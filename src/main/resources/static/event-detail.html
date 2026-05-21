@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="vi" data-load-components>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Chi tiết sự kiện Workshop: Web Development - Event Management System">
+    <title>Chi tiết sự kiện - Event Management System</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="components/components.css">
+</head>
+<body class="app-with-components">
+    <!-- Header -->
+    <header id="header" role="banner"></header>
+
+    <!-- Main Layout with Sidebar -->
+    <div class="main-with-sidebar">
+        <!-- Sidebar Navigation -->
+        <nav id="sidebar" role="navigation" aria-label="Menu chính"></nav>
+
+        <!-- Main Content -->
+        <main class="content-area" role="main">
+            <!-- Breadcrumb Navigation -->
+            <nav class="breadcrumb" aria-label="Đường dẫn breadcrumb">
+                <a href="#">Sự kiện</a> 
+                <span aria-hidden="true">/</span> 
+                <span>Workshop: Web Development</span>
+            </nav>
+            
+            <!-- Event Detail Container -->
+            <article class="event-detail-container">
+                <div class="event-detail-main">
+                    <!-- Event Header with Cover Image -->
+                    <header class="event-detail-header">
+                        <figure class="event-cover">
+                            <img src="https://via.placeholder.com/800x400" alt="Ảnh bìa sự kiện Workshop Web Development">
+                            <span class="badge" aria-label="Trạng thái: Sắp diễn ra">Sắp diễn ra</span>
+                        </figure>
+                    </header>
+                    
+                    <!-- Event Main Content -->
+                    <section class="event-detail-content">
+                        <h1>Workshop: Web Development with Modern Stack</h1>
+                        
+                        <!-- Event Metadata -->
+                        <div class="event-meta">
+                            <div class="meta-item">
+                                <strong>📅 Thời gian:</strong>
+                                <time datetime="2026-05-15T14:00">15/05/2026, 14:00 - 17:00</time>
+                            </div>
+                            <div class="meta-item">
+                                <strong>📍 Địa điểm:</strong>
+                                <address>Phòng 101, Tòa A</address>
+                            </div>
+                            <div class="meta-item">
+                                <strong>👥 Sức chứa:</strong>
+                                <span>30/50 người</span>
+                            </div>
+                            <div class="meta-item">
+                                <strong>🏢 Bộ phận:</strong>
+                                <span>IT Department</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Event Description -->
+                        <section class="event-description" aria-labelledby="description-title">
+                            <h2 id="description-title">Mô tả sự kiện</h2>
+                            <p>
+                                Tham gia workshop toàn diện về Web Development với các công nghệ hiện đại nhất. 
+                                Bạn sẽ học được:
+                            </p>
+                            <ul>
+                                <li>Frontend: HTML5, CSS3, JavaScript, React.js</li>
+                                <li>Backend: Node.js, Express, MongoDB</li>
+                                <li>Full-stack development best practices</li>
+                                <li>Deployment và DevOps cơ bản</li>
+                            </ul>
+                            <dl>
+                                <dt>Yêu cầu:</dt>
+                                <dd>Có kiến thức cơ bản về JavaScript</dd>
+                                <dt>Giảng viên:</dt>
+                                <dd>Nguyễn Văn Tùng - Senior Developer</dd>
+                            </dl>
+                        </section>
+                        
+                        <!-- Event Agenda / Timeline -->
+                        <section class="event-agenda" aria-labelledby="agenda-title">
+                            <h2 id="agenda-title">Lịch trình sự kiện</h2>
+                            <ol class="timeline">
+                                <li class="timeline-item">
+                                    <time class="timeline-time" datetime="2026-05-15T14:00/PT15M">14:00 - 14:15</time>
+                                    <div class="timeline-content">
+                                        <h3>Giới thiệu & Welcome</h3>
+                                        <p>Chào mừng các bạn, giới thiệu về workshop</p>
+                                    </div>
+                                </li>
+                                <li class="timeline-item">
+                                    <time class="timeline-time" datetime="2026-05-15T14:15/PT60M">14:15 - 15:15</time>
+                                    <div class="timeline-content">
+                                        <h3>Frontend Development</h3>
+                                        <p>React.js cơ bản và các hooks quan trọng</p>
+                                    </div>
+                                </li>
+                                <li class="timeline-item">
+                                    <time class="timeline-time" datetime="2026-05-15T15:15/PT15M">15:15 - 15:30</time>
+                                    <div class="timeline-content">
+                                        <h3>Break Time</h3>
+                                        <p>Nghỉ giải lao, uống nước</p>
+                                    </div>
+                                </li>
+                                <li class="timeline-item">
+                                    <time class="timeline-time" datetime="2026-05-15T15:30/PT60M">15:30 - 16:30</time>
+                                    <div class="timeline-content">
+                                        <h3>Backend Development</h3>
+                                        <p>Node.js, Express, và REST API design</p>
+                                    </div>
+                                </li>
+                                <li class="timeline-item">
+                                    <time class="timeline-time" datetime="2026-05-15T16:30/PT30M">16:30 - 17:00</time>
+                                    <div class="timeline-content">
+                                        <h3>Q&A & Networking</h3>
+                                        <p>Trả lời câu hỏi và kết nối với các bạn</p>
+                                    </div>
+                                </li>
+                            </ol>
+                        </section>
+                    </section>
+                </div>
+                
+                <!-- Sidebar Right - Registration & Additional Info -->
+                <aside class="event-detail-sidebar" aria-label="Thông tin đăng ký và chi tiết">
+                    <!-- Registration Card -->
+                    <section class="register-card">
+                        <h2>Đăng ký sự kiện</h2>
+                        <p class="register-status" aria-label="Trạng thái đăng ký">⏳ Đang mở đăng ký</p>
+                        <button class="btn btn-primary btn-register" aria-label="Đăng ký tham gia sự kiện">Đăng ký ngay</button>
+                        <p class="register-note">Có 20 chỗ còn trống</p>
+                    </section>
+                    
+                    <!-- Additional Info Card -->
+                    <section class="info-card" aria-labelledby="info-title">
+                        <h2 id="info-title">Thông tin thêm</h2>
+                        <dl>
+                            <dt>Ngày tạo:</dt>
+                            <dd><time datetime="2026-05-10">10/05/2026</time></dd>
+                            <dt>Trạng thái:</dt>
+                            <dd><span class="status-badge status-published" aria-label="Trạng thái: Đã công bố">Đã công bố</span></dd>
+                            <dt>Người tạo:</dt>
+                            <dd>Admin</dd>
+                        </dl>
+                    </section>
+                    
+                    <!-- Share Card -->
+                    <section class="share-card" aria-labelledby="share-title">
+                        <h2 id="share-title">Chia sẻ</h2>
+                        <div class="share-buttons">
+                            <button class="btn-share facebook" aria-label="Chia sẻ trên Facebook">f</button>
+                            <button class="btn-share twitter" aria-label="Chia sẻ trên Twitter">𝕏</button>
+                            <button class="btn-share copy" aria-label="Sao chép liên kết">🔗</button>
+                        </div>
+                    </section>
+                </aside>
+            </article>
+        </main>
+    </div>
+
+    <!-- Footer -->
+    <footer id="footer" role="contentinfo"></footer>
+
+    <!-- Scripts -->
+    <script src="assets/components.js"></script>
+</body>
+</html>

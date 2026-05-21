@@ -1,0 +1,74 @@
+package com.example.model;
+
+import javax.persistence.*;
+
+@Entity
+@Table(name = "student")
+public class Student {
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @Column(nullable = false, unique = true, length = 50)
+    private String studentCode;
+    
+    @Column(columnDefinition = "NVARCHAR(100)")
+    private String major;
+    
+    @Column
+    private Integer year;
+    
+    @OneToOne
+    @JoinColumn(name = "userId", nullable = false, unique = true)
+    private User user;
+
+    public Student() {}
+
+    public Student(String studentCode, String major, Integer year, User user) {
+        this.studentCode = studentCode;
+        this.major = major;
+        this.year = year;
+        this.user = user;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getStudentCode() {
+        return studentCode;
+    }
+
+    public void setStudentCode(String studentCode) {
+        this.studentCode = studentCode;
+    }
+
+    public String getMajor() {
+        return major;
+    }
+
+    public void setMajor(String major) {
+        this.major = major;
+    }
+
+    public Integer getYear() {
+        return year;
+    }
+
+    public void setYear(Integer year) {
+        this.year = year;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+}

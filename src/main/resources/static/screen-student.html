@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sinh viên — Sự kiện &amp; Đăng ký</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } } };</script>
+</head>
+<body class="min-h-screen bg-gradient-to-b from-sky-50 via-white to-indigo-50/40 font-sans text-slate-800 antialiased">
+    <header class="sticky top-0 z-30 border-b border-sky-100/80 bg-white/85 backdrop-blur-lg">
+        <div class="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
+            <a href="#" class="flex items-center gap-2 font-bold tracking-tight text-slate-900">
+                <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 text-white">🎓</span>
+                <span>Campus Events</span>
+            </a>
+            <nav class="hidden items-center gap-6 text-sm font-medium text-slate-600 md:flex">
+                <a href="#" class="text-sky-700">Sự kiện</a>
+                <a href="#" class="hover:text-sky-700">Vé của tôi</a>
+                <a href="#" class="hover:text-sky-700">Lịch</a>
+            </nav>
+            <div class="flex items-center gap-2">
+                <a href="role-screens.html" class="hidden text-sm text-slate-500 hover:text-sky-700 sm:inline">Vai trò</a>
+                <details class="relative">
+                    <summary class="flex cursor-pointer list-none items-center gap-2 rounded-full border border-sky-100 bg-white px-2.5 py-2 text-sm font-semibold text-slate-700 shadow-sm">
+                        <span data-account-initials class="flex h-7 w-7 items-center justify-center rounded-full bg-sky-100 text-xs font-bold text-sky-700">SV</span>
+                        <span data-account-name class="hidden max-w-32 truncate sm:inline">Sinh viên</span>
+                    </summary>
+                    <div class="absolute right-0 mt-2 w-56 rounded-xl border border-slate-200 bg-white p-2 text-sm shadow-xl">
+                        <div class="rounded-lg bg-slate-50 px-3 py-2">
+                            <p data-account-name class="truncate font-semibold text-slate-900">Sinh viên</p>
+                            <p data-account-role class="text-xs font-semibold uppercase text-slate-500">STUDENT</p>
+                        </div>
+                        <a href="forgot-password.html" class="mt-1 block rounded-lg px-3 py-2 font-semibold text-slate-700 hover:bg-sky-50">Đổi mật khẩu</a>
+                        <button type="button" data-logout class="block w-full rounded-lg px-3 py-2 text-left font-semibold text-rose-600 hover:bg-rose-50">Đăng xuất</button>
+                    </div>
+                </details>
+            </div>
+        </div>
+    </header>
+
+    <section class="relative overflow-hidden border-b border-sky-100 bg-gradient-to-r from-sky-500 via-blue-600 to-indigo-700 px-4 py-14 text-white sm:py-16">
+        <div class="pointer-events-none absolute -right-20 top-0 h-64 w-64 rounded-full bg-white/10 blur-3xl"></div>
+        <div class="pointer-events-none absolute -left-20 bottom-0 h-48 w-48 rounded-full bg-cyan-300/20 blur-3xl"></div>
+        <div class="relative mx-auto max-w-6xl text-center">
+            <p class="text-sm font-semibold uppercase tracking-widest text-sky-100">Chào bạn, Minh An</p>
+            <h1 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Khám phá sự kiện campus</h1>
+            <p class="mx-auto mt-3 max-w-xl text-sky-100">Đăng ký một chạm — nhắc lịch tự động. Bạn có <strong class="text-white">2</strong> sự kiện sắp diễn ra.</p>
+            <div class="mt-6 flex flex-wrap justify-center gap-2">
+                <span class="rounded-full bg-white/15 px-4 py-1.5 text-xs font-medium backdrop-blur-sm">CNTT</span>
+                <span class="rounded-full bg-white/15 px-4 py-1.5 text-xs font-medium backdrop-blur-sm">Hôm nay</span>
+                <span class="rounded-full bg-white/15 px-4 py-1.5 text-xs font-medium backdrop-blur-sm">Miễn phí</span>
+            </div>
+        </div>
+    </section>
+
+    <main class="mx-auto max-w-6xl space-y-10 px-4 py-10 sm:px-6">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+            <h2 class="text-xl font-bold text-slate-900">Sự kiện nổi bật</h2>
+            <div class="flex gap-2">
+                <button type="button" class="rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white">Tất cả</button>
+                <button type="button" class="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-medium text-slate-600 hover:border-sky-300">Tuần này</button>
+            </div>
+        </div>
+
+        <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <article class="group overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-md transition hover:-translate-y-1 hover:shadow-xl hover:shadow-sky-500/10">
+                <div class="relative h-44 overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1540575467063-027a26d3b38c?auto=format&fit=crop&w=600&q=80" alt="" class="h-full w-full object-cover transition duration-500 group-hover:scale-105" width="600" height="400">
+                    <span class="absolute left-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-bold uppercase text-sky-700 shadow">Sắp diễn ra</span>
+                </div>
+                <div class="p-5">
+                    <h3 class="font-semibold text-slate-900">Design Sprint Day</h3>
+                    <p class="mt-1 text-sm text-slate-500">📅 18/05 · 📍 Hội trường A</p>
+                    <div class="mt-3 flex items-center justify-between text-xs text-slate-500">
+                        <span>48/80 chỗ</span>
+                        <span class="text-emerald-600 font-semibold">Còn chỗ</span>
+                    </div>
+                    <a href="event-detail.html" class="mt-4 flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-sky-600 to-blue-600 py-3 text-sm font-semibold text-white shadow-lg shadow-sky-500/25 transition hover:brightness-110">Đăng ký</a>
+                </div>
+            </article>
+
+            <article class="group overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-md transition hover:-translate-y-1 hover:shadow-xl">
+                <div class="relative h-44 overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1517245386807-bb43f82e33f4?auto=format&fit=crop&w=600&q=80" alt="" class="h-full w-full object-cover transition duration-500 group-hover:scale-105" width="600" height="400">
+                    <span class="absolute left-3 top-3 rounded-full bg-violet-600 px-2.5 py-1 text-[10px] font-bold uppercase text-white shadow">Mới</span>
+                </div>
+                <div class="p-5">
+                    <h3 class="font-semibold text-slate-900">Career Fair 2026</h3>
+                    <p class="mt-1 text-sm text-slate-500">📅 22/05 · 📍 Nhà thi đấu</p>
+                    <div class="mt-3 flex items-center justify-between text-xs text-slate-500">
+                        <span>310/500</span>
+                        <span class="text-amber-600 font-semibold">Sắp đầy</span>
+                    </div>
+                    <button type="button" class="mt-4 w-full rounded-xl bg-slate-900 py-3 text-sm font-semibold text-white transition hover:bg-slate-800">Đăng ký</button>
+                </div>
+            </article>
+
+            <article class="group overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-md transition hover:-translate-y-1 sm:col-span-2 lg:col-span-1">
+                <div class="relative h-44 overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=600&q=80" alt="" class="h-full w-full object-cover transition duration-500 group-hover:scale-105" width="600" height="400">
+                    <span class="absolute left-3 top-3 rounded-full bg-emerald-600 px-2.5 py-1 text-[10px] font-bold uppercase text-white shadow">Đã đăng ký</span>
+                </div>
+                <div class="p-5">
+                    <h3 class="font-semibold text-slate-900">CLB Guitar — Đêm nhạc</h3>
+                    <p class="mt-1 text-sm text-slate-500">📅 25/05 · 📍 Sân thượng D</p>
+                    <div class="mt-3 flex items-center justify-between text-xs text-slate-500">
+                        <span>Vé đã gửi email</span>
+                        <span class="text-emerald-600 font-semibold">✓</span>
+                    </div>
+                    <button type="button" disabled class="mt-4 w-full cursor-not-allowed rounded-xl border border-slate-200 bg-slate-100 py-3 text-sm font-semibold text-slate-400">Đã tham gia</button>
+                </div>
+            </article>
+        </div>
+
+        <section class="rounded-2xl border border-sky-100 bg-gradient-to-br from-white to-sky-50/50 p-6 shadow-sm">
+            <h2 class="text-lg font-bold text-slate-900">Lịch sắp tới</h2>
+            <ul class="mt-4 divide-y divide-sky-100">
+                <li class="flex items-center justify-between py-3 text-sm">
+                    <span class="font-medium text-slate-800">Workshop CV</span>
+                    <span class="text-slate-500">16/05 · 14:00</span>
+                </li>
+                <li class="flex items-center justify-between py-3 text-sm">
+                    <span class="font-medium text-slate-800">Design Sprint Day</span>
+                    <span class="text-slate-500">18/05 · 09:00</span>
+                </li>
+                <li class="flex items-center justify-between py-3 text-sm">
+                    <span class="font-medium text-slate-800">Career Fair</span>
+                    <span class="text-slate-500">22/05 · Cả ngày</span>
+                </li>
+            </ul>
+        </section>
+    </main>
+
+    <footer class="border-t border-sky-100 bg-white/80 py-8 text-center text-sm text-slate-500">
+        <a href="dashboard.html" class="text-sky-700 hover:underline">Mở dashboard gốc</a>
+        · <a href="role-screens.html" class="text-sky-700 hover:underline">Các vai trò</a>
+    </footer>
+    <script>
+        (function () {
+            var raw = {};
+            try { raw = JSON.parse(sessionStorage.getItem('user') || '{}'); } catch (ignore) {}
+            var name = raw.fullName || localStorage.getItem('userName') || 'Sinh viên';
+            var role = raw.role || localStorage.getItem('userRole') || 'STUDENT';
+            var initials = name.split(/\s+/).filter(Boolean).slice(-2).map(function (part) { return part.charAt(0); }).join('').toUpperCase() || 'SV';
+            document.querySelectorAll('[data-account-name]').forEach(function (node) { node.textContent = name; });
+            document.querySelectorAll('[data-account-role]').forEach(function (node) { node.textContent = role; });
+            document.querySelectorAll('[data-account-initials]').forEach(function (node) { node.textContent = initials; });
+        })();
+        var logoutInProgress = false;
+        function showLogoutNotice(message) {
+            var notice = document.querySelector('[data-logout-notice]');
+            if (!notice) {
+                notice = document.createElement('div');
+                notice.setAttribute('data-logout-notice', '');
+                notice.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(15,23,42,.32);opacity:0;transition:opacity .18s ease;';
+                notice.innerHTML = '<div style="display:grid;justify-items:center;gap:12px;width:min(352px,100%);padding:24px;border-radius:12px;background:#fff;color:#0f172a;text-align:center;box-shadow:0 24px 70px -24px rgba(15,23,42,.48);"><div style="display:flex;width:48px;height:48px;align-items:center;justify-content:center;border-radius:999px;background:#eff6ff;color:#2563eb;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><p data-logout-text style="margin:0;font-weight:700;line-height:1.5;"></p></div>';
+                document.body.appendChild(notice);
+            }
+            notice.querySelector('[data-logout-text]').textContent = message;
+            notice.style.opacity = '1';
+        }
+        document.querySelector('[data-logout]').addEventListener('click', function () {
+            if (logoutInProgress) return;
+            logoutInProgress = true;
+            showLogoutNotice('Đang đăng xuất...');
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userName');
+            localStorage.removeItem('userRole');
+            sessionStorage.clear();
+            fetch('/api/logout', { method: 'POST' }).catch(function () {}).finally(function () {
+                showLogoutNotice('Đã đăng xuất. Đang chuyển về trang đăng nhập...');
+                window.setTimeout(function () {
+                    window.location.href = window.location.pathname.startsWith('/api/') ? '/api/login.html' : 'login.html';
+                }, 900);
+            });
+        });
+    </script>
+</body>
+</html>

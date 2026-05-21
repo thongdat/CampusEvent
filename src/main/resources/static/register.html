@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng ký - Campus Events</title>
+    <style>
+        :root {
+            --ink: #101828;
+            --muted: #667085;
+            --line: #d0d5dd;
+            --soft: #f2f4f7;
+            --surface: #ffffff;
+            --primary: #155eef;
+            --primary-dark: #004eeb;
+            --success: #079455;
+            --danger: #d92d20;
+            --radius: 16px;
+            --font: "Segoe UI", Arial, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            letter-spacing: 0;
+        }
+
+        body {
+            min-height: 100vh;
+            font-family: var(--font);
+            color: var(--ink);
+            background:
+                    radial-gradient(circle at top left, rgba(21, 94, 239, .16), transparent 30rem),
+                    linear-gradient(135deg, #f9fafb 0%, #eef4ff 100%);
+            display: grid;
+            place-items: center;
+            padding: 24px;
+        }
+
+        .shell {
+            width: min(560px, 100%);
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid rgba(208, 213, 221, .8);
+            border-radius: 24px;
+            padding: clamp(28px, 5vw, 40px);
+            box-shadow: 0 24px 64px -24px rgba(16, 24, 40, .26);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 28px;
+        }
+
+        .brand-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            display: grid;
+            place-items: center;
+            color: #fff;
+            background: linear-gradient(135deg, var(--primary), #7a5af8);
+            box-shadow: 0 12px 24px -12px rgba(21, 94, 239, .8);
+        }
+
+        .brand-icon svg {
+            width: 22px;
+            height: 22px;
+        }
+
+        .brand-name {
+            font-size: 18px;
+            font-weight: 800;
+        }
+
+        .brand-sub {
+            margin-top: 2px;
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        h1 {
+            font-size: clamp(28px, 5vw, 34px);
+            line-height: 1.15;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: var(--muted);
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+
+        .google-badge {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            width: fit-content;
+            padding: 8px 12px;
+            border: 1px solid #b2ddff;
+            border-radius: 999px;
+            background: #eff8ff;
+            color: #175cd3;
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .google-badge svg {
+            width: 16px;
+            height: 16px;
+            flex: 0 0 auto;
+        }
+
+        .steps {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0 0 24px;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 800;
+            color: #98a2b3;
+            white-space: nowrap;
+        }
+
+        .step-num {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            border: 2px solid #eaecf0;
+            font-size: 12px;
+        }
+
+        .step.active {
+            color: var(--primary);
+        }
+
+        .step.active .step-num {
+            color: #fff;
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .step.done {
+            color: var(--success);
+        }
+
+        .step.done .step-num {
+            color: #fff;
+            background: var(--success);
+            border-color: var(--success);
+        }
+
+        .step-line {
+            flex: 1;
+            height: 2px;
+            border-radius: 2px;
+            background: #eaecf0;
+        }
+
+        .step-line.done {
+            background: var(--success);
+        }
+
+        .field {
+            display: grid;
+            gap: 7px;
+            margin-bottom: 14px;
+        }
+
+        label {
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        input,
+        select {
+            width: 100%;
+            min-height: 48px;
+            border: 1.5px solid var(--line);
+            border-radius: var(--radius);
+            background: #fcfcfd;
+            color: var(--ink);
+            padding: 12px 14px;
+            font: 500 15px/1.3 var(--font);
+            outline: none;
+            transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: var(--primary);
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(21, 94, 239, .12);
+        }
+
+        input:read-only {
+            color: #667085;
+            background: #f2f4f7;
+        }
+
+        .hint {
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .student-fields,
+        .otp-area {
+            display: none;
+            animation: fade-in .2s ease;
+        }
+
+        .student-fields.show,
+        .otp-area.show {
+            display: block;
+        }
+
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(-4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .button {
+            width: 100%;
+            min-height: 48px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            border: 0;
+            border-radius: var(--radius);
+            color: #fff;
+            font: 800 15px/1 var(--font);
+            cursor: pointer;
+            transition: transform .18s ease, opacity .18s ease, box-shadow .18s ease;
+        }
+
+        .button:hover {
+            transform: translateY(-1px);
+        }
+
+        .button:disabled {
+            cursor: not-allowed;
+            opacity: .62;
+            transform: none;
+        }
+
+        .button.primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            box-shadow: 0 16px 32px -18px rgba(21, 94, 239, .9);
+        }
+
+        .button.success {
+            background: linear-gradient(135deg, #17b26a, #079455);
+            box-shadow: 0 16px 32px -18px rgba(7, 148, 85, .9);
+        }
+
+        .button.ghost {
+            width: auto;
+            min-width: 116px;
+            color: var(--primary);
+            background: #fff;
+            border: 1.5px solid var(--line);
+            box-shadow: none;
+        }
+
+        .otp-row {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 10px;
+            align-items: end;
+            margin-top: 12px;
+        }
+
+        .message {
+            display: none;
+            margin-top: 14px;
+            padding: 12px 14px;
+            border-radius: 14px;
+            font-size: 14px;
+            font-weight: 700;
+            line-height: 1.45;
+        }
+
+        .message.error {
+            display: block;
+            color: var(--danger);
+            background: #fef3f2;
+            border: 1px solid #fecdca;
+        }
+
+        .message.success {
+            display: block;
+            color: #067647;
+            background: #ecfdf3;
+            border: 1px solid #abefc6;
+        }
+
+        .spinner {
+            display: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255, 255, 255, .35);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin .65s linear infinite;
+        }
+
+        .loading .spinner {
+            display: inline-block;
+        }
+
+        .loading .button-text {
+            display: none;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .note,
+        .footer {
+            color: var(--muted);
+            text-align: center;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .note {
+            margin-top: 16px;
+        }
+
+        .footer {
+            margin-top: 12px;
+        }
+
+        .note a,
+        .footer a {
+            color: var(--primary);
+            font-weight: 800;
+            text-decoration: none;
+        }
+
+        .note a:hover,
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 540px) {
+            body {
+                padding: 12px;
+            }
+
+            .row,
+            .otp-row {
+                grid-template-columns: 1fr;
+            }
+
+            .steps {
+                gap: 6px;
+            }
+
+            .step {
+                font-size: 11px;
+            }
+
+            .step-num {
+                width: 24px;
+                height: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+<main class="shell">
+    <section class="card">
+        <div class="brand">
+            <div class="brand-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 5h16v14H4z"></path>
+                    <path d="M8 3v4M16 3v4M4 9h16"></path>
+                </svg>
+            </div>
+            <div>
+                <div class="brand-name">Campus Events</div>
+                <div class="brand-sub">Hệ thống sự kiện sinh viên</div>
+            </div>
+        </div>
+
+        <div id="googleBadge" class="google-badge">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.07 5.07 0 0 1-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"></path>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"></path>
+                <path fill="#FBBC05" d="M5.84 14.09a6.97 6.97 0 0 1 0-4.18V7.07H2.18A11 11 0 0 0 1 12c0 1.78.43 3.45 1.18 4.93l2.85-2.22.81-.62z"></path>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"></path>
+            </svg>
+            Đăng ký từ tài khoản Google
+        </div>
+
+        <h1>Tạo tài khoản mới</h1>
+        <p class="subtitle">Điền thông tin bên dưới. Email sẽ được xác minh bằng OTP trước khi kích hoạt tài khoản.</p>
+
+        <div class="steps" aria-hidden="true">
+            <div class="step active" id="s1"><span class="step-num">1</span> Thông tin</div>
+            <div class="step-line" id="sl1"></div>
+            <div class="step" id="s2"><span class="step-num">2</span> Xác minh</div>
+            <div class="step-line" id="sl2"></div>
+            <div class="step" id="s3"><span class="step-num">3</span> Hoàn tất</div>
+        </div>
+
+        <form id="registerForm" accept-charset="UTF-8" novalidate>
+            <input type="hidden" id="fromGoogle" value="false">
+
+            <div class="field">
+                <label for="fullName">Họ và tên</label>
+                <input type="text" id="fullName" placeholder="Nguyễn Văn An" required>
+            </div>
+
+            <div class="field">
+                <label for="email">Email</label>
+                <input type="email" id="email" placeholder="you@example.com" required>
+            </div>
+
+            <div class="field">
+                <label for="phone">Số điện thoại</label>
+                <input type="tel" id="phone" placeholder="0901234567" inputmode="numeric" maxlength="10" required>
+                <p class="hint">Mỗi tài khoản dùng một số điện thoại duy nhất.</p>
+            </div>
+
+            <div class="field">
+                <label for="role">Vai trò</label>
+                <select id="role" required>
+                    <option value="">Chọn vai trò</option>
+                    <option value="STUDENT">Sinh viên</option>
+                    <option value="DEPARTMENT">Khoa / Bộ môn</option>
+                </select>
+            </div>
+
+            <div id="studentFields" class="student-fields">
+                <div class="field">
+                    <label for="studentCode">Mã sinh viên</label>
+                    <input type="text" id="studentCode" placeholder="HE180001" maxlength="20" autocomplete="off">
+                    <p class="hint">Không dùng mã tự sinh kiểu SV001. Mỗi sinh viên chỉ có một mã duy nhất.</p>
+                </div>
+
+                <div class="field">
+                    <label for="faculty">Khoa</label>
+                    <select id="faculty">
+                        <option value="">Chọn khoa</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label for="major" id="majorLabel">Chuyên ngành</label>
+                    <select id="major">
+                        <option value="">Chọn bộ môn/ngành</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label for="semester">Kì học hiện tại</label>
+                    <select id="semester">
+                        <option value="">Chọn kì</option>
+                        <option value="1">Kì 1</option>
+                        <option value="2">Kì 2</option>
+                        <option value="3">Kì 3</option>
+                        <option value="4">Kì 4</option>
+                        <option value="5">Kì 5</option>
+                        <option value="6">Kì 6</option>
+                        <option value="7">Kì 7</option>
+                        <option value="8">Kì 8</option>
+                        <option value="9">Kì 9</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="field">
+                    <label for="password">Mật khẩu</label>
+                    <input type="password" id="password" placeholder="Ít nhất 8 ký tự" required>
+                </div>
+                <div class="field">
+                    <label for="confirmPassword">Nhập lại mật khẩu</label>
+                    <input type="password" id="confirmPassword" placeholder="Nhập lại mật khẩu" required>
+                </div>
+            </div>
+
+            <button type="button" class="button success" id="btnSendOtp">
+                <span class="button-text">Gửi mã xác minh email</span>
+                <span class="spinner"></span>
+            </button>
+
+            <div id="otpWrap" class="otp-area">
+                <div class="otp-row">
+                    <div class="field" style="margin-bottom:0">
+                        <label for="otpCode">Mã OTP (6 số)</label>
+                        <input type="text" id="otpCode" placeholder="123456" maxlength="6" inputmode="numeric">
+                    </div>
+                    <button type="button" class="button ghost" id="btnResend" disabled>Gửi lại <span id="countdown">60</span>s</button>
+                </div>
+
+                <button type="submit" class="button primary" id="btnRegister" style="margin-top:12px">
+                    <span class="button-text">Hoàn tất đăng ký</span>
+                    <span class="spinner"></span>
+                </button>
+            </div>
+
+            <div id="message" class="message" role="alert"></div>
+            <p class="note">Khi tiếp tục, bạn đồng ý với <a href="#">Điều khoản</a> và <a href="#">Chính sách bảo mật</a>.</p>
+            <p class="footer">Đã có tài khoản? <a href="login.html">Đăng nhập</a></p>
+        </form>
+    </section>
+</main>
+
+<script>
+(function () {
+    var params = new URLSearchParams(window.location.search);
+    var googleEmail = params.get('google_email');
+    var googleName = params.get('google_name');
+    var isGoogle = !!(googleEmail && googleEmail.trim());
+
+    var form = document.getElementById('registerForm');
+    var fullName = document.getElementById('fullName');
+    var email = document.getElementById('email');
+    var phone = document.getElementById('phone');
+    var role = document.getElementById('role');
+    var studentFields = document.getElementById('studentFields');
+    var studentCode = document.getElementById('studentCode');
+    var faculty = document.getElementById('faculty');
+    var major = document.getElementById('major');
+    var majorLabel = document.getElementById('majorLabel');
+    var semester = document.getElementById('semester');
+    var password = document.getElementById('password');
+    var confirmPassword = document.getElementById('confirmPassword');
+    var otpCode = document.getElementById('otpCode');
+    var otpWrap = document.getElementById('otpWrap');
+    var btnSendOtp = document.getElementById('btnSendOtp');
+    var btnRegister = document.getElementById('btnRegister');
+    var btnResend = document.getElementById('btnResend');
+    var message = document.getElementById('message');
+    var timer;
+    var academicStructure = [
+        { faculty: 'Công nghệ Thông tin', departments: ['Công nghệ Thông tin', 'Kỹ thuật phần mềm', 'An toàn thông tin', 'Trí tuệ nhân tạo', 'Data Science'] },
+        { faculty: 'Kinh tế', departments: ['Kinh tế', 'Marketing', 'Quản trị kinh doanh', 'Tài chính Ngân hàng'] },
+        { faculty: 'Thiết kế & Truyền thông', departments: ['Thiết kế Mỹ thuật số', 'Thiết kế Đồ họa', 'Truyền thông đa phương tiện'] },
+        { faculty: 'Ngôn ngữ', departments: ['Ngôn ngữ Anh', 'Ngôn ngữ Nhật'] },
+        { faculty: 'Du lịch - Khách sạn', departments: ['Du lịch - Khách sạn', 'Hospitality Management'] }
+    ];
+
+    function fillFaculties() {
+        faculty.innerHTML = '<option value="">Chọn khoa</option>' + academicStructure.map(function (item) {
+            return '<option value="' + item.faculty + '">' + item.faculty + '</option>';
+        }).join('');
+    }
+
+    function fillDepartments() {
+        var group = academicStructure.find(function (item) { return item.faculty === faculty.value; });
+        major.innerHTML = '<option value="">Chọn bộ môn/ngành</option>' + (group ? group.departments.map(function (item) {
+            return '<option value="' + item + '">' + item + '</option>';
+        }).join('') : '');
+    }
+
+    fillFaculties();
+
+    if (isGoogle) {
+        email.value = googleEmail.trim();
+        email.readOnly = true;
+        document.getElementById('fromGoogle').value = 'true';
+        document.getElementById('googleBadge').style.display = 'inline-flex';
+        if (googleName) {
+            fullName.value = googleName;
+        }
+    }
+
+    role.addEventListener('change', function () {
+        var needsAcademic = role.value === 'STUDENT' || role.value === 'DEPARTMENT';
+        var isStudent = role.value === 'STUDENT';
+        studentFields.classList.toggle('show', needsAcademic);
+        studentCode.closest('.field').style.display = isStudent ? '' : 'none';
+        semester.closest('.field').style.display = isStudent ? '' : 'none';
+        majorLabel.textContent = isStudent ? 'Chuyên ngành' : 'Bộ môn phụ trách';
+        if (!needsAcademic) {
+            studentCode.value = '';
+            faculty.value = '';
+            major.value = '';
+            semester.value = '';
+            fillDepartments();
+        }
+    });
+
+    faculty.addEventListener('change', function () {
+        major.value = '';
+        fillDepartments();
+    });
+
+    phone.addEventListener('input', function () {
+        phone.value = phone.value.replace(/\D/g, '').slice(0, 10);
+    });
+
+    studentCode.addEventListener('input', function () {
+        studentCode.value = studentCode.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    });
+
+    otpCode.addEventListener('input', function () {
+        otpCode.value = otpCode.value.replace(/\D/g, '').slice(0, 6);
+    });
+
+    function show(text, type) {
+        message.className = 'message ' + type;
+        message.textContent = text;
+    }
+
+    function clearMessage() {
+        message.className = 'message';
+        message.textContent = '';
+    }
+
+    function setLoading(button, isLoading) {
+        button.classList.toggle('loading', isLoading);
+        button.disabled = isLoading;
+    }
+
+    function setStepper(index) {
+        ['s1', 's2', 's3'].forEach(function (id, i) {
+            var step = document.getElementById(id);
+            step.className = 'step' + (i < index ? ' done' : '') + (i === index ? ' active' : '');
+        });
+        ['sl1', 'sl2'].forEach(function (id, i) {
+            document.getElementById(id).className = 'step-line' + (i < index ? ' done' : '');
+        });
+    }
+
+    function startCountdown() {
+        var seconds = 60;
+        var countdown = document.getElementById('countdown');
+        btnResend.innerHTML = 'Gửi lại <span id="countdown">60</span>s';
+        countdown = document.getElementById('countdown');
+        btnResend.disabled = true;
+        countdown.textContent = seconds;
+        clearInterval(timer);
+        timer = setInterval(function () {
+            seconds -= 1;
+            countdown.textContent = seconds;
+            if (seconds <= 0) {
+                clearInterval(timer);
+                btnResend.disabled = false;
+                btnResend.textContent = 'Gửi lại';
+            }
+        }, 1000);
+    }
+
+    function validateBase() {
+        var nameValue = fullName.value.trim();
+        var emailValue = email.value.trim();
+        var phoneValue = phone.value.trim();
+
+        if (!nameValue || !emailValue || !phoneValue || !role.value || !password.value || !confirmPassword.value) {
+            show('Vui lòng điền đầy đủ thông tin.', 'error');
+            return false;
+        }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)) {
+            show('Email không hợp lệ.', 'error');
+            return false;
+        }
+        if (!/^\d{10}$/.test(phoneValue)) {
+            show('Số điện thoại phải gồm đúng 10 chữ số.', 'error');
+            return false;
+        }
+        if (password.value.length < 8) {
+            show('Mật khẩu tối thiểu 8 ký tự.', 'error');
+            return false;
+        }
+        if (password.value !== confirmPassword.value) {
+            show('Mật khẩu nhập lại không khớp.', 'error');
+            return false;
+        }
+        if (role.value === 'STUDENT' || role.value === 'DEPARTMENT') {
+            if (!faculty.value) {
+                show('Vui lòng chọn khoa.', 'error');
+                return false;
+            }
+            if (!major.value) {
+                show(role.value === 'STUDENT' ? 'Vui lòng chọn chuyên ngành.' : 'Vui lòng chọn bộ môn phụ trách.', 'error');
+                return false;
+            }
+        }
+        if (role.value === 'STUDENT') {
+            var code = studentCode.value.trim().toUpperCase();
+            if (!code) {
+                show('Vui lòng nhập mã sinh viên.', 'error');
+                return false;
+            }
+            if (/^SV\d+$/.test(code)) {
+                show('Không sử dụng mã tự sinh kiểu SV001. Vui lòng nhập mã sinh viên thật.', 'error');
+                return false;
+            }
+            if (!/^[A-Z0-9]{4,20}$/.test(code)) {
+                show('Mã sinh viên chỉ gồm chữ và số, dài từ 4 đến 20 ký tự.', 'error');
+                return false;
+            }
+            if (!semester.value) {
+                show('Vui lòng chọn kì học.', 'error');
+                return false;
+            }
+        }
+        return true;
+    }
+
+    function sendOtp() {
+        clearMessage();
+        if (!validateBase()) {
+            return;
+        }
+        setLoading(btnSendOtp, true);
+        fetch('/api/auth/register/send-otp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json; charset=UTF-8' },
+            body: JSON.stringify({ email: email.value.trim() })
+        })
+            .then(function (response) { return response.json(); })
+            .then(function (data) {
+                setLoading(btnSendOtp, false);
+                if (data.success) {
+                    show(data.message, 'success');
+                    otpWrap.classList.add('show');
+                    btnSendOtp.style.display = 'none';
+                    setStepper(1);
+                    startCountdown();
+                } else {
+                    show(data.message, 'error');
+                }
+            })
+            .catch(function () {
+                setLoading(btnSendOtp, false);
+                show('Lỗi kết nối. Vui lòng thử lại.', 'error');
+            });
+    }
+
+    btnSendOtp.addEventListener('click', sendOtp);
+
+    btnResend.addEventListener('click', function () {
+        clearMessage();
+        btnResend.disabled = true;
+        fetch('/api/auth/register/send-otp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json; charset=UTF-8' },
+            body: JSON.stringify({ email: email.value.trim() })
+        })
+            .then(function (response) { return response.json(); })
+            .then(function (data) {
+                if (data.success) {
+                    show('Đã gửi lại OTP.', 'success');
+                    startCountdown();
+                } else {
+                    show(data.message, 'error');
+                    btnResend.disabled = false;
+                }
+            })
+            .catch(function () {
+                show('Lỗi kết nối. Vui lòng thử lại.', 'error');
+                btnResend.disabled = false;
+            });
+    });
+
+    form.addEventListener('submit', function (event) {
+        event.preventDefault();
+        clearMessage();
+
+        if (!validateBase()) {
+            return;
+        }
+        if (!/^\d{6}$/.test(otpCode.value.trim())) {
+            show('Vui lòng nhập mã OTP gồm 6 chữ số.', 'error');
+            return;
+        }
+
+        setLoading(btnRegister, true);
+        var body = {
+            fullName: fullName.value.trim(),
+            email: email.value.trim(),
+            phone: phone.value.trim(),
+            role: role.value,
+            password: password.value,
+            confirmPassword: confirmPassword.value,
+            otpCode: otpCode.value.trim(),
+            fromGoogle: isGoogle
+        };
+
+        if (role.value === 'STUDENT') {
+            body.studentCode = studentCode.value.trim().toUpperCase();
+            body.major = major.value;
+            body.faculty = faculty.value;
+            body.semester = parseInt(semester.value, 10);
+        } else if (role.value === 'DEPARTMENT') {
+            body.major = major.value;
+            body.faculty = faculty.value;
+        }
+
+        fetch('/api/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json; charset=UTF-8' },
+            body: JSON.stringify(body)
+        })
+            .then(function (response) { return response.json(); })
+            .then(function (data) {
+                setLoading(btnRegister, false);
+                if (data.success) {
+                    setStepper(2);
+                    show(data.message, 'success');
+                    setTimeout(function () {
+                        window.location.href = 'login.html';
+                    }, 1400);
+                } else {
+                    show(data.message, 'error');
+                }
+            })
+            .catch(function () {
+                setLoading(btnRegister, false);
+                show('Lỗi kết nối. Vui lòng thử lại.', 'error');
+            });
+    });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Committee — Duyệt proposal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } } };</script>
+    <style>
+        .queue-item { transition: background .2s, border-color .2s; }
+        .queue-item:hover, .queue-item.selected { background: rgba(251,191,36,.08); border-color: rgba(245,158,11,.4); }
+    </style>
+</head>
+<body class="min-h-screen bg-amber-50/30 font-sans text-slate-800 antialiased">
+    <header class="border-b border-amber-200/60 bg-white/90 backdrop-blur-md">
+        <div class="mx-auto flex h-16 max-w-[1600px] items-center justify-between px-4 sm:px-6">
+            <div class="flex items-center gap-3">
+                <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 text-sm font-bold text-white">C</span>
+                <div>
+                    <p class="text-xs font-medium text-amber-800">Hội đồng</p>
+                    <p class="text-sm font-semibold text-slate-900">Duyệt đề xuất</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="hidden rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-900 sm:inline">3 chờ xử lý</span>
+                <a href="role-screens.html" class="text-sm font-medium text-amber-800 hover:underline">← Vai trò</a>
+                <details class="relative">
+                    <summary class="flex cursor-pointer list-none items-center gap-2 rounded-lg border border-amber-100 bg-white px-2.5 py-2 text-sm font-semibold text-slate-700 shadow-sm">
+                        <span data-account-initials class="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-100 text-xs font-bold text-amber-800">C</span>
+                        <span data-account-name class="hidden max-w-36 truncate sm:inline">Committee</span>
+                    </summary>
+                    <div class="absolute right-0 mt-2 w-56 rounded-xl border border-slate-200 bg-white p-2 text-sm shadow-xl">
+                        <div class="rounded-lg bg-slate-50 px-3 py-2">
+                            <p data-account-name class="truncate font-semibold text-slate-900">Committee</p>
+                            <p data-account-role class="text-xs font-semibold uppercase text-slate-500">COMMITTEE</p>
+                        </div>
+                        <a href="forgot-password.html" class="mt-1 block rounded-lg px-3 py-2 font-semibold text-slate-700 hover:bg-amber-50">Đổi mật khẩu</a>
+                        <button type="button" data-logout class="block w-full rounded-lg px-3 py-2 text-left font-semibold text-rose-600 hover:bg-rose-50">Đăng xuất</button>
+                    </div>
+                </details>
+            </div>
+        </div>
+    </header>
+
+    <div class="mx-auto flex max-h-[calc(100vh-4rem)] max-w-[1600px] flex-col lg:h-[calc(100vh-4rem)] lg:flex-row">
+        <!-- Queue -->
+        <aside class="w-full shrink-0 border-b border-amber-200/50 bg-white lg:w-80 lg:border-b-0 lg:border-r lg:overflow-y-auto">
+            <div class="p-4">
+                <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500">Hàng đợi</h2>
+                <ul class="mt-3 space-y-2">
+                    <li class="queue-item selected cursor-pointer rounded-xl border border-amber-300 bg-amber-50 p-4">
+                        <p class="font-semibold text-slate-900">Workshop UX Research</p>
+                        <p class="mt-1 text-xs text-slate-500">Khoa QTKD · 14/05</p>
+                        <span class="mt-2 inline-block rounded-full bg-amber-200 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-900">Mới</span>
+                    </li>
+                    <li class="queue-item cursor-pointer rounded-xl border border-slate-200 bg-white p-4">
+                        <p class="font-semibold text-slate-900">Ngày hội startup</p>
+                        <p class="mt-1 text-xs text-slate-500">Viện Đổi mới · 12/05</p>
+                    </li>
+                    <li class="queue-item cursor-pointer rounded-xl border border-slate-200 bg-white p-4">
+                        <p class="font-semibold text-slate-900">Giải thể thao liên khoa</p>
+                        <p class="mt-1 text-xs text-slate-500">Phòng CTSV · 10/05</p>
+                    </li>
+                </ul>
+            </div>
+        </aside>
+
+        <!-- Detail -->
+        <main class="min-h-0 flex-1 overflow-y-auto bg-gradient-to-b from-white to-amber-50/20 p-4 sm:p-8">
+            <div class="mx-auto max-w-3xl">
+                <div class="flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Proposal #2026-042</p>
+                        <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Workshop UX Research</h1>
+                        <p class="mt-2 text-sm text-slate-600">Đề xuất tổ chức buổi workshop 3h cho 80 sinh viên năm 3–4.</p>
+                    </div>
+                    <img src="https://images.unsplash.com/photo-1540575467063-027a26d3b38c?w=200&h=200&fit=crop" alt="" class="hidden h-24 w-24 rounded-2xl object-cover shadow-lg sm:block" width="96" height="96">
+                </div>
+
+                <dl class="mt-8 grid gap-4 rounded-2xl border border-amber-100 bg-white/80 p-6 sm:grid-cols-2">
+                    <div>
+                        <dt class="text-xs font-semibold uppercase text-slate-500">Phòng ban</dt>
+                        <dd class="mt-1 font-medium text-slate-900">Khoa QTKD</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-semibold uppercase text-slate-500">Ngân sách đề xuất</dt>
+                        <dd class="mt-1 font-medium text-slate-900">22.000.000đ</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-semibold uppercase text-slate-500">Ngày tổ chức</dt>
+                        <dd class="mt-1 font-medium text-slate-900">28/06/2026</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-semibold uppercase text-slate-500">Người nộp</dt>
+                        <dd class="mt-1 font-medium text-slate-900">TS. Phạm Lan</dd>
+                    </div>
+                </dl>
+
+                <section class="mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                    <h2 class="text-sm font-semibold text-slate-900">Nội dung đề xuất</h2>
+                    <p class="mt-3 text-sm leading-relaxed text-slate-600">
+                        Chương trình gồm phần lý thuyết nghiên cứu UX và phần thực hành nhóm. Cần hội trường 200 chỗ, bảng flipchart, và coffee break.
+                        Kết quả mong đợi: sinh viên hoàn thành một mini project persona + user journey.
+                    </p>
+                </section>
+
+                <div class="sticky bottom-0 mt-10 flex flex-col gap-3 rounded-2xl border border-amber-200/80 bg-white/95 p-4 shadow-xl backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between">
+                    <p class="text-sm text-slate-600">Chọn một hành động — không thể hoàn tác qua mockup này.</p>
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" class="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">Yêu cầu chỉnh sửa</button>
+                        <button type="button" class="rounded-xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-rose-500/25 transition hover:bg-rose-700">Từ chối</button>
+                        <button type="button" class="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30 transition hover:brightness-110">Phê duyệt</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script>
+        (function () {
+            var raw = {};
+            try { raw = JSON.parse(sessionStorage.getItem('user') || '{}'); } catch (ignore) {}
+            var name = raw.fullName || localStorage.getItem('userName') || 'Committee';
+            var role = raw.role || localStorage.getItem('userRole') || 'COMMITTEE';
+            var initials = name.split(/\s+/).filter(Boolean).slice(-2).map(function (part) { return part.charAt(0); }).join('').toUpperCase() || 'C';
+            document.querySelectorAll('[data-account-name]').forEach(function (node) { node.textContent = name; });
+            document.querySelectorAll('[data-account-role]').forEach(function (node) { node.textContent = role; });
+            document.querySelectorAll('[data-account-initials]').forEach(function (node) { node.textContent = initials; });
+        })();
+        document.querySelectorAll('.queue-item').forEach(function (el) {
+            el.addEventListener('click', function () {
+                document.querySelectorAll('.queue-item').forEach(function (x) {
+                    x.classList.remove('selected', 'border-amber-300', 'bg-amber-50');
+                    x.classList.add('border-slate-200', 'bg-white');
+                });
+                el.classList.add('selected', 'border-amber-300', 'bg-amber-50');
+                el.classList.remove('border-slate-200', 'bg-white');
+            });
+        });
+        var logoutInProgress = false;
+        function showLogoutNotice(message) {
+            var notice = document.querySelector('[data-logout-notice]');
+            if (!notice) {
+                notice = document.createElement('div');
+                notice.setAttribute('data-logout-notice', '');
+                notice.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(15,23,42,.32);opacity:0;transition:opacity .18s ease;';
+                notice.innerHTML = '<div style="display:grid;justify-items:center;gap:12px;width:min(352px,100%);padding:24px;border-radius:12px;background:#fff;color:#0f172a;text-align:center;box-shadow:0 24px 70px -24px rgba(15,23,42,.48);"><div style="display:flex;width:48px;height:48px;align-items:center;justify-content:center;border-radius:999px;background:#fff7ed;color:#ea580c;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><p data-logout-text style="margin:0;font-weight:700;line-height:1.5;"></p></div>';
+                document.body.appendChild(notice);
+            }
+            notice.querySelector('[data-logout-text]').textContent = message;
+            notice.style.opacity = '1';
+        }
+        document.querySelector('[data-logout]').addEventListener('click', function () {
+            if (logoutInProgress) return;
+            logoutInProgress = true;
+            showLogoutNotice('Đang đăng xuất...');
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userName');
+            localStorage.removeItem('userRole');
+            sessionStorage.clear();
+            fetch('/api/logout', { method: 'POST' }).catch(function () {}).finally(function () {
+                showLogoutNotice('Đã đăng xuất. Đang chuyển về trang đăng nhập...');
+                window.setTimeout(function () {
+                    window.location.href = window.location.pathname.startsWith('/api/') ? '/api/login.html' : 'login.html';
+                }, 900);
+            });
+        });
+    </script>
+</body>
+</html>

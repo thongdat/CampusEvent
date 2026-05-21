@@ -1,0 +1,2 @@
+-- Spring Boot SQL init disabled. 
+-- The original data creation scripts have been moved to schema_backup.sql to prevent them from executing automatically and causing "table already exists" errors.

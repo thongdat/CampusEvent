@@ -1,0 +1,1882 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Department Console</title>
+    <style>
+        :root {
+            --ink: #172033;
+            --muted: #667085;
+            --soft: #eef2f7;
+            --line: #d9e1ec;
+            --paper: #f7f9fc;
+            --panel: #ffffff;
+            --nav: #111827;
+            --teal: #0f766e;
+            --green: #047857;
+            --amber: #b45309;
+            --rose: #be123c;
+            --blue: #2563eb;
+            --violet: #6d28d9;
+            --shadow: 0 18px 45px -36px rgba(23, 32, 51, .8);
+        }
+
+        * { box-sizing: border-box; letter-spacing: 0; }
+        html { min-width: 320px; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: var(--paper);
+            color: var(--ink);
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+        }
+        button, input, textarea, select { font: inherit; }
+        button { cursor: pointer; }
+        a { color: inherit; text-decoration: none; }
+
+        .app {
+            display: grid;
+            grid-template-columns: 16rem minmax(0, 1fr);
+            min-height: 100vh;
+        }
+        .sidebar {
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: var(--nav);
+            color: #dbe4ef;
+        }
+        .brand {
+            display: flex;
+            min-height: 4.35rem;
+            align-items: center;
+            gap: .7rem;
+            padding: .85rem 1rem;
+            border-bottom: 1px solid rgba(255,255,255,.1);
+        }
+        .brand-mark {
+            display: inline-grid;
+            width: 2.35rem;
+            height: 2.35rem;
+            place-items: center;
+            border-radius: .55rem;
+            background: #14b8a6;
+            color: #fff;
+            font-weight: 900;
+        }
+        .brand-title { color: #fff; font-weight: 850; }
+        .brand-sub {
+            margin-top: .16rem;
+            max-width: 11rem;
+            color: #9ca3af;
+            font-size: .76rem;
+            line-height: 1.25;
+        }
+        .nav {
+            flex: 1;
+            padding: .8rem;
+            overflow-y: auto;
+        }
+        .nav-title {
+            margin: .7rem .35rem .35rem;
+            color: #9ca3af;
+            font-size: .68rem;
+            font-weight: 850;
+            text-transform: uppercase;
+        }
+        .nav button {
+            width: 100%;
+            min-height: 2.35rem;
+            border: 0;
+            border-radius: .5rem;
+            background: transparent;
+            color: #dbe4ef;
+            padding: .52rem .68rem;
+            text-align: left;
+            font-size: .84rem;
+            font-weight: 760;
+        }
+        .nav button.active {
+            background: rgba(255,255,255,.1);
+            color: #fff;
+            box-shadow: inset 3px 0 0 #14b8a6;
+        }
+        .sidebar-footer {
+            display: grid;
+            gap: .55rem;
+            padding: .9rem;
+            border-top: 1px solid rgba(255,255,255,.1);
+        }
+        .logout {
+            min-height: 2.4rem;
+            border: 1px solid rgba(248,113,113,.5);
+            border-radius: .5rem;
+            background: rgba(127,29,29,.18);
+            color: #fecaca;
+            font-weight: 850;
+        }
+        .account-card {
+            display: grid;
+            grid-template-columns: 2.15rem minmax(0, 1fr);
+            gap: .65rem;
+            align-items: center;
+            border-radius: .5rem;
+            background: rgba(255,255,255,.07);
+            padding: .65rem;
+        }
+        .account-avatar {
+            display: inline-grid;
+            width: 2.15rem;
+            height: 2.15rem;
+            place-items: center;
+            border-radius: .5rem;
+            background: #ccfbf1;
+            color: #0f766e;
+            font-weight: 950;
+        }
+        .account-name {
+            display: block;
+            overflow: hidden;
+            color: #fff;
+            font-size: .82rem;
+            font-weight: 850;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .account-role {
+            display: block;
+            margin-top: .12rem;
+            color: #9ca3af;
+            font-size: .72rem;
+            font-weight: 750;
+            text-transform: uppercase;
+        }
+        .account-menu {
+            position: relative;
+        }
+        .account-menu summary {
+            cursor: pointer;
+            list-style: none;
+        }
+        .account-menu summary::-webkit-details-marker { display: none; }
+        .account-panel {
+            display: grid;
+            gap: .45rem;
+            margin-top: .45rem;
+            border: 1px solid rgba(255,255,255,.1);
+            border-radius: .5rem;
+            background: rgba(15, 23, 42, .92);
+            padding: .55rem;
+        }
+        .account-link {
+            display: inline-flex;
+            min-height: 2.25rem;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(153,246,228,.35);
+            border-radius: .5rem;
+            background: rgba(20,184,166,.12);
+            color: #ccfbf1;
+            font-size: .76rem;
+            font-weight: 850;
+        }
+        .account-panel .logout {
+            width: 100%;
+        }
+
+        .main { min-width: 0; }
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 8;
+            display: flex;
+            min-height: 4.35rem;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: .85rem 1.25rem;
+            border-bottom: 1px solid var(--line);
+            background: rgba(255,255,255,.94);
+            backdrop-filter: blur(12px);
+        }
+        .kicker {
+            margin: 0;
+            color: var(--teal);
+            font-size: .72rem;
+            font-weight: 850;
+            text-transform: uppercase;
+        }
+        h1 {
+            margin: .12rem 0 0;
+            font-size: 1.28rem;
+            line-height: 1.15;
+        }
+        .subtitle {
+            margin: .28rem 0 0;
+            color: var(--muted);
+            font-size: .86rem;
+        }
+        .toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: .55rem;
+            flex-wrap: wrap;
+        }
+        .btn {
+            display: inline-flex;
+            min-height: 2.38rem;
+            align-items: center;
+            justify-content: center;
+            gap: .35rem;
+            border: 1px solid var(--line);
+            border-radius: .5rem;
+            background: #fff;
+            color: #344054;
+            padding: .45rem .78rem;
+            font-weight: 820;
+            white-space: nowrap;
+        }
+        .btn:hover { border-color: #a9b7ca; }
+        .btn.primary {
+            border-color: #0f766e;
+            background: #0f766e;
+            color: #fff;
+        }
+        .btn.danger {
+            border-color: #fecdd3;
+            background: #fff1f2;
+            color: var(--rose);
+        }
+        .btn.ghost { background: transparent; }
+        .btn.active {
+            border-color: #99f6e4;
+            background: #f0fdfa;
+            color: var(--teal);
+        }
+        .icon {
+            display: inline-grid;
+            width: 1rem;
+            height: 1rem;
+            place-items: center;
+            font-weight: 900;
+            line-height: 1;
+        }
+
+        .content {
+            display: grid;
+            gap: 1rem;
+            padding: 1.15rem 1.25rem 1.8rem;
+        }
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: .8rem;
+        }
+        .metric, .surface, .proposal-card, .event-card, .unit-card {
+            border: 1px solid var(--line);
+            border-radius: .5rem;
+            background: var(--panel);
+            box-shadow: var(--shadow);
+        }
+        .metric {
+            min-height: 6.2rem;
+            padding: .9rem;
+        }
+        .metric p {
+            margin: 0;
+            color: var(--muted);
+            font-size: .77rem;
+            font-weight: 820;
+        }
+        .metric strong {
+            display: block;
+            margin-top: .45rem;
+            color: #0b1220;
+            font-size: 1.65rem;
+            line-height: 1;
+        }
+        .metric span {
+            display: block;
+            margin-top: .45rem;
+            color: #667085;
+            font-size: .75rem;
+        }
+        .surface { padding: 1rem; }
+        .surface-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: .9rem;
+        }
+        .surface-title { margin: 0; font-size: 1rem; font-weight: 880; }
+        .surface-note { margin: .22rem 0 0; color: var(--muted); font-size: .82rem; line-height: 1.35; }
+        .empty {
+            padding: 1rem;
+            border: 1px dashed #cbd5e1;
+            border-radius: .5rem;
+            background: #f8fafc;
+            color: var(--muted);
+            font-size: .86rem;
+        }
+
+        .starter-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.15fr) minmax(18rem, .85fr);
+            gap: 1rem;
+        }
+        .profile-panel {
+            display: grid;
+            gap: .8rem;
+            border: 1px solid #bae6fd;
+            border-radius: .5rem;
+            background: #f0f9ff;
+            padding: 1rem;
+        }
+        .profile-row {
+            display: grid;
+            grid-template-columns: 7.25rem minmax(0, 1fr);
+            gap: .65rem;
+            align-items: center;
+            min-height: 2.25rem;
+            border-radius: .45rem;
+            background: #fff;
+            padding: .55rem .65rem;
+            font-size: .84rem;
+        }
+        .profile-row span {
+            color: #64748b;
+            font-size: .76rem;
+            font-weight: 850;
+            text-transform: uppercase;
+        }
+        .profile-row strong {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .focus-list {
+            display: grid;
+            gap: .6rem;
+        }
+        .focus-item {
+            display: grid;
+            grid-template-columns: 2.3rem minmax(0, 1fr) auto;
+            gap: .65rem;
+            align-items: center;
+            border: 1px solid var(--line);
+            border-radius: .5rem;
+            background: #fff;
+            padding: .7rem;
+        }
+        .focus-mark {
+            display: inline-grid;
+            width: 2.15rem;
+            height: 2.15rem;
+            place-items: center;
+            border-radius: .5rem;
+            background: #f0fdfa;
+            color: var(--teal);
+            font-weight: 950;
+        }
+        .focus-title {
+            margin: 0;
+            font-size: .9rem;
+            font-weight: 880;
+        }
+        .simple-board {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: .85rem;
+        }
+        .welcome-panel {
+            display: grid;
+            grid-template-columns: minmax(0, 1.1fr) minmax(19rem, .9fr);
+            gap: 1rem;
+            align-items: stretch;
+        }
+        .welcome-copy {
+            display: grid;
+            gap: .75rem;
+            border: 1px solid #bae6fd;
+            border-radius: .5rem;
+            background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 100%);
+            padding: 1rem;
+        }
+        .welcome-copy h2 {
+            margin: 0;
+            font-size: 1.16rem;
+        }
+        .welcome-copy p {
+            margin: 0;
+            color: var(--muted);
+            font-size: .88rem;
+            line-height: 1.5;
+        }
+        .quick-steps {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: .55rem;
+        }
+        .quick-step {
+            border: 1px solid var(--line);
+            border-radius: .5rem;
+            background: #fff;
+            padding: .68rem;
+        }
+        .quick-step strong {
+            display: block;
+            color: #0f172a;
+            font-size: .84rem;
+        }
+        .quick-step span {
+            display: block;
+            margin-top: .24rem;
+            color: var(--muted);
+            font-size: .74rem;
+            line-height: 1.35;
+        }
+        .next-panel {
+            display: grid;
+            gap: .65rem;
+            border: 1px solid var(--line);
+            border-radius: .5rem;
+            background: #fff;
+            padding: 1rem;
+            box-shadow: var(--shadow);
+        }
+        .next-panel h2 {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 900;
+        }
+        .proposal-list {
+            display: grid;
+            gap: .72rem;
+        }
+        .proposal-row {
+            display: grid;
+            grid-template-columns: 9.5rem minmax(0, 1fr) auto;
+            gap: .8rem;
+            align-items: center;
+            border: 1px solid var(--line);
+            border-radius: .5rem;
+            background: #fff;
+            padding: .72rem;
+            box-shadow: var(--shadow);
+        }
+        .proposal-row.priority {
+            border-color: #fed7aa;
+            background: #fffaf5;
+        }
+        .proposal-row img {
+            display: block;
+            width: 100%;
+            aspect-ratio: 16 / 10;
+            border-radius: .45rem;
+            object-fit: cover;
+            background: #e2e8f0;
+        }
+        .proposal-row-main {
+            display: grid;
+            gap: .38rem;
+            min-width: 0;
+        }
+        .proposal-row-title {
+            margin: 0;
+            color: #0f172a;
+            font-size: .94rem;
+            font-weight: 900;
+            line-height: 1.25;
+        }
+        .proposal-row-actions {
+            display: flex;
+            gap: .45rem;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+        .simple-column {
+            display: grid;
+            gap: .65rem;
+            align-content: start;
+        }
+        .simple-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: .5rem;
+            min-height: 2.35rem;
+            border-radius: .5rem;
+            background: #eef2f7;
+            padding: .5rem .65rem;
+            font-size: .8rem;
+            font-weight: 880;
+        }
+
+        .workflow-map {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1.2fr;
+            gap: .75rem;
+            align-items: stretch;
+        }
+        .step {
+            position: relative;
+            min-height: 5.25rem;
+            border: 1px solid var(--line);
+            border-radius: .5rem;
+            background: #f8fafc;
+            padding: .78rem;
+        }
+        .step:not(:last-child)::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            right: -.75rem;
+            width: .75rem;
+            border-top: 2px solid #a8b3c4;
+        }
+        .step-index {
+            display: inline-grid;
+            width: 1.45rem;
+            height: 1.45rem;
+            place-items: center;
+            border-radius: 999px;
+            background: #e0f2fe;
+            color: #0369a1;
+            font-size: .72rem;
+            font-weight: 900;
+        }
+        .step-title {
+            margin: .55rem 0 .2rem;
+            font-size: .87rem;
+            font-weight: 880;
+        }
+        .step-note {
+            margin: 0;
+            color: var(--muted);
+            font-size: .76rem;
+            line-height: 1.35;
+        }
+        .decision {
+            display: grid;
+            gap: .45rem;
+        }
+        .decision-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: .55rem;
+            min-height: 2.05rem;
+            border-radius: .45rem;
+            padding: .35rem .55rem;
+            font-size: .76rem;
+            font-weight: 850;
+        }
+
+        .kanban {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: .85rem;
+            align-items: start;
+        }
+        .lane {
+            min-width: 0;
+            display: grid;
+            gap: .62rem;
+        }
+        .lane-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: .5rem;
+            min-height: 2.4rem;
+            border-radius: .5rem;
+            background: #eef2f7;
+            padding: .5rem .65rem;
+            font-size: .78rem;
+            font-weight: 880;
+        }
+        .proposal-card {
+            padding: .78rem;
+            display: grid;
+            gap: .55rem;
+        }
+        .proposal-title {
+            margin: 0;
+            font-size: .9rem;
+            line-height: 1.25;
+            font-weight: 880;
+        }
+        .meta {
+            margin: 0;
+            color: var(--muted);
+            font-size: .76rem;
+            line-height: 1.35;
+        }
+        .card-actions {
+            display: flex;
+            gap: .45rem;
+            flex-wrap: wrap;
+        }
+        .mini-btn {
+            min-height: 1.95rem;
+            border: 1px solid var(--line);
+            border-radius: .45rem;
+            background: #fff;
+            color: #344054;
+            padding: .25rem .55rem;
+            font-size: .76rem;
+            font-weight: 820;
+        }
+        .mini-btn.primary {
+            border-color: #99f6e4;
+            background: #f0fdfa;
+            color: var(--teal);
+        }
+        .mini-btn.danger {
+            border-color: #fecdd3;
+            background: #fff1f2;
+            color: var(--rose);
+        }
+
+        .badge {
+            display: inline-flex;
+            width: fit-content;
+            align-items: center;
+            justify-content: center;
+            border-radius: .45rem;
+            padding: .22rem .5rem;
+            font-size: .7rem;
+            font-weight: 880;
+            white-space: nowrap;
+        }
+        .green { background: #ecfdf5; color: var(--green); }
+        .amber { background: #fffbeb; color: var(--amber); }
+        .rose { background: #fff1f2; color: var(--rose); }
+        .blue { background: #eff6ff; color: var(--blue); }
+        .violet { background: #f5f3ff; color: var(--violet); }
+        .gray { background: #f1f5f9; color: #475569; }
+
+        .event-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: .85rem;
+        }
+        .event-card { overflow: hidden; }
+        .event-card img {
+            display: block;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            object-fit: cover;
+            background: #dbe4ef;
+        }
+        .event-body {
+            display: grid;
+            gap: .5rem;
+            padding: .85rem;
+        }
+        .event-title {
+            margin: 0;
+            min-height: 2.35rem;
+            font-size: .94rem;
+            line-height: 1.25;
+            font-weight: 880;
+        }
+        .event-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: .45rem;
+        }
+        .stat-chip {
+            border-radius: .45rem;
+            background: #f8fafc;
+            padding: .45rem;
+            color: #475569;
+            font-size: .74rem;
+            font-weight: 780;
+        }
+        .progress {
+            height: .42rem;
+            overflow: hidden;
+            border-radius: 999px;
+            background: #e2e8f0;
+        }
+        .progress span {
+            display: block;
+            height: 100%;
+            width: var(--value, 0%);
+            max-width: 100%;
+            background: #14b8a6;
+        }
+        .unit-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: .75rem;
+        }
+        .department-overview {
+            display: grid;
+            grid-template-columns: minmax(17rem, .8fr) minmax(0, 1.2fr);
+            gap: 1rem;
+            align-items: start;
+        }
+        .faculty-summary {
+            display: grid;
+            gap: .72rem;
+            border: 1px solid #bae6fd;
+            border-radius: .5rem;
+            background: #f0f9ff;
+            padding: 1rem;
+        }
+        .summary-title {
+            margin: 0;
+            color: #0f172a;
+            font-size: 1rem;
+            font-weight: 900;
+        }
+        .summary-copy {
+            margin: 0;
+            color: #475569;
+            font-size: .82rem;
+            line-height: 1.45;
+        }
+        .summary-stat-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: .5rem;
+        }
+        .summary-stat {
+            border-radius: .5rem;
+            background: #fff;
+            padding: .65rem;
+        }
+        .summary-stat span {
+            display: block;
+            color: #64748b;
+            font-size: .7rem;
+            font-weight: 850;
+            text-transform: uppercase;
+        }
+        .summary-stat strong {
+            display: block;
+            margin-top: .24rem;
+            color: #0f172a;
+            font-size: 1.2rem;
+            line-height: 1;
+        }
+        .unit-list {
+            display: grid;
+            gap: .58rem;
+        }
+        .unit-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: .75rem;
+            align-items: center;
+            border: 1px solid var(--line);
+            border-radius: .5rem;
+            background: #fff;
+            padding: .78rem;
+        }
+        .unit-row.active {
+            border-color: #5eead4;
+            background: #f0fdfa;
+        }
+        .unit-row button {
+            border: 0;
+            background: transparent;
+            padding: 0;
+            color: var(--ink);
+            font-weight: 900;
+            text-align: left;
+        }
+        .unit-metrics {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .35rem;
+            justify-content: flex-end;
+        }
+        .unit-card {
+            padding: .8rem;
+            background: #fff;
+        }
+        .unit-card.active {
+            border-color: #5eead4;
+            background: #f0fdfa;
+        }
+        .unit-card button {
+            border: 0;
+            background: transparent;
+            padding: 0;
+            color: var(--ink);
+            font-weight: 880;
+            text-align: left;
+        }
+        .unit-card .meta { margin-top: .38rem; }
+        .table-wrap {
+            overflow-x: auto;
+            border: 1px solid var(--line);
+            border-radius: .5rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: .84rem;
+        }
+        th, td {
+            padding: .75rem .85rem;
+            border-bottom: 1px solid var(--line);
+            text-align: left;
+            vertical-align: top;
+        }
+        thead {
+            background: #f8fafc;
+            color: #64748b;
+            font-size: .72rem;
+            text-transform: uppercase;
+        }
+        tbody tr:last-child td { border-bottom: 0; }
+
+        .modal {
+            position: fixed;
+            inset: 0;
+            z-index: 30;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            background: rgba(15, 23, 42, .58);
+        }
+        .modal.open { display: flex; }
+        .dialog {
+            width: min(62rem, 100%);
+            max-height: min(92vh, 56rem);
+            overflow: auto;
+            border-radius: .65rem;
+            background: #fff;
+            box-shadow: 0 28px 80px -28px rgba(0,0,0,.45);
+        }
+        .dialog-head {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 1rem;
+            border-bottom: 1px solid var(--line);
+            background: #fff;
+        }
+        .dialog-title { margin: 0; font-size: 1rem; font-weight: 900; }
+        .form {
+            display: grid;
+            gap: .9rem;
+            padding: 1rem;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: .8rem;
+        }
+        .field {
+            display: grid;
+            gap: .34rem;
+        }
+        .field.full { grid-column: 1 / -1; }
+        .field-help {
+            color: #667085;
+            font-size: .74rem;
+            line-height: 1.35;
+        }
+        label {
+            color: #344054;
+            font-size: .78rem;
+            font-weight: 850;
+        }
+        input, select, textarea {
+            width: 100%;
+            min-height: 2.5rem;
+            border: 1px solid #cbd5e1;
+            border-radius: .48rem;
+            background: #fff;
+            color: var(--ink);
+            padding: .58rem .68rem;
+            outline: none;
+        }
+        textarea {
+            min-height: 7.5rem;
+            resize: vertical;
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: #14b8a6;
+            box-shadow: 0 0 0 3px rgba(20,184,166,.15);
+        }
+        .image-options {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: .55rem;
+            margin-top: .45rem;
+        }
+        .image-option {
+            min-height: 4.4rem;
+            overflow: hidden;
+            border: 2px solid transparent;
+            border-radius: .48rem;
+            background: #e2e8f0;
+            padding: 0;
+        }
+        .image-option.active {
+            border-color: #14b8a6;
+            box-shadow: 0 0 0 3px rgba(20,184,166,.16);
+        }
+        .image-option img {
+            display: block;
+            width: 100%;
+            height: 4.4rem;
+            object-fit: cover;
+        }
+        .dialog-foot {
+            display: flex;
+            justify-content: flex-end;
+            gap: .55rem;
+            padding: 1rem;
+            border-top: 1px solid var(--line);
+            background: #f8fafc;
+        }
+        .toast {
+            position: fixed;
+            right: 1rem;
+            bottom: 1rem;
+            z-index: 40;
+            display: none;
+            max-width: min(24rem, calc(100vw - 2rem));
+            border: 1px solid #99f6e4;
+            border-radius: .55rem;
+            background: #f0fdfa;
+            color: #134e4a;
+            padding: .78rem .9rem;
+            font-size: .86rem;
+            font-weight: 800;
+            box-shadow: var(--shadow);
+        }
+        .toast.show { display: block; }
+
+        @media (max-width: 1180px) {
+            .metrics, .kanban, .event-grid, .unit-grid, .workflow-map, .simple-board, .starter-grid, .department-overview, .welcome-panel, .quick-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .proposal-row { grid-template-columns: 8rem minmax(0, 1fr); }
+            .proposal-row-actions { grid-column: 1 / -1; justify-content: flex-start; }
+            .step::after { display: none; }
+        }
+        @media (max-width: 780px) {
+            .app { grid-template-columns: 1fr; }
+            .sidebar { position: relative; height: auto; }
+            .topbar { align-items: flex-start; flex-direction: column; }
+            .toolbar { justify-content: flex-start; }
+            .metrics, .kanban, .event-grid, .unit-grid, .workflow-map, .form-grid, .simple-board, .starter-grid, .image-options, .department-overview, .summary-stat-grid, .unit-row, .welcome-panel, .quick-steps, .proposal-row { grid-template-columns: 1fr; }
+            .unit-metrics { justify-content: flex-start; }
+            .profile-row, .focus-item { grid-template-columns: 1fr; }
+            .content { padding-inline: .85rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <aside class="sidebar">
+            <div class="brand">
+                <span class="brand-mark">D</span>
+                <div>
+                    <div class="brand-title">Department</div>
+                    <div class="brand-sub" id="departmentScope">Đang tải dữ liệu...</div>
+                </div>
+            </div>
+            <nav class="nav">
+                <div class="nav-title">Phạm vi</div>
+                <button type="button" class="active" data-scope="faculty">Cả khoa</button>
+                <button type="button" data-scope="department">Chuyên ngành của tôi</button>
+                <div class="nav-title">Quy trình</div>
+                <button type="button" class="active" data-tab="workflow">Proposal workflow</button>
+                <button type="button" data-tab="events">Sự kiện chính thức</button>
+                <button type="button" data-tab="departments">Khoa & bộ môn</button>
+            </nav>
+            <div class="sidebar-footer">
+                <details class="account-menu">
+                    <summary class="account-card">
+                        <span class="account-avatar" id="accountInitials">D</span>
+                        <span>
+                            <span class="account-name" id="accountName">Department user</span>
+                            <span class="account-role" id="accountRole">Bấm để mở tài khoản</span>
+                        </span>
+                    </summary>
+                    <div class="account-panel">
+                        <a class="account-link" href="forgot-password.html">Đổi mật khẩu</a>
+                        <button type="button" class="logout" id="logoutBtn">Đăng xuất</button>
+                    </div>
+                </details>
+            </div>
+        </aside>
+
+        <main class="main">
+            <header class="topbar">
+                <div>
+                    <p class="kicker">Department Console</p>
+                    <h1 id="pageTitle">Khoa tạo đề xuất sự kiện</h1>
+                    <p class="subtitle" id="pageSubtitle">Theo dõi đúng workflow: đề xuất, hội đồng duyệt, chỉnh sửa, công bố, sinh viên đăng ký.</p>
+                </div>
+                <div class="toolbar">
+                    <button type="button" class="btn active" data-scope="faculty">Cả khoa</button>
+                    <button type="button" class="btn" data-scope="department">Chuyên ngành của tôi</button>
+                    <button type="button" class="btn" id="refreshBtn"><span class="icon">↻</span>Làm mới</button>
+                    <button type="button" class="btn primary" id="newProposalBtn"><span class="icon">+</span>Tạo đề xuất</button>
+                </div>
+            </header>
+
+            <section class="content" id="content">
+                <div class="empty">Đang tải dữ liệu từ database...</div>
+            </section>
+        </main>
+    </div>
+
+    <div class="modal" id="proposalModal" aria-hidden="true">
+        <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="proposalDialogTitle">
+            <div class="dialog-head">
+                <div>
+                    <h2 class="dialog-title" id="proposalDialogTitle">Tạo đề xuất sự kiện</h2>
+                    <p class="surface-note" id="proposalDialogNote">Thông tin này sẽ được gửi sang hội đồng xét duyệt.</p>
+                </div>
+                <button type="button" class="btn ghost" id="closeProposalBtn">Đóng</button>
+            </div>
+            <form class="form" id="proposalForm">
+                <input type="hidden" id="proposalId">
+                <div class="form-grid">
+                    <div class="field full">
+                        <label for="proposalTitle">Tên sự kiện</label>
+                        <input id="proposalTitle" name="title" required maxlength="200" placeholder="Ví dụ: Workshop Spring Boot MVC">
+                    </div>
+                    <div class="field">
+                        <label for="proposalFaculty">Khoa / bộ môn</label>
+                        <select id="proposalFaculty" required></select>
+                        <div class="field-help">Mặc định theo tài khoản đang đăng nhập.</div>
+                    </div>
+                    <div class="field">
+                        <label for="proposalMajor">Chuyên ngành</label>
+                        <select id="proposalMajor" name="departmentId" required></select>
+                        <div class="field-help">Ví dụ: Công nghệ Thông tin → Kỹ thuật phần mềm.</div>
+                    </div>
+                    <div class="field">
+                        <label for="proposalDate">Ngày giờ đề xuất</label>
+                        <input id="proposalDate" name="proposedDate" type="datetime-local" required>
+                    </div>
+                    <div class="field">
+                        <label for="proposalLocation">Địa điểm</label>
+                        <input id="proposalLocation" name="location" maxlength="200" placeholder="Hội trường Alpha">
+                    </div>
+                    <div class="field">
+                        <label for="proposalCapacity">Sức chứa</label>
+                        <input id="proposalCapacity" name="capacity" type="number" min="1" step="1" value="100" required>
+                    </div>
+                    <div class="field">
+                        <label for="proposalBudget">Ngân sách dự kiến</label>
+                        <input id="proposalBudget" name="budget" type="number" min="0" step="10000" value="0">
+                    </div>
+                    <div class="field">
+                        <label for="proposalImage">Ảnh sự kiện</label>
+                        <input id="proposalImage" name="imageUrl" placeholder="https://...">
+                        <div class="field-help">Chọn nhanh một ảnh bên dưới hoặc dán link ảnh thật của sự kiện.</div>
+                    </div>
+                    <div class="field full">
+                        <label>Ảnh gợi ý</label>
+                        <div class="image-options" id="imageOptions"></div>
+                    </div>
+                    <div class="field">
+                        <label for="proposalNote">Ghi chú gửi hội đồng</label>
+                        <input id="proposalNote" name="note" placeholder="Mục tiêu, yêu cầu hỗ trợ, lý do tổ chức">
+                    </div>
+                    <div class="field full">
+                        <label for="proposalDescription">Mô tả chi tiết</label>
+                        <textarea id="proposalDescription" name="description" required placeholder="Nội dung chính, đối tượng tham gia, agenda dự kiến..."></textarea>
+                    </div>
+                </div>
+                <div class="dialog-foot">
+                    <button type="button" class="btn" id="cancelProposalBtn">Hủy</button>
+                    <button type="submit" class="btn primary" id="saveProposalBtn">Gửi đề xuất</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+    (function () {
+        var API_BASE = '/api/admin';
+        var STRUCTURE_API = '/api/auth/department-structure';
+        var fallbackStructure = [
+            { faculty: 'Công nghệ Thông tin', departments: ['Công nghệ Thông tin', 'Kỹ thuật phần mềm', 'An toàn thông tin', 'Trí tuệ nhân tạo', 'Data Science'] },
+            { faculty: 'Kinh tế', departments: ['Kinh tế', 'Marketing', 'Quản trị kinh doanh', 'Tài chính Ngân hàng'] },
+            { faculty: 'Thiết kế & Truyền thông', departments: ['Thiết kế Mỹ thuật số', 'Thiết kế Đồ họa', 'Truyền thông đa phương tiện'] },
+            { faculty: 'Ngôn ngữ', departments: ['Ngôn ngữ Anh', 'Ngôn ngữ Nhật'] },
+            { faculty: 'Du lịch - Khách sạn', departments: ['Du lịch - Khách sạn', 'Hospitality Management'] }
+        ];
+        var academicStructure = fallbackStructure.slice();
+        var imageLibrary = [
+            { key: 'tech', label: 'Công nghệ', url: 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=900&q=80' },
+            { key: 'software', label: 'Phần mềm', url: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=900&q=80' },
+            { key: 'cloud', label: 'Cloud', url: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=900&q=80' },
+            { key: 'security', label: 'Bảo mật', url: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=900&q=80' },
+            { key: 'ai', label: 'AI/Data', url: 'https://images.unsplash.com/photo-1555255707-c07966088b7b?auto=format&fit=crop&w=900&q=80' },
+            { key: 'data', label: 'Data', url: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=900&q=80' },
+            { key: 'business', label: 'Kinh tế', url: 'https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=900&q=80' },
+            { key: 'career', label: 'Career', url: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=900&q=80' },
+            { key: 'startup', label: 'Startup', url: 'https://images.unsplash.com/photo-1556761175-4b46a572b786?auto=format&fit=crop&w=900&q=80' },
+            { key: 'design', label: 'Thiết kế', url: 'https://images.unsplash.com/photo-1558655146-d09347e92766?auto=format&fit=crop&w=900&q=80' },
+            { key: 'ux', label: 'UX', url: 'https://images.unsplash.com/photo-1581291518633-83b4ebd1d83e?auto=format&fit=crop&w=900&q=80' },
+            { key: 'language', label: 'Ngôn ngữ', url: 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&w=900&q=80' },
+            { key: 'tourism', label: 'Du lịch', url: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80' },
+            { key: 'campus', label: 'Campus', url: 'https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?auto=format&fit=crop&w=900&q=80' },
+            { key: 'workshop', label: 'Workshop', url: 'https://images.unsplash.com/photo-1540575467063-027a26d3b38c?auto=format&fit=crop&w=900&q=80' }
+        ];
+        var user = {};
+        try { user = JSON.parse(sessionStorage.getItem('user') || '{}'); } catch (ignore) {}
+
+        var state = {
+            tab: 'workflow',
+            scope: 'faculty',
+            selectedDepartment: user.major || '',
+            selectedFaculty: user.faculty || '',
+            loading: false
+        };
+        var store = { departments: [], events: [], proposals: [] };
+
+        function currentAccount() {
+            var fullName = user.fullName || localStorage.getItem('userName') || 'Department user';
+            var role = user.role || localStorage.getItem('userRole') || 'DEPARTMENT';
+            var initials = fullName.split(/\s+/).filter(Boolean).slice(-2).map(function (part) { return part.charAt(0); }).join('').toUpperCase() || 'D';
+            return { fullName: fullName, role: role, initials: initials };
+        }
+        function renderAccount() {
+            var account = currentAccount();
+            document.getElementById('accountName').textContent = account.fullName;
+            document.getElementById('accountRole').textContent = account.role;
+            document.getElementById('accountInitials').textContent = account.initials;
+        }
+
+        function h(value) {
+            return String(value == null ? '' : value).replace(/[&<>"']/g, function (char) {
+                return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[char];
+            });
+        }
+        function normalize(value) {
+            return String(value || '')
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/đ/g, 'd')
+                .replace(/[^a-z0-9]+/g, ' ')
+                .trim();
+        }
+        function same(a, b) { return normalize(a) === normalize(b); }
+        function number(value) { return Number(value || 0).toLocaleString('vi-VN'); }
+        function money(value) {
+            return Number(value || 0).toLocaleString('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 });
+        }
+        function dateTime(value) {
+            if (!value) return 'N/A';
+            var date = new Date(value);
+            if (Number.isNaN(date.getTime())) return h(value);
+            return date.toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+        function toDateTimeInput(value) {
+            var date = value ? new Date(value) : new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+            if (Number.isNaN(date.getTime())) date = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+            var pad = function (part) { return String(part).padStart(2, '0'); };
+            return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate()) + 'T' + pad(date.getHours()) + ':' + pad(date.getMinutes());
+        }
+        function facultyOf(name) {
+            var key = normalize(name);
+            if (['it department', 'information technology', 'cntt'].includes(key)) return 'Công nghệ Thông tin';
+            if (['business department', 'economics', 'marketing department'].includes(key)) return 'Kinh tế';
+            var found = academicStructure.find(function (item) {
+                return same(item.faculty, name) || item.departments.some(function (department) { return same(department, name); });
+            });
+            return found ? found.faculty : '';
+        }
+        function statusLabel(status) {
+            var value = String(status || '').toUpperCase();
+            return {
+                PENDING: 'Chờ hội đồng',
+                REVISION: 'Yêu cầu sửa',
+                APPROVED: 'Đã phê duyệt',
+                REJECTED: 'Từ chối',
+                PUBLISHED: 'Đã công bố',
+                COMPLETED: 'Hoàn tất',
+                CANCELLED: 'Đã hủy'
+            }[value] || value || 'N/A';
+        }
+        function tone(status) {
+            var value = String(status || '').toUpperCase();
+            if (['APPROVED', 'PUBLISHED', 'COMPLETED', 'ATTENDED'].includes(value)) return 'green';
+            if (['PENDING', 'REVISION', 'WAITLIST'].includes(value)) return 'amber';
+            if (['REJECTED', 'CANCELLED', 'FAILED'].includes(value)) return 'rose';
+            if (['REGISTERED'].includes(value)) return 'blue';
+            return 'gray';
+        }
+        function badge(text, color) {
+            return '<span class="badge ' + (color || 'gray') + '">' + h(text) + '</span>';
+        }
+        function toast(message) {
+            var node = document.getElementById('toast');
+            node.textContent = message;
+            node.classList.add('show');
+            window.clearTimeout(toast.timer);
+            toast.timer = window.setTimeout(function () { node.classList.remove('show'); }, 2600);
+        }
+        function api(path, options) {
+            options = options || {};
+            var headers = Object.assign({ Accept: 'application/json' }, options.headers || {});
+            if (options.body && !headers['Content-Type']) headers['Content-Type'] = 'application/json';
+            return fetch(path.indexOf('/api/') === 0 ? path : API_BASE + path, Object.assign({}, options, { headers: headers }))
+                .then(function (response) {
+                    if (!response.ok) {
+                        return response.text().then(function (text) { throw new Error(text || ('HTTP ' + response.status)); });
+                    }
+                    return response.json();
+                });
+        }
+        function eventImageUrl(event) {
+            if (event.imageUrl) return event.imageUrl;
+            var signal = normalize((event.title || '') + ' ' + (event.departmentName || ''));
+            return imageForSignal(signal);
+        }
+        function proposalImageUrl(proposal) {
+            if (proposal.imageUrl) return proposal.imageUrl;
+            return imageForSignal([proposal.title, proposal.departmentName, proposal.facultyName, proposal.description].join(' '));
+        }
+        function imageForSignal(signal) {
+            signal = normalize(signal || '');
+            if (signal.includes('cloud') || signal.includes('native') || signal.includes('network')) return imageLibrary.find(function (item) { return item.key === 'cloud'; }).url;
+            if (signal.includes('software') || signal.includes('phan mem') || signal.includes('spring') || signal.includes('web')) return imageLibrary.find(function (item) { return item.key === 'software'; }).url;
+            if (signal.includes('security') || signal.includes('an toan') || signal.includes('ctf') || signal.includes('secure')) return imageLibrary.find(function (item) { return item.key === 'security'; }).url;
+            if (signal.includes('analytics') || signal.includes('data')) return imageLibrary.find(function (item) { return item.key === 'data'; }).url;
+            if (signal.includes('ai') || signal.includes('tri tue')) return imageLibrary.find(function (item) { return item.key === 'ai'; }).url;
+            if (signal.includes('career') || signal.includes('doanh nghiep') || signal.includes('viec lam')) return imageLibrary.find(function (item) { return item.key === 'career'; }).url;
+            if (signal.includes('startup')) return imageLibrary.find(function (item) { return item.key === 'startup'; }).url;
+            if (signal.includes('marketing') || signal.includes('kinh te') || signal.includes('business') || signal.includes('quan tri')) return imageLibrary.find(function (item) { return item.key === 'business'; }).url;
+            if (signal.includes('ux') || signal.includes('research')) return imageLibrary.find(function (item) { return item.key === 'ux'; }).url;
+            if (signal.includes('design') || signal.includes('thiet ke') || signal.includes('truyen thong')) return imageLibrary.find(function (item) { return item.key === 'design'; }).url;
+            if (signal.includes('ngon ngu') || signal.includes('english') || signal.includes('japan')) return imageLibrary.find(function (item) { return item.key === 'language'; }).url;
+            if (signal.includes('du lich') || signal.includes('khach san') || signal.includes('tourism')) return imageLibrary.find(function (item) { return item.key === 'tourism'; }).url;
+            if (signal.includes('workshop') || signal.includes('seminar')) return imageLibrary.find(function (item) { return item.key === 'workshop'; }).url;
+            return imageLibrary.find(function (item) { return item.key === 'campus'; }).url;
+        }
+        function imageChoicesFor(faculty, major, title) {
+            var preferred = imageForSignal([faculty, major, title].join(' '));
+            var choices = [preferred].concat(imageLibrary.map(function (item) { return item.url; }));
+            return choices.filter(function (url, index, array) { return array.indexOf(url) === index; }).slice(0, 8);
+        }
+
+        function departmentFaculty(department) {
+            return department.facultyName || facultyOf(department.name) || 'Khác';
+        }
+        function departmentsInFaculty() {
+            if (!state.selectedFaculty) return store.departments;
+            return store.departments.filter(function (department) { return same(departmentFaculty(department), state.selectedFaculty); });
+        }
+        function scopedDepartments() {
+            if (state.scope === 'department' && state.selectedDepartment) {
+                return store.departments.filter(function (department) { return same(department.name, state.selectedDepartment); });
+            }
+            return departmentsInFaculty();
+        }
+        function scopedItems(items) {
+            var departments = scopedDepartments();
+            var ids = new Set(departments.map(function (department) { return String(department.id); }));
+            return items.filter(function (item) {
+                if (ids.has(String(item.departmentId))) return true;
+                return state.scope === 'faculty' && state.selectedFaculty && same(item.facultyName || facultyOf(item.departmentName), state.selectedFaculty);
+            });
+        }
+        function compareEventsByTime(left, right) {
+            var now = Date.now();
+            var leftTime = new Date(left && left.startTime || 0).getTime();
+            var rightTime = new Date(right && right.startTime || 0).getTime();
+            var leftValid = Number.isFinite(leftTime) && leftTime > 0;
+            var rightValid = Number.isFinite(rightTime) && rightTime > 0;
+            var leftUpcoming = leftValid && leftTime >= now;
+            var rightUpcoming = rightValid && rightTime >= now;
+            if (leftUpcoming !== rightUpcoming) return leftUpcoming ? -1 : 1;
+            if (!leftValid && !rightValid) return String(left && left.title || '').localeCompare(String(right && right.title || ''), 'vi');
+            if (!leftValid) return 1;
+            if (!rightValid) return -1;
+            return leftUpcoming ? leftTime - rightTime : rightTime - leftTime;
+        }
+        function findProposal(id) {
+            return store.proposals.find(function (proposal) { return String(proposal.id) === String(id); });
+        }
+
+        function metrics() {
+            var departments = scopedDepartments();
+            var events = scopedItems(store.events);
+            var proposals = scopedItems(store.proposals);
+            return {
+                departments: departments.length,
+                students: departments.reduce(function (sum, item) { return sum + Number(item.studentCount || 0); }, 0),
+                events: events.length,
+                proposals: proposals.length,
+                pending: proposals.filter(function (item) { return same(item.status, 'PENDING'); }).length,
+                revision: proposals.filter(function (item) { return same(item.status, 'REVISION'); }).length,
+                approved: proposals.filter(function (item) { return same(item.status, 'APPROVED'); }).length,
+                rejected: proposals.filter(function (item) { return same(item.status, 'REJECTED'); }).length,
+                budget: events.reduce(function (sum, item) { return sum + Number(item.budget || 0); }, 0),
+                registrations: events.reduce(function (sum, item) { return sum + Number(item.registrationCount || 0); }, 0),
+                attendance: events.reduce(function (sum, item) { return sum + Number(item.attendanceCount || 0); }, 0)
+            };
+        }
+        function renderHeader() {
+            var title = state.selectedFaculty || 'Department';
+            var scopeText = state.scope === 'department' && state.selectedDepartment
+                ? state.selectedDepartment + ' thuộc ' + title
+                : 'Tổng hợp ' + number(departmentsInFaculty().length) + ' bộ môn/ngành thuộc ' + title;
+            document.getElementById('departmentScope').textContent = state.selectedDepartment || title;
+            document.getElementById('pageTitle').textContent = state.tab === 'workflow'
+                ? 'Khoa tạo đề xuất sự kiện'
+                : state.tab === 'events'
+                    ? 'Sự kiện chính thức của ' + title
+                    : 'Cấu trúc khoa & bộ môn';
+            document.getElementById('pageSubtitle').textContent = scopeText;
+            document.querySelectorAll('[data-scope]').forEach(function (button) {
+                button.classList.toggle('active', button.dataset.scope === state.scope);
+            });
+            document.querySelectorAll('[data-tab]').forEach(function (button) {
+                button.classList.toggle('active', button.dataset.tab === state.tab);
+            });
+        }
+        function renderMetricGrid() {
+            var m = metrics();
+            if (state.tab === 'workflow') {
+                return '<div class="metrics">' +
+                    '<article class="metric"><p>Cần bạn xử lý</p><strong>' + number(m.revision) + '</strong><span>Proposal hội đồng yêu cầu sửa</span></article>' +
+                    '<article class="metric"><p>Đang chờ duyệt</p><strong>' + number(m.pending) + '</strong><span>Đã gửi sang hội đồng</span></article>' +
+                    '<article class="metric"><p>Đã phê duyệt</p><strong>' + number(m.approved) + '</strong><span>Sẵn sàng công bố thành event</span></article>' +
+                    '<article class="metric"><p>Event chính thức</p><strong>' + number(m.events) + '</strong><span>' + money(m.budget) + ' ngân sách</span></article>' +
+                '</div>';
+            }
+            if (state.tab === 'events') {
+                return '<div class="metrics">' +
+                    '<article class="metric"><p>Events</p><strong>' + number(m.events) + '</strong><span>Trong phạm vi đang xem</span></article>' +
+                    '<article class="metric"><p>Lượt đăng ký</p><strong>' + number(m.registrations) + '</strong><span>Registered + waitlist</span></article>' +
+                    '<article class="metric"><p>Điểm danh</p><strong>' + number(m.attendance) + '</strong><span>Attendance đã lưu</span></article>' +
+                    '<article class="metric"><p>Ngân sách</p><strong>' + money(m.budget) + '</strong><span>Tổng budget event</span></article>' +
+                '</div>';
+            }
+            return '<div class="metrics">' +
+                '<article class="metric"><p>Bộ môn/ngành</p><strong>' + number(m.departments) + '</strong><span>Đang nằm trong khoa</span></article>' +
+                '<article class="metric"><p>Sinh viên</p><strong>' + number(m.students) + '</strong><span>Gom theo bộ môn/ngành</span></article>' +
+                '<article class="metric"><p>Proposal</p><strong>' + number(m.proposals) + '</strong><span>Đang theo workflow</span></article>' +
+                '<article class="metric"><p>Events</p><strong>' + number(m.events) + '</strong><span>Dữ liệu thật từ DB</span></article>' +
+            '</div>';
+        }
+
+        function renderStarter() {
+            var m = metrics();
+            var faculty = state.selectedFaculty || 'Chưa chọn khoa';
+            var major = state.selectedDepartment || 'Chưa chọn chuyên ngành';
+            var proposals = scopedItems(store.proposals);
+            var nextItems = proposals.filter(function (item) { return same(item.status, 'REVISION'); }).slice(0, 3);
+            if (!nextItems.length) {
+                nextItems = proposals.filter(function (item) { return same(item.status, 'PENDING'); }).slice(0, 3);
+            }
+            var focus = nextItems.map(function (proposal, index) {
+                return '<div class="focus-item">' +
+                    '<span class="focus-mark">' + (index + 1) + '</span>' +
+                    '<div><h3 class="focus-title">' + h(proposal.title) + '</h3><p class="meta">' + statusLabel(proposal.status) + ' · ' + h(proposal.committeeName || 'Hội đồng duyệt chung') + '</p></div>' +
+                    '<button type="button" class="mini-btn primary" data-edit-proposal="' + h(proposal.id) + '">Mở</button>' +
+                '</div>';
+            }).join('');
+            return '<section class="starter-grid">' +
+                '<div class="surface">' +
+                    '<div class="surface-head"><div><h2 class="surface-title">Bắt đầu nhanh</h2><p class="surface-note">Chọn khoa và chuyên ngành một lần, các đề xuất sau sẽ tự đi theo đúng phạm vi này.</p></div></div>' +
+                    '<div class="profile-panel">' +
+                        '<div class="profile-row"><span>Khoa</span><strong>' + h(faculty) + '</strong></div>' +
+                        '<div class="profile-row"><span>Chuyên ngành</span><strong>' + h(major) + '</strong></div>' +
+                        '<div class="profile-row"><span>Hội đồng</span><strong>' + (m.pending + m.revision > 0 ? 'Đã chuyển vào luồng duyệt' : 'Sẵn sàng nhận đề xuất') + '</strong></div>' +
+                        '<button type="button" class="btn primary" data-new-proposal><span class="icon">+</span>Tạo đề xuất mới</button>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="surface">' +
+                    '<div class="surface-head"><div><h2 class="surface-title">Việc cần chú ý</h2><p class="surface-note">Ưu tiên proposal cần sửa, sau đó đến proposal đang chờ hội đồng.</p></div></div>' +
+                    '<div class="focus-list">' + (focus || '<div class="empty">Hiện không có việc cần xử lý.</div>') + '</div>' +
+                '</div>' +
+            '</section>';
+        }
+
+        function renderWorkflowMap() {
+            var m = metrics();
+            return '<section class="surface">' +
+                '<div class="surface-head"><div><h2 class="surface-title">Workflow sự kiện</h2><p class="surface-note">Bám theo luồng bạn vẽ: khoa tạo đề xuất, hội đồng duyệt, yêu cầu sửa quay lại khoa, phê duyệt thì thành sự kiện chính thức cho sinh viên đăng ký.</p></div>' +
+                '<button type="button" class="btn primary" data-new-proposal><span class="icon">+</span>Tạo đề xuất</button></div>' +
+                '<div class="workflow-map">' +
+                    '<div class="step"><span class="step-index">1</span><h3 class="step-title">Khoa tạo đề xuất</h3><p class="step-note">Điền tên, thời gian, địa điểm, ngân sách, ảnh và mô tả.</p></div>' +
+                    '<div class="step"><span class="step-index">2</span><h3 class="step-title">Gửi hội đồng</h3><p class="step-note">' + number(m.pending) + ' proposal đang chờ hội đồng xem xét.</p></div>' +
+                    '<div class="step"><span class="step-index">3</span><h3 class="step-title">Quyết định</h3><p class="step-note">Hội đồng phê duyệt, yêu cầu sửa hoặc từ chối.</p></div>' +
+                    '<div class="step"><span class="step-index">4</span><h3 class="step-title">Kết quả</h3><div class="decision">' +
+                        '<div class="decision-row green">Phê duyệt <strong>' + number(m.approved) + '</strong></div>' +
+                        '<div class="decision-row amber">Yêu cầu sửa <strong>' + number(m.revision) + '</strong></div>' +
+                        '<div class="decision-row rose">Từ chối <strong>' + number(m.rejected) + '</strong></div>' +
+                    '</div></div>' +
+                '</div>' +
+            '</section>';
+        }
+        function proposalCard(proposal) {
+            var status = String(proposal.status || '').toUpperCase();
+            var editable = status === 'PENDING' || status === 'REVISION';
+            var image = '<img src="' + h(proposalImageUrl(proposal)) + '" alt="" style="width:100%;aspect-ratio:16/8;object-fit:cover;border-radius:.45rem;background:#e2e8f0;">';
+            return '<article class="proposal-card">' +
+                image +
+                '<div>' + badge(statusLabel(status), tone(status)) + '</div>' +
+                '<h3 class="proposal-title">' + h(proposal.title) + '</h3>' +
+                '<p class="meta">' + h(proposal.departmentName) + ' · ' + dateTime(proposal.proposedDate) + '</p>' +
+                '<p class="meta">' + h(proposal.location || 'Chưa có địa điểm') + ' · ' + number(proposal.capacity || 0) + ' chỗ · ' + money(proposal.budget || 0) + '</p>' +
+                '<p class="meta"><strong>Hội đồng:</strong> ' + h(proposal.committeeName || 'Hội đồng duyệt chung') + '</p>' +
+                (proposal.note ? '<p class="meta"><strong>Ghi chú:</strong> ' + h(proposal.note) + '</p>' : '') +
+                '<div class="card-actions">' +
+                    (editable ? '<button type="button" class="mini-btn primary" data-edit-proposal="' + h(proposal.id) + '">Chỉnh sửa & gửi lại</button>' : '') +
+                    (status === 'REJECTED' ? '<button type="button" class="mini-btn" data-copy-proposal="' + h(proposal.id) + '">Tạo bản mới</button>' : '') +
+                    '<button type="button" class="mini-btn" data-view-tab="events">Xem event</button>' +
+                '</div>' +
+            '</article>';
+        }
+        function renderKanban() {
+            var proposals = scopedItems(store.proposals);
+            var lanes = [
+                { statuses: ['REVISION'], title: 'Cần bạn xử lý', color: 'amber' },
+                { statuses: ['PENDING'], title: 'Đang chờ hội đồng', color: 'blue' },
+                { statuses: ['APPROVED', 'REJECTED'], title: 'Đã có kết quả', color: 'green' }
+            ];
+            return '<section class="surface">' +
+                '<div class="surface-head"><div><h2 class="surface-title">Proposal của khoa</h2><p class="surface-note">Bảng này chỉ giữ ba nhóm chính để người mới dễ theo dõi.</p></div></div>' +
+                '<div class="simple-board">' +
+                    lanes.map(function (lane) {
+                        var items = proposals.filter(function (proposal) {
+                            return lane.statuses.some(function (status) { return same(proposal.status, status); });
+                        });
+                        return '<div class="simple-column">' +
+                            '<div class="lane-head"><span>' + h(lane.title) + '</span>' + badge(number(items.length), lane.color) + '</div>' +
+                            (items.map(proposalCard).join('') || '<div class="empty">Không có proposal.</div>') +
+                        '</div>';
+                    }).join('') +
+                '</div>' +
+            '</section>';
+        }
+        function proposalPriority(proposal) {
+            var status = String(proposal.status || '').toUpperCase();
+            if (status === 'REVISION') return 0;
+            if (status === 'PENDING') return 1;
+            if (status === 'APPROVED') return 2;
+            if (status === 'REJECTED') return 3;
+            return 4;
+        }
+        function sortProposalsForUser(left, right) {
+            var priority = proposalPriority(left) - proposalPriority(right);
+            if (priority !== 0) return priority;
+            return new Date(right.proposedDate || right.createdAt || 0) - new Date(left.proposedDate || left.createdAt || 0);
+        }
+        function proposalRow(proposal, index) {
+            var status = String(proposal.status || '').toUpperCase();
+            var editable = status === 'PENDING' || status === 'REVISION';
+            return '<article class="proposal-row ' + (proposalPriority(proposal) < 2 ? 'priority' : '') + '">' +
+                '<img src="' + h(proposalImageUrl(proposal)) + '" alt="">' +
+                '<div class="proposal-row-main">' +
+                    '<div>' + badge(statusLabel(status), tone(status)) + '</div>' +
+                    '<h3 class="proposal-row-title">' + h(proposal.title) + '</h3>' +
+                    '<p class="meta">' + h(proposal.departmentName) + ' · ' + dateTime(proposal.proposedDate) + '</p>' +
+                    '<p class="meta">' + h(proposal.location || 'Chưa có địa điểm') + ' · ' + number(proposal.capacity || 0) + ' chỗ · ' + money(proposal.budget || 0) + '</p>' +
+                    '<p class="meta"><strong>Hội đồng:</strong> ' + h(proposal.committeeName || 'Hội đồng duyệt chung') + '</p>' +
+                    (proposal.note ? '<p class="meta"><strong>Ghi chú:</strong> ' + h(proposal.note) + '</p>' : '') +
+                '</div>' +
+                '<div class="proposal-row-actions">' +
+                    (editable ? '<button type="button" class="mini-btn primary" data-edit-proposal="' + h(proposal.id) + '">Mở & sửa</button>' : '') +
+                    (status === 'REJECTED' ? '<button type="button" class="mini-btn" data-copy-proposal="' + h(proposal.id) + '">Tạo bản mới</button>' : '') +
+                    '<button type="button" class="mini-btn" data-view-tab="events">Xem event</button>' +
+                '</div>' +
+            '</article>';
+        }
+        function renderWorkflow() {
+            var m = metrics();
+            var faculty = state.selectedFaculty || 'Khoa đang quản lý';
+            var major = state.selectedDepartment || 'Chuyên ngành của tôi';
+            var proposals = scopedItems(store.proposals).slice().sort(sortProposalsForUser);
+            var attention = proposals.filter(function (proposal) {
+                return proposalPriority(proposal) < 2;
+            }).slice(0, 4);
+            var rows = proposals.slice(0, 12).map(proposalRow).join('');
+            var attentionRows = attention.map(proposalRow).join('');
+            return '<section class="welcome-panel">' +
+                '<div class="welcome-copy">' +
+                    '<div><h2>Dễ bắt đầu cho khoa mới sử dụng</h2><p>Trang này chỉ giữ những việc chính: tạo đề xuất, sửa đề xuất bị hội đồng trả về và theo dõi proposal đã gửi. Các mục ít dùng được đưa xuống dưới.</p></div>' +
+                    '<div class="quick-steps">' +
+                        '<div class="quick-step"><strong>1. Tạo đề xuất</strong><span>Điền tên, ngày giờ, địa điểm, ngân sách và chọn ảnh.</span></div>' +
+                        '<div class="quick-step"><strong>2. Chờ hội đồng</strong><span>Proposal sẽ nằm trong danh sách chờ duyệt.</span></div>' +
+                        '<div class="quick-step"><strong>3. Sửa hoặc theo dõi</strong><span>Nếu bị yêu cầu sửa, hệ thống đưa lên đầu danh sách.</span></div>' +
+                    '</div>' +
+                    '<div class="card-actions"><button type="button" class="btn primary" data-new-proposal><span class="icon">+</span>Tạo đề xuất mới</button><button type="button" class="btn" data-view-tab="events">Xem event chính thức</button></div>' +
+                '</div>' +
+                '<aside class="next-panel">' +
+                    '<div><h2>Thông tin đang xem</h2><p class="surface-note">' + h(faculty) + ' · ' + h(major) + '</p></div>' +
+                    '<div class="summary-stat-grid">' +
+                        '<div class="summary-stat"><span>Cần sửa</span><strong>' + number(m.revision) + '</strong></div>' +
+                        '<div class="summary-stat"><span>Chờ duyệt</span><strong>' + number(m.pending) + '</strong></div>' +
+                        '<div class="summary-stat"><span>Đã duyệt</span><strong>' + number(m.approved) + '</strong></div>' +
+                        '<div class="summary-stat"><span>Event</span><strong>' + number(m.events) + '</strong></div>' +
+                    '</div>' +
+                '</aside>' +
+            '</section>' +
+            '<section class="surface">' +
+                '<div class="surface-head"><div><h2 class="surface-title">Việc cần xử lý trước</h2><p class="surface-note">Những proposal cần sửa hoặc đang chờ duyệt được đưa lên đầu để người mới không phải tìm trong nhiều cột.</p></div>' + badge(number(attention.length) + ' mục', attention.length ? 'amber' : 'green') + '</div>' +
+                '<div class="proposal-list">' + (attentionRows || '<div class="empty">Không có việc gấp. Bạn có thể tạo proposal mới hoặc xem event đã công bố.</div>') + '</div>' +
+            '</section>' +
+            '<section class="surface">' +
+                '<div class="surface-head"><div><h2 class="surface-title">Đề xuất gần đây</h2><p class="surface-note">Hiển thị tối đa 12 proposal theo mức độ cần xử lý. Mỗi proposal luôn có ảnh gợi ý nếu chưa được tải ảnh riêng.</p></div>' + badge(number(proposals.length) + ' proposal', 'blue') + '</div>' +
+                '<div class="proposal-list">' + (rows || '<div class="empty">Chưa có proposal trong phạm vi này.</div>') + '</div>' +
+            '</section>';
+        }
+
+        function renderEvents() {
+            var events = scopedItems(store.events).slice().sort(compareEventsByTime);
+            var cards = events.map(function (event) {
+                var capacity = Number(event.capacity || 0);
+                var registered = Number(event.registrationCount || 0);
+                var fill = capacity > 0 ? Math.min(100, Math.round(registered * 100 / capacity)) : 0;
+                return '<article class="event-card">' +
+                    '<img src="' + h(eventImageUrl(event)) + '" alt="">' +
+                    '<div class="event-body">' +
+                        '<div>' + badge(statusLabel(event.status), tone(event.status)) + '</div>' +
+                        '<h3 class="event-title">' + h(event.title) + '</h3>' +
+                        '<p class="meta">' + h(event.departmentName) + ' · ' + dateTime(event.startTime) + '</p>' +
+                        '<div class="event-stats">' +
+                            '<div class="stat-chip">' + number(registered) + ' / ' + number(capacity) + ' đăng ký</div>' +
+                            '<div class="stat-chip">' + money(event.budget || 0) + '</div>' +
+                            '<div class="stat-chip">' + number(event.attendanceCount || 0) + ' điểm danh</div>' +
+                            '<div class="stat-chip">' + number(event.feedbackCount || 0) + ' đánh giá</div>' +
+                        '</div>' +
+                        '<div class="progress" aria-label="Tỷ lệ lấp đầy"><span style="--value:' + fill + '%"></span></div>' +
+                    '</div>' +
+                '</article>';
+            }).join('');
+            return renderMetricGrid() +
+                '<section class="surface">' +
+                    '<div class="surface-head"><div><h2 class="surface-title">Sự kiện chính thức</h2><p class="surface-note">Đây là phần sau khi proposal được duyệt và event được công bố cho sinh viên xem, đăng ký, nhận vé, check-in và đánh giá.</p></div>' + badge(number(events.length) + ' event', 'blue') + '</div>' +
+                    '<div class="event-grid">' + (cards || '<div class="empty">Chưa có sự kiện trong phạm vi này.</div>') + '</div>' +
+                '</section>';
+        }
+
+        function renderDepartments() {
+            var facultyDepartments = departmentsInFaculty().slice().sort(function (a, b) {
+                return String(a.name || '').localeCompare(String(b.name || ''), 'vi');
+            });
+            var facultyEvents = scopedItems(store.events).slice().sort(compareEventsByTime);
+            var selected = facultyDepartments.find(function (department) { return same(department.name, state.selectedDepartment); }) || facultyDepartments[0];
+            var totals = {
+                events: facultyDepartments.reduce(function (sum, item) { return sum + Number(item.eventCount || 0); }, 0),
+                proposals: facultyDepartments.reduce(function (sum, item) { return sum + Number(item.proposalCount || 0); }, 0),
+                students: facultyDepartments.reduce(function (sum, item) { return sum + Number(item.studentCount || 0); }, 0)
+            };
+            var rows = facultyEvents.slice(0, 12).map(function (event) {
+                return '<tr><td><strong>' + h(event.title) + '</strong><br><span class="meta">' + h(event.location || '') + '</span></td><td>' + h(event.departmentName) + '</td><td>' + dateTime(event.startTime) + '</td><td>' + badge(statusLabel(event.status), tone(event.status)) + '</td></tr>';
+            }).join('');
+            var units = facultyDepartments.map(function (department) {
+                var active = selected && same(department.name, selected.name);
+                return '<article class="unit-row ' + (active ? 'active' : '') + '">' +
+                    '<div><button type="button" data-unit="' + h(department.name) + '">' + h(department.name) + '</button>' +
+                    '<p class="meta">' + h(department.description || ('Thuộc khoa ' + (state.selectedFaculty || departmentFaculty(department)))) + '</p></div>' +
+                    '<div class="unit-metrics">' +
+                        badge(number(department.eventCount) + ' event', department.eventCount ? 'blue' : 'gray') +
+                        badge(number(department.proposalCount) + ' proposal', department.proposalCount ? 'amber' : 'gray') +
+                        badge(number(department.studentCount) + ' SV', department.studentCount ? 'green' : 'gray') +
+                    '</div>' +
+                '</article>';
+            }).join('');
+            return renderMetricGrid() +
+                '<section class="surface">' +
+                    '<div class="surface-head"><div><h2 class="surface-title">Khoa & bộ môn</h2><p class="surface-note">Chọn một bộ môn ở danh sách bên phải để thu hẹp workflow và event theo đúng phạm vi.</p></div>' + badge(number(facultyDepartments.length) + ' bộ môn', 'blue') + '</div>' +
+                    '<div class="department-overview">' +
+                        '<aside class="faculty-summary">' +
+                            '<div><h3 class="summary-title">' + h(state.selectedFaculty || 'Khoa đang quản lý') + '</h3>' +
+                            '<p class="summary-copy">Tổng quan ngắn gọn trước, danh sách bộ môn sau. Cách này giúp người dùng không bị ngợp bởi nhiều bảng nhỏ cùng lúc.</p></div>' +
+                            '<div class="summary-stat-grid">' +
+                                '<div class="summary-stat"><span>Event</span><strong>' + number(totals.events) + '</strong></div>' +
+                                '<div class="summary-stat"><span>Proposal</span><strong>' + number(totals.proposals) + '</strong></div>' +
+                                '<div class="summary-stat"><span>Sinh viên</span><strong>' + number(totals.students) + '</strong></div>' +
+                                '<div class="summary-stat"><span>Đang xem</span><strong>' + h(selected ? selected.name : 'N/A') + '</strong></div>' +
+                            '</div>' +
+                        '</aside>' +
+                        '<div class="unit-list">' + (units || '<div class="empty">Không có bộ môn trong phạm vi này.</div>') + '</div>' +
+                    '</div>' +
+                '</section>' +
+                '<section class="surface">' +
+                    '<div class="surface-head"><div><h2 class="surface-title">Event theo thời gian</h2><p class="surface-note">Event sắp diễn ra được đưa lên trước; event đã qua nằm sau để lịch không bị xáo trộn.</p></div></div>' +
+                    '<div class="table-wrap"><table><thead><tr><th>Sự kiện</th><th>Bộ môn</th><th>Thời gian</th><th>Status</th></tr></thead><tbody>' + (rows || '<tr><td colspan="4">Chưa có event.</td></tr>') + '</tbody></table></div>' +
+                '</section>';
+        }
+        function bindDynamicActions() {
+            document.querySelectorAll('[data-new-proposal]').forEach(function (button) {
+                button.addEventListener('click', function () { openProposalDialog(); });
+            });
+            document.querySelectorAll('[data-edit-proposal]').forEach(function (button) {
+                button.addEventListener('click', function () { openProposalDialog(findProposal(button.dataset.editProposal)); });
+            });
+            document.querySelectorAll('[data-copy-proposal]').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    var proposal = Object.assign({}, findProposal(button.dataset.copyProposal) || {});
+                    delete proposal.id;
+                    proposal.status = 'PENDING';
+                    proposal.note = '';
+                    openProposalDialog(proposal, true);
+                });
+            });
+            document.querySelectorAll('[data-view-tab]').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    state.tab = button.dataset.viewTab;
+                    render();
+                });
+            });
+            document.querySelectorAll('[data-unit]').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    state.selectedDepartment = button.dataset.unit;
+                    state.selectedFaculty = facultyOf(state.selectedDepartment);
+                    state.scope = 'department';
+                    render();
+                });
+            });
+        }
+        function render() {
+            renderHeader();
+            var html = state.loading
+                ? '<div class="empty">Đang tải dữ liệu từ database...</div>'
+                : state.tab === 'workflow'
+                    ? renderWorkflow()
+                    : state.tab === 'events'
+                        ? renderEvents()
+                        : renderDepartments();
+            document.getElementById('content').innerHTML = html;
+            bindDynamicActions();
+        }
+
+        function facultyOptions() {
+            var names = academicStructure.map(function (item) { return item.faculty; });
+            store.departments.forEach(function (department) {
+                var faculty = departmentFaculty(department);
+                if (!names.some(function (name) { return same(name, faculty); })) names.push(faculty);
+            });
+            return names.filter(Boolean);
+        }
+        function departmentsForFaculty(faculty) {
+            return store.departments.filter(function (department) { return same(departmentFaculty(department), faculty); });
+        }
+        function defaultDepartmentForFaculty(faculty) {
+            var options = departmentsForFaculty(faculty);
+            if (!options.length) return null;
+            var preferredName = same(faculty, 'Công nghệ Thông tin') ? 'Kỹ thuật phần mềm' : '';
+            return options.find(function (department) { return preferredName && same(department.name, preferredName); })
+                || options.find(function (department) { return !same(department.name, faculty); })
+                || options[0];
+        }
+        function selectedDepartmentId() {
+            return Number(document.getElementById('proposalMajor').value || 0);
+        }
+        function selectedDepartmentObject() {
+            var id = selectedDepartmentId();
+            return store.departments.find(function (department) { return Number(department.id) === id; }) || null;
+        }
+        function populateMajorSelect(faculty, selectedId) {
+            var options = departmentsForFaculty(faculty);
+            if (!options.length) options = scopedDepartments();
+            if (!options.length) options = store.departments;
+            var preferred = selectedId || (state.selectedDepartment ? (store.departments.find(function (department) { return same(department.name, state.selectedDepartment); }) || {}).id : null);
+            document.getElementById('proposalMajor').innerHTML = options.map(function (department) {
+                var selected = String(department.id) === String(preferred) ? ' selected' : '';
+                return '<option value="' + h(department.id) + '"' + selected + '>' + h(department.name) + '</option>';
+            }).join('');
+        }
+        function populateFacultyAndMajor(selectedId) {
+            var selectedDepartment = store.departments.find(function (department) { return String(department.id) === String(selectedId); });
+            var initialFaculty = selectedDepartment ? departmentFaculty(selectedDepartment) : state.selectedFaculty || facultyOptions()[0] || '';
+            document.getElementById('proposalFaculty').innerHTML = facultyOptions().map(function (faculty) {
+                return '<option value="' + h(faculty) + '"' + (same(faculty, initialFaculty) ? ' selected' : '') + '>' + h(faculty) + '</option>';
+            }).join('');
+            populateMajorSelect(initialFaculty, selectedId);
+            syncImageSuggestions();
+        }
+        function syncImageSuggestions() {
+            var department = selectedDepartmentObject();
+            var faculty = document.getElementById('proposalFaculty').value;
+            var major = department ? department.name : '';
+            var title = document.getElementById('proposalTitle').value;
+            var current = document.getElementById('proposalImage').value || imageForSignal([faculty, major, title].join(' '));
+            if (!document.getElementById('proposalImage').value) document.getElementById('proposalImage').value = current;
+            document.getElementById('imageOptions').innerHTML = imageChoicesFor(faculty, major, title).map(function (url) {
+                return '<button type="button" class="image-option ' + (url === current ? 'active' : '') + '" data-image-url="' + h(url) + '"><img src="' + h(url) + '" alt=""></button>';
+            }).join('');
+            document.querySelectorAll('[data-image-url]').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    document.getElementById('proposalImage').value = button.dataset.imageUrl;
+                    syncImageSuggestions();
+                });
+            });
+        }
+        function openProposalDialog(proposal, copyMode) {
+            proposal = proposal || {};
+            var modal = document.getElementById('proposalModal');
+            document.getElementById('proposalId').value = copyMode ? '' : (proposal.id || '');
+            document.getElementById('proposalDialogTitle').textContent = proposal.id && !copyMode ? 'Chỉnh sửa & gửi lại đề xuất' : 'Tạo đề xuất sự kiện';
+            document.getElementById('proposalDialogNote').textContent = proposal.id && !copyMode ? 'Sau khi lưu, proposal sẽ quay về trạng thái chờ hội đồng.' : 'Thông tin này sẽ được gửi sang hội đồng xét duyệt.';
+            document.getElementById('proposalTitle').value = proposal.title || '';
+            document.getElementById('proposalDate').value = toDateTimeInput(proposal.proposedDate);
+            document.getElementById('proposalLocation').value = proposal.location || '';
+            document.getElementById('proposalCapacity').value = proposal.capacity || 100;
+            document.getElementById('proposalBudget').value = proposal.budget || 0;
+            document.getElementById('proposalImage').value = proposal.imageUrl || '';
+            document.getElementById('proposalNote').value = proposal.note || '';
+            document.getElementById('proposalDescription').value = proposal.description || '';
+            populateFacultyAndMajor(proposal.departmentId);
+            modal.classList.add('open');
+            modal.setAttribute('aria-hidden', 'false');
+            document.getElementById('proposalTitle').focus();
+        }
+        function closeProposalDialog() {
+            var modal = document.getElementById('proposalModal');
+            modal.classList.remove('open');
+            modal.setAttribute('aria-hidden', 'true');
+        }
+        function proposalPayload() {
+            return {
+                title: document.getElementById('proposalTitle').value.trim(),
+                departmentId: selectedDepartmentId(),
+                proposedDate: document.getElementById('proposalDate').value,
+                location: document.getElementById('proposalLocation').value.trim(),
+                capacity: Number(document.getElementById('proposalCapacity').value || 0),
+                budget: Number(document.getElementById('proposalBudget').value || 0),
+                imageUrl: document.getElementById('proposalImage').value.trim(),
+                note: document.getElementById('proposalNote').value.trim(),
+                description: document.getElementById('proposalDescription').value.trim()
+            };
+        }
+        function loadData() {
+            state.loading = true;
+            render();
+            return Promise.all([
+                api(STRUCTURE_API).catch(function () { return { items: fallbackStructure }; }),
+                api('/departments'),
+                api('/events'),
+                api('/proposals')
+            ]).then(function (payload) {
+                academicStructure = payload[0].items && payload[0].items.length ? payload[0].items : fallbackStructure;
+                store.departments = payload[1];
+                store.events = payload[2];
+                store.proposals = payload[3];
+                if (!state.selectedFaculty && state.selectedDepartment) state.selectedFaculty = facultyOf(state.selectedDepartment);
+                if (!state.selectedFaculty && store.departments.length) state.selectedFaculty = departmentFaculty(store.departments[0]);
+                if (state.selectedFaculty && (!state.selectedDepartment || same(state.selectedDepartment, state.selectedFaculty))) {
+                    var defaultUnit = defaultDepartmentForFaculty(state.selectedFaculty);
+                    state.selectedDepartment = defaultUnit ? defaultUnit.name : '';
+                }
+                state.loading = false;
+                render();
+            }).catch(function (error) {
+                state.loading = false;
+                document.getElementById('content').innerHTML = '<div class="empty">Không thể tải dữ liệu: ' + h(error.message) + '</div>';
+            });
+        }
+
+        document.querySelectorAll('[data-scope]').forEach(function (button) {
+            button.addEventListener('click', function () {
+                state.scope = button.dataset.scope;
+                render();
+            });
+        });
+        document.querySelectorAll('[data-tab]').forEach(function (button) {
+            button.addEventListener('click', function () {
+                state.tab = button.dataset.tab;
+                render();
+            });
+        });
+        document.getElementById('newProposalBtn').addEventListener('click', function () { openProposalDialog(); });
+        document.getElementById('refreshBtn').addEventListener('click', function () { loadData().then(function () { toast('Đã làm mới dữ liệu.'); }); });
+        document.getElementById('closeProposalBtn').addEventListener('click', closeProposalDialog);
+        document.getElementById('cancelProposalBtn').addEventListener('click', closeProposalDialog);
+        document.getElementById('proposalModal').addEventListener('click', function (event) {
+            if (event.target === event.currentTarget) closeProposalDialog();
+        });
+        document.getElementById('proposalFaculty').addEventListener('change', function () {
+            populateMajorSelect(document.getElementById('proposalFaculty').value, null);
+            document.getElementById('proposalImage').value = '';
+            syncImageSuggestions();
+        });
+        document.getElementById('proposalMajor').addEventListener('change', function () {
+            document.getElementById('proposalImage').value = '';
+            syncImageSuggestions();
+        });
+        document.getElementById('proposalTitle').addEventListener('input', function () {
+            if (!document.getElementById('proposalImage').value) syncImageSuggestions();
+        });
+        document.getElementById('proposalImage').addEventListener('input', syncImageSuggestions);
+        document.getElementById('proposalForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+            var id = document.getElementById('proposalId').value;
+            var payload = proposalPayload();
+            if (!payload.title || !payload.description || !payload.proposedDate || !payload.departmentId) {
+                toast('Vui lòng nhập đủ thông tin bắt buộc.');
+                return;
+            }
+            var request = id
+                ? api('/proposals/' + encodeURIComponent(id), { method: 'PUT', body: JSON.stringify(payload) })
+                : api('/proposals', { method: 'POST', body: JSON.stringify(payload) });
+            request.then(function () {
+                closeProposalDialog();
+                return loadData();
+            }).then(function () {
+                state.tab = 'workflow';
+                render();
+                toast(id ? 'Đã cập nhật và gửi lại proposal.' : 'Đã gửi proposal sang hội đồng.');
+            }).catch(function (error) {
+                toast('Không lưu được proposal: ' + error.message);
+            });
+        });
+        var logoutInProgress = false;
+        function showLogoutNotice(message) {
+            var notice = document.querySelector('[data-logout-notice]');
+            if (!notice) {
+                notice = document.createElement('div');
+                notice.setAttribute('data-logout-notice', '');
+                notice.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(15,23,42,.32);opacity:0;transition:opacity .18s ease;';
+                notice.innerHTML = '<div style="display:grid;justify-items:center;gap:12px;width:min(352px,100%);padding:24px;border-radius:12px;background:#fff;color:#0f172a;text-align:center;box-shadow:0 24px 70px -24px rgba(15,23,42,.48);"><div style="display:flex;width:48px;height:48px;align-items:center;justify-content:center;border-radius:999px;background:#ecfdf5;color:#047857;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><p data-logout-text style="margin:0;font-weight:700;line-height:1.5;"></p></div>';
+                document.body.appendChild(notice);
+            }
+            notice.querySelector('[data-logout-text]').textContent = message;
+            notice.style.opacity = '1';
+        }
+        document.getElementById('logoutBtn').addEventListener('click', function () {
+            if (logoutInProgress) return;
+            logoutInProgress = true;
+            showLogoutNotice('Đang đăng xuất...');
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userName');
+            localStorage.removeItem('userRole');
+            sessionStorage.clear();
+            fetch('/api/logout', { method: 'POST' }).catch(function () {}).finally(function () {
+                showLogoutNotice('Đã đăng xuất. Đang chuyển về trang đăng nhập...');
+                window.setTimeout(function () {
+                    window.location.href = window.location.pathname.startsWith('/api/') ? '/api/login.html' : 'login.html';
+                }, 900);
+            });
+        });
+
+        renderAccount();
+        loadData();
+    })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng nhập thành công — Campus Events</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            min-height: 100vh; display: grid; place-items: center;
+            font-family: "Outfit", system-ui, sans-serif;
+            background: linear-gradient(135deg, #eef2ff 0%, #f0f4ff 40%, #faf5ff 100%);
+            color: #0f172a;
+        }
+        .card {
+            text-align: center; padding: 3rem 2.5rem;
+            background: #fff; border-radius: 28px;
+            box-shadow: 0 24px 48px -20px rgba(15,23,42,0.1);
+            border: 1px solid rgba(15,23,42,0.08);
+            max-width: 440px; width: 100%;
+        }
+        .check-icon {
+            width: 72px; height: 72px; margin: 0 auto 1.5rem;
+            background: linear-gradient(135deg, #16a34a, #15803d);
+            border-radius: 50%; display: grid; place-items: center;
+            box-shadow: 0 8px 24px rgba(22,163,74,0.3);
+            animation: pop 0.5s cubic-bezier(0.22,1,0.36,1);
+        }
+        .check-icon svg { width: 36px; height: 36px; color: #fff; }
+        h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.5rem; }
+        p { color: #64748b; font-size: 1rem; margin-bottom: 0.25rem; }
+        .email-tag { display: inline-block; padding: 0.5rem 1rem; border-radius: 999px; background: #eff6ff; color: #2563eb; font-weight: 700; font-size: 0.9375rem; margin: 1rem 0; }
+        .role-tag { display: inline-block; padding: 0.4rem 0.85rem; border-radius: 999px; background: #f0fdf4; color: #16a34a; font-weight: 700; font-size: 0.8125rem; margin-bottom: 1.5rem; }
+        .redirect-msg { color: #94a3b8; font-size: 0.875rem; }
+        .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #cbd5e1; border-top-color: #2563eb; border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 0.5rem; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes pop { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="check-icon">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+        </div>
+        <h1>Đăng nhập thành công!</h1>
+        <p>Xin chào, <strong id="userName">...</strong></p>
+        <div class="email-tag" id="userEmail">...</div>
+        <div><span class="role-tag" id="userRole">...</span></div>
+        <p class="redirect-msg"><span class="spinner"></span>Đang chuyển hướng...</p>
+    </div>
+
+    <script>
+    (function() {
+        var params = new URLSearchParams(window.location.search);
+        var email = decodeURIComponent(params.get('email') || '');
+        var name = decodeURIComponent(params.get('name') || 'Người dùng');
+        var role = params.get('role') || 'STUDENT';
+        var id = params.get('id') || '0';
+
+        // Hiển thị thông tin
+        document.getElementById('userName').textContent = name;
+        document.getElementById('userEmail').textContent = email;
+
+        var roleNames = {
+            'ADMIN': 'Quản trị viên',
+            'DEPARTMENT': 'Khoa / Bộ môn',
+            'COMMITTEE': 'Hội đồng',
+            'STUDENT': 'Sinh viên'
+        };
+        document.getElementById('userRole').textContent = roleNames[role] || role;
+
+        // Lưu vào sessionStorage (giống luồng login thường)
+        sessionStorage.setItem('user', JSON.stringify({
+            id: parseInt(id),
+            fullName: name,
+            email: email,
+            role: role
+        }));
+        localStorage.setItem('userName', name);
+        localStorage.setItem('userRole', role);
+
+        // Chuyển hướng theo role sau 2 giây
+        var routes = {
+            'ADMIN': 'admin-screen/overview.html',
+            'DEPARTMENT': 'screen-department.html',
+            'COMMITTEE': 'screen-committee.html',
+            'STUDENT': 'screen-student.html'
+        };
+
+        setTimeout(function() {
+            window.location.href = routes[role] || 'screen-student.html';
+        }, 2000);
+    })();
+    </script>
+</body>
+</html>
