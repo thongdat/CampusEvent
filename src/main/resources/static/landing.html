@@ -247,7 +247,7 @@
         .rounded-2xl,
         .rounded-3xl,
         .rounded-\[2rem\] {
-            border-radius: 0.5rem !important;
+            border-radius: inherit;
         }
     </style>
 </head>
@@ -301,13 +301,12 @@
         <div class="relative z-10 mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8 lg:py-14">
             <div class="max-w-3xl">
                 <p class="animate-fade-up mb-5 inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/12 px-4 py-2 text-xs font-extrabold uppercase text-orange-100 shadow-sm backdrop-blur" style="animation-delay:0.04s;opacity:0">
-                    <span class="h-2 w-2 rounded-full bg-orange-fpt shadow-[0_0_0_5px_rgba(243,112,33,0.15)]"></span>
-                    FPT Event Hub
+                    <span id="slide-eyebrow" class="h-2 w-2 rounded-full bg-orange-fpt shadow-[0_0_0_5px_rgba(243,112,33,0.15)]">FPT Event Hub</span>
                 </p>
-                <h1 id="hero-title" class="animate-fade-up text-4xl font-extrabold leading-[1.04] text-white sm:text-5xl lg:text-6xl" style="animation-delay:0.12s;opacity:0">
+                <h1 id="slide-title" class="animate-fade-up text-4xl font-extrabold leading-[1.04] text-white sm:text-5xl lg:text-6xl" style="animation-delay:0.12s;opacity:0">
                     Campus Pulse cho <span class="text-gradient">sự kiện FPT</span>
                 </h1>
-                <p class="animate-fade-up mt-5 max-w-2xl text-base leading-7 text-orange-50/86 sm:text-lg sm:leading-8" style="animation-delay:0.2s;opacity:0">
+                <p id="slide-desc" class="animate-fade-up mt-5 max-w-2xl text-base leading-7 text-orange-50/86 sm:text-lg sm:leading-8" style="animation-delay:0.2s;opacity:0">
                     Một nơi nhẹ nhàng để sinh viên tìm chương trình mình muốn tham gia, còn khoa, hội đồng và admin theo dõi mọi thứ đủ rõ mà không phải hỏi nhau qua quá nhiều kênh.
                 </p>
                 <div class="animate-fade-up mt-7 flex flex-wrap items-center gap-3" style="animation-delay:0.28s;opacity:0">
@@ -348,14 +347,9 @@
 
     <section id="events" class="bg-white py-20 sm:py-24">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div class="grid gap-8 lg:grid-cols-[0.78fr_1.22fr] lg:items-end">
-                <div data-reveal>
-                    <p class="text-sm font-extrabold uppercase tracking-[0.22em] text-orange-deep">Sự kiện đang mở</p>
-                    <h2 class="mt-3 text-3xl font-extrabold text-ink sm:text-4xl">Ba sự kiện gần nhất đang chờ sinh viên.</h2>
-                </div>
-                <p data-reveal class="max-w-3xl text-lg leading-8 text-ink-muted">
-                    Dữ liệu lấy từ hệ thống và tự xếp lịch sắp diễn ra lên trước để trang gọn, dễ chọn hơn.
-                </p>
+            <div data-reveal class="max-w-3xl">
+                <p class="text-sm font-extrabold uppercase tracking-[0.22em] text-orange-deep">Sự kiện đang mở</p>
+                <h2 class="mt-3 text-3xl font-extrabold text-ink sm:text-4xl">Ba sự kiện gần nhất</h2>
             </div>
 
             <div id="landing-events" class="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
