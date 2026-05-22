@@ -9,6 +9,27 @@ CampusEvent là hệ thống quản lý sự kiện sinh viên cho campus FPT. D
 - Màn hình theo vai trò: Student, Department, Committee, Admin.
 - Quản lý event, proposal, registration, attendance, feedback, email log.
 - Dashboard admin với thống kê, phân quyền và dữ liệu vận hành.
+- **Cơ chế xếp slot ưu tiên thông minh**: thay vì FIFO, hệ thống tính điểm ưu tiên
+  cho từng cặp sinh viên - event dựa trên 4 tiêu chí có trọng số
+  `0.4·M + 0.3·S + 0.2·P + 0.1·T` (chuyên ngành / học kỳ / điểm hoạt động /
+  thời điểm đăng ký). Khi event đầy, người có điểm cao hơn sẽ "giành" slot
+  khỏi người có điểm thấp hơn (đẩy về hàng chờ). Khi có người huỷ, hàng chờ
+  được tự động lên slot theo điểm cao nhất.
+
+## API sinh viên (`/api/student/*`)
+
+Tất cả endpoint yêu cầu header `X-User-Email` (frontend đọc từ sessionStorage).
+
+| Endpoint | Mục đích |
+|---|---|
+| `GET /me` | Profile + tổng quan (stats, rank) |
+| `GET /events?q=&scope=&faculty=&sort=` | Danh sách event + điểm ưu tiên ước tính cho từng event |
+| `GET /events/{id}` | Chi tiết event + breakdown 4 tiêu chí + hàng đợi (top 8) |
+| `POST /events/{id}/register` | Đăng ký với cơ chế xếp slot ưu tiên |
+| `DELETE /registrations/{id}` | Huỷ và auto-promote hàng chờ |
+| `GET /my-registrations` | Danh sách đăng ký + vé + check-in + trạng thái feedback |
+| `POST /events/{id}/feedback` | Gửi feedback (chỉ khi đã ATTENDED) |
+| `GET /leaderboard` | Top 20 sinh viên theo điểm tích lũy |
 
 ## Công nghệ
 
@@ -60,7 +81,28 @@ CampusEvent/
 
 ## Cấu hình database
 
-Tạo database trong SQL Server:
+### Tạo schema + nạp dữ liệu mẫu phong phú (khuyến nghị)
+
+File `database_full.sql` ở thư mục gốc đã chứa toàn bộ schema + bộ dữ liệu mẫu
+chuẩn FPT: 15 chuyên ngành, 96 user (3 admin, 15 điều phối khoa, 8 hội đồng, 70
+sinh viên), 32 event kèm ảnh chất lượng cao, 35 proposal, ~500 đăng ký, ~280
+check-in, ~140 feedback, ~700 email log và ~900 activity log.
+
+1. Mở SSMS, kết nối SQL Server.
+2. Mở file `database_full.sql`, bấm **Execute** một lần. Script tự tạo
+   `event_management_db` nếu chưa có và reset toàn bộ bảng.
+3. Khởi động backend Spring Boot.
+4. Hash lại mật khẩu seed:
+   ```http
+   GET http://localhost:8081/api/auth/init-passwords
+   ```
+   Sau bước này có thể đăng nhập với các tài khoản mẫu:
+   - `admin01@fpt.edu.vn` / `admin123`
+   - `dept01@fpt.edu.vn` / `dept123`
+   - `com01@fpt.edu.vn` / `com123`
+   - `sv001@fpt.edu.vn` / `stu123`
+
+Nếu chỉ muốn tạo database trống:
 
 ```sql
 CREATE DATABASE event_management_db;
@@ -109,6 +151,28 @@ Sau khi chạy, mở:
 ```
 
 File build nằm trong `target/`. Thư mục này đã được ignore bởi Git.
+
+## Cấu hình Google OAuth (tùy chọn)
+
+Mặc định nút **Đăng nhập với Google** trên `login.html` sẽ tự động ẩn nếu chưa
+cấu hình OAuth (endpoint `/api/auth/oauth-status` trả về `googleEnabled=false`).
+
+Để bật:
+
+1. Vào https://console.cloud.google.com/apis/credentials
+2. **Create Credentials → OAuth client ID → Web application**.
+3. **Authorized redirect URIs** thêm:
+   `http://localhost:8081/api/login/oauth2/code/google`
+4. Copy `Client ID` và `Client Secret`.
+5. Đặt biến môi trường rồi chạy lại Spring Boot:
+
+   ```powershell
+   $env:GOOGLE_CLIENT_ID  = "xxxxx.apps.googleusercontent.com"
+   $env:GOOGLE_CLIENT_SECRET = "GOCSPX-xxxxxxxx"
+   .\apache-maven-3.9.9\bin\mvn.cmd spring-boot:run
+   ```
+
+Hoặc sửa trực tiếp `application.properties` (lưu ý không commit secret).
 
 ## Ghi chú bảo mật
 

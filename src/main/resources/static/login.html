@@ -277,6 +277,24 @@
             letter-spacing: 0.12em;
         }
 
+        .auth-hint {
+            margin: 1rem 0 0;
+            padding: 0.75rem 0.9rem;
+            border-radius: 12px;
+            background: #fff8e6;
+            border: 1px solid #f3d27a;
+            color: #6b4500;
+            font-size: 0.8125rem;
+            line-height: 1.55;
+        }
+
+        .auth-hint code {
+            background: rgba(0, 0, 0, 0.06);
+            padding: 0.1rem 0.35rem;
+            border-radius: 6px;
+            font-size: 0.78125rem;
+        }
+
         .auth-divider::before,
         .auth-divider::after {
             content: "";
@@ -562,7 +580,7 @@
                         <p>Chào mừng trở lại.</p>
                     </header>
 
-                    <a class="btn-google" href="/api/oauth2/authorization/google" aria-label="Đăng nhập bằng Google">
+                    <a class="btn-google" id="btnGoogle" href="/api/oauth2/authorization/google" aria-label="Đăng nhập bằng Google" hidden>
                         <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
                             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                             <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -572,7 +590,13 @@
                         Tiếp tục với Google
                     </a>
 
-                    <div class="auth-divider" role="separator"><span>hoặc email</span></div>
+                    <div class="auth-hint" id="oauthHint" hidden>
+                        Đăng nhập Google đang tắt vì chưa cấu hình. Mở
+                        <code>application.properties</code> hoặc đặt biến môi trường
+                        <code>GOOGLE_CLIENT_ID</code> và <code>GOOGLE_CLIENT_SECRET</code> rồi khởi động lại để bật.
+                    </div>
+
+                    <div class="auth-divider" id="oauthDivider" role="separator" hidden><span>hoặc email</span></div>
 
                     <form class="login-form" action="#" method="post" novalidate>
                         <div class="form-group">
@@ -607,6 +631,26 @@
 
         const form = document.querySelector('.login-form');
         const msg = document.getElementById('formMessage');
+        const btnGoogle = document.getElementById('btnGoogle');
+        const oauthHint = document.getElementById('oauthHint');
+        const oauthDivider = document.getElementById('oauthDivider');
+
+        // Hỏi backend xem Google OAuth đã cấu hình chưa.
+        // Nếu chưa, ẩn nút Google + hiện gợi ý, tránh việc click vào và rơi vào
+        // trang lỗi "invalid_client" của Google.
+        fetch('/api/auth/oauth-status', { headers: { 'Accept': 'application/json' } })
+            .then(function(res) { return res.ok ? res.json() : { googleEnabled: false }; })
+            .then(function(data) {
+                var enabled = !!(data && data.googleEnabled);
+                if (btnGoogle) btnGoogle.hidden = !enabled;
+                if (oauthDivider) oauthDivider.hidden = !enabled;
+                if (oauthHint) oauthHint.hidden = enabled;
+            })
+            .catch(function() {
+                if (btnGoogle) btnGoogle.hidden = true;
+                if (oauthDivider) oauthDivider.hidden = true;
+                if (oauthHint) oauthHint.hidden = false;
+            });
 
         // Check for OAuth parameters
         const urlParams = new URLSearchParams(window.location.search);
@@ -625,7 +669,10 @@
             }, 1200);
         } else if (oauth === 'error') {
             msg.className = 'form-error error';
-            msg.textContent = 'Đăng nhập bằng Google thất bại. Vui lòng thử lại.';
+            msg.textContent = 'Đăng nhập bằng Google thất bại. Vui lòng thử lại hoặc dùng email.';
+        } else if (oauth === 'locked') {
+            msg.className = 'form-error error';
+            msg.textContent = 'Tài khoản Google của bạn đang bị khóa. Liên hệ quản trị viên để được mở khóa.';
         }
         const btn = document.getElementById('btnLogin');
         const emailInput = document.getElementById('email');
@@ -642,6 +689,7 @@
         function redirectByRole(role) {
             var routes = {
                 'ADMIN': 'admin-screen/overview.html',
+                'MANAGER': 'screen-department.html',
                 'DEPARTMENT': 'screen-department.html',
                 'COMMITTEE': 'screen-committee.html',
                 'STUDENT': 'screen-student.html'
@@ -713,6 +761,9 @@
                     { email: 'admin@example.com', password: 'admin123', role: 'ADMIN', locked: false },
                     { email: 'department@example.com', password: 'dept123', role: 'DEPARTMENT', locked: false, major: 'Công nghệ Thông tin', faculty: 'Công nghệ Thông tin' },
                     { email: 'committee@example.com', password: 'com123', role: 'COMMITTEE', locked: false },
+                    { email: 'student@example.com', password: 'student123', role: 'STUDENT', locked: false, major: 'Công nghệ Thông tin', faculty: 'Công nghệ Thông tin' },
+                    { email: 'student@fpt.edu.vn', password: 'student123', role: 'STUDENT', locked: false, major: 'Kỹ thuật phần mềm', faculty: 'Công nghệ Thông tin' },
+                    { email: 'sv1@fpt.edu.vn', password: 'stu123', role: 'STUDENT', locked: false, major: 'Kỹ thuật phần mềm', faculty: 'Công nghệ Thông tin' },
                     { email: 'locked@example.com', password: 'locked123', role: 'ADMIN', locked: true }
                 ];
                 var user = MOCK.find(function(u) { return u.email === email && u.password === pass; });

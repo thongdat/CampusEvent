@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Graduation FPT cover">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1a0b3a"/>
+      <stop offset="0.5" stop-color="#5b21b6"/>
+      <stop offset="1" stop-color="#f59e0b"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="600" fill="url(#bg)"/>
+  <g opacity="0.85" fill="#ffffff">
+    <polygon points="1000,180 1180,260 1000,340 820,260" opacity="0.18"/>
+    <rect x="970" y="280" width="60" height="70" fill="#0b3a82" opacity="0.85"/>
+    <line x1="1000" y1="280" x2="1000" y2="380" stroke="#fde68a" stroke-width="3"/>
+    <circle cx="1000" cy="380" r="10" fill="#fde68a"/>
+  </g>
+  <g transform="translate(64,68)">
+    <rect x="0" y="0" width="58" height="22" rx="4" fill="#f37021"/>
+    <text x="29" y="17" text-anchor="middle" font-family="Inter, sans-serif" font-weight="900" font-size="16" fill="#ffffff">FPT</text>
+    <text x="68" y="17" font-family="Inter, sans-serif" font-weight="700" font-size="13" fill="#ffffff" letter-spacing="0.18em">UNIVERSITY</text>
+    <text x="0" y="42" font-family="Inter, sans-serif" font-weight="500" font-size="12" fill="#fde68a" letter-spacing="0.12em">CLASS OF 2026 · GRADUATION</text>
+  </g>
+  <g transform="translate(64,260)">
+    <rect x="0" y="0" width="240" height="36" rx="18" fill="#fde68a"/>
+    <text x="120" y="24" text-anchor="middle" font-family="Inter, sans-serif" font-weight="800" font-size="13" fill="#1a0b3a" letter-spacing="0.08em">LÄ TÐT NGHIÆP</text>
+  </g>
+  <text x="64" y="370" font-family="Inter, sans-serif" font-weight="800" font-size="60" fill="#ffffff">Ch°¡ng mÛi b¯t §u.</text>
+  <text x="64" y="432" font-family="Inter, sans-serif" font-weight="800" font-size="60" fill="#fde68a">Hành trình ti¿p diÅn.</text>
+  <text x="64" y="490" font-family="Inter, sans-serif" font-weight="500" font-size="20" fill="#fff5e6">Vinh danh sinh viên FPT · alumni g·p gá · gala graduation 2026</text>
+</svg>

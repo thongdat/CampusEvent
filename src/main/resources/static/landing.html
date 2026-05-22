@@ -247,7 +247,7 @@
         .rounded-2xl,
         .rounded-3xl,
         .rounded-\[2rem\] {
-            border-radius: 0.5rem !important;
+            border-radius: inherit;
         }
     </style>
 </head>
@@ -262,8 +262,10 @@
         </a>
 
         <nav class="hidden items-center gap-1 md:flex" aria-label="Chính">
+            <a href="#features" class="rounded-full px-4 py-2 text-sm font-semibold text-ink-muted transition-colors hover:bg-orange-100 hover:text-orange-deep">Tính năng</a>
+            <a href="#roles" class="rounded-full px-4 py-2 text-sm font-semibold text-ink-muted transition-colors hover:bg-orange-100 hover:text-orange-deep">Vai trò</a>
             <a href="#events" class="rounded-full px-4 py-2 text-sm font-semibold text-ink-muted transition-colors hover:bg-orange-100 hover:text-orange-deep">Sự kiện</a>
-            <a href="#gallery" class="rounded-full px-4 py-2 text-sm font-semibold text-ink-muted transition-colors hover:bg-orange-100 hover:text-orange-deep">Ảnh FPT</a>
+            <a href="#journey" class="rounded-full px-4 py-2 text-sm font-semibold text-ink-muted transition-colors hover:bg-orange-100 hover:text-orange-deep">Hành trình</a>
             <a href="#faq" class="rounded-full px-4 py-2 text-sm font-semibold text-ink-muted transition-colors hover:bg-orange-100 hover:text-orange-deep">FAQ</a>
         </nav>
 
@@ -279,8 +281,10 @@
 
     <div id="mobile-panel" class="fixed inset-x-0 top-16 z-40 max-h-[calc(100dvh-4rem)] overflow-y-auto border-b border-orange-100 bg-white/96 opacity-0 -translate-y-2 shadow-xl shadow-orange-900/10 backdrop-blur-xl md:hidden" hidden>
         <nav class="flex flex-col gap-1 p-4" aria-label="Menu di động">
+            <a href="#features" class="rounded-2xl px-4 py-3 text-sm font-semibold text-ink-muted hover:bg-orange-50 hover:text-orange-deep">Tính năng</a>
+            <a href="#roles" class="rounded-2xl px-4 py-3 text-sm font-semibold text-ink-muted hover:bg-orange-50 hover:text-orange-deep">Vai trò</a>
             <a href="#events" class="rounded-2xl px-4 py-3 text-sm font-semibold text-ink-muted hover:bg-orange-50 hover:text-orange-deep">Sự kiện</a>
-            <a href="#gallery" class="rounded-2xl px-4 py-3 text-sm font-semibold text-ink-muted hover:bg-orange-50 hover:text-orange-deep">Ảnh FPT</a>
+            <a href="#journey" class="rounded-2xl px-4 py-3 text-sm font-semibold text-ink-muted hover:bg-orange-50 hover:text-orange-deep">Hành trình</a>
             <a href="#faq" class="rounded-2xl px-4 py-3 text-sm font-semibold text-ink-muted hover:bg-orange-50 hover:text-orange-deep">FAQ</a>
             <hr class="my-2 border-orange-100">
             <a href="login.html" class="rounded-2xl px-4 py-3 text-sm font-semibold text-ink-muted hover:bg-orange-50 hover:text-orange-deep">Đăng nhập</a>
@@ -300,15 +304,15 @@
 
         <div class="relative z-10 mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8 lg:py-14">
             <div class="max-w-3xl">
-                <p class="animate-fade-up mb-5 inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/12 px-4 py-2 text-xs font-extrabold uppercase text-orange-100 shadow-sm backdrop-blur" style="animation-delay:0.04s;opacity:0">
-                    <span class="h-2 w-2 rounded-full bg-orange-fpt shadow-[0_0_0_5px_rgba(243,112,33,0.15)]"></span>
-                    FPT Event Hub
+                <p class="animate-fade-up mb-5 inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/12 px-4 py-2 text-xs font-extrabold uppercase tracking-[0.18em] text-orange-100 shadow-sm backdrop-blur" style="animation-delay:0.04s;opacity:0">
+                    <span class="inline-block h-2 w-2 rounded-full bg-orange-fpt shadow-[0_0_0_5px_rgba(243,112,33,0.15)]"></span>
+                    <span id="slide-eyebrow">FPT Event Hub · Smart Priority Matching</span>
                 </p>
-                <h1 id="hero-title" class="animate-fade-up text-4xl font-extrabold leading-[1.04] text-white sm:text-5xl lg:text-6xl" style="animation-delay:0.12s;opacity:0">
-                    Campus Pulse cho <span class="text-gradient">sự kiện FPT</span>
+                <h1 id="slide-title" class="animate-fade-up text-4xl font-extrabold leading-[1.04] text-white sm:text-5xl lg:text-6xl" style="animation-delay:0.12s;opacity:0">
+                    Sự kiện FPT, <span class="text-gradient">đúng người – đúng slot.</span>
                 </h1>
-                <p class="animate-fade-up mt-5 max-w-2xl text-base leading-7 text-orange-50/86 sm:text-lg sm:leading-8" style="animation-delay:0.2s;opacity:0">
-                    Một nơi nhẹ nhàng để sinh viên tìm chương trình mình muốn tham gia, còn khoa, hội đồng và admin theo dõi mọi thứ đủ rõ mà không phải hỏi nhau qua quá nhiều kênh.
+                <p id="slide-desc" class="animate-fade-up mt-5 max-w-2xl text-base leading-7 text-orange-50/86 sm:text-lg sm:leading-8" style="animation-delay:0.2s;opacity:0">
+                    Nền tảng quản lý sự kiện sinh viên Đại học FPT với cơ chế xếp slot ưu tiên thông minh: ngành học, kỳ học, điểm rèn luyện và thời gian đăng ký được cân nhắc tự động — sinh viên thấy mình phù hợp với event nào, khoa &amp; hội đồng thấy rõ chương trình đang diễn ra như thế nào.
                 </p>
                 <div class="animate-fade-up mt-7 flex flex-wrap items-center gap-3" style="animation-delay:0.28s;opacity:0">
                     <a href="login.html" class="btn-primary inline-flex items-center justify-center rounded-full px-7 py-3.5 text-sm font-bold text-white">
@@ -318,20 +322,23 @@
                         Xem lịch sự kiện
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
                     </a>
+                    <a href="role-screens.html" class="inline-flex items-center gap-2 rounded-full px-5 py-3.5 text-sm font-bold text-orange-100 underline-offset-4 hover:underline">
+                        Khám phá theo vai trò
+                    </a>
                 </div>
 
                 <div class="animate-fade-up mt-8 hidden max-w-xl grid-cols-3 gap-3 sm:grid" style="animation-delay:0.36s;opacity:0">
                     <div class="border-l border-white/24 pl-4">
                         <span class="block text-2xl font-extrabold text-orange-100" id="metric-events">--</span>
-                        <span class="mt-1 block text-xs font-semibold text-orange-50/72">sự kiện trong hệ thống</span>
+                        <span class="mt-1 block text-xs font-semibold text-orange-50/72">sự kiện đang triển khai</span>
                     </div>
                     <div class="border-l border-white/24 pl-4">
                         <span class="block text-2xl font-extrabold text-teal-100" id="metric-registrations">--</span>
-                        <span class="mt-1 block text-xs font-semibold text-orange-50/72">lượt đăng ký</span>
+                        <span class="mt-1 block text-xs font-semibold text-orange-50/72">lượt đăng ký ưu tiên</span>
                     </div>
                     <div class="border-l border-white/24 pl-4">
                         <span class="block text-2xl font-extrabold text-blue-100" id="metric-users">--</span>
-                        <span class="mt-1 block text-xs font-semibold text-orange-50/72">người dùng</span>
+                        <span class="mt-1 block text-xs font-semibold text-orange-50/72">sinh viên &amp; cán bộ</span>
                     </div>
                 </div>
             </div>
@@ -346,16 +353,134 @@
         </div>
     </section>
 
+    <section id="features" class="section-orange py-20 sm:py-24">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="mx-auto max-w-3xl text-center" data-reveal>
+                <p class="text-sm font-extrabold uppercase tracking-[0.22em] text-orange-deep">Tại sao Campus Pulse</p>
+                <h2 class="mt-3 text-3xl font-extrabold text-ink sm:text-4xl">Bốn năng lực được sinh viên &amp; ban tổ chức cần.</h2>
+                <p class="mt-4 text-base leading-7 text-ink-muted sm:text-lg">Không cố gắng làm hết mọi thứ. Tập trung vào những việc lặp lại nhiều nhất trong vòng đời một sự kiện sinh viên FPT.</p>
+            </div>
+
+            <div class="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+                <article data-reveal class="feature-card rounded-3xl p-7">
+                    <span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-50 text-orange-deep">
+                        <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                    </span>
+                    <h3 class="mt-5 text-lg font-extrabold text-ink">Smart Priority Matching</h3>
+                    <p class="mt-2 text-sm leading-6 text-ink-muted">Mỗi đăng ký được chấm theo 4 trọng số: ngành học (40%), kỳ học (30%), điểm rèn luyện (20%), thời gian (10%). Slot ưu tiên xếp tự động, sinh viên thấy ngay lý do mình ở đâu trong hàng đợi.</p>
+                </article>
+
+                <article data-reveal class="feature-card rounded-3xl p-7">
+                    <span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-50 text-forest">
+                        <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 3h7v7H3z"/><path d="M14 3h7v7h-7z"/><path d="M3 14h7v7H3z"/><path d="M14 14h7v7h-7z"/></svg>
+                    </span>
+                    <h3 class="mt-5 text-lg font-extrabold text-ink">4 vai trò – 4 console</h3>
+                    <p class="mt-2 text-sm leading-6 text-ink-muted">Sinh viên, Khoa/Bộ môn, Hội đồng duyệt, Admin — mỗi vai trò có giao diện riêng, không lẫn nhau, không phải mở &quot;tab admin&quot; để làm việc của sinh viên.</p>
+                </article>
+
+                <article data-reveal class="feature-card rounded-3xl p-7">
+                    <span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-skybrand">
+                        <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/><path d="M9 5v14"/></svg>
+                    </span>
+                    <h3 class="mt-5 text-lg font-extrabold text-ink">Vé QR &amp; check-in</h3>
+                    <p class="mt-2 text-sm leading-6 text-ink-muted">Đăng ký thành công nhận vé ngay. Check-in tại sự kiện ghi attendance, tự động cộng điểm rèn luyện và mở khoá quyền gửi feedback.</p>
+                </article>
+
+                <article data-reveal class="feature-card rounded-3xl p-7">
+                    <span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-purple-50 text-purple-700">
+                        <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-7"/></svg>
+                    </span>
+                    <h3 class="mt-5 text-lg font-extrabold text-ink">Insight cho khoa &amp; hội đồng</h3>
+                    <p class="mt-2 text-sm leading-6 text-ink-muted">Dashboard số liệu thật: tỉ lệ lấp đầy, tỷ lệ tham dự, phản hồi trung bình, hoạt động theo khoa — đủ dữ liệu để duyệt đề xuất sự kiện kế tiếp.</p>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <section id="roles" class="bg-white py-20 sm:py-24">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="grid items-end gap-6 md:grid-cols-[1fr_auto]" data-reveal>
+                <div class="max-w-2xl">
+                    <p class="text-sm font-extrabold uppercase tracking-[0.22em] text-orange-deep">Vai trò trong hệ thống</p>
+                    <h2 class="mt-3 text-3xl font-extrabold text-ink sm:text-4xl">Mỗi người đăng nhập, mỗi không gian phù hợp.</h2>
+                </div>
+                <a href="role-screens.html" class="inline-flex items-center gap-2 self-end rounded-full border border-orange-200 bg-white px-5 py-2.5 text-sm font-bold text-orange-deep hover:bg-orange-50">
+                    Xem hub vai trò
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                </a>
+            </div>
+
+            <div class="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+                <a href="screen-student.html" data-reveal class="group flex flex-col rounded-3xl border border-orange-100 bg-orange-50/60 p-6 transition hover:-translate-y-1 hover:shadow-panel">
+                    <span class="text-3xl">🎓</span>
+                    <h3 class="mt-4 text-lg font-extrabold text-ink">Sinh viên</h3>
+                    <p class="mt-2 text-sm leading-6 text-ink-muted">Khám phá event theo ngành, đăng ký theo slot ưu tiên, theo dõi vé, check-in &amp; gửi feedback.</p>
+                    <span class="mt-4 inline-flex items-center gap-1 text-sm font-bold text-orange-deep">Mở màn sinh viên <span class="transition group-hover:translate-x-1">→</span></span>
+                </a>
+
+                <a href="screen-department.html" data-reveal class="group flex flex-col rounded-3xl border border-teal-100 bg-teal-50/60 p-6 transition hover:-translate-y-1 hover:shadow-panel">
+                    <span class="text-3xl">🏛️</span>
+                    <h3 class="mt-4 text-lg font-extrabold text-ink">Khoa / Bộ môn</h3>
+                    <p class="mt-2 text-sm leading-6 text-ink-muted">Đề xuất sự kiện mới, theo dõi tỉ lệ lấp đầy, attendance, phản hồi theo từng chương trình.</p>
+                    <span class="mt-4 inline-flex items-center gap-1 text-sm font-bold text-forest">Mở console khoa <span class="transition group-hover:translate-x-1">→</span></span>
+                </a>
+
+                <a href="screen-committee.html" data-reveal class="group flex flex-col rounded-3xl border border-blue-100 bg-blue-50/60 p-6 transition hover:-translate-y-1 hover:shadow-panel">
+                    <span class="text-3xl">⚖️</span>
+                    <h3 class="mt-4 text-lg font-extrabold text-ink">Hội đồng duyệt</h3>
+                    <p class="mt-2 text-sm leading-6 text-ink-muted">Xem hàng đợi đề xuất, duyệt/từ chối/yêu cầu chỉnh sửa, ấn định thời gian &amp; capacity trước khi publish.</p>
+                    <span class="mt-4 inline-flex items-center gap-1 text-sm font-bold text-skybrand">Mở console hội đồng <span class="transition group-hover:translate-x-1">→</span></span>
+                </a>
+
+                <a href="admin-screen/overview.html" data-reveal class="group flex flex-col rounded-3xl border border-purple-100 bg-purple-50/60 p-6 transition hover:-translate-y-1 hover:shadow-panel">
+                    <span class="text-3xl">🛡️</span>
+                    <h3 class="mt-4 text-lg font-extrabold text-ink">Admin</h3>
+                    <p class="mt-2 text-sm leading-6 text-ink-muted">Quản trị toàn hệ thống: tài khoản, vai trò, sự kiện, log hoạt động, gửi email &amp; reset mật khẩu.</p>
+                    <span class="mt-4 inline-flex items-center gap-1 text-sm font-bold text-purple-700">Mở admin console <span class="transition group-hover:translate-x-1">→</span></span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <section id="journey" class="section-orange py-20 sm:py-24">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="mx-auto max-w-3xl text-center" data-reveal>
+                <p class="text-sm font-extrabold uppercase tracking-[0.22em] text-orange-deep">Hành trình sinh viên FPT</p>
+                <h2 class="mt-3 text-3xl font-extrabold text-ink sm:text-4xl">Từ khám phá đến nhận điểm — đúng 3 bước.</h2>
+            </div>
+
+            <ol class="mt-12 grid gap-5 md:grid-cols-3">
+                <li data-reveal class="rounded-3xl border border-orange-100 bg-white p-7 shadow-sm">
+                    <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-orange-deep text-base font-extrabold text-white">1</span>
+                    <h3 class="mt-5 text-lg font-extrabold text-ink">Khám phá theo ngành</h3>
+                    <p class="mt-2 text-sm leading-6 text-ink-muted">Sự kiện được lọc theo khoa và sắp xếp theo điểm ưu tiên cá nhân — sinh viên thấy ngay chương trình phù hợp với mình nhất.</p>
+                </li>
+                <li data-reveal class="rounded-3xl border border-orange-100 bg-white p-7 shadow-sm">
+                    <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-orange-deep text-base font-extrabold text-white">2</span>
+                    <h3 class="mt-5 text-lg font-extrabold text-ink">Đăng ký &amp; nhận slot</h3>
+                    <p class="mt-2 text-sm leading-6 text-ink-muted">Khi đủ chỗ → vào trực tiếp danh sách REGISTERED. Khi hết chỗ → vào WAITLIST có thứ tự ưu tiên, tự động lên slot nếu ai đó huỷ.</p>
+                </li>
+                <li data-reveal class="rounded-3xl border border-orange-100 bg-white p-7 shadow-sm">
+                    <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-orange-deep text-base font-extrabold text-white">3</span>
+                    <h3 class="mt-5 text-lg font-extrabold text-ink">Tham dự &amp; phản hồi</h3>
+                    <p class="mt-2 text-sm leading-6 text-ink-muted">Vé QR check-in tại sự kiện. Sau khi tham dự, sinh viên gửi feedback và được cộng điểm rèn luyện vào hồ sơ.</p>
+                </li>
+            </ol>
+        </div>
+    </section>
+
     <section id="events" class="bg-white py-20 sm:py-24">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div class="grid gap-8 lg:grid-cols-[0.78fr_1.22fr] lg:items-end">
-                <div data-reveal>
+            <div data-reveal class="flex flex-wrap items-end justify-between gap-4">
+                <div class="max-w-2xl">
                     <p class="text-sm font-extrabold uppercase tracking-[0.22em] text-orange-deep">Sự kiện đang mở</p>
-                    <h2 class="mt-3 text-3xl font-extrabold text-ink sm:text-4xl">Ba sự kiện gần nhất đang chờ sinh viên.</h2>
+                    <h2 class="mt-3 text-3xl font-extrabold text-ink sm:text-4xl">Ba chương trình gần nhất từ hệ thống.</h2>
+                    <p class="mt-3 text-base leading-7 text-ink-muted">Dữ liệu live từ database — đây là những sự kiện đang được sinh viên đăng ký.</p>
                 </div>
-                <p data-reveal class="max-w-3xl text-lg leading-8 text-ink-muted">
-                    Dữ liệu lấy từ hệ thống và tự xếp lịch sắp diễn ra lên trước để trang gọn, dễ chọn hơn.
-                </p>
+                <a href="login.html" class="inline-flex items-center gap-1 rounded-full bg-orange-fpt px-5 py-2.5 text-sm font-extrabold text-white shadow-glow hover:brightness-105">
+                    Đăng nhập để đăng ký
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                </a>
             </div>
 
             <div id="landing-events" class="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
@@ -416,18 +541,41 @@
             </div>
 
             <dl class="mt-12 grid gap-4">
-                <div data-reveal class="rounded-3xl border border-orange-100 bg-orange-50/60 p-6">
-                    <dt class="font-extrabold text-ink">Có cần cài app không?</dt>
-                    <dd class="mt-2 text-sm leading-6 text-ink-muted">Không. Trang chạy trực tiếp trên trình duyệt và được tối ưu cho cả desktop lẫn mobile.</dd>
-                </div>
-                <div data-reveal class="rounded-3xl border border-orange-100 bg-white p-6 shadow-sm">
-                    <dt class="font-extrabold text-ink">Có hỗ trợ tiếng Việt không?</dt>
-                    <dd class="mt-2 text-sm leading-6 text-ink-muted">Có. Giao diện, nội dung email và các trạng thái sự kiện đều ưu tiên cách viết rõ ràng bằng tiếng Việt.</dd>
-                </div>
-                <div data-reveal class="rounded-3xl border border-orange-100 bg-white p-6 shadow-sm">
-                    <dt class="font-extrabold text-ink">Ban tổ chức theo dõi gì sau sự kiện?</dt>
-                    <dd class="mt-2 text-sm leading-6 text-ink-muted">Có thể xem số lượt đăng ký, check-in, tỷ lệ tham dự và phản hồi để tổng kết chương trình nhanh hơn.</dd>
-                </div>
+                <details data-reveal class="group rounded-3xl border border-orange-100 bg-orange-50/60 p-6 [&[open]]:bg-white [&[open]]:shadow-panel">
+                    <summary class="flex cursor-pointer list-none items-center justify-between gap-4 font-extrabold text-ink">
+                        Smart Priority Matching xếp slot ưu tiên dựa trên gì?
+                        <span class="text-orange-deep transition group-open:rotate-180">▾</span>
+                    </summary>
+                    <dd class="mt-3 text-sm leading-6 text-ink-muted">Bốn trọng số: ngành học khớp với chuyên đề (40%), kỳ học phù hợp (30%), điểm rèn luyện tích luỹ (20%), thời gian đăng ký sớm (10%). Sinh viên có thể xem rõ điểm thành phần ngay trong màn chi tiết sự kiện.</dd>
+                </details>
+                <details data-reveal class="group rounded-3xl border border-orange-100 bg-white p-6 shadow-sm [&[open]]:bg-orange-50/40">
+                    <summary class="flex cursor-pointer list-none items-center justify-between gap-4 font-extrabold text-ink">
+                        Tài khoản dùng thử cho demo lấy ở đâu?
+                        <span class="text-orange-deep transition group-open:rotate-180">▾</span>
+                    </summary>
+                    <dd class="mt-3 text-sm leading-6 text-ink-muted">Mở trang <a class="font-bold text-orange-deep underline" href="role-screens.html">role-screens.html</a> để xem danh sách tài khoản demo cho 4 vai trò (Sinh viên, Khoa, Hội đồng, Admin). Mật khẩu seed mặc định in trực tiếp trên thẻ.</dd>
+                </details>
+                <details data-reveal class="group rounded-3xl border border-orange-100 bg-white p-6 shadow-sm [&[open]]:bg-orange-50/40">
+                    <summary class="flex cursor-pointer list-none items-center justify-between gap-4 font-extrabold text-ink">
+                        Nếu sự kiện đã hết slot, sinh viên có cơ hội nữa không?
+                        <span class="text-orange-deep transition group-open:rotate-180">▾</span>
+                    </summary>
+                    <dd class="mt-3 text-sm leading-6 text-ink-muted">Có. Hệ thống đưa vào WAITLIST có thứ tự ưu tiên. Khi một sinh viên huỷ đăng ký, người waitlist đứng đầu được tự động promote lên slot REGISTERED kèm vé QR.</dd>
+                </details>
+                <details data-reveal class="group rounded-3xl border border-orange-100 bg-white p-6 shadow-sm [&[open]]:bg-orange-50/40">
+                    <summary class="flex cursor-pointer list-none items-center justify-between gap-4 font-extrabold text-ink">
+                        Khoa &amp; hội đồng theo dõi gì sau sự kiện?
+                        <span class="text-orange-deep transition group-open:rotate-180">▾</span>
+                    </summary>
+                    <dd class="mt-3 text-sm leading-6 text-ink-muted">Tỷ lệ lấp đầy, số check-in, đánh giá trung bình, top phản hồi và phân bố theo khoa — đủ dữ liệu để duyệt đề xuất chương trình kế tiếp.</dd>
+                </details>
+                <details data-reveal class="group rounded-3xl border border-orange-100 bg-white p-6 shadow-sm [&[open]]:bg-orange-50/40">
+                    <summary class="flex cursor-pointer list-none items-center justify-between gap-4 font-extrabold text-ink">
+                        Cần cài đặt gì để chạy thử?
+                        <span class="text-orange-deep transition group-open:rotate-180">▾</span>
+                    </summary>
+                    <dd class="mt-3 text-sm leading-6 text-ink-muted">Chỉ cần JDK 17+, SQL Server và Maven. Chạy <code class="rounded bg-orange-100/60 px-1.5 py-0.5 font-bold text-orange-deep">mvn spring-boot:run</code> rồi mở <code class="rounded bg-orange-100/60 px-1.5 py-0.5 font-bold text-orange-deep">http://localhost:8081/api/landing.html</code>. Toàn bộ HTML/CSS chạy trực tiếp trên trình duyệt, không cần build frontend.</dd>
+                </details>
             </dl>
         </div>
     </section>
@@ -435,11 +583,11 @@
     <section id="cta" class="bg-gradient-to-br from-orange-fpt via-orange-deep to-[#431407] px-4 py-16 text-center text-white sm:px-6 sm:py-20 lg:px-8">
         <div class="mx-auto max-w-7xl" data-reveal>
             <p class="text-sm font-extrabold uppercase tracking-[0.24em] text-orange-100">Sẵn sàng bắt đầu</p>
-            <h2 class="mx-auto mt-3 max-w-3xl text-3xl font-extrabold sm:text-4xl">Vào hệ thống và bắt đầu từ lịch sự kiện gần nhất.</h2>
-            <p class="mx-auto mt-4 max-w-2xl text-sm leading-6 text-orange-50/82 sm:text-base">Landing là lời chào. Phần quan trọng nằm phía sau: dữ liệu thật, vai trò rõ, event được sắp đúng thời gian.</p>
+            <h2 class="mx-auto mt-3 max-w-3xl text-3xl font-extrabold sm:text-4xl">Đăng nhập với vai trò của bạn — hệ thống đưa thẳng đến đúng việc cần làm.</h2>
+            <p class="mx-auto mt-4 max-w-2xl text-sm leading-6 text-orange-50/82 sm:text-base">Sinh viên thấy event phù hợp. Khoa thấy đề xuất chờ duyệt. Hội đồng thấy hàng đợi. Admin thấy toàn cảnh. Không lẫn, không cần giải thích.</p>
             <div class="mt-8 flex flex-wrap justify-center gap-3">
                 <a href="login.html" class="inline-flex rounded-full bg-white px-7 py-3.5 text-sm font-extrabold text-orange-deep shadow-xl transition hover:bg-orange-50">Đăng nhập / Đăng ký</a>
-                <a href="#events" class="inline-flex rounded-full border border-white/35 px-7 py-3.5 text-sm font-extrabold text-white transition hover:bg-white/12">Xem lịch sự kiện</a>
+                <a href="role-screens.html" class="inline-flex rounded-full border border-white/35 px-7 py-3.5 text-sm font-extrabold text-white transition hover:bg-white/12">Khám phá theo vai trò</a>
             </div>
         </div>
     </section>
@@ -454,11 +602,13 @@
                 </span>
                 Campus Pulse
             </div>
-            <p class="mt-3 max-w-md text-sm leading-6 text-orange-50/58">Nền tảng sự kiện cho campus hiện đại, được làm mới với tinh thần cam FPT.</p>
+            <p class="mt-3 max-w-md text-sm leading-6 text-orange-50/58">Nền tảng quản lý sự kiện sinh viên Đại học FPT — Smart Priority Matching, vé QR, dashboard live cho 4 vai trò.</p>
         </div>
         <div class="flex flex-wrap gap-x-6 gap-y-3 text-sm font-semibold">
+            <a href="#features" class="text-orange-50/70 transition hover:text-white">Tính năng</a>
+            <a href="#roles" class="text-orange-50/70 transition hover:text-white">Vai trò</a>
             <a href="#events" class="text-orange-50/70 transition hover:text-white">Sự kiện</a>
-            <a href="#gallery" class="text-orange-50/70 transition hover:text-white">Ảnh FPT</a>
+            <a href="role-screens.html" class="text-orange-50/70 transition hover:text-white">Demo</a>
             <a href="mailto:dat@campuspulse.demo" class="text-orange-50/70 transition hover:text-white">Liên hệ</a>
         </div>
     </div>
@@ -535,19 +685,19 @@
 
         var slideContent = [
             {
-                eyebrow: 'Campus FPT',
-                title: 'Không gian học tập truyền cảm hứng',
-                desc: 'Một điểm chạm sinh viên nhìn vào là muốn tham gia.'
+                eyebrow: 'Smart Priority Matching · Campus FPT',
+                title: 'Sự kiện FPT, đúng người – đúng slot.',
+                desc: 'Mỗi đăng ký được chấm theo ngành, kỳ học, điểm rèn luyện và thời gian — sinh viên thấy ngay vị trí của mình trong hàng đợi ưu tiên.'
             },
             {
-                eyebrow: '50+ câu lạc bộ',
-                title: 'Hoạt động sinh viên luôn có nhịp',
-                desc: 'Những chương trình đông người vẫn cần đăng ký, vé QR và check-in thật gọn.'
+                eyebrow: '50+ câu lạc bộ · sự kiện đa khoa',
+                title: 'Hoạt động sinh viên luôn có nhịp.',
+                desc: 'Hackathon, workshop AI, career day, festival — mỗi chương trình đều có vé QR, check-in và phản hồi đầy đủ trong một hệ thống.'
             },
             {
-                eyebrow: 'Giao lưu & kết nối',
-                title: 'Sự kiện là nơi sinh viên gặp nhau',
-                desc: 'Hình ảnh campus giúp trải nghiệm gần hơn với đời sống sinh viên.'
+                eyebrow: 'Bốn vai trò · Bốn không gian',
+                title: 'Sinh viên, khoa, hội đồng, admin — không lẫn.',
+                desc: 'Mỗi người đăng nhập đi thẳng vào console phù hợp. Không cần giải thích, không cần “tab admin” cho việc của sinh viên.'
             }
         ];
 
@@ -682,16 +832,16 @@
             return '<article data-reveal class="event-live-card overflow-hidden rounded-3xl">' +
                 '<div class="aspect-[16/10] overflow-hidden"><img src="' + escapeHtml(eventImage(event)) + '" alt="' + escapeHtml(event.title) + '" class="h-full w-full object-cover" width="900" height="560"></div>' +
                 '<div class="p-6">' +
-                    '<div class="flex items-center justify-between gap-3">' +
-                        '<span class="rounded-full bg-orange-50 px-3 py-1 text-xs font-extrabold text-orange-deep">' + escapeHtml(statusCopy(event)) + '</span>' +
-                        '<span class="text-xs font-bold text-ink-soft">' + escapeHtml(event.departmentName || 'Campus') + '</span>' +
-                    '</div>' +
-                    '<h3 class="mt-4 min-h-[3.2rem] text-lg font-extrabold leading-snug text-ink">' + escapeHtml(event.title) + '</h3>' +
-                    '<p class="mt-2 text-sm leading-6 text-ink-muted">' + eventDate(event.startTime) + ' · ' + escapeHtml(event.location || 'FPT Campus') + '</p>' +
-                    '<div class="mt-4 h-2 overflow-hidden rounded-full bg-orange-100"><span class="block h-full rounded-full bg-gradient-to-r from-orange-fpt to-forest" style="width:' + fill + '%"></span></div>' +
-                    '<p class="mt-2 text-xs font-bold text-ink-muted">' + number(registered) + ' / ' + number(capacity) + ' lượt đăng ký</p>' +
+                '<div class="flex items-center justify-between gap-3">' +
+                '<span class="rounded-full bg-orange-50 px-3 py-1 text-xs font-extrabold text-orange-deep">' + escapeHtml(statusCopy(event)) + '</span>' +
+                '<span class="text-xs font-bold text-ink-soft">' + escapeHtml(event.departmentName || 'Campus') + '</span>' +
                 '</div>' +
-            '</article>';
+                '<h3 class="mt-4 min-h-[3.2rem] text-lg font-extrabold leading-snug text-ink">' + escapeHtml(event.title) + '</h3>' +
+                '<p class="mt-2 text-sm leading-6 text-ink-muted">' + eventDate(event.startTime) + ' · ' + escapeHtml(event.location || 'FPT Campus') + '</p>' +
+                '<div class="mt-4 h-2 overflow-hidden rounded-full bg-orange-100"><span class="block h-full rounded-full bg-gradient-to-r from-orange-fpt to-forest" style="width:' + fill + '%"></span></div>' +
+                '<p class="mt-2 text-xs font-bold text-ink-muted">' + number(registered) + ' / ' + number(capacity) + ' lượt đăng ký</p>' +
+                '</div>' +
+                '</article>';
         }
 
         function fetchJson(path, fallback) {

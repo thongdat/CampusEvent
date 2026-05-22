@@ -23,6 +23,7 @@ import com.example.repository.RoleRepository;
 import com.example.repository.StudentRepository;
 import com.example.repository.TicketRepository;
 import com.example.repository.UserRepository;
+import com.example.service.EmailService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.data.domain.Page;
@@ -80,6 +81,7 @@ public class AdminDashboardController {
     private final EmailLogRepository emailLogRepository;
     private final ActivityLogRepository activityLogRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
     public AdminDashboardController(
             UserRepository userRepository,
@@ -94,7 +96,8 @@ public class AdminDashboardController {
             FeedbackRepository feedbackRepository,
             EmailLogRepository emailLogRepository,
             ActivityLogRepository activityLogRepository,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder,
+            EmailService emailService) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.departmentRepository = departmentRepository;
@@ -108,6 +111,7 @@ public class AdminDashboardController {
         this.emailLogRepository = emailLogRepository;
         this.activityLogRepository = activityLogRepository;
         this.passwordEncoder = passwordEncoder;
+        this.emailService = emailService;
     }
 
     @GetMapping("/dashboard")
@@ -258,6 +262,7 @@ public class AdminDashboardController {
 
     @GetMapping("/roles")
     public List<Map<String, Object>> roles() {
+        ensureManagerRole();
         return buildRoles(roleRepository.findAll());
     }
 
@@ -380,6 +385,40 @@ public class AdminDashboardController {
         applyEmailPayload(emailLog, payload, true);
         EmailLog saved = emailLogRepository.save(emailLog);
         return ResponseEntity.status(HttpStatus.CREATED).body(findEmailLogPayload(saved.getId()));
+    }
+
+    @PostMapping("/email-logs/send")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> sendEmailNotification(@RequestBody Map<String, Object> payload) {
+        String toEmail = requiredString(payload, "toEmail");
+        String subject = requiredString(payload, "subject");
+        String content = textOrNull(stringValue(payload, "content", ""));
+
+        Map<String, Object> logPayload = new LinkedHashMap<>(payload);
+        logPayload.put("toEmail", toEmail);
+        logPayload.put("subject", subject);
+        logPayload.put("content", content);
+        logPayload.put("sentAt", currentDateTime().toString());
+
+        String errorMessage = "";
+        try {
+            emailService.sendPlainEmail(toEmail, subject, content);
+            logPayload.put("status", "SENT");
+        } catch (Exception exception) {
+            logPayload.put("status", "FAILED");
+            errorMessage = firstNonBlank(exception.getMessage(), exception.getClass().getSimpleName(), "Email send failed");
+        }
+
+        EmailLog emailLog = new EmailLog();
+        applyEmailPayload(emailLog, logPayload, true);
+        EmailLog saved = emailLogRepository.save(emailLog);
+        Map<String, Object> result = findEmailLogPayload(saved.getId());
+        if (!errorMessage.isBlank()) {
+            result.put("message", "Khong gui duoc email that: " + errorMessage);
+        } else {
+            result.put("message", "Da gui email that va luu lich su.");
+        }
+        return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 
     @PutMapping("/email-logs/{id}")
@@ -527,6 +566,7 @@ public class AdminDashboardController {
                         proposal.getDepartment())));
         Map<String, Object> publishPayload = new LinkedHashMap<>(payload);
         publishPayload.putIfAbsent("imageUrl", textOrEmpty(proposal.getImageUrl()));
+        publishPayload.putIfAbsent("imageUrls", imageListForResponse(proposal.getImageUrl(), proposal.getImageUrls()));
         publishPayload.putIfAbsent("budget", firstNonNull(proposal.getBudget(), BigDecimal.ZERO));
         publishPayload.putIfAbsent("location", firstNonBlank(proposal.getLocation(), savedEvent.getLocation(), "FPT Campus"));
         savedEvent.setLocation(textOrNull(stringValue(publishPayload, "location", firstNonBlank(savedEvent.getLocation(), proposal.getLocation(), "FPT Campus"))));
@@ -695,6 +735,7 @@ public class AdminDashboardController {
         long eventCount = eventRepository.countByDepartmentId(department.getId());
         long proposalCount = eventProposalRepository.countByDepartmentIdAndStatusIn(department.getId(), ACTIVE_PROPOSAL_STATUSES);
         long studentCount = countStudentsForDepartment(department);
+        User manager = managerForDepartment(department);
 
         Map<String, Object> item = new LinkedHashMap<>();
         item.put("id", department.getId());
@@ -705,8 +746,40 @@ public class AdminDashboardController {
         item.put("eventCount", eventCount);
         item.put("proposalCount", proposalCount);
         item.put("studentCount", studentCount);
+        item.put("managerId", manager != null ? manager.getId() : null);
+        item.put("managerName", manager != null ? textOrEmpty(manager.getFullName()) : "");
+        item.put("managerEmail", manager != null ? manager.getEmail() : "");
         item.put("status", eventCount + proposalCount > 0 ? "ACTIVE" : "REVIEW");
         return item;
+    }
+
+    private Role ensureManagerRole() {
+        Role role = roleRepository.findByName("MANAGER");
+        if (role != null) {
+            return role;
+        }
+        return roleRepository.save(new Role("MANAGER", "Quan ly khoa/bo mon: phu trach proposal, event va sinh vien trong don vi."));
+    }
+
+    private User managerForDepartment(Department department) {
+        String departmentName = textOrEmpty(department.getName());
+        String facultyName = AcademicStructure.facultyOf(departmentName);
+        return userRepository.findAll().stream()
+                .filter(user -> Boolean.TRUE.equals(user.getStatus()))
+                .filter(user -> user.getRole() != null)
+                .filter(user -> {
+                    String role = textOrEmpty(user.getRole().getName()).toUpperCase(Locale.ROOT);
+                    return "MANAGER".equals(role) || "DEPARTMENT".equals(role);
+                })
+                .filter(user -> {
+                    String major = textOrEmpty(user.getMajor());
+                    return sameKey(major, departmentName) || sameKey(major, facultyName);
+                })
+                .sorted(Comparator
+                        .comparing((User user) -> "MANAGER".equalsIgnoreCase(user.getRole().getName()) ? 0 : 1)
+                        .thenComparing(User::getFullName, Comparator.nullsLast(String::compareToIgnoreCase)))
+                .findFirst()
+                .orElse(null);
     }
 
     private long countStudentsForDepartment(Department department) {
@@ -874,6 +947,7 @@ public class AdminDashboardController {
         item.put("endTime", event.getEndTime());
         item.put("capacity", firstNonNull(event.getCapacity(), 0));
         item.put("imageUrl", firstNonBlank(event.getImageUrl(), defaultEventImage(event), ""));
+        item.put("imageUrls", imageListForResponse(firstNonBlank(event.getImageUrl(), defaultEventImage(event), ""), event.getImageUrls()));
         item.put("budget", firstNonNull(event.getBudget(), BigDecimal.ZERO));
         item.put("status", businessEventStatus(event, asOf));
         item.put("createdAt", event.getCreatedAt());
@@ -919,6 +993,7 @@ public class AdminDashboardController {
         item.put("location", textOrEmpty(proposal.getLocation()));
         item.put("capacity", firstNonNull(proposal.getCapacity(), 0));
         item.put("imageUrl", textOrEmpty(proposal.getImageUrl()));
+        item.put("imageUrls", imageListForResponse(proposal.getImageUrl(), proposal.getImageUrls()));
         item.put("budget", firstNonNull(proposal.getBudget(), BigDecimal.ZERO));
         item.put("proposedDate", proposal.getProposedDate());
         item.put("status", textOrEmpty(proposal.getStatus()));
@@ -1015,7 +1090,9 @@ public class AdminDashboardController {
     }
 
     private void applyEventMediaAndBudget(Event event, Map<String, Object> payload) {
-        event.setImageUrl(textOrNull(stringValue(payload, "imageUrl", textOrEmpty(event.getImageUrl()))));
+        List<String> images = imageListFromPayload(payload, textOrEmpty(event.getImageUrl()), event.getImageUrls());
+        event.setImageUrl(images.isEmpty() ? null : images.get(0));
+        event.setImageUrls(joinImageUrls(images));
         BigDecimal budget = decimalValue(payload, "budget", firstNonNull(event.getBudget(), BigDecimal.ZERO));
         if (budget.compareTo(BigDecimal.ZERO) < 0) {
             throw badRequest("Ngân sách không hợp lệ.");
@@ -1032,7 +1109,9 @@ public class AdminDashboardController {
         if (proposal.getCapacity() == null || proposal.getCapacity() <= 0) {
             throw badRequest("Sức chứa phải lớn hơn 0.");
         }
-        proposal.setImageUrl(textOrNull(stringValue(payload, "imageUrl", textOrEmpty(proposal.getImageUrl()))));
+        List<String> images = imageListFromPayload(payload, textOrEmpty(proposal.getImageUrl()), proposal.getImageUrls());
+        proposal.setImageUrl(images.isEmpty() ? null : images.get(0));
+        proposal.setImageUrls(joinImageUrls(images));
         BigDecimal budget = decimalValue(payload, "budget", firstNonNull(proposal.getBudget(), BigDecimal.ZERO));
         if (budget.compareTo(BigDecimal.ZERO) < 0) {
             throw badRequest("Ngân sách không hợp lệ.");
@@ -1267,6 +1346,66 @@ public class AdminDashboardController {
 
     private String textOrEmpty(String value) {
         return value == null ? "" : value.trim();
+    }
+
+    private List<String> imageListForResponse(String primaryImage, String galleryValue) {
+        List<String> images = new ArrayList<>();
+        addImageValue(images, primaryImage);
+        addImageValue(images, galleryValue);
+        return images;
+    }
+
+    private List<String> imageListFromPayload(Map<String, Object> payload, String existingPrimary, String existingGallery) {
+        List<String> images = new ArrayList<>();
+        String primary = stringValue(payload, "imageUrl", existingPrimary);
+        addImageValue(images, primary);
+        Object gallery = payload.containsKey("imageUrls") ? payload.get("imageUrls") : existingGallery;
+        addImageValue(images, gallery);
+        return images;
+    }
+
+    private String joinImageUrls(List<String> images) {
+        return images == null || images.isEmpty() ? null : String.join("\n", images);
+    }
+
+    private void addImageValue(List<String> target, Object raw) {
+        if (raw == null) {
+            return;
+        }
+        if (raw instanceof Iterable<?> values) {
+            for (Object value : values) {
+                addImageValue(target, value);
+            }
+            return;
+        }
+        String[] parts = String.valueOf(raw).split("[\\r\\n,|]+");
+        for (String part : parts) {
+            String url = part == null ? "" : part.trim();
+            if (url.isBlank()) {
+                continue;
+            }
+            boolean exists = target.stream().anyMatch(existing -> existing.equalsIgnoreCase(url));
+            if (!exists && target.size() < 8) {
+                target.add(url);
+            }
+        }
+    }
+
+    private boolean sameKey(String left, String right) {
+        return normalizeKey(left).equals(normalizeKey(right));
+    }
+
+    private String normalizeKey(String value) {
+        if (value == null) {
+            return "";
+        }
+        return java.text.Normalizer.normalize(value, java.text.Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "")
+                .toLowerCase(Locale.ROOT)
+                .replace('đ', 'd')
+                .replace('Đ', 'd')
+                .replaceAll("[^a-z0-9]+", " ")
+                .trim();
     }
 
     private String firstNonBlank(String first, String second, String fallback) {

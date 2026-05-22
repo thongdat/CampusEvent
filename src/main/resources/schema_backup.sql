@@ -91,6 +91,7 @@ CREATE TABLE event (
     end_time DATETIME2 NOT NULL,
     capacity INT,
     image_url NVARCHAR(500),
+    image_urls NVARCHAR(MAX),
     budget DECIMAL(18,2) NOT NULL DEFAULT 0,
     status VARCHAR(50) NOT NULL,
     created_at DATETIME2 NOT NULL,
@@ -103,6 +104,11 @@ CREATE TABLE event_proposal (
     id BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
     title NVARCHAR(200) NOT NULL,
     description NVARCHAR(MAX),
+    location NVARCHAR(200),
+    capacity INT,
+    image_url NVARCHAR(500),
+    image_urls NVARCHAR(MAX),
+    budget DECIMAL(18,2) NOT NULL DEFAULT 0,
     proposed_date DATETIME2 NOT NULL,
     status VARCHAR(50) NOT NULL,
     note NVARCHAR(MAX),
@@ -186,7 +192,8 @@ INSERT INTO role (name, description) VALUES
 ('ADMIN', N'Quản trị viên hệ thống'),
 ('DEPARTMENT', N'Khoa / Bộ môn'),
 ('COMMITTEE', N'Hội đồng duyệt sự kiện'),
-('STUDENT', N'Sinh viên');
+('STUDENT', N'Sinh viên'),
+('MANAGER', N'Quản lý khoa/bộ môn');
 GO
 
 INSERT INTO department (name, description, created_at) VALUES
@@ -199,7 +206,7 @@ GO
 
 INSERT INTO users (full_name, email, password, phone, created_at, status, role_id, major, semester, total_points) VALUES
 (N'Admin User',          'admin@example.com',      'hashed_password_123', '0901234567', GETDATE(), 1, 1, NULL, NULL, 0),
-(N'Department IT',       'department@example.com', 'hashed_password_456', '0912345678', GETDATE(), 1, 2, NULL, NULL, 0),
+(N'Department IT',       'department@example.com', 'hashed_password_456', '0912345678', GETDATE(), 1, 5, N'Công nghệ Thông tin', NULL, 0),
 (N'Committee User',      'committee@example.com',  'hashed_password_com', '0911111111', GETDATE(), 1, 3, NULL, NULL, 0),
 (N'Nguyễn Văn A',        'student1@example.com',   'hashed_password_789', '0923456789', GETDATE(), 1, 4, N'Công nghệ Thông tin', 3, 42),
 (N'Trần Thị B',          'student2@example.com',   'hashed_password_101', '0934567890', GETDATE(), 1, 4, N'Công nghệ Thông tin', 2, 36),
@@ -231,11 +238,28 @@ INSERT INTO event (title, description, location, start_time, end_time, capacity,
 (N'Seminar: AI & Machine Learning', N'Giới thiệu AI và ML trong thực tế', N'Phòng 201 - Tòa A', '2026-06-01 13:00:00', '2026-06-01 15:00:00', 80, N'/assets/events/ai-ml.jpg', 15000000, 'PUBLISHED', GETDATE(), 1);
 GO
 
+UPDATE event
+SET image_urls = image_url
+WHERE image_url IS NOT NULL;
+GO
+
 INSERT INTO event_proposal (title, description, proposed_date, status, note, created_at, department_id) VALUES
 (N'Database Performance Clinic', N'Tối ưu truy vấn SQL Server cho sinh viên SWP.', '2026-06-10 09:00:00', 'PENDING', N'Chờ hội đồng duyệt.', GETDATE(), 1),
 (N'Business Case Challenge', N'Cuộc thi phân tích tình huống kinh doanh.', '2026-06-14 13:30:00', 'APPROVED', N'Đã duyệt, chuẩn bị tạo event.', GETDATE(), 2),
 (N'Portfolio Review Day', N'Góp ý portfolio thiết kế cho sinh viên.', '2026-06-18 08:30:00', 'REVISION_REQUIRED', N'Cần bổ sung ngân sách.', GETDATE(), 3),
 (N'English Speaking Workshop', N'Luyện phỏng vấn bằng tiếng Anh.', '2026-06-22 15:00:00', 'REJECTED', N'Lịch trùng sự kiện khác.', GETDATE(), 5);
+GO
+
+UPDATE event_proposal
+SET
+    location = COALESCE(location, N'FPT Campus'),
+    capacity = COALESCE(capacity, 100),
+    budget = COALESCE(budget, 5000000),
+    image_url = COALESCE(image_url, N'https://images.unsplash.com/photo-1540575467063-027a26d3b38c?auto=format&fit=crop&w=1200&q=80');
+
+UPDATE event_proposal
+SET image_urls = image_url
+WHERE image_url IS NOT NULL;
 GO
 
 INSERT INTO registration (registration_date, status, note, event_id, student_id) VALUES
@@ -281,7 +305,7 @@ GO
 PRINT N'';
 PRINT N'=====================================================';
 PRINT N'  HOÀN TẤT! Database đã sẵn sàng.';
-PRINT N'  - 4 roles, 5 departments, 12 users, 8 students';
+PRINT N'  - 5 roles, 5 departments, 12 users, 8 students';
 PRINT N'  - Student code dùng mã thật HE180001...HE180008, không dùng SV001';
 PRINT N'  - Phone và student_code đều có ràng buộc duy nhất';
 PRINT N'=====================================================';

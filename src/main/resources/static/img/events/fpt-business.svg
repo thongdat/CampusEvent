@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Startup business FPT cover">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#052e16"/>
+      <stop offset="0.55" stop-color="#16a34a"/>
+      <stop offset="1" stop-color="#a7f3d0"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="600" fill="url(#bg)"/>
+  <g opacity="0.15" stroke="#ffffff" fill="none" stroke-width="2">
+    <path d="M820 540 L900 460 L980 480 L1060 360 L1140 240"/>
+    <circle cx="820" cy="540" r="6"/>
+    <circle cx="900" cy="460" r="6"/>
+    <circle cx="980" cy="480" r="6"/>
+    <circle cx="1060" cy="360" r="6"/>
+    <circle cx="1140" cy="240" r="6"/>
+  </g>
+  <g transform="translate(64,68)">
+    <rect x="0" y="0" width="58" height="22" rx="4" fill="#f37021"/>
+    <text x="29" y="17" text-anchor="middle" font-family="Inter, sans-serif" font-weight="900" font-size="16" fill="#ffffff">FPT</text>
+    <text x="68" y="17" font-family="Inter, sans-serif" font-weight="700" font-size="13" fill="#ffffff" letter-spacing="0.18em">UNIVERSITY</text>
+    <text x="0" y="42" font-family="Inter, sans-serif" font-weight="500" font-size="12" fill="#bbf7d0" letter-spacing="0.12em">STARTUP · PITCH · GROWTH</text>
+  </g>
+  <g transform="translate(64,260)">
+    <rect x="0" y="0" width="220" height="36" rx="18" fill="#ffffff"/>
+    <text x="110" y="24" text-anchor="middle" font-family="Inter, sans-serif" font-weight="800" font-size="13" fill="#052e16" letter-spacing="0.08em">KHÞI NGHIÆP &amp; KINH DOANH</text>
+  </g>
+  <text x="64" y="370" font-family="Inter, sans-serif" font-weight="800" font-size="60" fill="#ffffff">Ý t°ßng thành s£n ph©m.</text>
+  <text x="64" y="432" font-family="Inter, sans-serif" font-weight="800" font-size="60" fill="#ffd166">S£n ph©m ra thË tr°Ýng.</text>
+  <text x="64" y="490" font-family="Inter, sans-serif" font-weight="500" font-size="20" fill="#f0fdf4">Pitch day · mentor chuyên gia · demo cùng quù §u t° ViÇt Nam</text>
+</svg>

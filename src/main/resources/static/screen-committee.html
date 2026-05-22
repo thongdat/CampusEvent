@@ -3,170 +3,517 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Committee — Duyệt proposal</title>
+    <title>Hội đồng duyệt đề xuất · Campus Events</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } } };</script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+                    keyframes: {
+                        pop: { '0%': { transform: 'scale(0.97)', opacity: 0 }, '100%': { transform: 'scale(1)', opacity: 1 } },
+                        shimmer: { '0%': { backgroundPosition: '-400px 0' }, '100%': { backgroundPosition: '400px 0' } }
+                    },
+                    animation: { pop: 'pop .18s ease-out', shimmer: 'shimmer 1.4s linear infinite' }
+                }
+            }
+        };
+    </script>
     <style>
-        .queue-item { transition: background .2s, border-color .2s; }
-        .queue-item:hover, .queue-item.selected { background: rgba(251,191,36,.08); border-color: rgba(245,158,11,.4); }
+        body { font-family: 'Inter', system-ui, sans-serif; }
+        .skeleton {
+            background: linear-gradient(90deg,#fef3c7 0%,#fde68a 40%,#fef3c7 80%);
+            background-size: 800px 100%;
+            animation: shimmer 1.4s linear infinite;
+        }
+        .queue-item { transition: all .15s ease; }
+        .queue-item:hover { background: rgba(251,191,36,.08); }
+        .queue-item.selected { background: linear-gradient(135deg,#fef3c7,#fde68a); border-color: #d97706; box-shadow: 0 6px 18px -8px rgba(217,119,6,.4); }
+        .dialog-backdrop { background: rgba(15,23,42,.55); backdrop-filter: blur(6px); }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 8px; }
     </style>
 </head>
-<body class="min-h-screen bg-amber-50/30 font-sans text-slate-800 antialiased">
-    <header class="border-b border-amber-200/60 bg-white/90 backdrop-blur-md">
-        <div class="mx-auto flex h-16 max-w-[1600px] items-center justify-between px-4 sm:px-6">
-            <div class="flex items-center gap-3">
-                <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 text-sm font-bold text-white">C</span>
-                <div>
-                    <p class="text-xs font-medium text-amber-800">Hội đồng</p>
-                    <p class="text-sm font-semibold text-slate-900">Duyệt đề xuất</p>
-                </div>
-            </div>
-            <div class="flex items-center gap-3">
-                <span class="hidden rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-900 sm:inline">3 chờ xử lý</span>
-                <a href="role-screens.html" class="text-sm font-medium text-amber-800 hover:underline">← Vai trò</a>
-                <details class="relative">
-                    <summary class="flex cursor-pointer list-none items-center gap-2 rounded-lg border border-amber-100 bg-white px-2.5 py-2 text-sm font-semibold text-slate-700 shadow-sm">
-                        <span data-account-initials class="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-100 text-xs font-bold text-amber-800">C</span>
-                        <span data-account-name class="hidden max-w-36 truncate sm:inline">Committee</span>
-                    </summary>
-                    <div class="absolute right-0 mt-2 w-56 rounded-xl border border-slate-200 bg-white p-2 text-sm shadow-xl">
-                        <div class="rounded-lg bg-slate-50 px-3 py-2">
-                            <p data-account-name class="truncate font-semibold text-slate-900">Committee</p>
-                            <p data-account-role class="text-xs font-semibold uppercase text-slate-500">COMMITTEE</p>
-                        </div>
-                        <a href="forgot-password.html" class="mt-1 block rounded-lg px-3 py-2 font-semibold text-slate-700 hover:bg-amber-50">Đổi mật khẩu</a>
-                        <button type="button" data-logout class="block w-full rounded-lg px-3 py-2 text-left font-semibold text-rose-600 hover:bg-rose-50">Đăng xuất</button>
-                    </div>
-                </details>
+<body class="min-h-screen bg-amber-50/40 font-sans text-slate-800 antialiased">
+
+<header class="sticky top-0 z-30 border-b border-amber-200/70 bg-white/95 backdrop-blur-md">
+    <div class="mx-auto flex h-16 max-w-[1600px] items-center justify-between gap-3 px-4 sm:px-6">
+        <div class="flex items-center gap-3">
+            <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-base font-bold text-white shadow-md shadow-amber-500/30">⚖</span>
+            <div class="leading-tight">
+                <p class="text-[11px] font-semibold uppercase tracking-widest text-amber-800">Hội đồng</p>
+                <p class="text-sm font-bold text-slate-900">Duyệt đề xuất</p>
             </div>
         </div>
-    </header>
 
-    <div class="mx-auto flex max-h-[calc(100vh-4rem)] max-w-[1600px] flex-col lg:h-[calc(100vh-4rem)] lg:flex-row">
-        <!-- Queue -->
-        <aside class="w-full shrink-0 border-b border-amber-200/50 bg-white lg:w-80 lg:border-b-0 lg:border-r lg:overflow-y-auto">
-            <div class="p-4">
-                <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500">Hàng đợi</h2>
-                <ul class="mt-3 space-y-2">
-                    <li class="queue-item selected cursor-pointer rounded-xl border border-amber-300 bg-amber-50 p-4">
-                        <p class="font-semibold text-slate-900">Workshop UX Research</p>
-                        <p class="mt-1 text-xs text-slate-500">Khoa QTKD · 14/05</p>
-                        <span class="mt-2 inline-block rounded-full bg-amber-200 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-900">Mới</span>
-                    </li>
-                    <li class="queue-item cursor-pointer rounded-xl border border-slate-200 bg-white p-4">
-                        <p class="font-semibold text-slate-900">Ngày hội startup</p>
-                        <p class="mt-1 text-xs text-slate-500">Viện Đổi mới · 12/05</p>
-                    </li>
-                    <li class="queue-item cursor-pointer rounded-xl border border-slate-200 bg-white p-4">
-                        <p class="font-semibold text-slate-900">Giải thể thao liên khoa</p>
-                        <p class="mt-1 text-xs text-slate-500">Phòng CTSV · 10/05</p>
-                    </li>
-                </ul>
-            </div>
-        </aside>
+        <div class="hidden flex-1 max-w-md md:block">
+            <label class="relative block">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+                </span>
+                <input id="searchInput" type="search" placeholder="Tìm đề xuất, khoa..."
+                    class="w-full rounded-xl border border-amber-200 bg-amber-50/50 py-2.5 pl-10 pr-3 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-300">
+            </label>
+        </div>
 
-        <!-- Detail -->
-        <main class="min-h-0 flex-1 overflow-y-auto bg-gradient-to-b from-white to-amber-50/20 p-4 sm:p-8">
-            <div class="mx-auto max-w-3xl">
-                <div class="flex flex-wrap items-start justify-between gap-4">
-                    <div>
-                        <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Proposal #2026-042</p>
-                        <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Workshop UX Research</h1>
-                        <p class="mt-2 text-sm text-slate-600">Đề xuất tổ chức buổi workshop 3h cho 80 sinh viên năm 3–4.</p>
+        <div class="flex items-center gap-2">
+            <a href="role-screens.html" class="hidden rounded-lg px-3 py-2 text-sm font-medium text-amber-800 hover:bg-amber-100 sm:inline">← Vai trò</a>
+            <details class="relative">
+                <summary class="flex cursor-pointer list-none items-center gap-2 rounded-lg border border-amber-200 bg-white px-2.5 py-2 text-sm font-semibold text-slate-700 shadow-sm">
+                    <span id="accountInitials" class="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-100 text-xs font-bold text-amber-800">C</span>
+                    <span id="accountName" class="hidden max-w-32 truncate sm:inline">Committee</span>
+                </summary>
+                <div class="absolute right-0 z-40 mt-2 w-60 rounded-xl border border-slate-200 bg-white p-2 text-sm shadow-2xl animate-pop">
+                    <div class="rounded-lg bg-slate-50 px-3 py-3">
+                        <p id="accountNameLg" class="truncate font-semibold text-slate-900">Committee</p>
+                        <p id="accountEmail" class="truncate text-xs text-slate-500">—</p>
                     </div>
-                    <img src="https://images.unsplash.com/photo-1540575467063-027a26d3b38c?w=200&h=200&fit=crop" alt="" class="hidden h-24 w-24 rounded-2xl object-cover shadow-lg sm:block" width="96" height="96">
+                    <a href="forgot-password.html" class="mt-1 block rounded-lg px-3 py-2 font-semibold text-slate-700 hover:bg-amber-50">Đổi mật khẩu</a>
+                    <button type="button" id="btnLogout" class="block w-full rounded-lg px-3 py-2 text-left font-semibold text-rose-600 hover:bg-rose-50">Đăng xuất</button>
                 </div>
-
-                <dl class="mt-8 grid gap-4 rounded-2xl border border-amber-100 bg-white/80 p-6 sm:grid-cols-2">
-                    <div>
-                        <dt class="text-xs font-semibold uppercase text-slate-500">Phòng ban</dt>
-                        <dd class="mt-1 font-medium text-slate-900">Khoa QTKD</dd>
-                    </div>
-                    <div>
-                        <dt class="text-xs font-semibold uppercase text-slate-500">Ngân sách đề xuất</dt>
-                        <dd class="mt-1 font-medium text-slate-900">22.000.000đ</dd>
-                    </div>
-                    <div>
-                        <dt class="text-xs font-semibold uppercase text-slate-500">Ngày tổ chức</dt>
-                        <dd class="mt-1 font-medium text-slate-900">28/06/2026</dd>
-                    </div>
-                    <div>
-                        <dt class="text-xs font-semibold uppercase text-slate-500">Người nộp</dt>
-                        <dd class="mt-1 font-medium text-slate-900">TS. Phạm Lan</dd>
-                    </div>
-                </dl>
-
-                <section class="mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                    <h2 class="text-sm font-semibold text-slate-900">Nội dung đề xuất</h2>
-                    <p class="mt-3 text-sm leading-relaxed text-slate-600">
-                        Chương trình gồm phần lý thuyết nghiên cứu UX và phần thực hành nhóm. Cần hội trường 200 chỗ, bảng flipchart, và coffee break.
-                        Kết quả mong đợi: sinh viên hoàn thành một mini project persona + user journey.
-                    </p>
-                </section>
-
-                <div class="sticky bottom-0 mt-10 flex flex-col gap-3 rounded-2xl border border-amber-200/80 bg-white/95 p-4 shadow-xl backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between">
-                    <p class="text-sm text-slate-600">Chọn một hành động — không thể hoàn tác qua mockup này.</p>
-                    <div class="flex flex-wrap gap-2">
-                        <button type="button" class="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">Yêu cầu chỉnh sửa</button>
-                        <button type="button" class="rounded-xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-rose-500/25 transition hover:bg-rose-700">Từ chối</button>
-                        <button type="button" class="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30 transition hover:brightness-110">Phê duyệt</button>
-                    </div>
-                </div>
-            </div>
-        </main>
+            </details>
+        </div>
     </div>
-    <script>
-        (function () {
-            var raw = {};
-            try { raw = JSON.parse(sessionStorage.getItem('user') || '{}'); } catch (ignore) {}
-            var name = raw.fullName || localStorage.getItem('userName') || 'Committee';
-            var role = raw.role || localStorage.getItem('userRole') || 'COMMITTEE';
-            var initials = name.split(/\s+/).filter(Boolean).slice(-2).map(function (part) { return part.charAt(0); }).join('').toUpperCase() || 'C';
-            document.querySelectorAll('[data-account-name]').forEach(function (node) { node.textContent = name; });
-            document.querySelectorAll('[data-account-role]').forEach(function (node) { node.textContent = role; });
-            document.querySelectorAll('[data-account-initials]').forEach(function (node) { node.textContent = initials; });
-        })();
-        document.querySelectorAll('.queue-item').forEach(function (el) {
-            el.addEventListener('click', function () {
-                document.querySelectorAll('.queue-item').forEach(function (x) {
-                    x.classList.remove('selected', 'border-amber-300', 'bg-amber-50');
-                    x.classList.add('border-slate-200', 'bg-white');
-                });
-                el.classList.add('selected', 'border-amber-300', 'bg-amber-50');
-                el.classList.remove('border-slate-200', 'bg-white');
-            });
-        });
-        var logoutInProgress = false;
-        function showLogoutNotice(message) {
-            var notice = document.querySelector('[data-logout-notice]');
-            if (!notice) {
-                notice = document.createElement('div');
-                notice.setAttribute('data-logout-notice', '');
-                notice.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(15,23,42,.32);opacity:0;transition:opacity .18s ease;';
-                notice.innerHTML = '<div style="display:grid;justify-items:center;gap:12px;width:min(352px,100%);padding:24px;border-radius:12px;background:#fff;color:#0f172a;text-align:center;box-shadow:0 24px 70px -24px rgba(15,23,42,.48);"><div style="display:flex;width:48px;height:48px;align-items:center;justify-content:center;border-radius:999px;background:#fff7ed;color:#ea580c;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><p data-logout-text style="margin:0;font-weight:700;line-height:1.5;"></p></div>';
-                document.body.appendChild(notice);
-            }
-            notice.querySelector('[data-logout-text]').textContent = message;
-            notice.style.opacity = '1';
+</header>
+
+<!-- Stats Strip -->
+<section class="mx-auto max-w-[1600px] px-4 pt-6 sm:px-6">
+    <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div data-stat-card="PENDING" class="cursor-pointer rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 to-amber-100 p-4 transition hover:shadow-lg">
+            <p class="text-xs font-semibold uppercase tracking-widest text-amber-800">Chờ duyệt</p>
+            <p data-stat-pending class="mt-1 text-3xl font-bold text-amber-900">—</p>
+        </div>
+        <div data-stat-card="REVISION" class="cursor-pointer rounded-2xl border border-sky-200 bg-gradient-to-br from-sky-50 to-sky-100 p-4 transition hover:shadow-lg">
+            <p class="text-xs font-semibold uppercase tracking-widest text-sky-800">Đang chỉnh sửa</p>
+            <p data-stat-revision class="mt-1 text-3xl font-bold text-sky-900">—</p>
+        </div>
+        <div data-stat-card="APPROVED" class="cursor-pointer rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-emerald-100 p-4 transition hover:shadow-lg">
+            <p class="text-xs font-semibold uppercase tracking-widest text-emerald-800">Đã duyệt</p>
+            <p data-stat-approved class="mt-1 text-3xl font-bold text-emerald-900">—</p>
+        </div>
+        <div data-stat-card="REJECTED" class="cursor-pointer rounded-2xl border border-rose-200 bg-gradient-to-br from-rose-50 to-rose-100 p-4 transition hover:shadow-lg">
+            <p class="text-xs font-semibold uppercase tracking-widest text-rose-800">Đã từ chối</p>
+            <p data-stat-rejected class="mt-1 text-3xl font-bold text-rose-900">—</p>
+        </div>
+    </div>
+</section>
+
+<div class="mx-auto mt-4 grid max-w-[1600px] gap-0 px-0 sm:px-6 lg:grid-cols-[22rem_minmax(0,1fr)]">
+    <!-- QUEUE -->
+    <aside class="border-y border-amber-200/60 bg-white lg:rounded-l-2xl lg:border lg:border-r-0 lg:max-h-[calc(100vh-12rem)] lg:overflow-y-auto">
+        <header class="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-amber-200/60 bg-white/95 px-4 py-3 backdrop-blur">
+            <div class="flex gap-1">
+                <button data-filter="PENDING,REVISION" class="filter-chip rounded-full bg-amber-500 px-3 py-1.5 text-xs font-bold text-white">Cần xử lý</button>
+                <button data-filter="APPROVED" class="filter-chip rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:border-emerald-300">Đã duyệt</button>
+                <button data-filter="REJECTED" class="filter-chip rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:border-rose-300">Từ chối</button>
+            </div>
+            <span id="queueCount" class="text-xs font-semibold text-slate-500">—</span>
+        </header>
+        <ul id="queue" class="divide-y divide-amber-100/80"></ul>
+        <div id="queueEmpty" hidden class="px-6 py-12 text-center">
+            <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-2xl">✓</div>
+            <p class="mt-2 text-sm font-semibold text-slate-700">Không có gì cần xử lý</p>
+            <p class="text-xs text-slate-500">Chuyển sang tab khác để xem lịch sử.</p>
+        </div>
+    </aside>
+
+    <!-- DETAIL -->
+    <main class="border border-amber-200/60 bg-gradient-to-b from-white to-amber-50/30 lg:rounded-r-2xl lg:max-h-[calc(100vh-12rem)] lg:overflow-y-auto">
+        <div id="detail" class="px-4 py-6 sm:px-8">
+            <div class="flex h-[60vh] flex-col items-center justify-center text-center text-slate-400">
+                <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-100 text-3xl">📋</div>
+                <p class="mt-3 text-sm font-semibold">Chọn một đề xuất từ hàng đợi để xem chi tiết</p>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- TOAST + MODAL -->
+<div id="toast" class="pointer-events-none fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white opacity-0 shadow-2xl transition-opacity"></div>
+
+<div id="modal" hidden class="fixed inset-0 z-40 flex items-end justify-center overflow-y-auto p-0 sm:items-center sm:p-4">
+    <div class="dialog-backdrop absolute inset-0" data-modal-close></div>
+    <div class="relative w-full max-w-md animate-pop overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:rounded-3xl">
+        <div id="modalBody"></div>
+    </div>
+</div>
+
+<script>
+(function () {
+    'use strict';
+
+    const API_BASE = '/api';
+    const STATE = {
+        filter: 'PENDING,REVISION',
+        query: '',
+        items: [],
+        selectedId: null
+    };
+
+    function $(s, r = document) { return r.querySelector(s); }
+    function $$(s, r = document) { return Array.from(r.querySelectorAll(s)); }
+    function escapeHtml(s) {
+        return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    // Session user
+    let sessionUser = null;
+    try { sessionUser = JSON.parse(sessionStorage.getItem('user') || '{}'); } catch (e) {}
+    const name = (sessionUser && sessionUser.fullName) || 'Committee';
+    const initials = name.split(/\s+/).filter(Boolean).slice(-2).map(p => p.charAt(0)).join('').toUpperCase() || 'C';
+    $('#accountInitials').textContent = initials;
+    $('#accountName').textContent = name;
+    $('#accountNameLg').textContent = name;
+    $('#accountEmail').textContent = (sessionUser && sessionUser.email) || '—';
+
+    async function api(path, opts = {}) {
+        const headers = Object.assign({ 'Accept': 'application/json' }, opts.headers || {});
+        if (sessionUser && sessionUser.email) headers['X-User-Email'] = sessionUser.email;
+        if (opts.body && typeof opts.body !== 'string') {
+            headers['Content-Type'] = 'application/json';
+            opts.body = JSON.stringify(opts.body);
         }
-        document.querySelector('[data-logout]').addEventListener('click', function () {
-            if (logoutInProgress) return;
-            logoutInProgress = true;
-            showLogoutNotice('Đang đăng xuất...');
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('userName');
-            localStorage.removeItem('userRole');
-            sessionStorage.clear();
-            fetch('/api/logout', { method: 'POST' }).catch(function () {}).finally(function () {
-                showLogoutNotice('Đã đăng xuất. Đang chuyển về trang đăng nhập...');
-                window.setTimeout(function () {
-                    window.location.href = window.location.pathname.startsWith('/api/') ? '/api/login.html' : 'login.html';
-                }, 900);
-            });
+        const res = await fetch(API_BASE + path, Object.assign({}, opts, { headers }));
+        if (!res.ok) {
+            const text = await res.text().catch(() => '');
+            const err = new Error(text || ('HTTP ' + res.status));
+            err.status = res.status;
+            throw err;
+        }
+        if (res.status === 204) return null;
+        return res.json();
+    }
+
+    function toast(msg, tone = 'success') {
+        const el = $('#toast');
+        el.style.background = tone === 'error' ? '#dc2626' : tone === 'warn' ? '#d97706' : '#059669';
+        el.textContent = msg;
+        el.style.opacity = '1';
+        clearTimeout(toast._t);
+        toast._t = setTimeout(() => el.style.opacity = '0', 2600);
+    }
+
+    function openModal(html) {
+        $('#modalBody').innerHTML = html;
+        $('#modal').hidden = false;
+        document.body.style.overflow = 'hidden';
+    }
+    function closeModal() {
+        $('#modal').hidden = true;
+        document.body.style.overflow = '';
+    }
+    document.addEventListener('click', e => {
+        if (e.target && e.target.matches('[data-modal-close]')) closeModal();
+    });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+    function fmtDate(iso) {
+        if (!iso) return '—';
+        const d = new Date(iso);
+        if (isNaN(d.getTime())) return iso;
+        return d.toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+    function fmtDateShort(iso) {
+        if (!iso) return '—';
+        const d = new Date(iso);
+        if (isNaN(d.getTime())) return iso;
+        return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+    }
+    function fmtMoney(v) {
+        if (v == null) return '—';
+        return Number(v).toLocaleString('vi-VN') + 'đ';
+    }
+    function statusBadge(status) {
+        const m = {
+            'PENDING':  { cls: 'bg-amber-100 text-amber-800',     label: '⏳ Chờ duyệt' },
+            'REVISION': { cls: 'bg-sky-100 text-sky-800',         label: '✎ Yêu cầu sửa' },
+            'APPROVED': { cls: 'bg-emerald-100 text-emerald-800', label: '✓ Đã duyệt' },
+            'REJECTED': { cls: 'bg-rose-100 text-rose-700',       label: '✕ Đã từ chối' }
+        };
+        const e = m[(status || '').toUpperCase()] || { cls: 'bg-slate-100 text-slate-600', label: status || '—' };
+        return `<span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${e.cls}">${e.label}</span>`;
+    }
+
+    // ----------------------------- LOAD -----------------------------
+    async function loadOverview() {
+        try {
+            const data = await api('/committee/overview');
+            $('[data-stat-pending]').textContent  = data.counts.PENDING  || 0;
+            $('[data-stat-revision]').textContent = data.counts.REVISION || 0;
+            $('[data-stat-approved]').textContent = data.counts.APPROVED || 0;
+            $('[data-stat-rejected]').textContent = data.counts.REJECTED || 0;
+        } catch (e) {
+            console.error('overview', e);
+        }
+    }
+
+    async function loadQueue() {
+        $('#queue').innerHTML = '<li class="skeleton mx-4 my-3 h-20 rounded-xl"></li><li class="skeleton mx-4 my-3 h-20 rounded-xl"></li>';
+        $('#queueEmpty').hidden = true;
+        const qs = new URLSearchParams();
+        qs.set('status', STATE.filter);
+        if (STATE.query) qs.set('q', STATE.query);
+        try {
+            const data = await api('/committee/proposals?' + qs.toString());
+            STATE.items = data.items || [];
+            $('#queueCount').textContent = data.total + ' đề xuất';
+            renderQueue();
+            // Auto select first if none
+            if (!STATE.selectedId && STATE.items.length) {
+                selectProposal(STATE.items[0].id);
+            } else if (STATE.selectedId) {
+                const exists = STATE.items.some(i => i.id === STATE.selectedId);
+                if (!exists && STATE.items.length) selectProposal(STATE.items[0].id);
+            }
+        } catch (e) {
+            $('#queue').innerHTML = `<li class="px-4 py-6 text-center text-sm text-rose-600">${escapeHtml(e.message)}</li>`;
+        }
+    }
+
+    function renderQueue() {
+        const ul = $('#queue');
+        if (!STATE.items.length) {
+            ul.innerHTML = '';
+            $('#queueEmpty').hidden = false;
+            return;
+        }
+        $('#queueEmpty').hidden = true;
+        ul.innerHTML = STATE.items.map(p => {
+            const isSelected = p.id === STATE.selectedId;
+            const dept = p.department ? p.department.name : '—';
+            return `
+            <li class="queue-item cursor-pointer border-l-4 px-4 py-4 ${isSelected ? 'selected border-amber-500' : 'border-transparent'}" data-select="${p.id}">
+                <div class="flex items-start justify-between gap-2">
+                    <div class="min-w-0 flex-1">
+                        <p class="truncate text-sm font-bold text-slate-900">${escapeHtml(p.title || 'Không tiêu đề')}</p>
+                        <p class="mt-0.5 truncate text-xs text-slate-500">📂 ${escapeHtml(dept)} · 📅 ${fmtDateShort(p.proposedDate)}</p>
+                    </div>
+                    ${statusBadge(p.status)}
+                </div>
+                <p class="mt-1.5 text-[11px] text-slate-400">Tạo ${fmtDateShort(p.createdAt)}</p>
+            </li>`;
+        }).join('');
+        ul.querySelectorAll('[data-select]').forEach(el => {
+            el.addEventListener('click', () => selectProposal(Number(el.dataset.select)));
         });
-    </script>
+    }
+
+    async function selectProposal(id) {
+        STATE.selectedId = id;
+        renderQueue();
+        $('#detail').innerHTML = '<div class="space-y-3 p-4"><div class="skeleton h-8 w-1/2 rounded"></div><div class="skeleton h-5 w-1/3 rounded"></div><div class="skeleton h-44 w-full rounded-2xl"></div></div>';
+        try {
+            const p = await api('/committee/proposals/' + id);
+            renderDetail(p);
+        } catch (e) {
+            $('#detail').innerHTML = `<p class="px-4 py-6 text-sm text-rose-600">${escapeHtml(e.message)}</p>`;
+        }
+    }
+
+    function renderDetail(p) {
+        const status = (p.status || '').toUpperCase();
+        const actionable = status === 'PENDING' || status === 'REVISION';
+        const dept = p.department ? p.department.name : '—';
+
+        const actions = actionable ? `
+            <div class="sticky bottom-0 mt-8 flex flex-col gap-3 rounded-2xl border border-amber-200 bg-white/95 p-4 shadow-xl backdrop-blur sm:flex-row sm:items-center sm:justify-between">
+                <p class="text-xs text-slate-500">Hành động sẽ ghi log vào hệ thống. Approve sẽ tự tạo Event công khai.</p>
+                <div class="flex flex-wrap gap-2">
+                    <button data-action="revise" class="rounded-xl border border-sky-200 bg-white px-4 py-2.5 text-sm font-semibold text-sky-700 transition hover:bg-sky-50">✎ Yêu cầu sửa</button>
+                    <button data-action="reject" class="rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-rose-500/25 transition hover:bg-rose-700">✕ Từ chối</button>
+                    <button data-action="approve" class="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30 transition hover:brightness-110">✓ Phê duyệt</button>
+                </div>
+            </div>` : `
+            <div class="mt-8 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                Đề xuất này đã được xử lý (${statusBadge(p.status)}). Không thể thay đổi thêm.
+            </div>`;
+
+        $('#detail').innerHTML = `
+        <article>
+            ${p.imageUrl ? `<div class="overflow-hidden rounded-2xl border border-amber-100 bg-slate-100"><img src="${escapeHtml(p.imageUrl)}" alt="" class="h-52 w-full object-cover"></div>` : ''}
+
+            <header class="mt-${p.imageUrl ? '5' : '0'} flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-widest text-amber-700">Đề xuất #${p.id}</p>
+                    <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">${escapeHtml(p.title || '—')}</h1>
+                    <p class="mt-1 text-sm text-slate-500">Khoa: <strong class="text-slate-700">${escapeHtml(dept)}</strong></p>
+                </div>
+                ${statusBadge(p.status)}
+            </header>
+
+            <dl class="mt-6 grid gap-4 rounded-2xl border border-amber-200/70 bg-white p-5 shadow-sm sm:grid-cols-2">
+                <div>
+                    <dt class="text-[11px] font-semibold uppercase tracking-widest text-slate-500">📅 Ngày đề xuất tổ chức</dt>
+                    <dd class="mt-1 font-semibold text-slate-900">${fmtDate(p.proposedDate)}</dd>
+                </div>
+                <div>
+                    <dt class="text-[11px] font-semibold uppercase tracking-widest text-slate-500">👥 Capacity</dt>
+                    <dd class="mt-1 font-semibold text-slate-900">${p.capacity ?? '—'} chỗ</dd>
+                </div>
+                <div>
+                    <dt class="text-[11px] font-semibold uppercase tracking-widest text-slate-500">📍 Địa điểm</dt>
+                    <dd class="mt-1 font-semibold text-slate-900">${escapeHtml(p.location || '—')}</dd>
+                </div>
+                <div>
+                    <dt class="text-[11px] font-semibold uppercase tracking-widest text-slate-500">💰 Ngân sách dự kiến</dt>
+                    <dd class="mt-1 font-semibold text-slate-900">${fmtMoney(p.budget)}</dd>
+                </div>
+            </dl>
+
+            <section class="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <h2 class="text-xs font-bold uppercase tracking-widest text-slate-500">Nội dung đề xuất</h2>
+                <p class="mt-3 whitespace-pre-line text-sm leading-relaxed text-slate-700">${escapeHtml(p.description || 'Không có mô tả.')}</p>
+            </section>
+
+            ${p.note ? `<section class="mt-4 rounded-2xl border border-amber-200 bg-amber-50/70 p-4 text-sm text-amber-900">
+                <p class="text-[11px] font-bold uppercase tracking-widest text-amber-700">Ghi chú gần nhất</p>
+                <p class="mt-1 whitespace-pre-line">${escapeHtml(p.note)}</p>
+            </section>` : ''}
+
+            ${actions}
+        </article>`;
+
+        $$('#detail [data-action]').forEach(btn => btn.addEventListener('click', () => onAction(p, btn.dataset.action)));
+    }
+
+    function onAction(p, action) {
+        if (action === 'approve') {
+            const startDefault = p.proposedDate ? p.proposedDate.substring(0, 16) : '';
+            openModal(`
+            <form id="actionForm" class="p-6">
+                <h3 class="text-lg font-bold text-emerald-700">✓ Phê duyệt đề xuất</h3>
+                <p class="mt-1 text-sm text-slate-500">Tạo event công khai từ "${escapeHtml(p.title)}".</p>
+                <div class="mt-4 space-y-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700">Bắt đầu</label>
+                        <input type="datetime-local" name="startTime" value="${escapeHtml(startDefault)}" required class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-200">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700">Kết thúc</label>
+                        <input type="datetime-local" name="endTime" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-200">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700">Capacity</label>
+                            <input type="number" name="capacity" min="1" value="${p.capacity || 100}" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700">Địa điểm</label>
+                            <input type="text" name="location" value="${escapeHtml(p.location || 'FPT Campus')}" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700">Ghi chú duyệt (tuỳ chọn)</label>
+                        <textarea name="note" rows="2" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"></textarea>
+                    </div>
+                </div>
+                <div class="mt-5 flex justify-end gap-2">
+                    <button type="button" class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700" data-modal-close>Huỷ</button>
+                    <button type="submit" class="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2 text-sm font-semibold text-white shadow">Phê duyệt</button>
+                </div>
+            </form>`);
+            $('#actionForm').addEventListener('submit', e => {
+                e.preventDefault();
+                const fd = new FormData(e.target);
+                submit('approve', p.id, {
+                    startTime: fd.get('startTime'),
+                    endTime: fd.get('endTime'),
+                    capacity: Number(fd.get('capacity') || 100),
+                    location: fd.get('location'),
+                    note: fd.get('note')
+                });
+            });
+        } else if (action === 'reject') {
+            promptReason('✕ Từ chối đề xuất', 'reason', 'Nêu rõ lý do từ chối (sinh viên/khoa sẽ nhìn thấy)', value => submit('reject', p.id, { reason: value }), '#dc2626');
+        } else if (action === 'revise') {
+            promptReason('✎ Yêu cầu chỉnh sửa', 'request', 'Mô tả nội dung cần khoa điều chỉnh', value => submit('revise', p.id, { request: value }), '#0284c7');
+        }
+    }
+
+    function promptReason(title, fieldName, placeholder, onSubmit, color) {
+        openModal(`
+        <form id="reasonForm" class="p-6">
+            <h3 class="text-lg font-bold" style="color:${color}">${title}</h3>
+            <textarea name="${fieldName}" rows="5" required minlength="6" placeholder="${placeholder}"
+                class="mt-4 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-200"></textarea>
+            <div class="mt-4 flex justify-end gap-2">
+                <button type="button" class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700" data-modal-close>Huỷ</button>
+                <button type="submit" class="rounded-xl px-4 py-2 text-sm font-semibold text-white shadow" style="background:${color}">Xác nhận</button>
+            </div>
+        </form>`);
+        $('#reasonForm').addEventListener('submit', e => {
+            e.preventDefault();
+            const v = new FormData(e.target).get(fieldName);
+            if (!v || String(v).trim().length < 6) {
+                toast('Cần nhập ít nhất 6 ký tự', 'warn');
+                return;
+            }
+            onSubmit(String(v).trim());
+        });
+    }
+
+    async function submit(action, id, body) {
+        try {
+            const data = await api('/committee/proposals/' + id + '/' + action, { method: 'POST', body });
+            closeModal();
+            const labels = { approve: 'Đã phê duyệt', reject: 'Đã từ chối', revise: 'Đã gửi yêu cầu chỉnh sửa' };
+            toast('🎉 ' + (labels[action] || 'Thành công') + (data && data.event ? ' · Event #' + data.event.id : ''));
+            await Promise.all([loadOverview(), loadQueue()]);
+            if (data && data.id) selectProposal(data.id);
+        } catch (e) {
+            toast(e.message || 'Thao tác thất bại', 'error');
+        }
+    }
+
+    // ----------------------------- EVENTS -----------------------------
+    $$('.filter-chip').forEach(btn => btn.addEventListener('click', () => {
+        STATE.filter = btn.dataset.filter;
+        $$('.filter-chip').forEach(b => {
+            b.classList.remove('bg-amber-500', 'text-white');
+            b.classList.add('border', 'border-slate-200', 'bg-white', 'text-slate-600');
+        });
+        btn.classList.add('bg-amber-500', 'text-white');
+        btn.classList.remove('border', 'border-slate-200', 'bg-white', 'text-slate-600');
+        STATE.selectedId = null;
+        loadQueue();
+    }));
+
+    $$('[data-stat-card]').forEach(card => card.addEventListener('click', () => {
+        const status = card.dataset.statCard;
+        const chip = $$('.filter-chip').find(c => c.dataset.filter === status);
+        if (chip) chip.click();
+        else {
+            STATE.filter = status;
+            STATE.selectedId = null;
+            loadQueue();
+        }
+    }));
+
+    let searchTimer = null;
+    $('#searchInput').addEventListener('input', e => {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => {
+            STATE.query = e.target.value.trim();
+            loadQueue();
+        }, 300);
+    });
+
+    $('#btnLogout').addEventListener('click', () => {
+        localStorage.clear();
+        sessionStorage.clear();
+        fetch(API_BASE + '/logout', { method: 'POST' }).catch(() => {}).finally(() => {
+            location.href = API_BASE + '/login.html';
+        });
+    });
+
+    // ----------------------------- BOOT -----------------------------
+    loadOverview();
+    loadQueue();
+})();
+</script>
+
 </body>
 </html>

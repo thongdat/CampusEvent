@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Hackathon FPT cover">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0a0a23"/>
+      <stop offset="0.55" stop-color="#1d1c4d"/>
+      <stop offset="1" stop-color="#3d1c75"/>
+    </linearGradient>
+    <linearGradient id="acc" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ff6b35"/>
+      <stop offset="1" stop-color="#ffd166"/>
+    </linearGradient>
+    <pattern id="grid" width="36" height="36" patternUnits="userSpaceOnUse">
+      <path d="M36 0H0V36" fill="none" stroke="#ffffff" stroke-opacity="0.05" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="600" fill="url(#bg)"/>
+  <rect width="1200" height="600" fill="url(#grid)"/>
+  <g opacity="0.25" fill="#ff6b35">
+    <circle cx="1080" cy="120" r="180"/>
+  </g>
+  <g opacity="0.18" fill="#22d3ee">
+    <circle cx="120" cy="500" r="180"/>
+  </g>
+  <g transform="translate(64,68)">
+    <rect x="0" y="0" width="58" height="22" rx="4" fill="#f37021"/>
+    <text x="29" y="17" text-anchor="middle" font-family="Inter, sans-serif" font-weight="900" font-size="16" fill="#ffffff">FPT</text>
+    <text x="68" y="17" font-family="Inter, sans-serif" font-weight="700" font-size="13" fill="#ffffff" letter-spacing="0.18em">UNIVERSITY</text>
+    <text x="0" y="42" font-family="Inter, sans-serif" font-weight="500" font-size="12" fill="#9ad1ff" letter-spacing="0.12em">CODE · BUILD · WIN</text>
+  </g>
+  <g transform="translate(64,260)">
+    <rect x="0" y="0" width="170" height="36" rx="18" fill="url(#acc)"/>
+    <text x="85" y="24" text-anchor="middle" font-family="Inter, sans-serif" font-weight="800" font-size="13" fill="#1d1c4d" letter-spacing="0.08em">HACKATHON</text>
+  </g>
+  <text x="64" y="370" font-family="Inter, sans-serif" font-weight="800" font-size="64" fill="#ffffff">Code không ngç.</text>
+  <text x="64" y="438" font-family="Inter, sans-serif" font-weight="800" font-size="64" fill="#ffd166">Ý t°ßng bét phá.</text>
+  <text x="64" y="495" font-family="Inter, sans-serif" font-weight="500" font-size="20" fill="#cfe1ff">CuÙc thi l­p trình &amp; sáng t¡o công nghÇ dành cho sinh viên FPT</text>
+  <g transform="translate(820,360)" opacity="0.85">
+    <rect x="0" y="0" width="320" height="180" rx="14" fill="#0f172a" stroke="#22d3ee" stroke-opacity="0.4"/>
+    <circle cx="20" cy="20" r="6" fill="#ff5f56"/>
+    <circle cx="40" cy="20" r="6" fill="#ffbd2e"/>
+    <circle cx="60" cy="20" r="6" fill="#27c93f"/>
+    <text x="20" y="68" font-family="JetBrains Mono, Consolas, monospace" font-size="13" fill="#22d3ee">$ npm run build</text>
+    <text x="20" y="92" font-family="JetBrains Mono, Consolas, monospace" font-size="13" fill="#e2e8f0">’ deploy success </text>
+    <text x="20" y="116" font-family="JetBrains Mono, Consolas, monospace" font-size="13" fill="#a3e635">’ ship it =€</text>
+    <text x="20" y="148" font-family="JetBrains Mono, Consolas, monospace" font-size="13" fill="#fbbf24">team_fpt > _</text>
+  </g>
+</svg>

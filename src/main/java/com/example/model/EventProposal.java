@@ -27,6 +27,9 @@ public class EventProposal {
     @Column(columnDefinition = "NVARCHAR(500)")
     private String imageUrl;
 
+    @Column(columnDefinition = "NVARCHAR(MAX)")
+    private String imageUrls;
+
     @Column(precision = 18, scale = 2)
     private BigDecimal budget;
     
@@ -105,6 +108,14 @@ public class EventProposal {
 
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
+    }
+
+    public String getImageUrls() {
+        return imageUrls;
+    }
+
+    public void setImageUrls(String imageUrls) {
+        this.imageUrls = imageUrls;
     }
 
     public BigDecimal getBudget() {

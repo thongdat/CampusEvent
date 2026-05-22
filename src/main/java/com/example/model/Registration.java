@@ -19,7 +19,17 @@ public class Registration {
     
     @Column(columnDefinition = "NVARCHAR(MAX)")
     private String note;
-    
+
+    /**
+     * Điểm ưu tiên đăng ký (0..100) tổng hợp 4 tiêu chí: chuyên ngành, học kỳ, điểm hoạt động, thời điểm đăng ký.
+     * Được tính lúc đăng ký và lưu lại để dùng cho:
+     *  - Tranh slot khi event đầy (so sánh score, kẻ thấp bị đẩy WAITLIST).
+     *  - Auto-promote từ WAITLIST khi có người huỷ.
+     *  - Hiển thị cho sinh viên trên UI để minh bạch tiêu chí.
+     */
+    @Column(name = "priority_score", precision = 5, scale = 2)
+    private java.math.BigDecimal priorityScore;
+
     @ManyToOne
     @JoinColumn(name = "eventId", nullable = false)
     private Event event;
@@ -84,5 +94,13 @@ public class Registration {
 
     public void setStudent(Student student) {
         this.student = student;
+    }
+
+    public java.math.BigDecimal getPriorityScore() {
+        return priorityScore;
+    }
+
+    public void setPriorityScore(java.math.BigDecimal priorityScore) {
+        this.priorityScore = priorityScore;
     }
 }

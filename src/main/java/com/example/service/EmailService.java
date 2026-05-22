@@ -15,6 +15,15 @@ public class EmailService {
     @Autowired
     private JavaMailSender mailSender;
 
+    public void sendPlainEmail(String toEmail, String subject, String content) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(toEmail);
+        message.setSubject(subject);
+        message.setText(content == null ? "" : content);
+        mailSender.send(message);
+        logger.info("Da gui email thong bao toi: {}", toEmail);
+    }
+
     /**
      * Gửi mã OTP qua email để đặt lại mật khẩu
      */

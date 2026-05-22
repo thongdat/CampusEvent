@@ -1,172 +1,310 @@
 <!DOCTYPE html>
-<html lang="vi" data-load-components>
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Chi tiết sự kiện Workshop: Web Development - Event Management System">
-    <title>Chi tiết sự kiện - Event Management System</title>
-    <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="components/components.css">
+    <title>Chi tiết sự kiện · Campus Events</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', system-ui, sans-serif; }
+        .skeleton { background: linear-gradient(90deg,#eef2ff 0%,#e0e7ff 40%,#eef2ff 80%); background-size: 800px 100%; animation: shimmer 1.4s linear infinite; }
+        @keyframes shimmer { 0% { background-position: -400px 0; } 100% { background-position: 400px 0; } }
+        .card-img-fallback { background: linear-gradient(135deg,#dbeafe,#c7d2fe 70%); }
+    </style>
 </head>
-<body class="app-with-components">
-    <!-- Header -->
-    <header id="header" role="banner"></header>
+<body class="min-h-screen bg-slate-50 text-slate-800 antialiased">
 
-    <!-- Main Layout with Sidebar -->
-    <div class="main-with-sidebar">
-        <!-- Sidebar Navigation -->
-        <nav id="sidebar" role="navigation" aria-label="Menu chính"></nav>
-
-        <!-- Main Content -->
-        <main class="content-area" role="main">
-            <!-- Breadcrumb Navigation -->
-            <nav class="breadcrumb" aria-label="Đường dẫn breadcrumb">
-                <a href="#">Sự kiện</a> 
-                <span aria-hidden="true">/</span> 
-                <span>Workshop: Web Development</span>
-            </nav>
-            
-            <!-- Event Detail Container -->
-            <article class="event-detail-container">
-                <div class="event-detail-main">
-                    <!-- Event Header with Cover Image -->
-                    <header class="event-detail-header">
-                        <figure class="event-cover">
-                            <img src="https://via.placeholder.com/800x400" alt="Ảnh bìa sự kiện Workshop Web Development">
-                            <span class="badge" aria-label="Trạng thái: Sắp diễn ra">Sắp diễn ra</span>
-                        </figure>
-                    </header>
-                    
-                    <!-- Event Main Content -->
-                    <section class="event-detail-content">
-                        <h1>Workshop: Web Development with Modern Stack</h1>
-                        
-                        <!-- Event Metadata -->
-                        <div class="event-meta">
-                            <div class="meta-item">
-                                <strong>📅 Thời gian:</strong>
-                                <time datetime="2026-05-15T14:00">15/05/2026, 14:00 - 17:00</time>
-                            </div>
-                            <div class="meta-item">
-                                <strong>📍 Địa điểm:</strong>
-                                <address>Phòng 101, Tòa A</address>
-                            </div>
-                            <div class="meta-item">
-                                <strong>👥 Sức chứa:</strong>
-                                <span>30/50 người</span>
-                            </div>
-                            <div class="meta-item">
-                                <strong>🏢 Bộ phận:</strong>
-                                <span>IT Department</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Event Description -->
-                        <section class="event-description" aria-labelledby="description-title">
-                            <h2 id="description-title">Mô tả sự kiện</h2>
-                            <p>
-                                Tham gia workshop toàn diện về Web Development với các công nghệ hiện đại nhất. 
-                                Bạn sẽ học được:
-                            </p>
-                            <ul>
-                                <li>Frontend: HTML5, CSS3, JavaScript, React.js</li>
-                                <li>Backend: Node.js, Express, MongoDB</li>
-                                <li>Full-stack development best practices</li>
-                                <li>Deployment và DevOps cơ bản</li>
-                            </ul>
-                            <dl>
-                                <dt>Yêu cầu:</dt>
-                                <dd>Có kiến thức cơ bản về JavaScript</dd>
-                                <dt>Giảng viên:</dt>
-                                <dd>Nguyễn Văn Tùng - Senior Developer</dd>
-                            </dl>
-                        </section>
-                        
-                        <!-- Event Agenda / Timeline -->
-                        <section class="event-agenda" aria-labelledby="agenda-title">
-                            <h2 id="agenda-title">Lịch trình sự kiện</h2>
-                            <ol class="timeline">
-                                <li class="timeline-item">
-                                    <time class="timeline-time" datetime="2026-05-15T14:00/PT15M">14:00 - 14:15</time>
-                                    <div class="timeline-content">
-                                        <h3>Giới thiệu & Welcome</h3>
-                                        <p>Chào mừng các bạn, giới thiệu về workshop</p>
-                                    </div>
-                                </li>
-                                <li class="timeline-item">
-                                    <time class="timeline-time" datetime="2026-05-15T14:15/PT60M">14:15 - 15:15</time>
-                                    <div class="timeline-content">
-                                        <h3>Frontend Development</h3>
-                                        <p>React.js cơ bản và các hooks quan trọng</p>
-                                    </div>
-                                </li>
-                                <li class="timeline-item">
-                                    <time class="timeline-time" datetime="2026-05-15T15:15/PT15M">15:15 - 15:30</time>
-                                    <div class="timeline-content">
-                                        <h3>Break Time</h3>
-                                        <p>Nghỉ giải lao, uống nước</p>
-                                    </div>
-                                </li>
-                                <li class="timeline-item">
-                                    <time class="timeline-time" datetime="2026-05-15T15:30/PT60M">15:30 - 16:30</time>
-                                    <div class="timeline-content">
-                                        <h3>Backend Development</h3>
-                                        <p>Node.js, Express, và REST API design</p>
-                                    </div>
-                                </li>
-                                <li class="timeline-item">
-                                    <time class="timeline-time" datetime="2026-05-15T16:30/PT30M">16:30 - 17:00</time>
-                                    <div class="timeline-content">
-                                        <h3>Q&A & Networking</h3>
-                                        <p>Trả lời câu hỏi và kết nối với các bạn</p>
-                                    </div>
-                                </li>
-                            </ol>
-                        </section>
-                    </section>
-                </div>
-                
-                <!-- Sidebar Right - Registration & Additional Info -->
-                <aside class="event-detail-sidebar" aria-label="Thông tin đăng ký và chi tiết">
-                    <!-- Registration Card -->
-                    <section class="register-card">
-                        <h2>Đăng ký sự kiện</h2>
-                        <p class="register-status" aria-label="Trạng thái đăng ký">⏳ Đang mở đăng ký</p>
-                        <button class="btn btn-primary btn-register" aria-label="Đăng ký tham gia sự kiện">Đăng ký ngay</button>
-                        <p class="register-note">Có 20 chỗ còn trống</p>
-                    </section>
-                    
-                    <!-- Additional Info Card -->
-                    <section class="info-card" aria-labelledby="info-title">
-                        <h2 id="info-title">Thông tin thêm</h2>
-                        <dl>
-                            <dt>Ngày tạo:</dt>
-                            <dd><time datetime="2026-05-10">10/05/2026</time></dd>
-                            <dt>Trạng thái:</dt>
-                            <dd><span class="status-badge status-published" aria-label="Trạng thái: Đã công bố">Đã công bố</span></dd>
-                            <dt>Người tạo:</dt>
-                            <dd>Admin</dd>
-                        </dl>
-                    </section>
-                    
-                    <!-- Share Card -->
-                    <section class="share-card" aria-labelledby="share-title">
-                        <h2 id="share-title">Chia sẻ</h2>
-                        <div class="share-buttons">
-                            <button class="btn-share facebook" aria-label="Chia sẻ trên Facebook">f</button>
-                            <button class="btn-share twitter" aria-label="Chia sẻ trên Twitter">𝕏</button>
-                            <button class="btn-share copy" aria-label="Sao chép liên kết">🔗</button>
-                        </div>
-                    </section>
-                </aside>
-            </article>
-        </main>
+<header class="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur">
+    <div class="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
+        <a href="landing.html" class="flex items-center gap-2 font-bold tracking-tight text-slate-900">
+            <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 text-white">🎓</span>
+            Campus Events
+        </a>
+        <div class="flex items-center gap-2">
+            <a href="screen-student.html" class="hidden rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 sm:inline">Cổng sinh viên</a>
+            <a id="loginCta" href="login.html" class="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800">Đăng nhập</a>
+        </div>
     </div>
+</header>
 
-    <!-- Footer -->
-    <footer id="footer" role="contentinfo"></footer>
+<nav class="mx-auto max-w-6xl px-4 pt-5 text-xs text-slate-500 sm:px-6">
+    <a href="landing.html" class="hover:text-sky-700">Trang chủ</a>
+    <span class="mx-1">/</span>
+    <a href="screen-student.html" class="hover:text-sky-700">Sự kiện</a>
+    <span class="mx-1">/</span>
+    <span id="crumbTitle" class="text-slate-700">Đang tải...</span>
+</nav>
 
-    <!-- Scripts -->
-    <script src="assets/components.js"></script>
+<main id="content" class="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+    <div class="grid gap-6 lg:grid-cols-[1fr_360px]">
+        <div class="space-y-4">
+            <div class="skeleton h-72 w-full rounded-3xl"></div>
+            <div class="skeleton h-8 w-2/3 rounded"></div>
+            <div class="skeleton h-5 w-1/2 rounded"></div>
+        </div>
+        <div class="space-y-4">
+            <div class="skeleton h-44 w-full rounded-3xl"></div>
+            <div class="skeleton h-32 w-full rounded-3xl"></div>
+        </div>
+    </div>
+</main>
+
+<div id="toast" class="pointer-events-none fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white opacity-0 shadow-2xl transition-opacity"></div>
+
+<footer class="border-t border-slate-200 bg-white py-6 text-center text-xs text-slate-500">
+    Campus Events · <a href="landing.html" class="font-semibold text-sky-700 hover:underline">Về trang chủ</a>
+</footer>
+
+<script>
+(function () {
+    'use strict';
+
+    const API_BASE = '/api';
+    const id = Number(new URLSearchParams(location.search).get('id') || 0);
+    if (!id) {
+        $('content').innerHTML = '<div class="rounded-3xl border-2 border-dashed border-rose-200 bg-rose-50 p-12 text-center text-rose-700">Thiếu tham số <code>?id=…</code></div>';
+        return;
+    }
+
+    let sessionUser = null;
+    try { sessionUser = JSON.parse(sessionStorage.getItem('user') || '{}'); } catch (e) {}
+    const userEmail = sessionUser && sessionUser.email;
+
+    function $(s, r = document) { return r.querySelector ? r.querySelector(s) : document.getElementById(s); }
+    function $$(s, r = document) { return Array.from((r.querySelectorAll ? r : document).querySelectorAll(s)); }
+    function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+    function toast(msg, tone) {
+        const el = document.getElementById('toast');
+        el.style.background = tone === 'error' ? '#dc2626' : tone === 'warn' ? '#d97706' : '#0f172a';
+        el.textContent = msg;
+        el.style.opacity = '1';
+        clearTimeout(toast._t);
+        toast._t = setTimeout(() => el.style.opacity = '0', 2600);
+    }
+
+    function fmt(iso) {
+        if (!iso) return '—';
+        const d = new Date(iso);
+        return isNaN(d.getTime()) ? iso : d.toLocaleString('vi-VN', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+    function fmtTime(iso) {
+        if (!iso) return '';
+        const d = new Date(iso);
+        return isNaN(d.getTime()) ? '' : d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+    }
+    function priorityTone(score) {
+        if (score >= 80) return { ring: '#059669', text: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200', label: 'Rất cao' };
+        if (score >= 65) return { ring: '#0284c7', text: 'text-sky-700',     bg: 'bg-sky-50',     border: 'border-sky-200',     label: 'Cao' };
+        if (score >= 50) return { ring: '#d97706', text: 'text-amber-700',   bg: 'bg-amber-50',   border: 'border-amber-200',   label: 'Trung bình' };
+        return                  { ring: '#dc2626', text: 'text-rose-700',    bg: 'bg-rose-50',    border: 'border-rose-200',    label: 'Thấp' };
+    }
+    function statusBadge(status) {
+        const map = {
+            'REGISTERED':  { cls: 'bg-emerald-100 text-emerald-700',   label: '✓ Đã đăng ký' },
+            'WAITLIST':    { cls: 'bg-amber-100 text-amber-800',       label: '⏳ Hàng chờ' },
+            'PUBLISHED':   { cls: 'bg-sky-100 text-sky-700',           label: '📢 Đang mở' },
+            'COMPLETED':   { cls: 'bg-slate-100 text-slate-600',       label: '✅ Đã kết thúc' }
+        };
+        const e = map[(status || '').toUpperCase()] || { cls: 'bg-slate-100 text-slate-600', label: status || '—' };
+        return `<span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${e.cls}">${e.label}</span>`;
+    }
+
+    async function api(path, opts = {}) {
+        const headers = Object.assign({ 'Accept': 'application/json' }, opts.headers || {});
+        if (userEmail) headers['X-User-Email'] = userEmail;
+        if (opts.body && typeof opts.body !== 'string') {
+            headers['Content-Type'] = 'application/json';
+            opts.body = JSON.stringify(opts.body);
+        }
+        const res = await fetch(API_BASE + path, Object.assign({}, opts, { headers }));
+        if (!res.ok) throw new Error(await res.text() || ('HTTP ' + res.status));
+        return res.json();
+    }
+
+    async function load() {
+        try {
+            const e = await api('/student/events/' + id);
+            document.title = (e.title || 'Sự kiện') + ' · Campus Events';
+            document.getElementById('crumbTitle').textContent = e.title || '—';
+            render(e);
+        } catch (err) {
+            document.getElementById('content').innerHTML = `<div class="rounded-3xl border-2 border-dashed border-rose-200 bg-rose-50 p-12 text-center"><p class="text-base font-semibold text-rose-800">Không tải được sự kiện</p><p class="mt-2 text-sm text-rose-700">${escapeHtml(err.message)}</p></div>`;
+        }
+    }
+
+    function render(e) {
+        const dept = e.department ? e.department.name : '—';
+        const score = Math.round((e.priorityPreview || 0) * 10) / 10;
+        const tone = priorityTone(score);
+        const fill = e.fillRate == null ? 0 : e.fillRate;
+        const isPast = e.startTime && new Date(e.startTime) < new Date();
+        const myStatus = e.myStatus || '';
+        const bd = e.priorityBreakdown;
+
+        const queueHtml = (e.queue || []).length === 0 ? '<p class="text-sm text-slate-500">Chưa có ai đăng ký.</p>' : `
+            <ol class="space-y-2">
+                ${e.queue.map((q, i) => `
+                <li class="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 px-3 py-2 text-sm">
+                    <span class="flex items-center gap-3">
+                        <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white text-xs font-bold text-slate-700 shadow-sm">${i + 1}</span>
+                        <span>
+                            <span class="font-semibold text-slate-800">${escapeHtml(q.name)}</span>
+                            <span class="ml-1 text-xs text-slate-500">· ${escapeHtml(q.major || '—')}</span>
+                        </span>
+                    </span>
+                    <span class="flex items-center gap-2">${statusBadge(q.status)}<span class="font-mono text-xs font-semibold text-slate-700">${q.priority == null ? '—' : Number(q.priority).toFixed(1)}</span></span>
+                </li>`).join('')}
+            </ol>`;
+
+        const fbHtml = (e.feedbacks || []).length === 0 ? '' : `
+            <section class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                <h3 class="text-sm font-bold text-slate-900">⭐ Phản hồi nổi bật</h3>
+                <div class="mt-3 space-y-2">
+                    ${e.feedbacks.map(f => `
+                    <div class="rounded-xl border border-slate-100 bg-slate-50 p-3 text-sm">
+                        <div class="flex items-center gap-2"><span class="text-amber-500">${'★'.repeat(f.rating || 0)}${'☆'.repeat(5 - (f.rating || 0))}</span><span class="text-xs font-semibold text-slate-600">${escapeHtml(f.author)}</span></div>
+                        <p class="mt-1 text-slate-700">${escapeHtml(f.comment)}</p>
+                    </div>`).join('')}
+                </div>
+            </section>`;
+
+        const action = !userEmail
+            ? `<a href="login.html" class="block w-full rounded-xl bg-gradient-to-r from-sky-600 to-blue-700 py-3 text-center text-sm font-semibold text-white shadow-lg shadow-sky-500/30 hover:brightness-110">Đăng nhập để đăng ký</a>`
+            : isPast
+            ? `<button disabled class="w-full cursor-not-allowed rounded-xl border border-slate-200 bg-slate-100 py-3 text-sm font-semibold text-slate-400">Đã diễn ra</button>`
+            : (myStatus === 'REGISTERED' || myStatus === 'WAITLIST')
+            ? `<button id="btnCancel" data-id="${e.myRegistrationId}" class="w-full rounded-xl border border-rose-200 bg-white py-3 text-sm font-semibold text-rose-700 hover:bg-rose-50">${myStatus === 'WAITLIST' ? '⏳ Đang trong hàng chờ · Huỷ' : '✓ Đã đăng ký · Huỷ'}</button>`
+            : `<button id="btnRegister" class="block w-full rounded-xl bg-gradient-to-r from-sky-600 to-blue-700 py-3 text-sm font-semibold text-white shadow-lg shadow-sky-500/30 hover:brightness-110">Đăng ký · điểm ưu tiên ${score}</button>`;
+
+        const priorityCard = userEmail && bd ? `
+            <section class="rounded-3xl border ${tone.border} ${tone.bg} p-5">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-widest ${tone.text}">Điểm ưu tiên của bạn</p>
+                        <p class="mt-1 text-3xl font-bold ${tone.text}">${score}<span class="ml-1 text-sm font-medium text-slate-500">/100 · ${tone.label}</span></p>
+                    </div>
+                    <div class="flex h-16 w-16 items-center justify-center rounded-full" style="background:conic-gradient(${tone.ring} ${Math.min(100, score)}%, #e2e8f0 0);">
+                        <span class="flex h-12 w-12 items-center justify-center rounded-full bg-white text-base font-bold ${tone.text}">${Math.round(score)}</span>
+                    </div>
+                </div>
+                <div class="mt-4 space-y-2.5 text-xs">
+                    ${['M','S','P','T'].map(k => {
+                        const v = bd[k] || { label: k, score: 0, weight: 0, contribution: 0 };
+                        const color = { 'M':'#10b981','S':'#f59e0b','P':'#ef4444','T':'#0ea5e9' }[k];
+                        return `<div>
+                            <div class="mb-1 flex items-center justify-between">
+                                <span class="font-semibold text-slate-700"><span style="color:${color}">●</span> ${escapeHtml(v.label)} <span class="text-slate-400">(${v.weight}%)</span></span>
+                                <span class="font-mono text-slate-600">${v.score} → +${v.contribution}</span>
+                            </div>
+                            <div class="h-2 overflow-hidden rounded-full bg-slate-100"><div class="h-full transition-all duration-700" style="width:${Math.min(100, v.score)}%;background:${color}"></div></div>
+                        </div>`;
+                    }).join('')}
+                </div>
+            </section>` : '';
+
+        document.getElementById('content').innerHTML = `
+        <div class="grid gap-6 lg:grid-cols-[1fr_360px]">
+            <article class="space-y-6">
+                <div class="relative overflow-hidden rounded-3xl shadow-xl">
+                    ${e.imageUrl ? `<img src="${escapeHtml(e.imageUrl)}" alt="" class="h-80 w-full object-cover">` : '<div class="card-img-fallback flex h-80 w-full items-center justify-center text-6xl">🎓</div>'}
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
+                    <div class="absolute inset-x-6 bottom-6 text-white">
+                        <p class="text-xs font-bold uppercase tracking-widest text-sky-100">${escapeHtml(dept)}</p>
+                        <h1 class="mt-2 text-3xl font-bold leading-tight sm:text-4xl">${escapeHtml(e.title)}</h1>
+                        <p class="mt-2 text-sm text-sky-50">${fmt(e.startTime)} · ${escapeHtml(e.location || '—')}</p>
+                    </div>
+                </div>
+
+                <section class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                    <h2 class="text-sm font-bold uppercase tracking-widest text-slate-500">Mô tả sự kiện</h2>
+                    <p class="mt-3 whitespace-pre-line text-base leading-relaxed text-slate-700">${escapeHtml(e.description || 'Đang cập nhật...')}</p>
+                </section>
+
+                <section class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                    <h3 class="text-sm font-bold text-slate-900">🪪 Hàng đợi ưu tiên (top 8)</h3>
+                    <p class="mt-1 text-xs text-slate-500">Slot sẽ ưu tiên người có điểm cao nhất. Người điểm thấp tự động được chuyển sang hàng chờ khi event đầy.</p>
+                    <div class="mt-3">${queueHtml}</div>
+                </section>
+
+                ${fbHtml}
+            </article>
+
+            <aside class="space-y-4 lg:sticky lg:top-20 lg:self-start">
+                <section class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <p class="text-xs font-semibold uppercase tracking-widest text-slate-500">Đăng ký</p>
+                    <div class="mt-2 flex items-baseline justify-between">
+                        <span class="text-2xl font-bold text-slate-900">${e.registeredCount || 0}<span class="text-base text-slate-500">/${e.capacity || '∞'}</span></span>
+                        <span class="text-xs font-bold ${fill >= 95 ? 'text-rose-600' : fill >= 70 ? 'text-amber-600' : 'text-emerald-600'}">${fill}% đầy</span>
+                    </div>
+                    <div class="mt-2 h-2 overflow-hidden rounded-full bg-slate-100"><div class="h-full ${fill >= 95 ? 'bg-rose-500' : fill >= 70 ? 'bg-amber-500' : 'bg-emerald-500'}" style="width:${Math.min(100, fill)}%"></div></div>
+                    <div class="mt-4 space-y-1 text-sm text-slate-600">
+                        <p>📅 <strong class="text-slate-800">${fmt(e.startTime)}</strong></p>
+                        <p>⏰ Kết thúc lúc <strong class="text-slate-800">${fmtTime(e.endTime)}</strong></p>
+                        <p>📍 <strong class="text-slate-800">${escapeHtml(e.location || '—')}</strong></p>
+                        <p>📊 ${statusBadge(e.status)}</p>
+                    </div>
+                    <div class="mt-5">${action}</div>
+                </section>
+
+                ${priorityCard}
+
+                <section class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <p class="text-xs font-semibold uppercase tracking-widest text-slate-500">Chia sẻ</p>
+                    <div class="mt-3 flex gap-2">
+                        <button data-share="copy" class="flex flex-1 items-center justify-center gap-1 rounded-xl border border-slate-200 bg-white py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">🔗 Sao chép link</button>
+                        <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(location.href)}" class="flex flex-1 items-center justify-center gap-1 rounded-xl bg-blue-600 py-2 text-sm font-semibold text-white hover:bg-blue-700">Facebook</a>
+                    </div>
+                </section>
+            </aside>
+        </div>`;
+
+        const btnReg = document.getElementById('btnRegister');
+        if (btnReg) btnReg.addEventListener('click', registerEvent);
+        const btnCancel = document.getElementById('btnCancel');
+        if (btnCancel) btnCancel.addEventListener('click', () => cancel(Number(btnCancel.dataset.id)));
+        $$('[data-share="copy"]').forEach(b => b.addEventListener('click', () => {
+            navigator.clipboard.writeText(location.href).then(() => toast('Đã sao chép link'));
+        }));
+    }
+
+    async function registerEvent() {
+        try {
+            const r = await api('/student/events/' + id + '/register', { method: 'POST', body: {} });
+            const score = r.priorityScore == null ? '—' : Number(r.priorityScore).toFixed(1);
+            if (r.status === 'REGISTERED') {
+                toast('🎉 Đăng ký thành công · Ưu tiên ' + score);
+            } else if (r.status === 'WAITLIST') {
+                toast('Vào hàng chờ ưu tiên · điểm ' + score, 'warn');
+            } else {
+                toast('Đã đăng ký trước đó (' + r.status + ')', 'warn');
+            }
+            load();
+        } catch (e) {
+            toast(e.message, 'error');
+        }
+    }
+
+    async function cancel(rid) {
+        if (!rid || !confirm('Huỷ đăng ký?')) return;
+        try {
+            await api('/student/registrations/' + rid, { method: 'DELETE' });
+            toast('Đã huỷ đăng ký');
+            load();
+        } catch (e) {
+            toast(e.message, 'error');
+        }
+    }
+
+    if (userEmail) {
+        document.getElementById('loginCta').style.display = 'none';
+    }
+    load();
+})();
+</script>
+
 </body>
 </html>

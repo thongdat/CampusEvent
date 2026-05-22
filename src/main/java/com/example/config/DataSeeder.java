@@ -62,7 +62,7 @@ public class DataSeeder {
             Map<String, Role> roles = ensureRoles(roleRepository);
             List<Department> departments = ensureDepartments(departmentRepository);
             List<User> admins = ensureAdminUsers(userRepository, passwordEncoder, roles.get("ADMIN"));
-            ensureDepartmentUsers(userRepository, passwordEncoder, roles.get("DEPARTMENT"), departments);
+            ensureDepartmentUsers(userRepository, passwordEncoder, roles.get("MANAGER"), departments);
             ensureCommitteeUsers(userRepository, passwordEncoder, roles.get("COMMITTEE"));
             List<User> studentUsers = ensureStudentUsers(userRepository, passwordEncoder, roles.get("STUDENT"), departments);
             List<Student> students = ensureStudents(studentRepository, studentUsers);
@@ -101,6 +101,7 @@ public class DataSeeder {
 
     private Map<String, Role> ensureRoles(RoleRepository roleRepository) {
         Map<String, String> descriptions = new LinkedHashMap<>();
+        descriptions.put("MANAGER", "Quan ly khoa/bo mon: phu trach proposal, event va sinh vien trong don vi.");
         descriptions.put("ADMIN", "Quản trị hệ thống: quản lý user, role, department và báo cáo.");
         descriptions.put("DEPARTMENT", "Khoa/Bộ môn: tạo proposal, cập nhật proposal và quản lý event đã duyệt.");
         descriptions.put("COMMITTEE", "Hội đồng duyệt: xem, phê duyệt, từ chối hoặc yêu cầu chỉnh sửa proposal.");

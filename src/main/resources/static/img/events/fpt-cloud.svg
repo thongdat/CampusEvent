@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Cloud DevOps FPT cover">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0c4a6e"/>
+      <stop offset="0.55" stop-color="#0284c7"/>
+      <stop offset="1" stop-color="#7dd3fc"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="600" fill="url(#bg)"/>
+  <g opacity="0.85" fill="#ffffff">
+    <path d="M900 200 a60 60 0 0 1 116 -12 a48 48 0 0 1 78 28 a40 40 0 0 1 -14 78 h-180 a52 52 0 0 1 0 -94 z" opacity="0.5"/>
+    <path d="M780 380 a70 70 0 0 1 136 -14 a56 56 0 0 1 92 32 a48 48 0 0 1 -16 92 h-212 a60 60 0 0 1 0 -110 z" opacity="0.7"/>
+  </g>
+  <g transform="translate(64,68)">
+    <rect x="0" y="0" width="58" height="22" rx="4" fill="#f37021"/>
+    <text x="29" y="17" text-anchor="middle" font-family="Inter, sans-serif" font-weight="900" font-size="16" fill="#ffffff">FPT</text>
+    <text x="68" y="17" font-family="Inter, sans-serif" font-weight="700" font-size="13" fill="#ffffff" letter-spacing="0.18em">UNIVERSITY</text>
+    <text x="0" y="42" font-family="Inter, sans-serif" font-weight="500" font-size="12" fill="#e0f2fe" letter-spacing="0.12em">CLOUD · DEVOPS · K8S</text>
+  </g>
+  <g transform="translate(64,260)">
+    <rect x="0" y="0" width="200" height="36" rx="18" fill="#ffffff"/>
+    <text x="100" y="24" text-anchor="middle" font-family="Inter, sans-serif" font-weight="800" font-size="13" fill="#0c4a6e" letter-spacing="0.08em">CLOUD &amp; DEVOPS</text>
+  </g>
+  <text x="64" y="370" font-family="Inter, sans-serif" font-weight="800" font-size="60" fill="#ffffff">Ship nhanh.</text>
+  <text x="64" y="432" font-family="Inter, sans-serif" font-weight="800" font-size="60" fill="#ffd166">Scale vô t­n.</text>
+  <text x="64" y="490" font-family="Inter, sans-serif" font-weight="500" font-size="20" fill="#e0f2fe">Workshop h¡ t§ng ám mây · CI/CD · container hoá cho dñ án sinh viên</text>
+</svg>

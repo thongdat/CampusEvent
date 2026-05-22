@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Cultural festival FPT cover">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7c2d12"/>
+      <stop offset="0.45" stop-color="#dc2626"/>
+      <stop offset="1" stop-color="#fbbf24"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="600" fill="url(#bg)"/>
+  <g opacity="0.18" fill="#ffffff">
+    <circle cx="1000" cy="500" r="240"/>
+    <circle cx="900" cy="80" r="120"/>
+  </g>
+  <g transform="translate(64,68)">
+    <rect x="0" y="0" width="58" height="22" rx="4" fill="#0f172a"/>
+    <text x="29" y="17" text-anchor="middle" font-family="Inter, sans-serif" font-weight="900" font-size="16" fill="#ffffff">FPT</text>
+    <text x="68" y="17" font-family="Inter, sans-serif" font-weight="700" font-size="13" fill="#ffffff" letter-spacing="0.18em">UNIVERSITY</text>
+    <text x="0" y="42" font-family="Inter, sans-serif" font-weight="500" font-size="12" fill="#fff5e6" letter-spacing="0.12em">CULTURE · ARTS · FESTIVAL</text>
+  </g>
+  <g transform="translate(64,260)">
+    <rect x="0" y="0" width="220" height="36" rx="18" fill="#ffffff"/>
+    <text x="110" y="24" text-anchor="middle" font-family="Inter, sans-serif" font-weight="800" font-size="13" fill="#7c2d12" letter-spacing="0.08em">LÄ HØI &amp; VN HOÁ</text>
+  </g>
+  <text x="64" y="370" font-family="Inter, sans-serif" font-weight="800" font-size="60" fill="#ffffff">SÑng cùng am mê.</text>
+  <text x="64" y="432" font-family="Inter, sans-serif" font-weight="800" font-size="60" fill="#fef3c7">To£ sáng sân kh¥u.</text>
+  <text x="64" y="490" font-family="Inter, sans-serif" font-weight="500" font-size="20" fill="#fff5e6">Festival sinh viên · âm nh¡c · CLB nghÇ thu­t · tr£i nghiÇm a vn hoá</text>
+</svg>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Design UX FPT cover">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#831843"/>
+      <stop offset="0.5" stop-color="#ec4899"/>
+      <stop offset="1" stop-color="#fb923c"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="600" fill="url(#bg)"/>
+  <g opacity="0.18" fill="#ffffff">
+    <circle cx="980" cy="500" r="220"/>
+    <rect x="780" y="80" width="180" height="180" rx="40"/>
+    <polygon points="1080,80 1180,260 980,260"/>
+  </g>
+  <g transform="translate(64,68)">
+    <rect x="0" y="0" width="58" height="22" rx="4" fill="#0f172a"/>
+    <text x="29" y="17" text-anchor="middle" font-family="Inter, sans-serif" font-weight="900" font-size="16" fill="#ffffff">FPT</text>
+    <text x="68" y="17" font-family="Inter, sans-serif" font-weight="700" font-size="13" fill="#ffffff" letter-spacing="0.18em">UNIVERSITY</text>
+    <text x="0" y="42" font-family="Inter, sans-serif" font-weight="500" font-size="12" fill="#fef3c7" letter-spacing="0.12em">UI · UX · CREATIVITY</text>
+  </g>
+  <g transform="translate(64,260)">
+    <rect x="0" y="0" width="240" height="36" rx="18" fill="#ffffff"/>
+    <text x="120" y="24" text-anchor="middle" font-family="Inter, sans-serif" font-weight="800" font-size="13" fill="#831843" letter-spacing="0.08em">DESIGN &amp; CREATIVE</text>
+  </g>
+  <text x="64" y="370" font-family="Inter, sans-serif" font-weight="800" font-size="60" fill="#ffffff">Thi¿t k¿ tí t¿.</text>
+  <text x="64" y="432" font-family="Inter, sans-serif" font-weight="800" font-size="60" fill="#fde68a">Tr£i nghiÇm tinh.</text>
+  <text x="64" y="490" font-family="Inter, sans-serif" font-weight="500" font-size="20" fill="#fff5e6">Figma · UX research · workshop branding cùng studio ViÇt Nam</text>
+</svg>

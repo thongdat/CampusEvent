@@ -37,7 +37,7 @@
 
         .app {
             display: grid;
-            grid-template-columns: 16rem minmax(0, 1fr);
+            grid-template-columns: 16.5rem minmax(0, 1fr);
             min-height: 100vh;
         }
         .sidebar {
@@ -48,7 +48,29 @@
             flex-direction: column;
             background: var(--nav);
             color: #dbe4ef;
+            transition: transform .25s ease;
         }
+        .sidebar-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 18;
+            background: rgba(15, 23, 42, .55);
+        }
+        .sidebar-backdrop.open { display: block; }
+        .menu-toggle {
+            display: none;
+            width: 2.3rem;
+            height: 2.3rem;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--line);
+            border-radius: .5rem;
+            background: #fff;
+            color: var(--ink);
+        }
+        .menu-toggle:hover { background: #f1f5f9; }
+        .menu-toggle svg { display: block; }
         .brand {
             display: flex;
             min-height: 4.35rem;
@@ -922,6 +944,7 @@
             margin-top: .45rem;
         }
         .image-option {
+            position: relative;
             min-height: 4.4rem;
             overflow: hidden;
             border: 2px solid transparent;
@@ -938,6 +961,52 @@
             width: 100%;
             height: 4.4rem;
             object-fit: cover;
+        }
+        .image-option span {
+            position: absolute;
+            left: .4rem;
+            bottom: .4rem;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, .76);
+            color: #fff;
+            font-size: .65rem;
+            font-weight: 800;
+            padding: .16rem .42rem;
+        }
+        .selected-images {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .4rem;
+            margin-top: .45rem;
+        }
+        .image-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: .32rem;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            background: #fff;
+            padding: .18rem .25rem;
+            color: var(--ink);
+            font-size: .7rem;
+            font-weight: 800;
+        }
+        .image-chip img {
+            width: 1.65rem;
+            height: 1.65rem;
+            border-radius: 999px;
+            object-fit: cover;
+        }
+        .image-chip button {
+            display: inline-grid;
+            place-items: center;
+            width: 1.3rem;
+            height: 1.3rem;
+            border: 0;
+            border-radius: 999px;
+            background: #f1f5f9;
+            color: #475569;
+            cursor: pointer;
         }
         .dialog-foot {
             display: flex;
@@ -965,17 +1034,53 @@
         }
         .toast.show { display: block; }
 
+        .form-section {
+            display: grid;
+            gap: .9rem;
+            margin-top: .25rem;
+            padding: 1rem;
+            border: 1px solid var(--line);
+            border-radius: .55rem;
+            background: #f8fafc;
+        }
+        .form-section-title {
+            margin: 0;
+            color: #0f172a;
+            font-size: .82rem;
+            font-weight: 880;
+            text-transform: uppercase;
+            letter-spacing: .03em;
+        }
+        .form-section-hint {
+            margin: .2rem 0 0;
+            color: var(--muted);
+            font-size: .76rem;
+            line-height: 1.45;
+        }
+
         @media (max-width: 1180px) {
             .metrics, .kanban, .event-grid, .unit-grid, .workflow-map, .simple-board, .starter-grid, .department-overview, .welcome-panel, .quick-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
             .proposal-row { grid-template-columns: 8rem minmax(0, 1fr); }
             .proposal-row-actions { grid-column: 1 / -1; justify-content: flex-start; }
             .step::after { display: none; }
         }
-        @media (max-width: 780px) {
+        @media (max-width: 980px) {
             .app { grid-template-columns: 1fr; }
-            .sidebar { position: relative; height: auto; }
+            .sidebar {
+                position: fixed;
+                left: 0;
+                top: 0;
+                z-index: 20;
+                width: 16.5rem;
+                transform: translateX(-100%);
+                box-shadow: 24px 0 60px -32px rgba(0,0,0,.6);
+            }
+            .sidebar.open { transform: translateX(0); }
+            .menu-toggle { display: inline-flex; }
+        }
+        @media (max-width: 780px) {
             .topbar { align-items: flex-start; flex-direction: column; }
-            .toolbar { justify-content: flex-start; }
+            .toolbar { justify-content: flex-start; width: 100%; }
             .metrics, .kanban, .event-grid, .unit-grid, .workflow-map, .form-grid, .simple-board, .starter-grid, .image-options, .department-overview, .summary-stat-grid, .unit-row, .welcome-panel, .quick-steps, .proposal-row { grid-template-columns: 1fr; }
             .unit-metrics { justify-content: flex-start; }
             .profile-row, .focus-item { grid-template-columns: 1fr; }
@@ -985,7 +1090,8 @@
 </head>
 <body>
     <div class="app">
-        <aside class="sidebar">
+        <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+        <aside class="sidebar" id="sidebar">
             <div class="brand">
                 <span class="brand-mark">D</span>
                 <div>
@@ -994,13 +1100,13 @@
                 </div>
             </div>
             <nav class="nav">
-                <div class="nav-title">Phạm vi</div>
-                <button type="button" class="active" data-scope="faculty">Cả khoa</button>
-                <button type="button" data-scope="department">Chuyên ngành của tôi</button>
+                <div class="nav-title">Phạm vi đang xem</div>
+                <button type="button" class="active" data-scope="faculty" title="Xem toàn bộ khoa"><span class="icon" aria-hidden="true">🏛</span> Cả khoa</button>
+                <button type="button" data-scope="department" title="Chỉ xem chuyên ngành của bạn"><span class="icon" aria-hidden="true">🎓</span> Chuyên ngành của tôi</button>
                 <div class="nav-title">Quy trình</div>
-                <button type="button" class="active" data-tab="workflow">Proposal workflow</button>
-                <button type="button" data-tab="events">Sự kiện chính thức</button>
-                <button type="button" data-tab="departments">Khoa & bộ môn</button>
+                <button type="button" class="active" data-tab="workflow" title="Bắt đầu từ đây nếu bạn mới"><span class="icon" aria-hidden="true">✦</span> Proposal & workflow</button>
+                <button type="button" data-tab="events" title="Sự kiện đã công bố cho sinh viên"><span class="icon" aria-hidden="true">📅</span> Sự kiện chính thức</button>
+                <button type="button" data-tab="departments" title="Cấu trúc khoa và bộ môn"><span class="icon" aria-hidden="true">🗂</span> Khoa & bộ môn</button>
             </nav>
             <div class="sidebar-footer">
                 <details class="account-menu">
@@ -1021,16 +1127,19 @@
 
         <main class="main">
             <header class="topbar">
-                <div>
-                    <p class="kicker">Department Console</p>
-                    <h1 id="pageTitle">Khoa tạo đề xuất sự kiện</h1>
-                    <p class="subtitle" id="pageSubtitle">Theo dõi đúng workflow: đề xuất, hội đồng duyệt, chỉnh sửa, công bố, sinh viên đăng ký.</p>
+                <div style="display:flex;align-items:center;gap:.85rem;min-width:0;">
+                    <button class="menu-toggle" type="button" id="menuToggle" aria-label="Mở menu">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                    </button>
+                    <div>
+                        <p class="kicker">Department Console</p>
+                        <h1 id="pageTitle">Khoa tạo đề xuất sự kiện</h1>
+                        <p class="subtitle" id="pageSubtitle">Theo dõi đúng workflow: đề xuất, hội đồng duyệt, chỉnh sửa, công bố, sinh viên đăng ký.</p>
+                    </div>
                 </div>
                 <div class="toolbar">
-                    <button type="button" class="btn active" data-scope="faculty">Cả khoa</button>
-                    <button type="button" class="btn" data-scope="department">Chuyên ngành của tôi</button>
-                    <button type="button" class="btn" id="refreshBtn"><span class="icon">↻</span>Làm mới</button>
-                    <button type="button" class="btn primary" id="newProposalBtn"><span class="icon">+</span>Tạo đề xuất</button>
+                    <button type="button" class="btn" id="refreshBtn" title="Tải lại dữ liệu mới nhất"><span class="icon">↻</span>Làm mới</button>
+                    <button type="button" class="btn primary" id="newProposalBtn" title="Tạo đề xuất sự kiện mới (Ctrl+N)"><span class="icon">+</span>Tạo đề xuất</button>
                 </div>
             </header>
 
@@ -1051,55 +1160,83 @@
             </div>
             <form class="form" id="proposalForm">
                 <input type="hidden" id="proposalId">
-                <div class="form-grid">
-                    <div class="field full">
-                        <label for="proposalTitle">Tên sự kiện</label>
-                        <input id="proposalTitle" name="title" required maxlength="200" placeholder="Ví dụ: Workshop Spring Boot MVC">
+
+                <div class="form-section">
+                    <div>
+                        <h3 class="form-section-title">1. Thông tin cơ bản</h3>
+                        <p class="form-section-hint">Cho hội đồng biết bạn muốn tổ chức sự kiện gì, ai phụ trách.</p>
                     </div>
-                    <div class="field">
-                        <label for="proposalFaculty">Khoa / bộ môn</label>
-                        <select id="proposalFaculty" required></select>
-                        <div class="field-help">Mặc định theo tài khoản đang đăng nhập.</div>
-                    </div>
-                    <div class="field">
-                        <label for="proposalMajor">Chuyên ngành</label>
-                        <select id="proposalMajor" name="departmentId" required></select>
-                        <div class="field-help">Ví dụ: Công nghệ Thông tin → Kỹ thuật phần mềm.</div>
-                    </div>
-                    <div class="field">
-                        <label for="proposalDate">Ngày giờ đề xuất</label>
-                        <input id="proposalDate" name="proposedDate" type="datetime-local" required>
-                    </div>
-                    <div class="field">
-                        <label for="proposalLocation">Địa điểm</label>
-                        <input id="proposalLocation" name="location" maxlength="200" placeholder="Hội trường Alpha">
-                    </div>
-                    <div class="field">
-                        <label for="proposalCapacity">Sức chứa</label>
-                        <input id="proposalCapacity" name="capacity" type="number" min="1" step="1" value="100" required>
-                    </div>
-                    <div class="field">
-                        <label for="proposalBudget">Ngân sách dự kiến</label>
-                        <input id="proposalBudget" name="budget" type="number" min="0" step="10000" value="0">
-                    </div>
-                    <div class="field">
-                        <label for="proposalImage">Ảnh sự kiện</label>
-                        <input id="proposalImage" name="imageUrl" placeholder="https://...">
-                        <div class="field-help">Chọn nhanh một ảnh bên dưới hoặc dán link ảnh thật của sự kiện.</div>
-                    </div>
-                    <div class="field full">
-                        <label>Ảnh gợi ý</label>
-                        <div class="image-options" id="imageOptions"></div>
-                    </div>
-                    <div class="field">
-                        <label for="proposalNote">Ghi chú gửi hội đồng</label>
-                        <input id="proposalNote" name="note" placeholder="Mục tiêu, yêu cầu hỗ trợ, lý do tổ chức">
-                    </div>
-                    <div class="field full">
-                        <label for="proposalDescription">Mô tả chi tiết</label>
-                        <textarea id="proposalDescription" name="description" required placeholder="Nội dung chính, đối tượng tham gia, agenda dự kiến..."></textarea>
+                    <div class="form-grid">
+                        <div class="field full">
+                            <label for="proposalTitle">Tên sự kiện *</label>
+                            <input id="proposalTitle" name="title" required maxlength="200" placeholder="Ví dụ: Workshop Spring Boot MVC">
+                        </div>
+                        <div class="field">
+                            <label for="proposalFaculty">Khoa *</label>
+                            <select id="proposalFaculty" required></select>
+                            <div class="field-help">Mặc định theo tài khoản đang đăng nhập.</div>
+                        </div>
+                        <div class="field">
+                            <label for="proposalMajor">Chuyên ngành *</label>
+                            <select id="proposalMajor" name="departmentId" required></select>
+                            <div class="field-help">Ví dụ: Công nghệ Thông tin → Kỹ thuật phần mềm.</div>
+                        </div>
                     </div>
                 </div>
+
+                <div class="form-section">
+                    <div>
+                        <h3 class="form-section-title">2. Thời gian, địa điểm & ngân sách</h3>
+                        <p class="form-section-hint">Càng cụ thể, hội đồng càng dễ duyệt nhanh.</p>
+                    </div>
+                    <div class="form-grid">
+                        <div class="field">
+                            <label for="proposalDate">Ngày giờ đề xuất *</label>
+                            <input id="proposalDate" name="proposedDate" type="datetime-local" required>
+                        </div>
+                        <div class="field">
+                            <label for="proposalLocation">Địa điểm</label>
+                            <input id="proposalLocation" name="location" maxlength="200" placeholder="Hội trường Alpha">
+                        </div>
+                        <div class="field">
+                            <label for="proposalCapacity">Sức chứa (chỗ) *</label>
+                            <input id="proposalCapacity" name="capacity" type="number" min="1" step="1" value="100" required>
+                        </div>
+                        <div class="field">
+                            <label for="proposalBudget">Ngân sách dự kiến (VND)</label>
+                            <input id="proposalBudget" name="budget" type="number" min="0" step="10000" value="0">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div>
+                        <h3 class="form-section-title">3. Nội dung & hình ảnh</h3>
+                        <p class="form-section-hint">Mô tả rõ mục tiêu, agenda, đối tượng. Chọn ảnh gợi ý hoặc dán link ảnh thật.</p>
+                    </div>
+                    <div class="form-grid">
+                        <div class="field full">
+                            <label for="proposalDescription">Mô tả chi tiết *</label>
+                            <textarea id="proposalDescription" name="description" required placeholder="Nội dung chính, đối tượng tham gia, agenda dự kiến..."></textarea>
+                        </div>
+                        <div class="field full">
+                            <label for="proposalNote">Ghi chú gửi hội đồng</label>
+                            <input id="proposalNote" name="note" placeholder="Mục tiêu, yêu cầu hỗ trợ, lý do tổ chức">
+                        </div>
+                        <div class="field">
+                            <label for="proposalImage">Link ảnh sự kiện</label>
+                            <input id="proposalImage" name="imageUrl" placeholder="https://...">
+                            <input id="proposalImageUrls" name="imageUrls" type="hidden">
+                            <div class="field-help">Ảnh đầu tiên là ảnh bìa. Có thể dán link riêng hoặc chọn nhiều ảnh gợi ý.</div>
+                        </div>
+                        <div class="field">
+                            <label>Ảnh gợi ý <span id="imageCounter" class="field-help"></span></label>
+                            <div class="image-options" id="imageOptions"></div>
+                            <div class="selected-images" id="selectedImages"></div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="dialog-foot">
                     <button type="button" class="btn" id="cancelProposalBtn">Hủy</button>
                     <button type="submit" class="btn primary" id="saveProposalBtn">Gửi đề xuất</button>
@@ -1150,6 +1287,7 @@
             loading: false
         };
         var store = { departments: [], events: [], proposals: [] };
+        var selectedProposalImages = [];
 
         function currentAccount() {
             var fullName = user.fullName || localStorage.getItem('userName') || 'Department user';
@@ -1252,6 +1390,8 @@
             return imageForSignal(signal);
         }
         function proposalImageUrl(proposal) {
+            var images = imageValues(proposal.imageUrls);
+            if (images.length) return images[0];
             if (proposal.imageUrl) return proposal.imageUrl;
             return imageForSignal([proposal.title, proposal.departmentName, proposal.facultyName, proposal.description].join(' '));
         }
@@ -1276,6 +1416,28 @@
             var preferred = imageForSignal([faculty, major, title].join(' '));
             var choices = [preferred].concat(imageLibrary.map(function (item) { return item.url; }));
             return choices.filter(function (url, index, array) { return array.indexOf(url) === index; }).slice(0, 8);
+        }
+        function imageValues(value) {
+            var list = [];
+            function add(item) {
+                if (Array.isArray(item)) {
+                    item.forEach(add);
+                    return;
+                }
+                String(item || '').split(/[\r\n,|]+/).forEach(function (part) {
+                    var url = part.trim();
+                    if (url && !list.some(function (existing) { return existing.toLowerCase() === url.toLowerCase(); })) {
+                        list.push(url);
+                    }
+                });
+            }
+            add(value);
+            return list.slice(0, 8);
+        }
+        function setProposalImages(images) {
+            selectedProposalImages = imageValues(images);
+            document.getElementById('proposalImageUrls').value = selectedProposalImages.join('\n');
+            document.getElementById('proposalImage').value = selectedProposalImages[0] || '';
         }
 
         function departmentFaculty(department) {
@@ -1715,14 +1877,29 @@
             var faculty = document.getElementById('proposalFaculty').value;
             var major = department ? department.name : '';
             var title = document.getElementById('proposalTitle').value;
-            var current = document.getElementById('proposalImage').value || imageForSignal([faculty, major, title].join(' '));
-            if (!document.getElementById('proposalImage').value) document.getElementById('proposalImage').value = current;
+            var preferred = imageForSignal([faculty, major, title].join(' '));
+            if (!selectedProposalImages.length) setProposalImages([document.getElementById('proposalImage').value || preferred]);
             document.getElementById('imageOptions').innerHTML = imageChoicesFor(faculty, major, title).map(function (url) {
-                return '<button type="button" class="image-option ' + (url === current ? 'active' : '') + '" data-image-url="' + h(url) + '"><img src="' + h(url) + '" alt=""></button>';
+                var active = selectedProposalImages.some(function (selected) { return selected.toLowerCase() === url.toLowerCase(); });
+                return '<button type="button" class="image-option ' + (active ? 'active' : '') + '" data-image-url="' + h(url) + '"><img src="' + h(url) + '" alt=""><span>' + (active ? 'Đã chọn' : 'Chọn') + '</span></button>';
+            }).join('');
+            document.getElementById('imageCounter').textContent = selectedProposalImages.length ? '(' + selectedProposalImages.length + '/8)' : '';
+            document.getElementById('selectedImages').innerHTML = selectedProposalImages.map(function (url, index) {
+                return '<span class="image-chip"><img src="' + h(url) + '" alt=""><strong>' + (index === 0 ? 'Bìa' : index + 1) + '</strong><button type="button" data-remove-image="' + h(url) + '">×</button></span>';
             }).join('');
             document.querySelectorAll('[data-image-url]').forEach(function (button) {
                 button.addEventListener('click', function () {
-                    document.getElementById('proposalImage').value = button.dataset.imageUrl;
+                    var url = button.dataset.imageUrl;
+                    var exists = selectedProposalImages.some(function (item) { return item.toLowerCase() === url.toLowerCase(); });
+                    setProposalImages(exists
+                        ? selectedProposalImages.filter(function (item) { return item.toLowerCase() !== url.toLowerCase(); })
+                        : selectedProposalImages.concat(url));
+                    syncImageSuggestions();
+                });
+            });
+            document.querySelectorAll('[data-remove-image]').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    setProposalImages(selectedProposalImages.filter(function (url) { return url !== button.dataset.removeImage; }));
                     syncImageSuggestions();
                 });
             });
@@ -1738,7 +1915,7 @@
             document.getElementById('proposalLocation').value = proposal.location || '';
             document.getElementById('proposalCapacity').value = proposal.capacity || 100;
             document.getElementById('proposalBudget').value = proposal.budget || 0;
-            document.getElementById('proposalImage').value = proposal.imageUrl || '';
+            setProposalImages(imageValues(proposal.imageUrls).concat(proposal.imageUrl || []));
             document.getElementById('proposalNote').value = proposal.note || '';
             document.getElementById('proposalDescription').value = proposal.description || '';
             populateFacultyAndMajor(proposal.departmentId);
@@ -1759,7 +1936,8 @@
                 location: document.getElementById('proposalLocation').value.trim(),
                 capacity: Number(document.getElementById('proposalCapacity').value || 0),
                 budget: Number(document.getElementById('proposalBudget').value || 0),
-                imageUrl: document.getElementById('proposalImage').value.trim(),
+                imageUrl: selectedProposalImages[0] || document.getElementById('proposalImage').value.trim(),
+                imageUrls: selectedProposalImages,
                 note: document.getElementById('proposalNote').value.trim(),
                 description: document.getElementById('proposalDescription').value.trim()
             };
@@ -1805,6 +1983,27 @@
         });
         document.getElementById('newProposalBtn').addEventListener('click', function () { openProposalDialog(); });
         document.getElementById('refreshBtn').addEventListener('click', function () { loadData().then(function () { toast('Đã làm mới dữ liệu.'); }); });
+        (function bindMobileMenu() {
+            var sidebar = document.getElementById('sidebar');
+            var backdrop = document.getElementById('sidebarBackdrop');
+            var toggle = document.getElementById('menuToggle');
+            if (!sidebar || !toggle || !backdrop) return;
+            var openMenu = function () { sidebar.classList.add('open'); backdrop.classList.add('open'); };
+            var closeMenu = function () { sidebar.classList.remove('open'); backdrop.classList.remove('open'); };
+            toggle.addEventListener('click', openMenu);
+            backdrop.addEventListener('click', closeMenu);
+            sidebar.querySelectorAll('button').forEach(function (button) { button.addEventListener('click', closeMenu); });
+        })();
+        document.addEventListener('keydown', function (event) {
+            var modal = document.getElementById('proposalModal');
+            if ((event.ctrlKey || event.metaKey) && (event.key === 'n' || event.key === 'N')) {
+                event.preventDefault();
+                openProposalDialog();
+            } else if (event.key === 'Escape' && modal && modal.classList.contains('open')) {
+                event.preventDefault();
+                closeProposalDialog();
+            }
+        });
         document.getElementById('closeProposalBtn').addEventListener('click', closeProposalDialog);
         document.getElementById('cancelProposalBtn').addEventListener('click', closeProposalDialog);
         document.getElementById('proposalModal').addEventListener('click', function (event) {
@@ -1812,17 +2011,23 @@
         });
         document.getElementById('proposalFaculty').addEventListener('change', function () {
             populateMajorSelect(document.getElementById('proposalFaculty').value, null);
-            document.getElementById('proposalImage').value = '';
+            setProposalImages([]);
             syncImageSuggestions();
         });
         document.getElementById('proposalMajor').addEventListener('change', function () {
-            document.getElementById('proposalImage').value = '';
+            setProposalImages([]);
             syncImageSuggestions();
         });
         document.getElementById('proposalTitle').addEventListener('input', function () {
-            if (!document.getElementById('proposalImage').value) syncImageSuggestions();
+            if (!selectedProposalImages.length) syncImageSuggestions();
         });
-        document.getElementById('proposalImage').addEventListener('input', syncImageSuggestions);
+        document.getElementById('proposalImage').addEventListener('change', function () {
+            var url = document.getElementById('proposalImage').value.trim();
+            if (url) {
+                setProposalImages([url].concat(selectedProposalImages.filter(function (item) { return item.toLowerCase() !== url.toLowerCase(); })));
+            }
+            syncImageSuggestions();
+        });
         document.getElementById('proposalForm').addEventListener('submit', function (event) {
             event.preventDefault();
             var id = document.getElementById('proposalId').value;

@@ -1,41 +1,37 @@
-const Admin = (() => {
+﻿const Admin = (() => {
     const API_BASE = window.location.protocol === 'file:'
         ? 'http://localhost:8081/api/admin'
         : '/api/admin';
     let logoutInProgress = false;
 
     const navItems = [
-        { group: 'Dashboard', id: 'overview', label: 'Dashboard', icon: 'layout-dashboard', href: 'overview.html' },
-        { group: 'Dashboard', id: 'reports', label: 'Reports', icon: 'bar-chart-3', href: 'reports.html' },
-        { group: 'People', id: 'users', label: 'Users', icon: 'users', href: 'users.html' },
-        { group: 'People', id: 'departments', label: 'Departments', icon: 'building-2', href: 'departments.html' },
-        { group: 'Events', id: 'proposals', label: 'Proposals', icon: 'clipboard-list', href: 'proposals.html' },
-        { group: 'Events', id: 'events', label: 'Events', icon: 'calendar-days', href: 'events.html' },
-        { group: 'Events', id: 'registrations', label: 'Registrations', icon: 'ticket-check', href: 'registrations.html' },
-        { group: 'Events', id: 'feedback', label: 'Feedback', icon: 'message-square-heart', href: 'feedback.html' },
-        { group: 'System', id: 'security', label: 'System', icon: 'settings-2', href: 'security.html' },
-        { group: 'System', id: 'logs', label: 'Activity Logs', icon: 'history', href: 'logs.html', secondary: true },
-        { group: 'System', id: 'roles', label: 'Roles', icon: 'shield-check', href: 'roles.html', secondary: true },
-        { group: 'Events', id: 'committees', label: 'Committees', icon: 'users-round', href: 'committees.html', secondary: true },
-        { group: 'System', id: 'email', label: 'Email', icon: 'mail-check', href: 'email.html', secondary: true },
-        { group: 'System', id: 'deployment', label: 'Deployment', icon: 'server-cog', href: 'deployment.html', secondary: true }
+        { group: 'Tổng quan', id: 'overview', label: 'Dashboard', icon: 'layout-dashboard', href: 'overview.html', keywords: 'tong quan home dashboard' },
+        { group: 'Tổng quan', id: 'reports', label: 'Báo cáo', icon: 'bar-chart-3', href: 'reports.html', keywords: 'reports analytics bao cao thong ke' },
+        { group: 'Người dùng', id: 'users', label: 'Người dùng', icon: 'users', href: 'users.html', keywords: 'users nguoi dung tai khoan' },
+        { group: 'Người dùng', id: 'roles', label: 'Phân quyền', icon: 'shield-check', href: 'roles.html', keywords: 'roles permissions phan quyen' },
+        { group: 'Người dùng', id: 'departments', label: 'Khoa & Bộ môn', icon: 'building-2', href: 'departments.html', keywords: 'departments khoa bo mon' },
+        { group: 'Sự kiện', id: 'proposals', label: 'Đề xuất', icon: 'clipboard-list', href: 'proposals.html', keywords: 'proposals de xuat workflow' },
+        { group: 'Sự kiện', id: 'events', label: 'Sự kiện', icon: 'calendar-days', href: 'events.html', keywords: 'events su kien lich' },
+        { group: 'Sự kiện', id: 'committees', label: 'Hội đồng', icon: 'users-round', href: 'committees.html', keywords: 'committees hoi dong duyet' },
+        { group: 'Sự kiện', id: 'registrations', label: 'Đăng ký', icon: 'ticket-check', href: 'registrations.html', keywords: 'registrations dang ky waitlist attendance' },
+        { group: 'Sự kiện', id: 'feedback', label: 'Phản hồi', icon: 'message-square-heart', href: 'feedback.html', keywords: 'feedback phan hoi rating' },
+        { group: 'Hệ thống', id: 'email', label: 'Email & Thông báo', icon: 'mail-check', href: 'email.html', keywords: 'email mail notification thong bao' },
+        { group: 'Hệ thống', id: 'logs', label: 'Nhật ký hoạt động', icon: 'history', href: 'logs.html', keywords: 'logs nhat ky activity audit' }
     ];
 
     const pageMeta = {
-        overview: ['Admin Dashboard', 'Tổng quan hệ thống, cảnh báo vận hành và các luồng đang cần xử lý.'],
-        reports: ['Reports & Analytics', 'Dashboard báo cáo, event statistics, attendance reports và xuất file.'],
-        logs: ['Activity Logs', 'Nhật ký hoạt động và dấu vết truy cập trong hệ thống.'],
-        users: ['User Management', 'Danh sách tài khoản, chi tiết, tạo/sửa, khóa/mở khóa và reset mật khẩu.'],
-        roles: ['Role & Permission Management', 'Role list, permission matrix và gán quyền cho user.'],
-        departments: ['Department Management', 'Danh sách khoa, tạo/sửa/xóa và gán trưởng khoa.'],
-        proposals: ['Event Proposal Management', 'Theo dõi proposal, phân committee, publish hoặc xóa proposal.'],
-        events: ['Event Management', 'Danh sách event, chỉnh sửa, hủy/xóa, capacity và event nổi bật.'],
-        committees: ['Committee Management', 'Committee list, assign/remove members và workflow duyệt.'],
-        registrations: ['Registration Management', 'Danh sách đăng ký, waitlist và attendance tracking.'],
-        feedback: ['Feedback Management', 'Danh sách feedback, rating analysis và xóa comment xấu.'],
-        email: ['Notification & Email', 'Email templates, gửi thông báo, announcement và lịch sử email.'],
-        security: ['Security & System', 'OAuth2, reCAPTCHA, SMTP, backup/restore, access logs và system settings.'],
-        deployment: ['Docker / Deployment', 'Deployment monitor, server status, container status và error logs.']
+        overview: ['Tổng quan hệ thống', 'Số liệu nhanh, cảnh báo vận hành và các việc cần xử lý hôm nay.', 'Tổng quan'],
+        reports: ['Báo cáo & Phân tích', 'Thống kê event, tỷ lệ tham dự, rating và xuất file báo cáo.', 'Báo cáo'],
+        logs: ['Nhật ký hoạt động', 'Theo dõi mọi hành động và truy cập của người dùng.', 'Nhật ký'],
+        users: ['Quản lý người dùng', 'Danh sách tài khoản, phân loại, khóa/mở khóa và đặt lại mật khẩu.', 'Người dùng'],
+        roles: ['Phân quyền & Vai trò', 'Tạo vai trò, ma trận quyền và gán quyền cho người dùng.', 'Phân quyền'],
+        departments: ['Khoa & Bộ môn', 'Cây tổ chức, thêm/sửa/xoá khoa, bộ môn và gán trưởng khoa.', 'Khoa & Bộ môn'],
+        proposals: ['Đề xuất sự kiện', 'Theo dõi proposal, phân hội đồng, công bố hoặc loại bỏ.', 'Đề xuất'],
+        events: ['Quản lý sự kiện', 'Tạo/sửa/huỷ event, ngân sách, sức chứa và event nổi bật.', 'Sự kiện'],
+        committees: ['Hội đồng duyệt', 'Danh sách hội đồng, thành viên và bảng workflow duyệt.', 'Hội đồng'],
+        registrations: ['Đăng ký & Điểm danh', 'Danh sách đăng ký, waitlist và check-in của sinh viên.', 'Đăng ký'],
+        feedback: ['Phản hồi & Đánh giá', 'Danh sách feedback, phân tích rating và xử lý bình luận.', 'Phản hồi'],
+        email: ['Email & Thông báo', 'Email templates, gửi thông báo, announcement và lịch sử email.', 'Email']
     };
 
     const academicStructure = [
@@ -146,7 +142,9 @@ const Admin = (() => {
     }
 
     function eventImageUrl(event) {
+        const gallery = imageValues(event?.imageUrls);
         if (event?.imageUrl) return event.imageUrl;
+        if (gallery.length) return gallery[0];
         const signal = normalize(`${event?.title || ''} ${event?.departmentName || ''}`);
         if (signal.includes('marketing') || signal.includes('kinh te') || signal.includes('business')) {
             return 'https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=900&q=80';
@@ -161,6 +159,38 @@ const Admin = (() => {
             return 'https://images.unsplash.com/photo-1558655146-d09347e92766?auto=format&fit=crop&w=900&q=80';
         }
         return 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=900&q=80';
+    }
+
+    const imageLibrary = [
+        { label: 'Cong nghe', url: 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=900&q=80' },
+        { label: 'Workshop', url: 'https://images.unsplash.com/photo-1540575467063-027a26d3b38c?auto=format&fit=crop&w=900&q=80' },
+        { label: 'Lap trinh', url: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=900&q=80' },
+        { label: 'Cloud', url: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=900&q=80' },
+        { label: 'Bao mat', url: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=900&q=80' },
+        { label: 'AI/Data', url: 'https://images.unsplash.com/photo-1555255707-c07966088b7b?auto=format&fit=crop&w=900&q=80' },
+        { label: 'Kinh te', url: 'https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=900&q=80' },
+        { label: 'Thiet ke', url: 'https://images.unsplash.com/photo-1558655146-d09347e92766?auto=format&fit=crop&w=900&q=80' }
+    ];
+
+    function imageValues(value) {
+        const list = [];
+        const add = item => {
+            if (Array.isArray(item)) {
+                item.forEach(add);
+                return;
+            }
+            String(item || '').split(/[\r\n,|]+/).forEach(part => {
+                const url = part.trim();
+                if (url && !list.some(existing => existing.toLowerCase() === url.toLowerCase())) list.push(url);
+            });
+        };
+        add(value);
+        return list.slice(0, 8);
+    }
+
+    function imageChoices(seed = []) {
+        const selected = imageValues(seed);
+        return imageValues(selected.concat(imageLibrary.map(item => item.url)));
     }
 
     async function api(path, options = {}) {
@@ -216,12 +246,15 @@ const Admin = (() => {
         window.localStorage.setItem(`aems-admin:${key}`, JSON.stringify(value));
     }
 
-    function toast(message) {
+    function toast(message, tone = '') {
         const node = document.getElementById('toast');
+        if (!node) return;
         node.textContent = message;
-        node.classList.add('show');
+        node.className = 'toast show' + (tone ? ' ' + tone : '');
         window.clearTimeout(toast.timer);
-        toast.timer = window.setTimeout(() => node.classList.remove('show'), 2800);
+        toast.timer = window.setTimeout(() => {
+            node.classList.remove('show');
+        }, 2800);
     }
 
     function badge(text, tone = 'gray') {
@@ -433,70 +466,173 @@ const Admin = (() => {
                 : '';
             currentGroup = item.group;
             return `${groupHeader}
-                <a class="nav-link ${item.id === state.page ? 'active' : ''}" href="${item.href}">
-                    ${icon(item.icon)}
+                <a class="nav-link${item.id === state.page ? ' active' : ''}" href="${item.href}" data-nav="${h(item.id)}" data-keywords="${h(item.label + ' ' + (item.keywords || ''))}">
+                    ${icon(item.icon, 'h-4 w-4')}
                     <span>${h(item.label)}</span>
                 </a>`;
         }).join('');
     }
 
     function shell(actions = '') {
-        const [title, subtitle] = pageMeta[state.page] || pageMeta.overview;
-        const primaryItems = navItems.filter(item => !item.secondary || item.id === state.page);
-        const moreItems = navItems.filter(item => item.secondary && item.id !== state.page);
-        const nav = renderNavList(primaryItems);
-        const moreNav = moreItems.map(item => `
-            <a class="nav-more-link" href="${item.href}">
-                ${icon(item.icon, 'h-3.5 w-3.5')}
-                <span>${h(item.label)}</span>
-            </a>`).join('');
+        const meta = pageMeta[state.page] || pageMeta.overview;
+        const [title, subtitle, crumb] = meta;
+        const nav = renderNavList(navItems);
         const user = currentUser();
+        const collapsedClass = localGet('sidebarCollapsed', false) ? ' collapsed' : '';
 
         document.getElementById('app').innerHTML = `
-            <div class="app-shell">
-                <aside class="sidebar">
+            <div class="app-shell${collapsedClass}" id="appShell">
+                <aside class="sidebar" id="sidebar">
                     <a class="brand" href="overview.html">
                         <span class="brand-mark">A</span>
-                        <span>
+                        <span class="brand-copy">
                             <span class="brand-title">AEMS Admin</span>
                             <span class="brand-subtitle">Control console</span>
                         </span>
+                        <button class="sidebar-toggle" type="button" id="sidebarCollapseBtn" aria-label="Thu gọn sidebar" title="Thu gọn">
+                            ${icon('panel-left-close', 'h-3.5 w-3.5')}
+                        </button>
                     </a>
-                    <nav class="nav">${nav}</nav>
+                    <label class="nav-search" title="Tìm trang">
+                        ${icon('search', 'h-3.5 w-3.5')}
+                        <input type="search" id="navSearch" placeholder="Tìm trang..." autocomplete="off">
+                        <kbd>Ctrl K</kbd>
+                    </label>
+                    <nav class="nav" id="navList">${nav}</nav>
                     <div class="sidebar-footer">
-                        <details class="nav-more">
-                            <summary>${icon('more-horizontal')}Khác</summary>
-                            <div class="nav-more-list">${moreNav}</div>
-                        </details>
                         <div class="sidebar-account">
-                            <strong>${h(user.fullName)}</strong>
-                            <span>${h(user.role)}${user.email ? ' · ' + h(user.email) : ''}</span>
+                            <span class="account-mark">${h(user.initials)}</span>
+                            <span>
+                                <strong>${h(user.fullName)}</strong>
+                                <span>${h(user.role)}${user.email ? ' · ' + h(user.email) : ''}</span>
+                            </span>
                         </div>
                         <span class="sidebar-copy">SWP Event Management · ${new Date().getFullYear()}</span>
                     </div>
                 </aside>
+                <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
                 <main class="main">
                     <header class="topbar">
-                        <div>
-                            <p class="page-kicker">Admin Console</p>
-                            <h1 class="page-title">${h(title)}</h1>
-                            <p class="page-subtitle">${h(subtitle)}</p>
+                        <div class="topbar-left">
+                            <button class="menu-toggle" type="button" id="menuToggle" aria-label="Mở menu">
+                                ${icon('menu', 'h-4 w-4')}
+                            </button>
+                            <div class="topbar-title">
+                                <nav class="breadcrumb" aria-label="Đường dẫn">
+                                    ${icon('home', 'h-3 w-3')}
+                                    <span>Admin Console</span>
+                                    ${icon('chevron-right', 'h-3 w-3')}
+                                    <span class="breadcrumb-current">${h(crumb || title)}</span>
+                                </nav>
+                                <h1 class="page-title">${h(title)}</h1>
+                                <p class="page-subtitle">${h(subtitle)}</p>
+                            </div>
                         </div>
                         <div class="topbar-actions">
+                            <button class="command-trigger" type="button" id="commandTrigger" title="Mở Command Palette (Ctrl+K)">
+                                ${icon('search', 'h-3.5 w-3.5')}<span>Tìm kiếm</span><kbd>Ctrl K</kbd>
+                            </button>
                             <div class="toolbar">${actions}</div>
                             ${accountMenu()}
                         </div>
                     </header>
                     <section id="content" class="content">
-                        <div class="empty">Đang tải dữ liệu...</div>
+                        ${skeleton()}
                     </section>
                 </main>
             </div>
             <div id="modalRoot" class="modal-backdrop"></div>
+            <div id="cmdkRoot" class="cmdk-backdrop"></div>
             <div id="toast" class="toast"></div>
         `;
-        bindAccountMenu();
+        bindShell();
         refreshIcons();
+    }
+
+    function skeleton(type = 'page') {
+        if (type === 'table') {
+            return `
+                <div class="panel"><div class="skeleton skeleton-line medium"></div>
+                    <div class="skeleton skeleton-line"></div>
+                    <div class="skeleton skeleton-line"></div>
+                    <div class="skeleton skeleton-line short"></div>
+                </div>`;
+        }
+        return `
+            <div class="skeleton-grid">
+                <div class="skeleton skeleton-card"></div>
+                <div class="skeleton skeleton-card"></div>
+                <div class="skeleton skeleton-card"></div>
+                <div class="skeleton skeleton-card"></div>
+            </div>
+            <div class="panel">
+                <div class="skeleton skeleton-line medium"></div>
+                <div class="skeleton skeleton-line"></div>
+                <div class="skeleton skeleton-line"></div>
+                <div class="skeleton skeleton-line short"></div>
+            </div>`;
+    }
+
+    function emptyState({ icon: iconName = 'inbox', title = 'Chưa có dữ liệu', copy = '', actions = '' } = {}) {
+        return `
+            <div class="empty">
+                <span class="empty-icon">${icon(iconName, 'h-5 w-5')}</span>
+                <span class="empty-title">${h(title)}</span>
+                ${copy ? `<span class="empty-copy">${h(copy)}</span>` : ''}
+                ${actions ? `<div class="empty-actions">${actions}</div>` : ''}
+            </div>`;
+    }
+
+    function bindShell() {
+        bindAccountMenu();
+        const collapseBtn = document.getElementById('sidebarCollapseBtn');
+        if (collapseBtn) {
+            collapseBtn.addEventListener('click', event => {
+                event.preventDefault();
+                event.stopPropagation();
+                const shellEl = document.getElementById('appShell');
+                const next = !shellEl.classList.contains('collapsed');
+                shellEl.classList.toggle('collapsed', next);
+                localSet('sidebarCollapsed', next);
+            });
+        }
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.getElementById('sidebar');
+        const backdrop = document.getElementById('sidebarBackdrop');
+        if (menuToggle && sidebar && backdrop) {
+            const openMenu = () => {
+                sidebar.classList.add('open');
+                backdrop.classList.add('open');
+            };
+            const closeMenu = () => {
+                sidebar.classList.remove('open');
+                backdrop.classList.remove('open');
+            };
+            menuToggle.addEventListener('click', openMenu);
+            backdrop.addEventListener('click', closeMenu);
+            sidebar.querySelectorAll('a').forEach(link => link.addEventListener('click', closeMenu));
+        }
+        const navSearch = document.getElementById('navSearch');
+        if (navSearch) {
+            navSearch.addEventListener('input', event => {
+                const query = normalize(event.target.value);
+                document.querySelectorAll('#navList .nav-link').forEach(link => {
+                    const keywords = normalize(link.dataset.keywords || '');
+                    link.style.display = !query || keywords.includes(query) ? '' : 'none';
+                });
+                document.querySelectorAll('#navList .nav-group').forEach(group => {
+                    let next = group.nextElementSibling;
+                    let any = false;
+                    while (next && !next.classList.contains('nav-group')) {
+                        if (next.classList.contains('nav-link') && next.style.display !== 'none') any = true;
+                        next = next.nextElementSibling;
+                    }
+                    group.style.display = any ? '' : 'none';
+                });
+            });
+        }
+        const trigger = document.getElementById('commandTrigger');
+        if (trigger) trigger.addEventListener('click', openCommandPalette);
     }
 
     function content(html) {
@@ -514,7 +650,13 @@ const Admin = (() => {
     }
 
     function table(headers, rows, emptyText = 'Không có dữ liệu.') {
-        if (!rows.length) return `<div class="empty">${h(emptyText)}</div>`;
+        if (!rows.length) {
+            return emptyState({
+                icon: 'inbox',
+                title: emptyText,
+                copy: 'Khi có dữ liệu mới, danh sách sẽ tự cập nhật ở đây.'
+            });
+        }
         return `
             <div class="table-panel">
                 <div class="table-scroll">
@@ -585,6 +727,23 @@ const Admin = (() => {
                 }).join('');
                 return `<div class="field${full}"><label>${h(field.label)}</label><select name="${h(field.name)}" ${field.required ? 'required' : ''}>${options}</select></div>`;
             }
+            if (field.type === 'image-picker') {
+                const selectedImages = imageValues(value);
+                const choices = imageChoices(selectedImages);
+                return `<div class="field${full} image-picker-field" data-image-picker="${h(field.name)}">
+                    <label>${h(field.label)}</label>
+                    <input type="hidden" name="${h(field.name)}" value="${h(selectedImages.join('\n'))}">
+                    <div class="field-help">Chọn tối đa 8 ảnh, ảnh đầu tiên sẽ làm ảnh bìa. Bấm lại vào ảnh để bỏ chọn, ảnh trùng sẽ tự được bỏ.</div>
+                    <div class="image-picker-grid">
+                        ${choices.map(url => `<button class="image-pick ${selectedImages.includes(url) ? 'active' : ''}" type="button" data-image-choice="${h(url)}"><img src="${h(url)}" alt=""><span>${selectedImages.includes(url) ? 'Đã chọn' : 'Chọn'}</span></button>`).join('')}
+                    </div>
+                    <div class="image-url-row">
+                        <input type="url" data-image-url-input placeholder="Dán link ảnh riêng rồi bấm thêm">
+                        <button class="btn" type="button" data-image-url-add>${icon('plus', 'h-3.5 w-3.5')}Thêm ảnh</button>
+                    </div>
+                    <div class="selected-images" data-image-selected></div>
+                </div>`;
+            }
             return `<div class="field${full}"><label>${h(field.label)}</label><input name="${h(field.name)}" type="${h(field.type || 'text')}" value="${h(value)}" ${field.required ? 'required' : ''}></div>`;
         }).join('');
 
@@ -602,6 +761,7 @@ const Admin = (() => {
             </form>`;
         modal.classList.add('open');
         modal.querySelectorAll('[data-close-modal]').forEach(button => button.addEventListener('click', () => modal.classList.remove('open')));
+        bindImagePickers(modal);
         document.getElementById('modalForm').addEventListener('submit', async event => {
             event.preventDefault();
             const formData = new FormData(event.currentTarget);
@@ -609,6 +769,7 @@ const Admin = (() => {
             fields.forEach(field => {
                 const raw = formData.get(field.name);
                 if (field.type === 'number') payload[field.name] = raw === '' ? null : Number(raw);
+                else if (field.type === 'image-picker') payload[field.name] = imageValues(raw);
                 else payload[field.name] = raw;
             });
             try {
@@ -621,9 +782,289 @@ const Admin = (() => {
         refreshIcons();
     }
 
-    function confirmAction(message, action) {
-        if (!window.confirm(message)) return;
-        action().catch(error => toast(error.message || 'Thao tác thất bại.'));
+    function bindImagePickers(scope) {
+        scope.querySelectorAll('[data-image-picker]').forEach(picker => {
+            const hidden = picker.querySelector('input[type="hidden"]');
+            const input = picker.querySelector('[data-image-url-input]');
+            const selectedNode = picker.querySelector('[data-image-selected]');
+            const buttons = () => Array.from(picker.querySelectorAll('[data-image-choice]'));
+            const render = () => {
+                const selected = imageValues(hidden.value);
+                hidden.value = selected.join('\n');
+                buttons().forEach(button => {
+                    const active = selected.some(url => url.toLowerCase() === button.dataset.imageChoice.toLowerCase());
+                    button.classList.toggle('active', active);
+                    const label = button.querySelector('span');
+                    if (label) label.textContent = active ? 'Đã chọn' : 'Chọn';
+                });
+                selectedNode.innerHTML = selected.length
+                    ? selected.map((url, index) => `<span class="image-chip"><img src="${h(url)}" alt=""><strong>${index === 0 ? 'Bìa' : index + 1}</strong><button type="button" data-image-remove="${h(url)}" aria-label="Bỏ ảnh">${icon('x', 'h-3 w-3')}</button></span>`).join('')
+                    : '<span class="field-help">Chưa chọn ảnh.</span>';
+                selectedNode.querySelectorAll('[data-image-remove]').forEach(button => {
+                    button.onclick = () => {
+                        hidden.value = selected.filter(url => url !== button.dataset.imageRemove).join('\n');
+                        render();
+                    };
+                });
+                refreshIcons();
+            };
+            buttons().forEach(button => {
+                button.onclick = () => {
+                    const selected = imageValues(hidden.value);
+                    const url = button.dataset.imageChoice;
+                    const exists = selected.some(item => item.toLowerCase() === url.toLowerCase());
+                    hidden.value = (exists ? selected.filter(item => item.toLowerCase() !== url.toLowerCase()) : selected.concat(url)).join('\n');
+                    render();
+                };
+            });
+            picker.querySelector('[data-image-url-add]')?.addEventListener('click', () => {
+                const selected = imageValues(hidden.value);
+                const url = (input.value || '').trim();
+                if (!url) return;
+                hidden.value = selected.concat(url).join('\n');
+                input.value = '';
+                render();
+            });
+            render();
+        });
+    }
+
+    function showConfirm({ title = 'Xác nhận thao tác', message = '', confirmText = 'Đồng ý', cancelText = 'Hủy', danger = false } = {}) {
+        return new Promise(resolve => {
+            const modal = document.getElementById('modalRoot');
+            modal.innerHTML = `
+                <div class="modal small ${danger ? 'danger' : ''}" role="alertdialog" aria-modal="true">
+                    <div class="modal-head">
+                        <div>
+                            <h2 class="modal-title">${h(title)}</h2>
+                        </div>
+                        <button class="icon-btn" type="button" data-cancel aria-label="Đóng">${icon('x')}</button>
+                    </div>
+                    <div class="modal-body">
+                        <p style="margin:0;color:#334155;line-height:1.55">${h(message)}</p>
+                    </div>
+                    <div class="modal-actions">
+                        <button class="btn" type="button" data-cancel>${h(cancelText)}</button>
+                        <button class="btn ${danger ? 'danger' : 'primary'}" type="button" data-ok autofocus>${h(confirmText)}</button>
+                    </div>
+                </div>`;
+            modal.classList.add('open');
+            const close = result => {
+                modal.classList.remove('open');
+                modal.innerHTML = '';
+                resolve(result);
+            };
+            modal.querySelectorAll('[data-cancel]').forEach(button => button.addEventListener('click', () => close(false)));
+            modal.querySelector('[data-ok]').addEventListener('click', () => close(true));
+            window.setTimeout(() => {
+                const ok = modal.querySelector('[data-ok]');
+                if (ok) ok.focus();
+            }, 60);
+            refreshIcons();
+        });
+    }
+
+    async function confirmAction(message, action, options = {}) {
+        const ok = await showConfirm({
+            title: options.title || 'Xác nhận',
+            message,
+            confirmText: options.confirmText || 'Xác nhận',
+            danger: options.danger !== false
+        });
+        if (!ok) return;
+        try {
+            await action();
+        } catch (error) {
+            toast(error.message || 'Thao tác thất bại.', 'error');
+        }
+    }
+
+    function actionMenu(items = []) {
+        if (!items.length) return '';
+        const id = `menu-${Math.random().toString(36).slice(2, 8)}`;
+        const buttons = items.map((item, index) => {
+            if (item.divider) return '<div class="action-divider"></div>';
+            return `<button class="action-item ${item.danger ? 'danger' : ''}" type="button" data-menu-index="${index}">
+                ${item.icon ? icon(item.icon, 'h-3.5 w-3.5') : ''}<span>${h(item.label)}</span>
+            </button>`;
+        }).join('');
+        return `
+            <div class="action-menu" data-menu="${id}">
+                <button class="icon-btn" type="button" data-menu-trigger="${id}" aria-haspopup="menu" aria-label="Hành động">${icon('more-horizontal')}</button>
+                <div class="action-menu-pop" data-menu-pop="${id}" role="menu">${buttons}</div>
+            </div>`;
+    }
+
+    function bindActionMenus(scope = document) {
+        scope.querySelectorAll('[data-menu-trigger]').forEach(trigger => {
+            if (trigger.dataset.bound === '1') return;
+            trigger.dataset.bound = '1';
+            trigger.addEventListener('click', event => {
+                event.stopPropagation();
+                const id = trigger.dataset.menuTrigger;
+                const wrapper = trigger.closest('.action-menu');
+                document.querySelectorAll('.action-menu.open').forEach(other => {
+                    if (other !== wrapper) other.classList.remove('open');
+                });
+                wrapper.classList.toggle('open');
+            });
+        });
+        if (!bindActionMenus.global) {
+            document.addEventListener('click', () => {
+                document.querySelectorAll('.action-menu.open').forEach(menu => menu.classList.remove('open'));
+            });
+            bindActionMenus.global = true;
+        }
+    }
+
+    function openCommandPalette() {
+        const root = document.getElementById('cmdkRoot');
+        if (!root) return;
+        const grouped = navItems.reduce((acc, item) => {
+            (acc[item.group] = acc[item.group] || []).push(item);
+            return acc;
+        }, {});
+        const items = navItems.map((item, index) => ({
+            id: item.id,
+            label: item.label,
+            href: item.href,
+            icon: item.icon,
+            group: item.group,
+            keywords: normalize(`${item.label} ${item.group} ${item.keywords || ''}`),
+            originalIndex: index
+        }));
+        let activeIndex = 0;
+        const renderList = (query = '') => {
+            const normalized = normalize(query);
+            const filtered = items.filter(item => !normalized || item.keywords.includes(normalized));
+            if (activeIndex >= filtered.length) activeIndex = Math.max(0, filtered.length - 1);
+            const groups = filtered.reduce((acc, item) => {
+                (acc[item.group] = acc[item.group] || []).push(item);
+                return acc;
+            }, {});
+            let counter = 0;
+            const html = Object.entries(groups).map(([group, list]) => {
+                return `<div class="cmdk-group">${h(group)}</div>` + list.map(item => {
+                    const isActive = counter === activeIndex ? ' active' : '';
+                    const node = `<button class="cmdk-item${isActive}" type="button" data-cmd-index="${counter}" data-cmd-href="${h(item.href)}">
+                        ${icon(item.icon, 'h-4 w-4')}<span>${h(item.label)}</span>
+                        <span class="cmdk-sub">${h(item.group)}</span>
+                    </button>`;
+                    counter += 1;
+                    return node;
+                }).join('');
+            }).join('');
+            return { html: html || `<div class="empty" style="border:none;background:transparent;padding:1.5rem">Không tìm thấy.</div>`, count: filtered.length };
+        };
+        const update = query => {
+            const list = document.getElementById('cmdkList');
+            const result = renderList(query);
+            list.innerHTML = result.html;
+            refreshIcons();
+            list.querySelectorAll('[data-cmd-index]').forEach(button => {
+                button.addEventListener('mouseenter', () => {
+                    activeIndex = Number(button.dataset.cmdIndex);
+                    list.querySelectorAll('.cmdk-item').forEach(item => item.classList.remove('active'));
+                    button.classList.add('active');
+                });
+                button.addEventListener('click', () => {
+                    window.location.href = button.dataset.cmdHref;
+                });
+            });
+            return result.count;
+        };
+        const close = () => {
+            root.classList.remove('open');
+            root.innerHTML = '';
+            document.removeEventListener('keydown', onKeyDown);
+        };
+        const onKeyDown = event => {
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                close();
+                return;
+            }
+            const list = document.getElementById('cmdkList');
+            if (!list) return;
+            const buttons = list.querySelectorAll('.cmdk-item');
+            if (event.key === 'ArrowDown') {
+                event.preventDefault();
+                activeIndex = Math.min(buttons.length - 1, activeIndex + 1);
+                buttons.forEach((button, idx) => button.classList.toggle('active', idx === activeIndex));
+                buttons[activeIndex]?.scrollIntoView({ block: 'nearest' });
+            } else if (event.key === 'ArrowUp') {
+                event.preventDefault();
+                activeIndex = Math.max(0, activeIndex - 1);
+                buttons.forEach((button, idx) => button.classList.toggle('active', idx === activeIndex));
+                buttons[activeIndex]?.scrollIntoView({ block: 'nearest' });
+            } else if (event.key === 'Enter') {
+                event.preventDefault();
+                const target = buttons[activeIndex];
+                if (target) window.location.href = target.dataset.cmdHref;
+            }
+        };
+        root.innerHTML = `
+            <div class="cmdk" role="dialog" aria-modal="true" aria-label="Command palette">
+                <div class="cmdk-input">
+                    ${icon('search', 'h-4 w-4')}
+                    <input type="search" id="cmdkInput" placeholder="Nhập tên trang hoặc chức năng..." autocomplete="off">
+                </div>
+                <div class="cmdk-list" id="cmdkList"></div>
+                <div class="cmdk-foot">
+                    <span><kbd>↑</kbd> <kbd>↓</kbd> di chuyển</span>
+                    <span><kbd>Enter</kbd> mở</span>
+                    <span><kbd>Esc</kbd> đóng</span>
+                </div>
+            </div>`;
+        root.classList.add('open');
+        update('');
+        const input = document.getElementById('cmdkInput');
+        input.addEventListener('input', event => {
+            activeIndex = 0;
+            update(event.target.value);
+        });
+        root.addEventListener('click', event => {
+            if (event.target === root) close();
+        });
+        document.addEventListener('keydown', onKeyDown);
+        window.setTimeout(() => input.focus(), 40);
+        refreshIcons();
+    }
+
+    function sortableTable(headers, rows, sortKey, options = {}) {
+        const stateKey = options.stateKey;
+        const onSort = options.onSort;
+        const current = stateKey ? (state.filters[`${stateKey}__sort`] || { key: '', dir: 'asc' }) : { key: '', dir: 'asc' };
+        if (!rows.length) return options.emptyHtml || emptyState({ icon: 'inbox', title: 'Chưa có dữ liệu' });
+        const head = headers.map((header, index) => {
+            const sortable = header.sortKey ? ` sortable ${current.key === header.sortKey ? current.dir : ''}` : '';
+            const mark = header.sortKey
+                ? `<span class="sort-mark">${current.key === header.sortKey ? (current.dir === 'asc' ? '▲' : '▼') : '⇅'}</span>`
+                : '';
+            return `<th class="${sortable}" ${header.sortKey ? `data-sort-key="${h(header.sortKey)}"` : ''}>${h(header.label)}${mark}</th>`;
+        }).join('');
+        const html = `
+            <div class="table-panel">
+                <div class="table-scroll">
+                    <table>
+                        <thead><tr>${head}</tr></thead>
+                        <tbody>${rows.join('')}</tbody>
+                    </table>
+                </div>
+            </div>`;
+        if (stateKey && onSort) {
+            window.setTimeout(() => {
+                document.querySelectorAll('th.sortable[data-sort-key]').forEach(th => {
+                    th.addEventListener('click', () => {
+                        const key = th.dataset.sortKey;
+                        const dir = current.key === key && current.dir === 'asc' ? 'desc' : 'asc';
+                        state.filters[`${stateKey}__sort`] = { key, dir };
+                        onSort(key, dir);
+                    });
+                });
+            }, 0);
+        }
+        return html;
     }
 
     function detailGrid(entries) {
@@ -738,13 +1179,18 @@ const Admin = (() => {
                         <h2 class="panel-title">Upcoming Events</h2>
                         <a class="btn" href="events.html">${icon('calendar-days')}Quản lý event</a>
                     </div>
-                    ${table(['Event', 'Khoa', 'Thời gian', 'Fill'], upcoming.map(event => `
+                    ${upcoming.length ? table(['Event', 'Khoa', 'Thời gian', 'Tỷ lệ lấp đầy'], upcoming.map(event => `
                         <tr>
                             <td><span class="cell-title">${h(event.title)}</span><span class="cell-sub">${h(event.location || 'N/A')}</span></td>
                             <td>${h(event.departmentName)}</td>
                             <td>${dateTime(event.startTime)}</td>
                             <td><div class="progress"><span style="width:${Math.min(100, Number(event.fillRate || 0))}%"></span></div><span class="cell-sub">${percent(event.fillRate)}</span></td>
-                        </tr>`), 'Chưa có event sắp tới.')}
+                        </tr>`)) : emptyState({
+                            icon: 'calendar-x-2',
+                            title: 'Chưa có event sắp tới',
+                            copy: 'Khi có proposal được duyệt và công bố thành event, danh sách sẽ xuất hiện ở đây.',
+                            actions: `<a class="btn primary" href="proposals.html">${icon('clipboard-list')}Mở Đề xuất</a>`
+                        })}
                 </section>
                 <section class="panel">
                     <div class="panel-header">
@@ -764,7 +1210,7 @@ const Admin = (() => {
     }
 
     function renderTimeline(logs) {
-        if (!logs.length) return '<div class="empty">Chưa có hoạt động.</div>';
+        if (!logs.length) return emptyState({ icon: 'history', title: 'Chưa có hoạt động' });
         return `<div class="timeline">${logs.map(log => `
             <div class="timeline-item">
                 <div class="timeline-time">${dateTime(log.createdAt)}</div>
@@ -812,10 +1258,17 @@ const Admin = (() => {
         state.page = 'users';
         shell(`<button class="btn primary" id="addUser">${icon('user-plus')}Create User</button>`);
         const [users, roles] = await Promise.all([load('/users', []), load('/roles', [])]);
-        const roleOptions = roles.map(role => ({ value: role.id, label: role.name }));
+        const managerRole = roles.find(role => role.name === 'MANAGER') || roles.find(role => role.name === 'DEPARTMENT');
+        const safeRoleOptions = roles
+            .filter(role => role.name !== 'ADMIN')
+            .map(role => ({ value: role.id, label: role.name }));
         const statusOptions = [{ value: 'true', label: 'ACTIVE' }, { value: 'false', label: 'LOCKED' }];
 
-        const openUserForm = (user = {}) => openForm({
+        const openUserForm = (user = {}) => {
+            const roleOptions = user.role === 'ADMIN'
+                ? roles.map(role => ({ value: role.id, label: role.name }))
+                : safeRoleOptions;
+            return openForm({
             title: user.id ? 'Edit User' : 'Create User',
             fields: [
                 { name: 'fullName', label: 'Họ tên', required: true },
@@ -829,7 +1282,7 @@ const Admin = (() => {
                 { name: 'studentCode', label: 'Mã sinh viên' },
                 { name: 'totalPoints', label: 'Điểm', type: 'number' }
             ],
-            values: { ...user, active: user.active === false ? 'false' : 'true' },
+            values: { ...user, roleId: user.roleId || managerRole?.id || safeRoleOptions[0]?.value || '', active: user.active === false ? 'false' : 'true' },
             onSubmit: async payload => {
                 payload.active = payload.active === 'true';
                 if (!payload.password) delete payload.password;
@@ -840,7 +1293,8 @@ const Admin = (() => {
                 toast('Đã lưu user.');
                 renderUsers();
             }
-        });
+            });
+        };
 
         const detail = user => openDetail('User Detail', `
             ${detailGrid([
@@ -925,7 +1379,7 @@ const Admin = (() => {
                     ${selectBox('userSort', sortOptions)}
                     <span class="metric-hint">${number(filtered.length)} user</span>
                 </div>
-                ${table(['User', 'Role', 'Khoa', 'Status', 'Điểm', 'Actions'], filtered.map(user => `
+                ${table(['User', 'Role', 'Khoa', 'Status', 'Điểm', 'Hành động'], filtered.map(user => `
                     <tr>
                         <td><span class="cell-title">${h(user.fullName)}</span><span class="cell-sub">${h(user.email)}</span></td>
                         <td>${badge(user.role || 'N/A', tone(user.role))}</td>
@@ -933,11 +1387,17 @@ const Admin = (() => {
                         <td>${badge(user.status, tone(user.status))}</td>
                         <td>${number(user.totalPoints)}</td>
                         <td><div class="row-actions">
-                            <button class="icon-btn" data-detail="${user.id}" title="Detail">${icon('eye')}</button>
-                            <button class="icon-btn" data-edit="${user.id}" title="Edit">${icon('pencil')}</button>
-                            <button class="icon-btn" data-lock="${user.id}" title="Lock/Unlock">${icon(user.status === 'LOCKED' ? 'unlock' : 'lock')}</button>
-                            <button class="icon-btn" data-reset="${user.id}" title="Reset Password">${icon('key-round')}</button>
-                            <button class="icon-btn danger" data-delete="${user.id}" title="Delete">${icon('trash-2')}</button>
+                            <button class="icon-btn" data-detail="${user.id}" title="Xem chi tiết">${icon('eye')}</button>
+                            <button class="icon-btn" data-edit="${user.id}" title="Chỉnh sửa">${icon('pencil')}</button>
+                            <div class="action-menu" data-menu="user-${user.id}">
+                                <button class="icon-btn" type="button" data-menu-trigger="user-${user.id}" aria-label="Thêm thao tác" title="Thêm thao tác">${icon('more-horizontal')}</button>
+                                <div class="action-menu-pop" data-menu-pop="user-${user.id}" role="menu">
+                                    <button class="action-item" type="button" data-lock="${user.id}">${icon(user.status === 'LOCKED' ? 'unlock' : 'lock', 'h-3.5 w-3.5')}<span>${user.status === 'LOCKED' ? 'Mở khóa tài khoản' : 'Khóa tài khoản'}</span></button>
+                                    <button class="action-item" type="button" data-reset="${user.id}">${icon('key-round', 'h-3.5 w-3.5')}<span>Đặt lại mật khẩu</span></button>
+                                    <div class="action-divider"></div>
+                                    <button class="action-item danger" type="button" data-delete="${user.id}">${icon('trash-2', 'h-3.5 w-3.5')}<span>Xóa tài khoản</span></button>
+                                </div>
+                            </div>
                         </div></td>
                     </tr>`))}
             `);
@@ -962,13 +1422,14 @@ const Admin = (() => {
                 state.filters.userSort = event.target.value;
                 render();
             });
+            bindActionMenus();
             document.querySelectorAll('[data-detail]').forEach(button => button.onclick = () => detail(users.find(user => String(user.id) === button.dataset.detail)));
             document.querySelectorAll('[data-edit]').forEach(button => button.onclick = () => openUserForm(users.find(user => String(user.id) === button.dataset.edit)));
             document.querySelectorAll('[data-lock]').forEach(button => button.onclick = () => toggleUser(users.find(user => String(user.id) === button.dataset.lock)));
             document.querySelectorAll('[data-reset]').forEach(button => button.onclick = () => resetPassword(users.find(user => String(user.id) === button.dataset.reset)));
             document.querySelectorAll('[data-delete]').forEach(button => button.onclick = () => confirmAction('Xóa user này? Nếu có dữ liệu liên quan, hệ thống sẽ khóa thay vì xóa vật lý.', async () => {
                 await api(`/users/${button.dataset.delete}`, { method: 'DELETE' });
-                toast('Đã xử lý user.');
+                toast('Đã xử lý user.', 'success');
                 renderUsers();
             }));
         };
@@ -980,7 +1441,9 @@ const Admin = (() => {
         state.page = 'roles';
         shell(`<button class="btn primary" id="addRole">${icon('plus')}Create Role</button><button class="btn" id="assignRole">${icon('user-cog')}Assign Role</button>`);
         const [roles, users] = await Promise.all([load('/roles', []), load('/users', [])]);
-        const roleOptions = roles.map(role => ({ value: role.id, label: role.name }));
+        const roleOptions = roles
+            .filter(role => role.name !== 'ADMIN')
+            .map(role => ({ value: role.id, label: role.name }));
 
         const openRoleForm = (role = {}) => openForm({
             title: role.id ? 'Edit Role' : 'Create Role',
@@ -1066,8 +1529,12 @@ const Admin = (() => {
     async function renderDepartments() {
         state.page = 'departments';
         shell(`<button class="btn primary" id="addDepartment">${icon('plus')}Thêm bộ môn</button>`);
-        const [departments, users] = await Promise.all([load('/departments', []), load('/users', [])]);
-        const managers = localGet('departmentManagers', {});
+        const [departments, users, roles] = await Promise.all([load('/departments', []), load('/users', []), load('/roles', [])]);
+        const managerRole = roles.find(role => role.name === 'MANAGER') || roles.find(role => role.name === 'DEPARTMENT');
+        const managerCandidates = users.filter(user => user.role !== 'ADMIN');
+        const managerFor = department =>
+            users.find(user => String(user.id) === String(department.managerId))
+            || users.find(user => ['MANAGER', 'DEPARTMENT'].includes(user.role) && normalize(user.major) === normalize(department.name));
         const grouped = departments.reduce((acc, department) => {
             const faculty = department.facultyName || facultyOfDepartment(department.name);
             if (!acc[faculty]) acc[faculty] = [];
@@ -1105,12 +1572,21 @@ const Admin = (() => {
 
         const assignManager = department => openForm({
             title: 'Gán người phụ trách',
-            fields: [{ name: 'managerId', label: 'Trưởng khoa', type: 'select', options: users.map(user => ({ value: user.id, label: `${user.fullName} - ${user.email}` })) }],
-            values: { managerId: managers[department.id] || '' },
+            fields: [{ name: 'managerId', label: 'Manager', type: 'select', options: managerCandidates.map(user => ({ value: user.id, label: `${user.fullName} - ${user.email}` })) }],
+            values: { managerId: department.managerId || managerFor(department)?.id || '' },
             onSubmit: async payload => {
-                managers[department.id] = payload.managerId;
-                localSet('departmentManagers', managers);
-                toast('Đã gán trưởng khoa.');
+                const selected = users.find(user => String(user.id) === String(payload.managerId));
+                if (!selected) throw new Error('Vui lòng chọn manager.');
+                await api(`/users/${selected.id}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        ...selected,
+                        roleId: managerRole?.id || selected.roleId,
+                        major: department.name,
+                        active: true
+                    })
+                });
+                toast('Đã gán manager cho bộ môn.');
                 renderDepartments();
             }
         });
@@ -1137,7 +1613,7 @@ const Admin = (() => {
                                 <thead><tr><th>Bộ môn/ngành</th><th>Manager</th><th>Events</th><th>Proposals</th><th>Students</th><th>Actions</th></tr></thead>
                                 <tbody>
                                     ${group.units.map(department => {
-                                        const manager = users.find(user => String(user.id) === String(managers[department.id]));
+                                        const manager = managerFor(department);
                                         return `<tr>
                                             <td><span class="cell-title">${h(department.name)}</span><span class="cell-sub">${h(department.description || `Thuộc khoa ${group.faculty}`)}</span></td>
                                             <td>${manager ? `${h(manager.fullName)}<span class="cell-sub">${h(manager.email)}</span>` : badge('Chưa gán', 'amber')}</td>
@@ -1145,9 +1621,9 @@ const Admin = (() => {
                                             <td>${number(department.proposalCount)}</td>
                                             <td>${number(department.studentCount)}</td>
                                             <td><div class="row-actions">
-                                                <button class="icon-btn" data-manager="${department.id}" title="Assign Manager">${icon('user-check')}</button>
-                                                <button class="icon-btn" data-edit-department="${department.id}">${icon('pencil')}</button>
-                                                <button class="icon-btn danger" data-delete-department="${department.id}">${icon('trash-2')}</button>
+                                                <button class="icon-btn" data-edit-department="${department.id}" title="Chỉnh sửa bộ môn">${icon('pencil')}</button>
+                                                <button class="icon-btn" data-manager="${department.id}" title="Gán trưởng khoa">${icon('user-check')}</button>
+                                                <button class="icon-btn danger" data-delete-department="${department.id}" title="Xóa bộ môn">${icon('trash-2')}</button>
                                             </div></td>
                                         </tr>`;
                                     }).join('')}
@@ -1187,10 +1663,14 @@ const Admin = (() => {
                 { name: 'endTime', label: 'Kết thúc', type: 'datetime-local', required: true },
                 { name: 'capacity', label: 'Capacity', type: 'number', defaultValue: 100 },
                 { name: 'budget', label: 'Ngân sách', type: 'number', defaultValue: 0 },
-                { name: 'imageUrl', label: 'Ảnh sự kiện', type: 'url', full: true },
+                { name: 'imageUrls', label: 'Ảnh sự kiện', type: 'image-picker', full: true },
                 { name: 'note', label: 'Ghi chú publish', type: 'textarea', full: true }
             ],
             values: {
+                location: proposal.location || 'FPT Campus',
+                capacity: proposal.capacity || 100,
+                budget: proposal.budget || 0,
+                imageUrls: proposal.imageUrls || proposal.imageUrl || '',
                 startTime: dateTimeInput(proposal.proposedDate),
                 endTime: dateTimeInput(proposal.proposedDate, 2)
             },
@@ -1249,15 +1729,22 @@ const Admin = (() => {
                     <td>${badge(proposal.status, tone(proposal.status))}</td>
                     <td>${committee ? badge(committee.name, 'blue') : badge('Chưa phân', 'amber')}</td>
                     <td><div class="row-actions">
-                        <button class="icon-btn" data-proposal-detail="${proposal.id}">${icon('eye')}</button>
-                        <button class="icon-btn" data-proposal-status="${proposal.id}">${icon('list-checks')}</button>
-                        <button class="icon-btn" data-proposal-committee="${proposal.id}">${icon('users-round')}</button>
-                        ${canPublish ? `<button class="icon-btn" data-proposal-publish="${proposal.id}" title="Publish thành event">${icon('send')}</button>` : ''}
-                        <button class="icon-btn danger" data-proposal-delete="${proposal.id}">${icon('trash-2')}</button>
+                        <button class="icon-btn" data-proposal-detail="${proposal.id}" title="Xem chi tiết">${icon('eye')}</button>
+                        ${canPublish ? `<button class="icon-btn" data-proposal-publish="${proposal.id}" title="Công bố thành event">${icon('send')}</button>` : ''}
+                        <div class="action-menu" data-menu="proposal-${proposal.id}">
+                            <button class="icon-btn" type="button" data-menu-trigger="proposal-${proposal.id}" aria-label="Thêm thao tác" title="Thêm thao tác">${icon('more-horizontal')}</button>
+                            <div class="action-menu-pop" data-menu-pop="proposal-${proposal.id}" role="menu">
+                                <button class="action-item" type="button" data-proposal-status="${proposal.id}">${icon('list-checks', 'h-3.5 w-3.5')}<span>Đổi trạng thái</span></button>
+                                <button class="action-item" type="button" data-proposal-committee="${proposal.id}">${icon('users-round', 'h-3.5 w-3.5')}<span>Phân hội đồng</span></button>
+                                <div class="action-divider"></div>
+                                <button class="action-item danger" type="button" data-proposal-delete="${proposal.id}">${icon('trash-2', 'h-3.5 w-3.5')}<span>Xóa proposal</span></button>
+                            </div>
+                        </div>
                     </div></td>
                 </tr>`;
             }))}
         `);
+        bindActionMenus();
         document.querySelectorAll('[data-proposal-detail]').forEach(button => button.onclick = () => {
             const proposal = proposals.find(item => String(item.id) === button.dataset.proposalDetail);
             openDetail('Proposal Detail', `${detailGrid([
@@ -1309,7 +1796,7 @@ const Admin = (() => {
                 { name: 'endTime', label: 'Kết thúc', type: 'datetime-local', required: true },
                 { name: 'capacity', label: 'Capacity', type: 'number', defaultValue: 100 },
                 { name: 'budget', label: 'Ngân sách', type: 'number', defaultValue: 0 },
-                { name: 'imageUrl', label: 'Ảnh sự kiện', type: 'url', full: true },
+                { name: 'imageUrls', label: 'Ảnh sự kiện', type: 'image-picker', full: true },
                 { name: 'description', label: 'Mô tả', type: 'textarea', full: true }
             ],
             values: {
@@ -1437,19 +1924,26 @@ const Admin = (() => {
                     <td>${money(event.budget)}</td>
                     <td>${badge(event.status, tone(event.status))}${featured[event.id] ? ` ${badge('Featured', 'orange')}` : ''}</td>
                     <td><div class="row-actions">
-                        <button class="icon-btn" data-event-detail="${event.id}">${icon('eye')}</button>
-                        <button class="icon-btn" data-event-edit="${event.id}">${icon('pencil')}</button>
-                        <button class="icon-btn" data-event-committee="${event.id}" title="Gán committee">${icon('users-round')}</button>
-                        <button class="icon-btn" data-event-budget="${event.id}" title="Thêm ngân sách">${icon('coins')}</button>
-                        <button class="icon-btn" data-event-status="${event.id}">${icon('refresh-cw')}</button>
-                        <button class="icon-btn" data-event-capacity="${event.id}">${icon('gauge')}</button>
-                        <button class="icon-btn" data-event-featured="${event.id}">${icon('star')}</button>
-                        <button class="icon-btn danger" data-event-delete="${event.id}">${icon('trash-2')}</button>
+                        <button class="icon-btn" data-event-detail="${event.id}" title="Xem chi tiết">${icon('eye')}</button>
+                        <button class="icon-btn" data-event-edit="${event.id}" title="Chỉnh sửa event">${icon('pencil')}</button>
+                        <div class="action-menu" data-menu="event-${event.id}">
+                            <button class="icon-btn" type="button" data-menu-trigger="event-${event.id}" aria-label="Thêm thao tác" title="Thêm thao tác">${icon('more-horizontal')}</button>
+                            <div class="action-menu-pop" data-menu-pop="event-${event.id}" role="menu">
+                                <button class="action-item" type="button" data-event-committee="${event.id}">${icon('users-round', 'h-3.5 w-3.5')}<span>Gán hội đồng</span></button>
+                                <button class="action-item" type="button" data-event-budget="${event.id}">${icon('coins', 'h-3.5 w-3.5')}<span>Thêm ngân sách</span></button>
+                                <button class="action-item" type="button" data-event-capacity="${event.id}">${icon('gauge', 'h-3.5 w-3.5')}<span>Đổi sức chứa</span></button>
+                                <button class="action-item" type="button" data-event-status="${event.id}">${icon('refresh-cw', 'h-3.5 w-3.5')}<span>Đổi trạng thái</span></button>
+                                <button class="action-item" type="button" data-event-featured="${event.id}">${icon('star', 'h-3.5 w-3.5')}<span>${featured[event.id] ? 'Bỏ Featured' : 'Đưa vào Featured'}</span></button>
+                                <div class="action-divider"></div>
+                                <button class="action-item danger" type="button" data-event-delete="${event.id}">${icon('trash-2', 'h-3.5 w-3.5')}<span>Xóa / huỷ event</span></button>
+                            </div>
+                        </div>
                     </div></td>
                 </tr>`))}
         `);
+        bindActionMenus();
         document.getElementById('addEvent').onclick = () => openEventForm();
-        document.getElementById('addBudget').onclick = () => events.length ? budgetForm() : toast('Chưa có event để thêm ngân sách.');
+        document.getElementById('addBudget').onclick = () => events.length ? budgetForm() : toast('Chưa có event để thêm ngân sách.', 'warn');
         document.querySelectorAll('[data-event-detail]').forEach(button => button.onclick = () => {
             const event = events.find(item => String(item.id) === button.dataset.eventDetail);
             const imagePreview = `<div class="event-preview"><img src="${h(eventImageUrl(event))}" alt=""></div>`;
@@ -1807,8 +2301,8 @@ const Admin = (() => {
                 { name: 'content', label: 'Nội dung', type: 'textarea', full: true, required: true }
             ],
             onSubmit: async payload => {
-                await api('/email-logs', { method: 'POST', body: JSON.stringify({ ...payload, status: 'SENT', sentAt: new Date().toISOString().slice(0, 16) }) });
-                toast('Đã ghi nhận thông báo đã gửi.');
+                const result = await api('/email-logs/send', { method: 'POST', body: JSON.stringify(payload) });
+                toast(result.status === 'FAILED' ? (result.message || 'Không gửi được email thật.') : 'Đã gửi email thật và lưu lịch sử.', result.status === 'FAILED' ? 'error' : 'success');
                 renderEmail();
             }
         });
@@ -1874,124 +2368,6 @@ const Admin = (() => {
         document.querySelectorAll('[data-template-edit]').forEach(button => button.onclick = () => templateForm(templates.find(item => item.id === button.dataset.templateEdit)));
     }
 
-    async function renderSecurity() {
-        state.page = 'security';
-        shell(`<button class="btn primary" id="saveSystemSettings">${icon('save')}Lưu cấu hình</button><button class="btn" id="backupDb">${icon('database-backup')}Backup</button>`);
-        const [overview, logs] = await Promise.all([
-            load('/dashboard', {}),
-            load('/activity-logs?page=0&size=40', { items: [] })
-        ]);
-        const settings = localGet('systemSettings', {
-            oauthClient: 'Google OAuth2',
-            recaptcha: 'Enabled',
-            smtpHost: 'smtp.gmail.com',
-            smtpPort: 587,
-            maintenance: 'Off',
-            sessionMinutes: 60
-        });
-
-        const settingForm = () => openForm({
-            title: 'System Settings',
-            fields: [
-                { name: 'oauthClient', label: 'OAuth2 Configuration', required: true },
-                { name: 'recaptcha', label: 'reCAPTCHA Settings', type: 'select', options: ['Enabled', 'Disabled', 'Test mode'].map(value => ({ value, label: value })) },
-                { name: 'smtpHost', label: 'SMTP Host', required: true },
-                { name: 'smtpPort', label: 'SMTP Port', type: 'number', required: true },
-                { name: 'maintenance', label: 'Maintenance', type: 'select', options: ['Off', 'Read-only', 'Full maintenance'].map(value => ({ value, label: value })) },
-                { name: 'sessionMinutes', label: 'Session timeout', type: 'number', required: true }
-            ],
-            values: settings,
-            onSubmit: async payload => {
-                localSet('systemSettings', payload);
-                toast('Đã lưu cấu hình hệ thống.');
-                renderSecurity();
-            }
-        });
-
-        content(`
-            <div class="metric-grid">
-                ${metric('OAuth2', settings.oauthClient, 'Google login')}
-                ${metric('reCAPTCHA', settings.recaptcha, 'Captcha protection')}
-                ${metric('SMTP', `${settings.smtpHost}:${settings.smtpPort}`, 'Mail server')}
-                ${metric('Access Logs', number(logs.totalItems || logs.items.length), 'Nhật ký truy cập')}
-            </div>
-            <div class="split-grid">
-                <section class="panel">
-                    <h2 class="panel-title">Security & System</h2>
-                    ${detailGrid([
-                        ['OAuth2 Configuration', settings.oauthClient],
-                        ['reCAPTCHA Settings', settings.recaptcha],
-                        ['SMTP Settings', `${settings.smtpHost}:${settings.smtpPort}`],
-                        ['Maintenance mode', settings.maintenance],
-                        ['Session timeout', `${settings.sessionMinutes} phút`],
-                        ['Backup scope', 'Users, events, reports, email logs']
-                    ])}
-                    <div class="inline-actions" style="justify-content:flex-start;margin-top:1rem">
-                        <button class="btn" id="restoreDb">${icon('upload')}Restore database</button>
-                    </div>
-                </section>
-                <section class="panel">
-                    <h2 class="panel-title">Access Logs</h2>
-                    ${renderTimeline((logs.items || []).slice(0, 10))}
-                </section>
-            </div>
-        `);
-        document.getElementById('saveSystemSettings').onclick = settingForm;
-        document.getElementById('backupDb').onclick = () => exportCsv('aems-backup-summary.csv', [
-            ['Section', 'Count'],
-            ['Users', overview.stats?.totalUsers || 0],
-            ['Events', overview.stats?.totalEvents || 0],
-            ['Registrations', overview.stats?.totalRegistrations || 0],
-            ['Emails', (overview.stats?.sentEmails || 0) + (overview.stats?.failedEmails || 0)]
-        ]);
-        document.getElementById('restoreDb').onclick = () => toast('Restore UI đã sẵn sàng. Backend cần endpoint restore để chạy thật.');
-    }
-
-    async function renderDeployment() {
-        state.page = 'deployment';
-        shell(`<button class="btn" id="refreshDeploy">${icon('refresh-cw')}Refresh</button>`);
-        const [overview, email] = await Promise.all([
-            load('/overview', {}),
-            load('/email-logs?page=0&size=20', { items: [] })
-        ]);
-        const containers = localGet('containers', [
-            { name: 'spring-api', image: 'eventmanagementt:1.0.0', status: 'RUNNING', cpu: '11%', memory: '512 MB' },
-            { name: 'sqlserver', image: 'mssql/server:latest', status: 'RUNNING', cpu: '24%', memory: '1.8 GB' },
-            { name: 'mail-worker', image: 'smtp-relay:local', status: email.items?.some(log => log.status === 'FAILED') ? 'ERROR' : 'RUNNING', cpu: '3%', memory: '96 MB' }
-        ]);
-        const failed = (email.items || []).filter(log => log.status === 'FAILED');
-        content(`
-            <div class="metric-grid">
-                ${metric('Server Status', 'ONLINE', 'Tomcat 8081 / context /api')}
-                ${metric('Deployment Monitor', 'Healthy', 'Static + API responding')}
-                ${metric('Containers', number(containers.length), 'Docker Container Status')}
-                ${metric('Error Logs', number(failed.length), 'Email/API lỗi gần đây')}
-            </div>
-            <div class="split-grid">
-                <section class="panel">
-                    <h2 class="panel-title">Docker Container Status</h2>
-                    ${table(['Container', 'Image', 'Status', 'CPU', 'Memory'], containers.map(container => `
-                        <tr>
-                            <td><span class="cell-title">${h(container.name)}</span></td>
-                            <td>${h(container.image)}</td>
-                            <td>${badge(container.status, tone(container.status))}</td>
-                            <td>${h(container.cpu)}</td>
-                            <td>${h(container.memory)}</td>
-                        </tr>`))}
-                </section>
-                <section class="panel">
-                    <h2 class="panel-title">Error Logs</h2>
-                    ${failed.length ? table(['Time', 'To', 'Subject'], failed.map(log => `
-                        <tr><td>${dateTime(log.sentAt)}</td><td>${h(log.toEmail)}</td><td>${h(log.subject)}</td></tr>`)) : '<div class="empty">Không có error log email trong trang hiện tại.</div>'}
-                </section>
-            </div>
-            <section class="panel">
-                <h2 class="panel-title">Deployment Monitor</h2>
-                <p class="panel-note">Snapshot hệ thống: ${number(overview.stats?.totalUsers)} users, ${number(overview.stats?.totalEvents)} events, ${number(overview.stats?.totalRegistrations)} registrations.</p>
-            </section>
-        `);
-        document.getElementById('refreshDeploy').onclick = renderDeployment;
-    }
 
     const handlers = {
         overview: renderOverview,
@@ -2005,20 +2381,49 @@ const Admin = (() => {
         events: renderEvents,
         committees: renderCommittees,
         registrations: renderRegistrations,
-        feedback: renderFeedback,
-        security: renderSecurity,
-        deployment: renderDeployment
+        feedback: renderFeedback
     };
 
-    function init() {
-        (handlers[state.page] || renderOverview)().catch(error => {
-            console.error(error);
-            shell();
-            content(`<div class="error">${h(error.message || error)}</div>`);
+    function bindGlobalHotkeys() {
+        document.addEventListener('keydown', event => {
+            const isCmdK = (event.ctrlKey || event.metaKey) && (event.key === 'k' || event.key === 'K');
+            if (isCmdK) {
+                event.preventDefault();
+                const root = document.getElementById('cmdkRoot');
+                if (root && root.classList.contains('open')) {
+                    root.classList.remove('open');
+                    root.innerHTML = '';
+                } else {
+                    openCommandPalette();
+                }
+                return;
+            }
+            if (event.key === 'Escape') {
+                const modal = document.getElementById('modalRoot');
+                if (modal && modal.classList.contains('open')) {
+                    modal.classList.remove('open');
+                    modal.innerHTML = '';
+                }
+            }
+            if ((event.ctrlKey || event.metaKey) && event.key === '/') {
+                event.preventDefault();
+                const search = document.querySelector('input[type="search"]');
+                if (search) search.focus();
+            }
         });
     }
 
-    return { init };
+    function init() {
+        bindGlobalHotkeys();
+        if (!handlers[state.page]) state.page = 'overview';
+        (handlers[state.page] || renderOverview)().catch(error => {
+            console.error(error);
+            shell();
+            content(`<div class="error"><strong>Không thể tải dữ liệu</strong><br>${h(error.message || error)}</div>`);
+        });
+    }
+
+    return { init, openCommandPalette, showConfirm };
 })();
 
 document.addEventListener('DOMContentLoaded', Admin.init);

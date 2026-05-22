@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Marketing FPT cover">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7f1d1d"/>
+      <stop offset="0.5" stop-color="#dc2626"/>
+      <stop offset="1" stop-color="#fb923c"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="600" fill="url(#bg)"/>
+  <g opacity="0.18" fill="#ffffff">
+    <path d="M820 80 q 80 -20 160 60 t 160 120 t -60 200 t -240 60 t -160 -160 t 140 -280 z"/>
+  </g>
+  <g transform="translate(64,68)">
+    <rect x="0" y="0" width="58" height="22" rx="4" fill="#0f172a"/>
+    <text x="29" y="17" text-anchor="middle" font-family="Inter, sans-serif" font-weight="900" font-size="16" fill="#ffffff">FPT</text>
+    <text x="68" y="17" font-family="Inter, sans-serif" font-weight="700" font-size="13" fill="#ffffff" letter-spacing="0.18em">UNIVERSITY</text>
+    <text x="0" y="42" font-family="Inter, sans-serif" font-weight="500" font-size="12" fill="#fef3c7" letter-spacing="0.12em">BRAND ∑ GROWTH ∑ ADS</text>
+  </g>
+  <g transform="translate(64,260)">
+    <rect x="0" y="0" width="240" height="36" rx="18" fill="#ffffff"/>
+    <text x="120" y="24" text-anchor="middle" font-family="Inter, sans-serif" font-weight="800" font-size="13" fill="#7f1d1d" letter-spacing="0.08em">MARKETING &amp; BRAND</text>
+  </g>
+  <text x="64" y="370" font-family="Inter, sans-serif" font-weight="800" font-size="60" fill="#ffffff">K√ chuy«n th∞°ng hi«u.</text>
+  <text x="64" y="432" font-family="Inter, sans-serif" font-weight="800" font-size="60" fill="#fde68a">B·n b±ng c‚u chÔ.</text>
+  <text x="64" y="490" font-family="Inter, sans-serif" font-weight="500" font-size="20" fill="#fff5e6">Workshop digital marketing ∑ content creator ∑ brand storytelling</text>
+</svg>

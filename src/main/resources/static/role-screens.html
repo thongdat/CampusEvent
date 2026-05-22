@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chọn vai trò · Campus Events</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>body { font-family: 'Inter', system-ui, sans-serif; }</style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50 text-slate-800">
+
+<header class="border-b border-slate-200 bg-white/80 backdrop-blur">
+    <div class="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
+        <a href="landing.html" class="flex items-center gap-2 font-bold text-slate-900">
+            <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 text-white">🎓</span>
+            Campus Events
+        </a>
+        <a href="login.html" class="rounded-lg px-3 py-2 text-sm font-semibold text-sky-700 hover:bg-sky-50">Đăng nhập</a>
+    </div>
+</header>
+
+<main class="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
+    <header class="text-center">
+        <p class="inline-flex items-center gap-2 rounded-full bg-sky-100 px-3 py-1 text-xs font-bold uppercase tracking-widest text-sky-700">Demo</p>
+        <h1 class="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Chọn vai trò để vào hệ thống</h1>
+        <p class="mx-auto mt-3 max-w-2xl text-base text-slate-600">
+            Mỗi vai trò có một console riêng. Hãy đăng nhập trước, sau đó bấm nút bên dưới để vào màn tương ứng.
+        </p>
+    </header>
+
+    <div class="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <article class="group relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
+            <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-sky-500 to-indigo-600"></div>
+            <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-600 text-2xl text-white shadow-lg shadow-sky-500/30">🎓</div>
+            <h2 class="mt-4 text-lg font-bold text-slate-900">Sinh viên</h2>
+            <p class="mt-1 text-sm text-slate-500">Khám phá, đăng ký sự kiện với cơ chế xếp slot ưu tiên thông minh.</p>
+            <ul class="mt-3 space-y-1 text-xs text-slate-600">
+                <li>• Đề xuất theo chuyên ngành</li>
+                <li>• Hàng đợi minh bạch</li>
+                <li>• Vé QR + check-in</li>
+                <li>• Bảng xếp hạng điểm</li>
+            </ul>
+            <a href="screen-student.html" class="mt-5 inline-flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-sky-600 to-blue-700 py-2.5 text-sm font-semibold text-white shadow-md transition hover:brightness-110">Mở console</a>
+        </article>
+
+        <article class="group relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
+            <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-teal-500 to-emerald-600"></div>
+            <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-600 text-2xl text-white shadow-lg shadow-teal-500/30">🏛</div>
+            <h2 class="mt-4 text-lg font-bold text-slate-900">Khoa / Phòng ban</h2>
+            <p class="mt-1 text-sm text-slate-500">Tạo đề xuất, theo dõi tiến trình duyệt và quản lý event của khoa.</p>
+            <ul class="mt-3 space-y-1 text-xs text-slate-600">
+                <li>• Tạo & gửi proposal</li>
+                <li>• Quản lý event đã duyệt</li>
+                <li>• Theo dõi đăng ký + check-in</li>
+                <li>• Báo cáo feedback</li>
+            </ul>
+            <a href="screen-department.html" class="mt-5 inline-flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-teal-600 to-emerald-700 py-2.5 text-sm font-semibold text-white shadow-md transition hover:brightness-110">Mở console</a>
+        </article>
+
+        <article class="group relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
+            <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-amber-500 to-orange-600"></div>
+            <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 text-2xl text-white shadow-lg shadow-amber-500/30">⚖</div>
+            <h2 class="mt-4 text-lg font-bold text-slate-900">Hội đồng</h2>
+            <p class="mt-1 text-sm text-slate-500">Phê duyệt / từ chối / yêu cầu chỉnh sửa đề xuất từ các khoa.</p>
+            <ul class="mt-3 space-y-1 text-xs text-slate-600">
+                <li>• Hàng đợi đề xuất</li>
+                <li>• Approve → tạo Event</li>
+                <li>• Reject / Revise có lý do</li>
+                <li>• Lịch sử quyết định</li>
+            </ul>
+            <a href="screen-committee.html" class="mt-5 inline-flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-amber-600 to-orange-700 py-2.5 text-sm font-semibold text-white shadow-md transition hover:brightness-110">Mở console</a>
+        </article>
+
+        <article class="group relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
+            <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-slate-700 to-slate-900"></div>
+            <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-700 to-slate-900 text-2xl text-white shadow-lg shadow-slate-500/30">⚙</div>
+            <h2 class="mt-4 text-lg font-bold text-slate-900">Quản trị</h2>
+            <p class="mt-1 text-sm text-slate-500">Tổng quan hệ thống: users, departments, roles, reports, security.</p>
+            <ul class="mt-3 space-y-1 text-xs text-slate-600">
+                <li>• Dashboard tổng quan</li>
+                <li>• Quản lý users + roles</li>
+                <li>• Reports + biểu đồ</li>
+                <li>• Email log + activity</li>
+            </ul>
+            <a href="admin-screen/overview.html" class="mt-5 inline-flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-slate-700 to-slate-900 py-2.5 text-sm font-semibold text-white shadow-md transition hover:brightness-110">Mở console</a>
+        </article>
+    </div>
+
+    <section class="mt-12 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+        <h2 class="text-lg font-bold text-slate-900">Tài khoản demo (sau khi chạy seed)</h2>
+        <p class="mt-1 text-sm text-slate-500">Truy cập <a class="text-sky-700 hover:underline" href="login.html">đăng nhập</a> rồi nhập thông tin dưới đây. Mật khẩu seed cần chạy <code class="rounded bg-slate-100 px-1.5 py-0.5 text-xs">POST /api/auth/init-passwords</code> sau khi import SQL.</p>
+        <div class="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+            <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <p class="font-bold text-slate-900">Admin</p>
+                <p class="text-slate-600"><code>admin@fpt.edu.vn</code> / <code>admin123</code></p>
+            </div>
+            <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <p class="font-bold text-slate-900">Khoa</p>
+                <p class="text-slate-600"><code>dept.it@fpt.edu.vn</code> / <code>dept123</code></p>
+            </div>
+            <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <p class="font-bold text-slate-900">Hội đồng</p>
+                <p class="text-slate-600"><code>committee1@fpt.edu.vn</code> / <code>committee123</code></p>
+            </div>
+            <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <p class="font-bold text-slate-900">Sinh viên</p>
+                <p class="text-slate-600"><code>student1@fpt.edu.vn</code> / <code>student123</code></p>
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer class="border-t border-slate-200 bg-white py-6 text-center text-xs text-slate-500">
+    Campus Events · <a href="landing.html" class="font-semibold text-sky-700 hover:underline">Về trang chủ</a>
+</footer>
+
+</body>
+</html>

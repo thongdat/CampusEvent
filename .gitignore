@@ -1,6 +1,12 @@
-﻿target/
+target/
 .idea/
 *.iml
 *.log
 *.class
 .mvn/wrapper/maven-wrapper.jar
+
+# Local secret / OAuth / SMTP configuration (KHÔNG commit credential thật)
+src/main/resources/application-local.properties
+application-local.properties
+.env
+.env.local

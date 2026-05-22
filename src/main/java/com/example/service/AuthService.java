@@ -59,7 +59,27 @@ public class AuthService {
         }
 
         User user = optionalUser.get();
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+        String stored = user.getPassword() == null ? "" : user.getPassword();
+        String input = request.getPassword() == null ? "" : request.getPassword();
+
+        boolean matched;
+        if (stored.startsWith("$2a$") || stored.startsWith("$2b$") || stored.startsWith("$2y$")) {
+            matched = passwordEncoder.matches(input, stored);
+        } else if (stored.startsWith("plain:")) {
+            // Seed password chưa được hash. Nếu khớp thì tự BCrypt rồi save lại,
+            // tránh việc user phải gọi /api/auth/init-passwords thủ công.
+            String literal = stored.substring("plain:".length());
+            matched = literal.equals(input);
+            if (matched) {
+                user.setPassword(passwordEncoder.encode(literal));
+                userRepository.save(user);
+            }
+        } else {
+            // Legacy "hashed_password_xxx" — không có cách verify, từ chối an toàn.
+            matched = false;
+        }
+
+        if (!matched) {
             return LoginResponse.error("Email hoặc mật khẩu không chính xác.", "INVALID_CREDENTIALS");
         }
 
@@ -354,9 +374,16 @@ public class AuthService {
         return result;
     }
 
+    /**
+     * Hash lại các mật khẩu seed trong database.
+     * - Nếu password bắt đầu bằng "plain:abc123" → hash "abc123" (giữ mật khẩu riêng).
+     *   Cho phép phân biệt admin123 / dept123 / com123 / stu123 trong seed FPT.
+     * - Nếu password đã ở dạng BCrypt ($2a$) → bỏ qua.
+     * - Trường hợp khác (legacy "hashed_password_xxx") → fallback "12345678".
+     */
     public Map<String, Object> initSeedPasswords() {
         Map<String, Object> result = new HashMap<>();
-        String defaultPassword = "12345678";
+        String fallback = "12345678";
         List<User> allUsers = userRepository.findAll();
         int count = 0;
 
@@ -365,13 +392,19 @@ public class AuthService {
             if (pwd == null || pwd.startsWith("$2a$")) {
                 continue;
             }
-            user.setPassword(passwordEncoder.encode(defaultPassword));
+            String target;
+            if (pwd.startsWith("plain:") && pwd.length() > "plain:".length()) {
+                target = pwd.substring("plain:".length());
+            } else {
+                target = fallback;
+            }
+            user.setPassword(passwordEncoder.encode(target));
             userRepository.save(user);
             count++;
         }
 
         result.put("success", true);
-        result.put("message", "Đã cập nhật " + count + " tài khoản. Mật khẩu mặc định: " + defaultPassword);
+        result.put("message", "Đã cập nhật " + count + " tài khoản. Mật khẩu seed prefix 'plain:' được giữ nguyên, các tài khoản cũ dùng fallback '" + fallback + "'.");
         result.put("updatedCount", count);
         return result;
     }
