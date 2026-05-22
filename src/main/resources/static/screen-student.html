@@ -38,6 +38,9 @@
     </script>
     <style>
         body { font-family: 'Inter', system-ui, sans-serif; }
+        /* Buộc HTML attribute [hidden] thắng các utility class display:flex/grid của Tailwind.
+           Nếu thiếu, dialog backdrop blur sẽ phủ kín màn hình ngay khi vừa load. */
+        [hidden] { display: none !important; }
         .skeleton {
             background: linear-gradient(90deg,#eef2ff 0%,#e0e7ff 40%,#eef2ff 80%);
             background-size: 800px 100%;
