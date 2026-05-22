@@ -52,6 +52,8 @@ public class OAuthConfigController {
         }
         // Coi các giá trị placeholder mặc định là "chưa cấu hình".
         String lower = trimmed.toLowerCase();
-        return !lower.contains("your-google") && !lower.contains("placeholder");
+        return !lower.contains("your-google")
+                && !lower.contains("placeholder")
+                && !lower.contains("disabled");
     }
 }
