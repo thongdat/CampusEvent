@@ -28,7 +28,8 @@ import java.util.Locale;
 @Component
 public class EventDataBackfill implements ApplicationRunner {
 
-    private static final String IMG_BASE = "/img/events/";
+    private static final String IMG_BASE = "/api/img/events/";
+    private static final String IMG_BASE_LEGACY = "/img/events/";
 
     private final EventRepository eventRepository;
 
@@ -43,12 +44,12 @@ public class EventDataBackfill implements ApplicationRunner {
             boolean touched = false;
             String desired = defaultImageFor(event);
             String current = event.getImageUrl();
-            if (isBlank(current) || isExternalLegacy(current)) {
+            if (isBlank(current) || isExternalLegacy(current) || needsContextPathUpgrade(current)) {
                 event.setImageUrl(desired);
                 touched = true;
             }
             String currentList = event.getImageUrls();
-            if (isBlank(currentList) || isExternalLegacy(currentList)) {
+            if (isBlank(currentList) || isExternalLegacy(currentList) || needsContextPathUpgrade(currentList)) {
                 event.setImageUrls(desired);
                 touched = true;
             }
@@ -63,6 +64,14 @@ public class EventDataBackfill implements ApplicationRunner {
         if (!changed.isEmpty()) {
             eventRepository.saveAll(changed);
         }
+    }
+
+    /**
+     * URL cũ kiểu /img/events/... thiếu context path /api → browser sẽ 404
+     * khi page nằm dưới /api/. Cần upgrade lên /api/img/events/...
+     */
+    private boolean needsContextPathUpgrade(String url) {
+        return url != null && url.trim().startsWith(IMG_BASE_LEGACY);
     }
 
     /**

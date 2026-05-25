@@ -24,6 +24,8 @@
     </script>
     <style>
         body { font-family: 'Inter', system-ui, sans-serif; }
+        /* Buộc HTML attribute [hidden] thắng các utility class display:flex/grid của Tailwind. */
+        [hidden] { display: none !important; }
         .skeleton {
             background: linear-gradient(90deg,#fef3c7 0%,#fde68a 40%,#fef3c7 80%);
             background-size: 800px 100%;

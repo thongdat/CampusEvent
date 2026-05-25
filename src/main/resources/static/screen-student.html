@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sinh viên · Campus Events</title>
+    <title>Sinh viên · Campus Events FPT</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -14,300 +14,377 @@
                 extend: {
                     fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
                     colors: {
-                        brand: {
-                            50:  '#eff6ff',
-                            100: '#dbeafe',
-                            500: '#3b82f6',
-                            600: '#2563eb',
-                            700: '#1d4ed8'
-                        }
+                        fpt: {
+                            50:  '#fff7ed',
+                            100: '#ffedd5',
+                            200: '#fed7aa',
+                            300: '#fdba74',
+                            400: '#fb923c',
+                            500: '#f37021',
+                            600: '#ea580c',
+                            700: '#c2410c',
+                            800: '#9a3412',
+                            900: '#7c2d12'
+                        },
+                        ink: { DEFAULT: '#1f130d', muted: '#6b5d52', soft: '#a08b7f' }
+                    },
+                    boxShadow: {
+                        soft: '0 1px 2px rgba(31,19,13,.04), 0 8px 24px -12px rgba(31,19,13,.12)',
+                        glow: '0 22px 60px -28px rgba(243,112,33,.55)'
                     },
                     keyframes: {
-                        pop: { '0%': { transform: 'scale(0.96)', opacity: 0 }, '100%': { transform: 'scale(1)', opacity: 1 } },
+                        pop: { '0%': { transform: 'scale(.96)', opacity: 0 }, '100%': { transform: 'scale(1)', opacity: 1 } },
                         slideUp: { '0%': { transform: 'translateY(8px)', opacity: 0 }, '100%': { transform: 'translateY(0)', opacity: 1 } },
-                        shimmer: { '0%': { backgroundPosition: '-400px 0' }, '100%': { backgroundPosition: '400px 0' } }
+                        shimmer: { '0%': { backgroundPosition: '-400px 0' }, '100%': { backgroundPosition: '400px 0' } },
+                        fadeIn: { '0%': { opacity: 0 }, '100%': { opacity: 1 } }
                     },
                     animation: {
                         pop: 'pop .18s ease-out',
                         slideUp: 'slideUp .25s ease-out',
-                        shimmer: 'shimmer 1.4s linear infinite'
+                        shimmer: 'shimmer 1.4s linear infinite',
+                        fadeIn: 'fadeIn .3s ease-out'
                     }
                 }
             }
         };
     </script>
     <style>
-        body { font-family: 'Inter', system-ui, sans-serif; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: linear-gradient(180deg,#fffaf5 0%,#fff 220px); }
+
+        /* Force HTML [hidden] win against utility classes */
+        [hidden] { display: none !important; }
+
         .skeleton {
-            background: linear-gradient(90deg,#eef2ff 0%,#e0e7ff 40%,#eef2ff 80%);
+            background: linear-gradient(90deg,#fff7ed 0%,#fed7aa 40%,#fff7ed 80%);
             background-size: 800px 100%;
             animation: shimmer 1.4s linear infinite;
         }
-        .scroll-snap-x { scroll-snap-type: x mandatory; }
-        .scroll-snap-x > * { scroll-snap-align: start; }
-        .dialog-backdrop { background: rgba(15,23,42,.55); backdrop-filter: blur(6px); }
-        .priority-ring {
-            background: conic-gradient(var(--ring-color, #2563eb) calc(var(--ring-pct, 0) * 1%), #e2e8f0 0);
-        }
+        .dialog-backdrop { background: rgba(31,19,13,.6); backdrop-filter: blur(8px); }
         details[open] > summary .chev { transform: rotate(180deg); }
         .chev { transition: transform .2s ease; }
-        .card-img-fallback { background: linear-gradient(135deg,#dbeafe,#c7d2fe 70%); }
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .card-img-fallback {
+            background:
+                linear-gradient(135deg, rgba(243,112,33,.18), rgba(194,65,12,.18) 60%, rgba(124,45,18,.22)),
+                radial-gradient(circle at 30% 30%, rgba(255,255,255,.4), transparent 50%);
+        }
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-thumb { background: #fed7aa; border-radius: 8px; }
+        ::-webkit-scrollbar-thumb:hover { background: #fdba74; }
+        ::-webkit-scrollbar-track { background: #fff7ed; }
+
+        /* Sidebar item active accent */
+        .sb-item { transition: all .18s ease; }
+        .sb-item.active {
+            background: linear-gradient(135deg, #f37021 0%, #c2410c 100%);
+            color: #fff;
+            box-shadow: 0 10px 24px -10px rgba(243,112,33,.6);
+        }
+        .sb-item.active svg { color: #fff !important; }
+        .sb-item:not(.active):hover { background: #fff7ed; color: #c2410c; }
+
+        /* Filter chip */
+        .chip { transition: all .15s ease; }
+        .chip.active { background: linear-gradient(135deg,#f37021,#c2410c); color:#fff; border-color: transparent; box-shadow: 0 10px 22px -10px rgba(243,112,33,.55); }
+
+        /* Event card hover */
+        .ev-card { transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease; }
+        .ev-card:hover { transform: translateY(-4px); box-shadow: 0 28px 60px -28px rgba(31,19,13,.25); border-color: #fed7aa; }
+        .ev-card img { transition: transform .55s cubic-bezier(.22,1,.36,1); }
+        .ev-card:hover img { transform: scale(1.06); }
+
+        /* Hero shapes */
+        .hero-blob-1 { background: radial-gradient(circle, rgba(255,237,213,.5) 0%, transparent 70%); }
+        .hero-blob-2 { background: radial-gradient(circle, rgba(254,215,170,.55) 0%, transparent 70%); }
+
+        /* SIDEBAR LAYOUT
+         * Desktop (>=1024px): sticky inside flex row, follows scroll.
+         * Mobile (<1024px):   fixed drawer, hidden offscreen, slides in via .open. */
+        #sidebar {
+            position: fixed;
+            top: 4rem;
+            left: 0;
+            bottom: 0;
+            width: 16rem;
+            z-index: 40;
+            transform: translateX(-110%);
+            transition: transform .28s cubic-bezier(.4,0,.2,1);
+        }
+        #sidebar.open { transform: translateX(0); }
+
+        @media (min-width: 1024px) {
+            #sidebar {
+                position: sticky;
+                top: 4rem;
+                bottom: auto;
+                height: calc(100vh - 4rem);
+                z-index: 10;
+                transform: none;
+                flex-shrink: 0;
+            }
+            #sidebarOverlay { display: none !important; }
+        }
     </style>
 </head>
-<body class="min-h-screen bg-slate-50 text-slate-800 antialiased">
+<body class="min-h-screen text-ink antialiased">
 
-<!-- ============================ HEADER ============================ -->
-<header class="sticky top-0 z-30 border-b border-slate-200 bg-white/85 backdrop-blur-lg">
-    <div class="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
-        <a href="#" class="flex items-center gap-2 font-bold tracking-tight text-slate-900">
-            <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 text-lg text-white shadow-md shadow-blue-500/30">🎓</span>
-            <span class="leading-tight">
-                <span class="block text-sm font-bold">Campus Events</span>
-                <span class="block text-[10px] font-medium uppercase tracking-widest text-slate-500">Smart Priority Matching</span>
+<!-- ============================ TASKBAR / TOP HEADER ============================ -->
+<header class="sticky top-0 z-40 border-b border-fpt-100 bg-white/85 backdrop-blur-xl">
+    <div class="mx-auto flex h-16 max-w-screen-2xl items-center gap-3 px-4 sm:px-6 lg:px-8">
+        <button id="btnMenu" class="grid h-10 w-10 place-items-center rounded-xl border border-fpt-100 bg-white text-fpt-700 hover:bg-fpt-50 lg:hidden" aria-label="Mở menu">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round"/></svg>
+        </button>
+
+        <a href="landing.html" class="flex items-center gap-2.5">
+            <span class="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-fpt-500 to-fpt-700 text-white shadow-glow">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5a6 3 0 0 0 12 0v-5"/></svg>
+            </span>
+            <span class="hidden leading-tight sm:block">
+                <span class="block text-sm font-extrabold text-ink">Campus Events</span>
+                <span class="block text-[10px] font-bold uppercase tracking-[0.2em] text-fpt-600">FPT University</span>
             </span>
         </a>
 
-        <div class="hidden flex-1 max-w-md md:block">
+        <div class="ml-4 hidden flex-1 max-w-xl md:block">
             <label class="relative block">
-                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-fpt-400">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
                 </span>
                 <input id="globalSearch" type="search" placeholder="Tìm sự kiện, khoa, địa điểm..."
-                    class="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-3 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-200">
+                    class="w-full rounded-2xl border border-fpt-100 bg-fpt-50/60 py-2.5 pl-10 pr-3 text-sm font-medium text-ink placeholder:text-ink-soft focus:border-fpt-300 focus:bg-white focus:outline-none focus:ring-4 focus:ring-fpt-200/40">
             </label>
         </div>
 
-        <div class="flex items-center gap-2">
+        <div class="ml-auto flex items-center gap-2">
+            <span class="hidden items-center gap-1.5 rounded-full bg-fpt-50 px-3 py-1.5 text-xs font-bold text-fpt-700 sm:inline-flex">
+                <span class="h-1.5 w-1.5 rounded-full bg-fpt-500 animate-pulse"></span>
+                Live
+            </span>
             <details class="relative">
-                <summary class="flex cursor-pointer list-none items-center gap-2 rounded-full border border-slate-200 bg-white px-2.5 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:shadow">
-                    <span id="accountInitials" class="flex h-7 w-7 items-center justify-center rounded-full bg-sky-100 text-xs font-bold text-sky-700">SV</span>
+                <summary class="flex cursor-pointer list-none items-center gap-2 rounded-full border border-fpt-100 bg-white py-1.5 pl-2 pr-3 text-sm font-semibold text-ink shadow-sm transition hover:border-fpt-200 hover:shadow-md">
+                    <span id="accountInitials" class="grid h-7 w-7 place-items-center rounded-full bg-gradient-to-br from-fpt-500 to-fpt-700 text-[11px] font-bold text-white">SV</span>
                     <span id="accountName" class="hidden max-w-32 truncate sm:inline">Sinh viên</span>
                     <svg class="chev hidden sm:block" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
                 </summary>
-                <div class="absolute right-0 z-40 mt-2 w-64 rounded-xl border border-slate-200 bg-white p-2 text-sm shadow-2xl animate-pop">
-                    <div class="rounded-lg bg-slate-50 px-3 py-3">
-                        <p id="accountNameLg" class="truncate font-semibold text-slate-900">Sinh viên</p>
-                        <p id="accountEmail" class="truncate text-xs text-slate-500">student@fpt.edu.vn</p>
-                        <p class="mt-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                            <span id="accountMajor" class="rounded bg-sky-100 px-2 py-0.5 text-sky-700">—</span>
-                            <span id="accountSemester">Kỳ —</span>
+                <div class="absolute right-0 z-50 mt-2 w-72 rounded-2xl border border-fpt-100 bg-white p-2 text-sm shadow-2xl animate-pop">
+                    <div class="rounded-xl bg-gradient-to-br from-fpt-50 to-fpt-100/60 p-3.5">
+                        <p id="accountNameLg" class="truncate text-base font-extrabold text-ink">Sinh viên</p>
+                        <p id="accountEmail" class="truncate text-xs text-ink-muted">student@fpt.edu.vn</p>
+                        <p class="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] font-semibold">
+                            <span id="accountMajor" class="rounded-full bg-white px-2 py-0.5 text-fpt-700 shadow-sm">—</span>
+                            <span id="accountSemester" class="rounded-full bg-white px-2 py-0.5 text-fpt-700 shadow-sm">Kỳ —</span>
                         </p>
                     </div>
-                    <a href="forgot-password.html" class="mt-1 block rounded-lg px-3 py-2 font-semibold text-slate-700 hover:bg-sky-50">Đổi mật khẩu</a>
-                    <button type="button" id="btnLogout" class="block w-full rounded-lg px-3 py-2 text-left font-semibold text-rose-600 hover:bg-rose-50">Đăng xuất</button>
+                    <a href="landing.html" class="mt-2 block rounded-xl px-3.5 py-2.5 font-semibold text-ink hover:bg-fpt-50 hover:text-fpt-700">🏠 Trang chủ</a>
+                    <a href="forgot-password.html" class="block rounded-xl px-3.5 py-2.5 font-semibold text-ink hover:bg-fpt-50 hover:text-fpt-700">🔑 Đổi mật khẩu</a>
+                    <button type="button" id="btnLogout" class="block w-full rounded-xl px-3.5 py-2.5 text-left font-semibold text-rose-600 hover:bg-rose-50">↩ Đăng xuất</button>
                 </div>
             </details>
         </div>
     </div>
 </header>
 
-<!-- ============================ HERO ============================ -->
-<section class="relative overflow-hidden bg-gradient-to-br from-indigo-700 via-blue-600 to-sky-500 text-white">
-    <div class="pointer-events-none absolute -right-32 top-0 h-96 w-96 rounded-full bg-cyan-300/30 blur-3xl"></div>
-    <div class="pointer-events-none absolute -left-32 bottom-0 h-72 w-72 rounded-full bg-violet-400/30 blur-3xl"></div>
+<div class="mx-auto flex max-w-screen-2xl">
 
-    <div class="relative mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14">
-        <div class="grid items-center gap-10 lg:grid-cols-[1.4fr_1fr]">
-            <div>
-                <p class="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-sky-50 backdrop-blur-sm">
-                    <span>🎯</span>
-                    Hệ thống đề xuất thông minh
-                </p>
-                <h1 class="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
-                    Xin chào <span id="heroName">bạn</span> 👋
-                </h1>
-                <p class="mt-3 max-w-2xl text-base text-sky-50 sm:text-lg">
-                    Hệ thống ưu tiên đăng ký theo chuyên ngành, học kỳ, điểm hoạt động và thời điểm đăng ký — minh bạch, công bằng, đúng người cần học.
-                </p>
+    <!-- ============================ SIDEBAR ============================ -->
+    <aside id="sidebar" class="border-r border-fpt-100 bg-white/95 backdrop-blur-xl">
+        <div class="flex h-full flex-col">
+            <nav class="flex-1 space-y-1 overflow-y-auto p-4">
+                <p class="px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-ink-soft">Khám phá</p>
+                <button data-tab="discover" class="sb-item active flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-fpt-600"><path d="M12 2 4 6v6c0 5 3.4 9.4 8 10 4.6-.6 8-5 8-10V6l-8-4z"/></svg>
+                    Sự kiện đề xuất
+                </button>
+                <button data-tab="all" class="sb-item flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-ink-muted">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-fpt-500"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                    Tất cả sự kiện
+                </button>
+                <button data-tab="mine" class="sb-item flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-ink-muted">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-fpt-500"><path d="M20 12V4H4v16h8"/><path d="M20 19l-3 3-2-2"/><path d="M9 10h6"/></svg>
+                    Đăng ký của tôi
+                    <span id="badgeMine" class="ml-auto rounded-full bg-fpt-100 px-2 py-0.5 text-[10px] font-bold text-fpt-700">0</span>
+                </button>
+                <button data-tab="board" class="sb-item flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-ink-muted">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-fpt-500"><path d="M8 21h8M12 17v4M6 3h12v6a6 6 0 0 1-12 0V3z"/><path d="M18 4h2v3a3 3 0 0 1-3 3M6 4H4v3a3 3 0 0 0 3 3"/></svg>
+                    Bảng vinh danh
+                </button>
 
-                <div class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                    <div class="rounded-2xl bg-white/15 px-4 py-3 backdrop-blur-md">
-                        <p class="text-xs font-semibold uppercase tracking-wider text-sky-100">Đã đăng ký</p>
-                        <p id="statRegistered" class="mt-1 text-2xl font-bold">—</p>
-                    </div>
-                    <div class="rounded-2xl bg-white/15 px-4 py-3 backdrop-blur-md">
-                        <p class="text-xs font-semibold uppercase tracking-wider text-sky-100">Đã tham gia</p>
-                        <p id="statAttended" class="mt-1 text-2xl font-bold">—</p>
-                    </div>
-                    <div class="rounded-2xl bg-white/15 px-4 py-3 backdrop-blur-md">
-                        <p class="text-xs font-semibold uppercase tracking-wider text-sky-100">Điểm tích lũy</p>
-                        <p id="statPoints" class="mt-1 text-2xl font-bold">—</p>
-                    </div>
-                    <div class="rounded-2xl bg-white/15 px-4 py-3 backdrop-blur-md">
-                        <p class="text-xs font-semibold uppercase tracking-wider text-sky-100">Xếp hạng</p>
-                        <p id="statRank" class="mt-1 text-2xl font-bold">—</p>
-                    </div>
+                <p class="px-3 pb-2 pt-5 text-[10px] font-bold uppercase tracking-[0.18em] text-ink-soft">Cá nhân</p>
+                <a href="forgot-password.html" class="sb-item flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-ink-muted">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-fpt-500"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    Đổi mật khẩu
+                </a>
+                <a href="landing.html" class="sb-item flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-ink-muted">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-fpt-500"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2h-4v-7H10v7H6a2 2 0 0 1-2-2z"/></svg>
+                    Trang chủ
+                </a>
+                <button type="button" id="btnLogoutSide" class="sb-item flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-rose-600 hover:bg-rose-50">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l-5-5 5-5M5 12h11"/></svg>
+                    Đăng xuất
+                </button>
+            </nav>
+
+            <div class="border-t border-fpt-100 p-4">
+                <div class="rounded-2xl bg-gradient-to-br from-fpt-500 via-fpt-600 to-fpt-700 p-4 text-white shadow-glow">
+                    <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-fpt-100">Hôm nay</p>
+                    <p id="todayCount" class="mt-1 text-2xl font-extrabold">—</p>
+                    <p class="text-xs text-fpt-100">sự kiện diễn ra trong ngày</p>
+                    <button type="button" data-tab="discover" class="mt-3 inline-flex items-center gap-1 rounded-full bg-white/15 px-3 py-1.5 text-xs font-bold backdrop-blur transition hover:bg-white/25">
+                        Xem ngay →
+                    </button>
                 </div>
             </div>
-
-            <!-- Priority explainer -->
-            <div class="rounded-3xl border border-white/20 bg-white/10 p-5 shadow-2xl backdrop-blur-lg">
-                <p class="text-xs font-bold uppercase tracking-widest text-sky-100">Cách tính điểm ưu tiên</p>
-                <p class="mt-1 text-sm text-sky-50">Mỗi sinh viên có 1 priority score riêng cho từng event.</p>
-                <ul class="mt-4 space-y-2.5 text-sm">
-                    <li class="flex items-center justify-between gap-3 rounded-xl bg-white/10 px-3 py-2">
-                        <span class="flex items-center gap-2"><span class="rounded-md bg-emerald-400/30 px-1.5 py-0.5 text-[10px] font-bold uppercase text-emerald-50">M</span> Chuyên ngành phù hợp</span>
-                        <span class="font-bold text-white">40%</span>
-                    </li>
-                    <li class="flex items-center justify-between gap-3 rounded-xl bg-white/10 px-3 py-2">
-                        <span class="flex items-center gap-2"><span class="rounded-md bg-amber-400/30 px-1.5 py-0.5 text-[10px] font-bold uppercase text-amber-50">S</span> Học kỳ cao hơn</span>
-                        <span class="font-bold text-white">30%</span>
-                    </li>
-                    <li class="flex items-center justify-between gap-3 rounded-xl bg-white/10 px-3 py-2">
-                        <span class="flex items-center gap-2"><span class="rounded-md bg-rose-400/30 px-1.5 py-0.5 text-[10px] font-bold uppercase text-rose-50">P</span> Điểm hoạt động cao</span>
-                        <span class="font-bold text-white">20%</span>
-                    </li>
-                    <li class="flex items-center justify-between gap-3 rounded-xl bg-white/10 px-3 py-2">
-                        <span class="flex items-center gap-2"><span class="rounded-md bg-sky-400/30 px-1.5 py-0.5 text-[10px] font-bold uppercase text-sky-50">T</span> Đăng ký sớm</span>
-                        <span class="font-bold text-white">10%</span>
-                    </li>
-                </ul>
-            </div>
         </div>
-    </div>
-</section>
+    </aside>
 
-<!-- ============================ MAIN ============================ -->
-<main class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-    <!-- Tabs -->
-    <nav class="sticky top-16 z-20 -mx-4 mb-6 flex gap-1 overflow-x-auto border-b border-slate-200 bg-slate-50/90 px-4 backdrop-blur-md sm:mx-0 sm:px-0">
-        <button data-tab="discover"  class="tab-btn whitespace-nowrap border-b-2 border-transparent px-4 py-3 text-sm font-semibold text-slate-500 transition hover:text-slate-900">🔥 Khám phá</button>
-        <button data-tab="mine"      class="tab-btn whitespace-nowrap border-b-2 border-transparent px-4 py-3 text-sm font-semibold text-slate-500 transition hover:text-slate-900">🎟️ Đăng ký của tôi</button>
-        <button data-tab="board"     class="tab-btn whitespace-nowrap border-b-2 border-transparent px-4 py-3 text-sm font-semibold text-slate-500 transition hover:text-slate-900">🏆 Bảng xếp hạng</button>
-        <button data-tab="priority"  class="tab-btn whitespace-nowrap border-b-2 border-transparent px-4 py-3 text-sm font-semibold text-slate-500 transition hover:text-slate-900">🧠 Cách xếp slot</button>
-    </nav>
+    <!-- Overlay for mobile sidebar -->
+    <div id="sidebarOverlay" hidden class="fixed inset-0 top-16 z-20 bg-ink/40 backdrop-blur-sm lg:hidden"></div>
 
-    <!-- ============================ TAB: DISCOVER ============================ -->
-    <section data-tab-panel="discover" class="space-y-6">
+    <!-- ============================ MAIN ============================ -->
+    <main class="min-w-0 flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
 
-        <div class="flex flex-wrap items-center gap-2">
-            <select id="filterScope" class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-200">
-                <option value="all">Tất cả</option>
-                <option value="recommended" selected>🎯 Đề xuất cho bạn</option>
-                <option value="upcoming">📅 Sắp tới</option>
-                <option value="today">🟢 Hôm nay</option>
-                <option value="past">📦 Đã diễn ra</option>
-            </select>
-            <select id="filterFaculty" class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-200">
-                <option value="all">Tất cả khoa</option>
-            </select>
-            <select id="filterSort" class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-200">
-                <option value="priority">Sắp theo điểm ưu tiên</option>
-                <option value="date">Sắp theo ngày</option>
-            </select>
-            <span id="resultCount" class="ml-auto text-xs font-semibold text-slate-500">—</span>
-        </div>
+        <!-- HERO -->
+        <section class="relative overflow-hidden rounded-3xl border border-fpt-100 bg-gradient-to-br from-fpt-50 via-white to-fpt-100/40 px-6 py-8 sm:px-10 sm:py-12">
+            <div class="hero-blob-1 pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full"></div>
+            <div class="hero-blob-2 pointer-events-none absolute -bottom-24 -left-16 h-64 w-64 rounded-full"></div>
 
-        <div id="eventGrid" class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"></div>
-
-        <div id="emptyDiscover" hidden class="rounded-2xl border-2 border-dashed border-slate-200 bg-white p-12 text-center">
-            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-2xl">🔍</div>
-            <p class="mt-3 text-base font-semibold text-slate-900">Chưa có sự kiện phù hợp</p>
-            <p class="mt-1 text-sm text-slate-500">Thử chuyển bộ lọc sang "Tất cả" hoặc bỏ từ khoá tìm kiếm.</p>
-        </div>
-    </section>
-
-    <!-- ============================ TAB: MY REGISTRATIONS ============================ -->
-    <section data-tab-panel="mine" hidden class="space-y-4">
-        <div id="myList" class="space-y-3"></div>
-        <div id="emptyMine" hidden class="rounded-2xl border-2 border-dashed border-slate-200 bg-white p-12 text-center">
-            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-2xl">🎟️</div>
-            <p class="mt-3 text-base font-semibold text-slate-900">Bạn chưa đăng ký sự kiện nào</p>
-            <p class="mt-1 text-sm text-slate-500">Quay lại tab "Khám phá" để bắt đầu.</p>
-        </div>
-    </section>
-
-    <!-- ============================ TAB: LEADERBOARD ============================ -->
-    <section data-tab-panel="board" hidden class="space-y-4">
-        <div class="rounded-2xl border border-slate-200 bg-white shadow-sm">
-            <header class="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+            <div class="relative grid items-center gap-6 lg:grid-cols-[1.5fr_1fr]">
                 <div>
-                    <h2 class="text-base font-bold text-slate-900">Top sinh viên năng động</h2>
-                    <p class="text-xs text-slate-500">Sắp xếp theo điểm hoạt động tích lũy (REGISTER · CHECK_IN · FEEDBACK).</p>
+                    <p class="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-fpt-700 shadow-sm backdrop-blur">
+                        <span class="h-1.5 w-1.5 rounded-full bg-fpt-500"></span>
+                        Sự kiện sinh viên FPT
+                    </p>
+                    <h1 class="mt-3 text-3xl font-extrabold leading-tight text-ink sm:text-4xl">
+                        Xin chào <span id="heroName" class="bg-gradient-to-r from-fpt-600 to-fpt-800 bg-clip-text text-transparent">bạn</span> 👋
+                    </h1>
+                    <p class="mt-3 max-w-2xl text-base text-ink-muted">
+                        Đây là những sự kiện được đề xuất riêng cho bạn — dựa trên ngành học, kỳ và hoạt động gần đây. Cuộn xuống và tìm cái phù hợp nhất.
+                    </p>
                 </div>
-            </header>
-            <ol id="leaderboardList" class="divide-y divide-slate-100"></ol>
-        </div>
-    </section>
 
-    <!-- ============================ TAB: PRIORITY EXPLAINER ============================ -->
-    <section data-tab-panel="priority" hidden class="space-y-6">
-        <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-            <h2 class="text-xl font-bold text-slate-900">Cách hệ thống xếp slot công bằng</h2>
-            <p class="mt-2 text-sm text-slate-600">
-                Thay vì FIFO "ai đăng ký trước được trước", hệ thống tính điểm ưu tiên riêng cho từng sinh viên - event,
-                rồi xếp slot theo điểm cao nhất. Khi event đầy, ai có điểm thấp hơn sẽ tự động chuyển vào hàng chờ và
-                được tự động lên slot nếu có người huỷ.
-            </p>
-
-            <div class="mt-6 rounded-2xl bg-slate-900 px-5 py-4 font-mono text-sm text-sky-200">
-                Điểm ưu tiên = 0.40·M + 0.30·S + 0.20·P + 0.10·T
-            </div>
-
-            <div class="mt-6 grid gap-4 sm:grid-cols-2">
-                <article class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                    <header class="flex items-center gap-3"><span class="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 font-bold text-emerald-700">M</span><h3 class="font-semibold">Chuyên ngành (40%)</h3></header>
-                    <ul class="mt-3 space-y-1 text-sm text-slate-600">
-                        <li>• Đúng chuyên ngành → <strong class="text-emerald-700">100</strong></li>
-                        <li>• Cùng khoa lớn → <strong>60</strong></li>
-                        <li>• Khác chuyên ngành → <strong>30</strong></li>
-                    </ul>
-                </article>
-                <article class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                    <header class="flex items-center gap-3"><span class="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100 font-bold text-amber-700">S</span><h3 class="font-semibold">Học kỳ (30%)</h3></header>
-                    <p class="mt-3 text-sm text-slate-600">Sinh viên kỳ cuối được ưu tiên hơn vì cần nhiều hoạt động học thuật để chuẩn bị tốt nghiệp.</p>
-                    <p class="mt-1 text-xs text-slate-500">S = (min(kỳ, 9) / 9) × 100</p>
-                </article>
-                <article class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                    <header class="flex items-center gap-3"><span class="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-100 font-bold text-rose-700">P</span><h3 class="font-semibold">Điểm hoạt động (20%)</h3></header>
-                    <p class="mt-3 text-sm text-slate-600">Điểm cao thể hiện sự tích cực. Nếu vượt 100, hệ thống chuẩn hoá bằng căn bậc hai để công bằng.</p>
-                </article>
-                <article class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                    <header class="flex items-center gap-3"><span class="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-100 font-bold text-sky-700">T</span><h3 class="font-semibold">Thời gian đăng ký (10%)</h3></header>
-                    <ul class="mt-3 space-y-1 text-sm text-slate-600">
-                        <li>• 20% thời gian đầu → <strong>100</strong></li>
-                        <li>• 50% giữa → <strong>70</strong></li>
-                        <li>• Gần deadline → <strong>40</strong></li>
-                    </ul>
-                </article>
-            </div>
-
-            <div class="mt-6 rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
-                <h3 class="text-sm font-bold text-slate-900">Ví dụ AI Workshop (khoa CNTT)</h3>
-                <div class="mt-3 overflow-x-auto">
-                    <table class="w-full text-sm">
-                        <thead class="text-left text-xs uppercase tracking-wider text-slate-500">
-                            <tr><th class="pb-2">Sinh viên</th><th class="pb-2">Chuyên ngành</th><th class="pb-2">Kỳ</th><th class="pb-2">Điểm</th><th class="pb-2 text-right">Priority</th></tr>
-                        </thead>
-                        <tbody class="text-slate-700">
-                            <tr class="border-t border-slate-100"><td class="py-2 font-semibold">A</td><td>Kỹ thuật phần mềm</td><td>8</td><td>90</td><td class="py-2 text-right font-bold text-emerald-600">94.7</td></tr>
-                            <tr class="border-t border-slate-100"><td class="py-2 font-semibold">B</td><td>Kỹ thuật phần mềm</td><td>5</td><td>75</td><td class="py-2 text-right font-bold text-emerald-600">81.7</td></tr>
-                            <tr class="border-t border-slate-100"><td class="py-2 font-semibold">C</td><td>Quản trị kinh doanh</td><td>8</td><td>95</td><td class="py-2 text-right font-bold text-rose-600">67.7</td></tr>
-                        </tbody>
-                    </table>
+                <div class="grid grid-cols-3 gap-3 lg:gap-4">
+                    <div class="rounded-2xl border border-fpt-100 bg-white/85 p-3.5 backdrop-blur sm:p-4">
+                        <p class="text-[10px] font-bold uppercase tracking-wider text-ink-soft">Đăng ký</p>
+                        <p id="statRegistered" class="mt-1 text-2xl font-extrabold text-fpt-700">—</p>
+                    </div>
+                    <div class="rounded-2xl border border-fpt-100 bg-white/85 p-3.5 backdrop-blur sm:p-4">
+                        <p class="text-[10px] font-bold uppercase tracking-wider text-ink-soft">Đã dự</p>
+                        <p id="statAttended" class="mt-1 text-2xl font-extrabold text-fpt-700">—</p>
+                    </div>
+                    <div class="rounded-2xl border border-fpt-100 bg-white/85 p-3.5 backdrop-blur sm:p-4">
+                        <p class="text-[10px] font-bold uppercase tracking-wider text-ink-soft">Hạng</p>
+                        <p id="statRank" class="mt-1 text-2xl font-extrabold text-fpt-700">—</p>
+                    </div>
                 </div>
-                <p class="mt-2 text-xs text-slate-500">A và B được chọn vì cùng chuyên ngành; C tuy điểm cao nhưng khác chuyên ngành nên priority thấp hơn.</p>
             </div>
-        </div>
-    </section>
-</main>
+        </section>
+
+        <!-- ============================ PANEL: DISCOVER / ALL ============================ -->
+        <section data-tab-panel="discover" class="mt-8 space-y-5">
+            <div class="flex flex-wrap items-end justify-between gap-3">
+                <div>
+                    <h2 id="discoverTitle" class="text-xl font-extrabold text-ink sm:text-2xl">Đề xuất cho bạn</h2>
+                    <p class="mt-1 text-sm text-ink-muted">Hệ thống tự sắp xếp theo mức độ phù hợp với hồ sơ của bạn — chọn cái bạn thích.</p>
+                </div>
+                <span id="resultCount" class="rounded-full bg-fpt-50 px-3 py-1.5 text-xs font-bold text-fpt-700">—</span>
+            </div>
+
+            <div class="flex flex-wrap gap-2">
+                <button data-chip="scope" data-value="upcoming" class="chip rounded-full border border-fpt-200 bg-white px-4 py-2 text-sm font-semibold text-ink active">Sắp tới</button>
+                <button data-chip="scope" data-value="today" class="chip rounded-full border border-fpt-200 bg-white px-4 py-2 text-sm font-semibold text-ink">Hôm nay</button>
+                <button data-chip="scope" data-value="past" class="chip rounded-full border border-fpt-200 bg-white px-4 py-2 text-sm font-semibold text-ink">Đã diễn ra</button>
+                <span class="mx-1 hidden h-7 w-px self-center bg-fpt-100 sm:inline-block"></span>
+                <select id="filterFaculty" class="rounded-full border border-fpt-200 bg-white px-4 py-2 text-sm font-semibold text-ink shadow-sm focus:border-fpt-400 focus:outline-none focus:ring-4 focus:ring-fpt-200/40">
+                    <option value="all">Tất cả khoa</option>
+                </select>
+            </div>
+
+            <div id="eventGrid" class="grid gap-5 sm:grid-cols-2 xl:grid-cols-3"></div>
+
+            <div id="emptyDiscover" hidden class="rounded-3xl border-2 border-dashed border-fpt-200 bg-fpt-50/40 p-14 text-center">
+                <div class="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-white text-3xl shadow-sm">🌅</div>
+                <p class="mt-4 text-base font-extrabold text-ink">Chưa có sự kiện phù hợp ở đây</p>
+                <p class="mt-1 text-sm text-ink-muted">Đổi sang "Tất cả khoa" hoặc xoá từ khoá tìm kiếm để xem thêm.</p>
+            </div>
+        </section>
+
+        <!-- ============================ PANEL: MINE ============================ -->
+        <section data-tab-panel="mine" hidden class="mt-8 space-y-5">
+            <div>
+                <h2 class="text-xl font-extrabold text-ink sm:text-2xl">Đăng ký của tôi</h2>
+                <p class="mt-1 text-sm text-ink-muted">Vé QR, trạng thái tham dự và phản hồi cho các sự kiện bạn đã đăng ký.</p>
+            </div>
+            <div id="myList" class="space-y-3"></div>
+            <div id="emptyMine" hidden class="rounded-3xl border-2 border-dashed border-fpt-200 bg-fpt-50/40 p-14 text-center">
+                <div class="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-white text-3xl shadow-sm">🎟️</div>
+                <p class="mt-4 text-base font-extrabold text-ink">Chưa có đăng ký nào</p>
+                <p class="mt-1 text-sm text-ink-muted">Khám phá sự kiện đề xuất ở trên và đăng ký cái bạn thích.</p>
+            </div>
+        </section>
+
+        <!-- ============================ PANEL: BOARD ============================ -->
+        <section data-tab-panel="board" hidden class="mt-8 space-y-5">
+            <div>
+                <h2 class="text-xl font-extrabold text-ink sm:text-2xl">Bảng vinh danh · Top 10</h2>
+                <p class="mt-1 text-sm text-ink-muted">10 sinh viên tích cực nhất theo điểm hoạt động tích luỹ trong kỳ.</p>
+            </div>
+            <div class="overflow-hidden rounded-3xl border border-fpt-100 bg-white shadow-sm">
+                <ol id="leaderboardList" class="divide-y divide-fpt-50"></ol>
+            </div>
+        </section>
+
+    </main>
+</div>
 
 <!-- ============================ FOOTER ============================ -->
-<footer class="border-t border-slate-200 bg-white py-6 text-center text-xs text-slate-500">
-    Campus Events · Smart Priority Matching · <a href="landing.html" class="font-semibold text-sky-700 hover:underline">Trang chủ</a>
-    · <a href="role-screens.html" class="font-semibold text-sky-700 hover:underline">Vai trò</a>
+<footer class="mt-12 border-t border-fpt-100 bg-gradient-to-br from-fpt-900 via-fpt-800 to-fpt-700 text-fpt-50">
+    <div class="mx-auto grid max-w-screen-2xl gap-8 px-4 py-12 sm:px-6 md:grid-cols-3 lg:px-8">
+        <div>
+            <div class="flex items-center gap-2.5 font-extrabold text-white">
+                <span class="grid h-10 w-10 place-items-center rounded-xl bg-white/15 backdrop-blur">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5a6 3 0 0 0 12 0v-5"/></svg>
+                </span>
+                <span>
+                    <span class="block text-base">Campus Events</span>
+                    <span class="block text-[10px] font-bold uppercase tracking-[0.2em] text-fpt-200">FPT University</span>
+                </span>
+            </div>
+            <p class="mt-4 text-sm leading-6 text-fpt-100/80">Hệ thống quản lý sự kiện sinh viên Đại học FPT — đăng ký, vé QR, check-in và phản hồi gọn trong một nơi.</p>
+        </div>
+
+        <div>
+            <p class="text-xs font-bold uppercase tracking-[0.18em] text-fpt-200">Khám phá</p>
+            <ul class="mt-4 space-y-2 text-sm">
+                <li><a href="landing.html" class="text-fpt-100/80 hover:text-white">Trang chủ</a></li>
+                <li><a href="role-screens.html" class="text-fpt-100/80 hover:text-white">Vai trò &amp; demo account</a></li>
+                <li><a href="screen-department.html" class="text-fpt-100/80 hover:text-white">Console khoa</a></li>
+                <li><a href="screen-committee.html" class="text-fpt-100/80 hover:text-white">Console hội đồng</a></li>
+            </ul>
+        </div>
+
+        <div>
+            <p class="text-xs font-bold uppercase tracking-[0.18em] text-fpt-200">Hỗ trợ</p>
+            <ul class="mt-4 space-y-2 text-sm">
+                <li><a href="forgot-password.html" class="text-fpt-100/80 hover:text-white">Quên mật khẩu</a></li>
+                <li><a href="mailto:support@fpt.edu.vn" class="text-fpt-100/80 hover:text-white">support@fpt.edu.vn</a></li>
+                <li class="text-fpt-100/60">Hotline FPTU: <span class="text-white">(024)/(028) 7300 1866</span></li>
+            </ul>
+        </div>
+    </div>
+    <div class="border-t border-white/10">
+        <div class="mx-auto flex max-w-screen-2xl flex-col gap-2 px-4 py-5 text-xs text-fpt-100/70 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+            <span>© 2026 Campus Events · Đại học FPT — Toàn cầu · Công nghệ · Khởi nghiệp.</span>
+            <span>Made with <span class="text-fpt-300">♥</span> for FPT students.</span>
+        </div>
+    </div>
 </footer>
 
 <!-- ============================ TOAST + MODAL ============================ -->
-<div id="toast" class="pointer-events-none fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white opacity-0 shadow-2xl transition-opacity"></div>
+<div id="toast" class="pointer-events-none fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-xl bg-ink px-4 py-3 text-sm font-semibold text-white opacity-0 shadow-2xl transition-opacity"></div>
 
-<div id="modal" hidden class="fixed inset-0 z-40 flex items-end justify-center overflow-y-auto p-0 sm:items-center sm:p-4">
+<div id="modal" hidden class="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto p-0 sm:items-center sm:p-4">
     <div class="dialog-backdrop absolute inset-0" data-modal-close></div>
     <div class="relative w-full max-w-2xl animate-slideUp overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:rounded-3xl">
-        <div id="modalBody" class="max-h-[85vh] overflow-y-auto"></div>
+        <div id="modalBody" class="max-h-[88vh] overflow-y-auto"></div>
     </div>
 </div>
 
@@ -316,18 +393,18 @@
 (function () {
     'use strict';
 
-    // ----------------------------- CONSTANTS / STATE -----------------------------
-    const API_BASE = (location.pathname.indexOf('/api/') === 0) ? '/api' : '/api';
+    // ----------------------------- CONST / STATE -----------------------------
+    const API_BASE = '/api';
     const STATE = {
         me: null,
         events: [],
         myRegs: [],
         leaderboard: [],
-        filters: { q: '', scope: 'recommended', faculty: 'all', sort: 'priority' },
+        filters: { q: '', scope: 'upcoming', faculty: 'all' },
         currentTab: 'discover'
     };
 
-    // ----------------------------- USER FROM SESSION -----------------------------
+    // ----------------------------- SESSION -----------------------------
     function readUser() {
         try {
             const raw = JSON.parse(sessionStorage.getItem('user') || '{}');
@@ -338,13 +415,12 @@
     const userEmail = sessionUser ? sessionUser.email : null;
 
     if (!userEmail) {
-        // Cho phép xem nhưng không gọi /me; vẫn bind UI tối thiểu.
         setBasicAccount({ fullName: 'Khách', email: '', major: '', semester: null });
     }
 
-    // ----------------------------- API HELPERS -----------------------------
+    // ----------------------------- API -----------------------------
     async function api(path, opts = {}) {
-        const headers = Object.assign({ 'Accept': 'application/json' }, opts.headers || {});
+        const headers = Object.assign({ Accept: 'application/json' }, opts.headers || {});
         if (userEmail) headers['X-User-Email'] = userEmail;
         if (opts.body && typeof opts.body !== 'string') {
             headers['Content-Type'] = 'application/json';
@@ -360,15 +436,26 @@
         return res.json();
     }
 
-    // ----------------------------- UI HELPERS -----------------------------
-    const $ = (sel, root = document) => root.querySelector(sel);
+    // ----------------------------- HELPERS -----------------------------
+    const $  = (sel, root = document) => root.querySelector(sel);
     const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
     const escapeHtml = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     const escapeAttr = s => escapeHtml(s);
 
+    // Normalize image URL: nếu thiếu context path → tự thêm /api
+    function fixImg(url) {
+        if (!url) return '';
+        const trimmed = String(url).trim();
+        if (!trimmed) return '';
+        if (/^https?:\/\//i.test(trimmed)) return trimmed;
+        if (trimmed.startsWith('/api/')) return trimmed;
+        if (trimmed.startsWith('/img/')) return '/api' + trimmed;
+        return trimmed;
+    }
+
     function toast(message, tone = 'success') {
         const el = $('#toast');
-        const bg = tone === 'error' ? '#dc2626' : tone === 'warn' ? '#d97706' : '#0f172a';
+        const bg = tone === 'error' ? '#dc2626' : tone === 'warn' ? '#d97706' : '#1f130d';
         el.style.background = bg;
         el.textContent = message;
         el.style.opacity = '1';
@@ -386,12 +473,8 @@
         $('#modal').hidden = true;
         document.body.style.overflow = '';
     }
-    document.addEventListener('click', (e) => {
-        if (e.target && e.target.matches('[data-modal-close]')) closeModal();
-    });
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closeModal();
-    });
+    document.addEventListener('click', e => { if (e.target && e.target.matches('[data-modal-close]')) closeModal(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
     function formatDateTime(iso) {
         if (!iso) return '—';
@@ -411,39 +494,57 @@
         if (isNaN(d.getTime())) return '';
         return d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
     }
-
-    function priorityTone(score) {
-        if (score >= 80) return { ring: '#059669', text: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200', label: 'Rất cao' };
-        if (score >= 65) return { ring: '#0284c7', text: 'text-sky-700',     bg: 'bg-sky-50',     border: 'border-sky-200',     label: 'Cao' };
-        if (score >= 50) return { ring: '#d97706', text: 'text-amber-700',   bg: 'bg-amber-50',   border: 'border-amber-200',   label: 'Trung bình' };
-        return                  { ring: '#dc2626', text: 'text-rose-700',    bg: 'bg-rose-50',    border: 'border-rose-200',    label: 'Thấp' };
+    function relativeFromNow(iso) {
+        if (!iso) return '';
+        const ms = new Date(iso).getTime() - Date.now();
+        if (!Number.isFinite(ms)) return '';
+        const abs = Math.abs(ms);
+        const day = Math.round(ms / (1000 * 60 * 60 * 24));
+        const hour = Math.round(ms / (1000 * 60 * 60));
+        if (abs < 1000 * 60 * 60) {
+            const m = Math.round(ms / (1000 * 60));
+            return m === 0 ? 'sắp tới' : (m > 0 ? 'còn ' + m + ' phút' : 'cách đây ' + (-m) + ' phút');
+        }
+        if (abs < 1000 * 60 * 60 * 36) return hour > 0 ? 'còn ' + hour + ' giờ' : 'cách đây ' + (-hour) + ' giờ';
+        return day > 0 ? 'còn ' + day + ' ngày' : 'cách đây ' + (-day) + ' ngày';
     }
 
     function statusBadge(status) {
+        const s = String(status || '').toUpperCase();
         const map = {
-            'REGISTERED':  { cls: 'bg-emerald-100 text-emerald-700',   label: '✓ Đã đăng ký' },
-            'WAITLIST':    { cls: 'bg-amber-100 text-amber-800',       label: '⏳ Hàng chờ' },
-            'CANCELLED':   { cls: 'bg-slate-200 text-slate-600',       label: '× Đã hủy' },
-            'PUBLISHED':   { cls: 'bg-sky-100 text-sky-700',           label: '📢 Đang mở' },
-            'APPROVED':    { cls: 'bg-blue-100 text-blue-700',         label: '✓ Đã duyệt' },
-            'COMPLETED':   { cls: 'bg-slate-100 text-slate-600',       label: '✅ Đã kết thúc' },
-            'PENDING':     { cls: 'bg-amber-100 text-amber-700',       label: '⏳ Chờ duyệt' }
+            REGISTERED: ['bg-emerald-100 text-emerald-700', '✓ Đã đăng ký'],
+            WAITLIST:   ['bg-amber-100 text-amber-700',     '⏳ Hàng chờ'],
+            CANCELLED:  ['bg-rose-100 text-rose-700',       '✕ Đã huỷ'],
+            APPROVED:   ['bg-emerald-50 text-emerald-700',  'Đang mở'],
+            PUBLISHED:  ['bg-emerald-50 text-emerald-700',  'Đang mở'],
+            DRAFT:      ['bg-slate-100 text-slate-700',     'Nháp']
         };
-        const entry = map[String(status || '').toUpperCase()] || { cls: 'bg-slate-100 text-slate-600', label: status || '—' };
-        return `<span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${entry.cls}">${entry.label}</span>`;
+        const m = map[s] || ['bg-slate-100 text-slate-700', s || '—'];
+        return `<span class="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${m[0]}">${m[1]}</span>`;
     }
 
+    function skeletonGrid(n = 6) {
+        return Array.from({ length: n }, () =>
+            `<div class="rounded-2xl border border-fpt-100 bg-white p-4">
+                <div class="skeleton h-40 w-full rounded-xl"></div>
+                <div class="skeleton mt-3 h-5 w-3/4 rounded"></div>
+                <div class="skeleton mt-2 h-4 w-1/2 rounded"></div>
+                <div class="skeleton mt-4 h-9 w-full rounded-xl"></div>
+            </div>`
+        ).join('');
+    }
+
+    // ----------------------------- ACCOUNT -----------------------------
     function setBasicAccount(profile) {
-        const name = profile.fullName || 'Sinh viên';
-        const parts = name.trim().split(/\s+/).filter(Boolean);
-        const initials = (parts.slice(-2).map(p => p.charAt(0)).join('') || 'SV').toUpperCase();
+        const fullName = profile.fullName || 'Sinh viên';
+        const initials = fullName.trim().split(/\s+/).map(w => w[0] || '').slice(-2).join('').toUpperCase() || 'SV';
         $('#accountInitials').textContent = initials;
-        $('#accountName').textContent = name;
-        $('#accountNameLg').textContent = name;
+        $('#accountName').textContent = fullName;
+        $('#accountNameLg').textContent = fullName;
         $('#accountEmail').textContent = profile.email || '—';
         $('#accountMajor').textContent = profile.major || 'Chưa cập nhật';
-        $('#accountSemester').textContent = profile.semester ? ('Kỳ ' + profile.semester) : 'Kỳ —';
-        $('#heroName').textContent = name;
+        $('#accountSemester').textContent = 'Kỳ ' + (profile.semester == null ? '—' : profile.semester);
+        $('#heroName').textContent = fullName.split(' ').slice(-2).join(' ');
     }
 
     // ----------------------------- LOAD ME -----------------------------
@@ -452,17 +553,20 @@
         try {
             const data = await api('/student/me');
             STATE.me = data;
-            setBasicAccount(data.profile || {});
-            $('#statRegistered').textContent = data.stats.registered || 0;
-            $('#statAttended').textContent = data.stats.attended || 0;
-            $('#statPoints').textContent = (data.profile.totalPoints || 0).toLocaleString('vi-VN');
-            $('#statRank').textContent = '#' + (data.rank || '—');
+            const profile = data.profile || {};
+            setBasicAccount({
+                fullName: profile.fullName,
+                email: profile.email,
+                major: profile.major,
+                semester: profile.semester
+            });
+            const stats = data.stats || {};
+            $('#statRegistered').textContent = stats.registered ?? 0;
+            $('#statAttended').textContent   = stats.attended ?? 0;
+            $('#statRank').textContent       = stats.rank ? '#' + stats.rank : '—';
+            $('#badgeMine').textContent      = stats.registered ?? 0;
         } catch (e) {
-            console.error('loadMe failed', e);
-            if (e.status === 401) {
-                toast('Phiên đăng nhập đã hết. Quay lại trang đăng nhập...', 'warn');
-                setTimeout(() => location.href = (API_BASE + '/login.html'), 1500);
-            }
+            console.warn('loadMe failed', e);
         }
     }
 
@@ -470,66 +574,50 @@
     async function loadEvents() {
         $('#eventGrid').innerHTML = skeletonGrid(6);
         $('#emptyDiscover').hidden = true;
-        const qs = new URLSearchParams();
-        if (STATE.filters.q) qs.set('q', STATE.filters.q);
-        if (STATE.filters.scope) qs.set('scope', STATE.filters.scope);
-        if (STATE.filters.faculty && STATE.filters.faculty !== 'all') qs.set('faculty', STATE.filters.faculty);
-        if (STATE.filters.sort) qs.set('sort', STATE.filters.sort);
-
         try {
+            const qs = new URLSearchParams();
+            qs.set('scope', STATE.filters.scope);
+            qs.set('sort', 'priority'); // BACKEND tự sort theo điểm ưu tiên ẩn
+            if (STATE.filters.q) qs.set('q', STATE.filters.q);
+            if (STATE.filters.faculty && STATE.filters.faculty !== 'all') qs.set('faculty', STATE.filters.faculty);
             const data = await api('/student/events?' + qs.toString());
             STATE.events = data.items || [];
-            renderFacultyOptions(data.facultyOptions || []);
+
+            // Populate faculty filter once
+            const sel = $('#filterFaculty');
+            if (sel.options.length <= 1 && data.facultyOptions) {
+                data.facultyOptions.forEach(f => {
+                    const o = document.createElement('option');
+                    o.value = f; o.textContent = f;
+                    sel.appendChild(o);
+                });
+            }
+
+            // Today count for sidebar widget
+            const today = new Date().toDateString();
+            const todayN = STATE.events.filter(e => e.startTime && new Date(e.startTime).toDateString() === today).length;
+            $('#todayCount').textContent = todayN;
+
             renderEvents();
-            $('#resultCount').textContent = data.total + ' sự kiện';
         } catch (e) {
-            console.error('loadEvents failed', e);
-            $('#eventGrid').innerHTML = `<div class="col-span-full rounded-2xl border-2 border-dashed border-rose-200 bg-rose-50 p-6 text-center text-sm text-rose-700">Không tải được danh sách sự kiện. ${escapeHtml(e.message || '')}</div>`;
+            $('#eventGrid').innerHTML = `<div class="col-span-full rounded-2xl border-2 border-dashed border-rose-200 bg-rose-50 p-8 text-center text-sm text-rose-700">${escapeHtml(e.message)}</div>`;
         }
-    }
-
-    function renderFacultyOptions(options) {
-        const sel = $('#filterFaculty');
-        if (sel.dataset.populated === '1') return;
-        const current = sel.value;
-        const opts = ['<option value="all">Tất cả khoa</option>']
-            .concat(options.map(o => `<option value="${escapeAttr(o)}">${escapeHtml(o)}</option>`));
-        sel.innerHTML = opts.join('');
-        sel.value = current || 'all';
-        sel.dataset.populated = '1';
-    }
-
-    function skeletonGrid(n) {
-        return new Array(n).fill(0).map(() =>
-            `<article class="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
-                <div class="skeleton h-44 w-full"></div>
-                <div class="space-y-2 p-5">
-                    <div class="skeleton h-4 w-3/4 rounded"></div>
-                    <div class="skeleton h-3 w-1/2 rounded"></div>
-                    <div class="skeleton mt-3 h-9 w-full rounded-xl"></div>
-                </div>
-            </article>`
-        ).join('');
     }
 
     function renderEvents() {
-        const wrap = $('#eventGrid');
-        if (!STATE.events.length) {
-            wrap.innerHTML = '';
-            $('#emptyDiscover').hidden = false;
+        const grid = $('#eventGrid');
+        const empty = $('#emptyDiscover');
+        const list = STATE.events;
+        $('#resultCount').textContent = list.length + ' sự kiện';
+        if (!list.length) {
+            grid.innerHTML = '';
+            empty.hidden = false;
             return;
         }
-        $('#emptyDiscover').hidden = true;
-        wrap.innerHTML = STATE.events.map(eventCard).join('');
-        wrap.querySelectorAll('[data-event-detail]').forEach(btn => {
-            btn.addEventListener('click', () => showEventDetail(Number(btn.dataset.eventDetail)));
-        });
-        wrap.querySelectorAll('[data-event-register]').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                register(Number(btn.dataset.eventRegister));
-            });
-        });
+        empty.hidden = true;
+        grid.innerHTML = list.map(eventCard).join('');
+        grid.querySelectorAll('[data-event-detail]').forEach(el => el.addEventListener('click', () => showEventDetail(Number(el.dataset.eventDetail))));
+        grid.querySelectorAll('[data-event-register]').forEach(el => el.addEventListener('click', e => { e.stopPropagation(); register(Number(el.dataset.eventRegister)); }));
     }
 
     function eventCard(e) {
@@ -537,58 +625,56 @@
         const fill = (e.fillRate == null) ? 0 : e.fillRate;
         const fillColor = fill >= 95 ? 'bg-rose-500' : fill >= 70 ? 'bg-amber-500' : 'bg-emerald-500';
         const seats = (e.capacity == null) ? '—' : `${e.registeredCount}/${e.capacity}`;
-
         const myStatus = e.myStatus || '';
         const isRegistered = myStatus === 'REGISTERED' || myStatus === 'WAITLIST';
         const isPast = e.startTime && new Date(e.startTime) < new Date();
+        const img = fixImg(e.imageUrl);
+        const when = e.startTime ? (formatDateShort(e.startTime) + ' · ' + formatTime(e.startTime)) : 'Chưa rõ';
+        const rel = relativeFromNow(e.startTime);
 
-        const score = Math.round((e.priorityPreview || 0) * 10) / 10;
-        const tone = priorityTone(score);
+        // Badge "đề xuất" — phù hợp ngành (priority cao). KHÔNG show số.
+        let pickBadge = '';
+        if (e.priorityMajor >= 100) {
+            pickBadge = `<span class="inline-flex items-center gap-1 rounded-full bg-emerald-500/95 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider text-white shadow-md">★ Đúng ngành</span>`;
+        } else if (e.priorityMajor >= 60) {
+            pickBadge = `<span class="inline-flex items-center gap-1 rounded-full bg-fpt-500/95 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider text-white shadow-md">Phù hợp khoa</span>`;
+        }
 
         const btn = isPast
-            ? `<button disabled class="mt-4 w-full cursor-not-allowed rounded-xl border border-slate-200 bg-slate-100 py-2.5 text-sm font-semibold text-slate-400">Đã diễn ra</button>`
+            ? `<button disabled class="w-full cursor-not-allowed rounded-xl border border-fpt-100 bg-fpt-50/40 py-2.5 text-sm font-bold text-ink-soft">Đã diễn ra</button>`
             : isRegistered
-            ? `<button data-event-detail="${e.id}" class="mt-4 w-full rounded-xl border border-emerald-200 bg-emerald-50 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100">${myStatus === 'WAITLIST' ? '⏳ Trong hàng chờ' : '✓ Đã đăng ký · Xem vé'}</button>`
-            : `<button data-event-register="${e.id}" class="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-sky-600 to-blue-700 py-2.5 text-sm font-semibold text-white shadow-lg shadow-sky-500/25 transition hover:brightness-110">Đăng ký · Ưu tiên ${score}</button>`;
-
-        const matchBadge = (e.priorityMajor >= 100)
-            ? `<span class="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase text-emerald-700">🎯 Đúng ngành</span>`
-            : (e.priorityMajor >= 60)
-            ? `<span class="inline-flex items-center gap-1 rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-bold uppercase text-sky-700">Cùng khoa</span>`
-            : '';
+            ? `<button data-event-detail="${e.id}" class="w-full rounded-xl border border-emerald-200 bg-emerald-50 py-2.5 text-sm font-bold text-emerald-700 transition hover:bg-emerald-100">${myStatus === 'WAITLIST' ? '⏳ Trong hàng chờ' : '✓ Đã đăng ký · Xem vé'}</button>`
+            : `<button data-event-register="${e.id}" class="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-fpt-500 to-fpt-700 py-2.5 text-sm font-extrabold text-white shadow-glow transition hover:brightness-110">Đăng ký ngay</button>`;
 
         return `
-        <article class="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-xl">
-            <div class="relative h-44 overflow-hidden card-img-fallback">
-                ${e.imageUrl ? `<img src="${escapeAttr(e.imageUrl)}" alt="" class="h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy" onerror="this.style.display='none'">` : '<div class="flex h-full w-full items-center justify-center text-4xl">🎓</div>'}
+        <article class="ev-card group flex flex-col overflow-hidden rounded-2xl border border-fpt-100 bg-white shadow-soft">
+            <button data-event-detail="${e.id}" class="relative block h-48 w-full overflow-hidden card-img-fallback text-left">
+                ${img ? `<img src="${escapeAttr(img)}" alt="${escapeAttr(e.title)}" class="h-full w-full object-cover" loading="lazy" onerror="this.style.display='none'">` : '<div class="grid h-full w-full place-items-center text-5xl">🎓</div>'}
                 <div class="absolute inset-x-3 top-3 flex items-start justify-between gap-2">
-                    <span class="rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-700 shadow">${escapeHtml(dept)}</span>
-                    ${matchBadge}
+                    <span class="rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider text-fpt-700 shadow">${escapeHtml(dept)}</span>
+                    ${pickBadge}
                 </div>
-                <div class="absolute bottom-3 right-3 flex items-center gap-2 rounded-2xl border border-white/40 bg-white/95 px-2.5 py-1.5 text-xs font-semibold shadow-md backdrop-blur ${tone.text}" title="Điểm ưu tiên đăng ký">
-                    <span class="priority-ring flex h-6 w-6 items-center justify-center rounded-full" style="--ring-color:${tone.ring};--ring-pct:${Math.min(100,score)};">
-                        <span class="flex h-4 w-4 items-center justify-center rounded-full bg-white text-[8px] font-bold ${tone.text}">${Math.round(score)}</span>
-                    </span>
-                    Ưu tiên ${score}
-                </div>
-            </div>
+                ${rel ? `<span class="absolute bottom-3 left-3 rounded-full bg-ink/80 px-2.5 py-1 text-[11px] font-bold text-white backdrop-blur">${escapeHtml(rel)}</span>` : ''}
+            </button>
             <div class="flex flex-1 flex-col p-5">
-                <button data-event-detail="${e.id}" class="text-left text-base font-bold text-slate-900 hover:text-sky-700">${escapeHtml(e.title)}</button>
-                <p class="mt-1 line-clamp-2 text-sm text-slate-500">${escapeHtml(e.description || '')}</p>
-                <div class="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-600">
-                    <span class="flex items-center gap-1">📅 ${formatDateShort(e.startTime)} · ${formatTime(e.startTime)}</span>
-                    <span class="flex items-center gap-1">📍 ${escapeHtml(e.location || '—')}</span>
-                </div>
-                <div class="mt-3">
-                    <div class="flex items-center justify-between text-xs text-slate-500">
-                        <span>${seats} chỗ</span>
-                        <span class="font-semibold ${fill >= 95 ? 'text-rose-600' : fill >= 70 ? 'text-amber-600' : 'text-emerald-600'}">${fill}%</span>
+                <button data-event-detail="${e.id}" class="line-clamp-2 min-h-[3rem] text-left text-base font-extrabold leading-tight text-ink transition group-hover:text-fpt-700">${escapeHtml(e.title)}</button>
+                <p class="mt-1.5 line-clamp-2 min-h-[3rem] text-sm leading-6 text-ink-muted">${escapeHtml(e.description || '')}</p>
+                <div class="mt-auto space-y-3 pt-4">
+                    <div class="grid grid-cols-2 gap-2 text-xs font-semibold text-ink-muted">
+                        <span class="line-clamp-1 flex items-center gap-1">📅 ${when}</span>
+                        <span class="line-clamp-1 flex items-center gap-1">📍 ${escapeHtml(e.location || '—')}</span>
                     </div>
-                    <div class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-100">
-                        <div class="h-full ${fillColor}" style="width:${Math.min(100, fill)}%"></div>
+                    <div>
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="font-semibold text-ink-muted">${seats} chỗ</span>
+                            <span class="font-extrabold ${fill >= 95 ? 'text-rose-600' : fill >= 70 ? 'text-amber-600' : 'text-emerald-600'}">${fill}% đầy</span>
+                        </div>
+                        <div class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-fpt-50">
+                            <div class="h-full ${fillColor}" style="width:${Math.min(100, fill)}%"></div>
+                        </div>
                     </div>
+                    ${btn}
                 </div>
-                ${btn}
             </div>
         </article>`;
     }
@@ -601,117 +687,75 @@
             $('#modalBody').innerHTML = renderEventModalBody(e);
             $('#modalBody').querySelector('[data-event-register]')?.addEventListener('click', () => register(id));
             $('#modalBody').querySelector('[data-event-cancel]')?.addEventListener('click', () => cancelRegistration(Number($('#modalBody').querySelector('[data-event-cancel]').dataset.regId)));
+            const fbToggle = $('#modalBody').querySelector('[data-fb-toggle]');
+            fbToggle?.addEventListener('click', () => {
+                const list = $('#modalBody').querySelector('[data-fb-list]');
+                const chev = $('#modalBody').querySelector('[data-fb-chev]');
+                const open = !list.hidden;
+                list.hidden = open;
+                chev.style.transform = open ? 'rotate(0deg)' : 'rotate(180deg)';
+            });
         } catch (err) {
-            $('#modalBody').innerHTML = `<div class="p-6"><p class="text-sm text-rose-600">${escapeHtml(err.message)}</p><button class="mt-4 rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white" data-modal-close>Đóng</button></div>`;
+            $('#modalBody').innerHTML = `<div class="p-6"><p class="text-sm text-rose-600">${escapeHtml(err.message)}</p><button class="mt-4 rounded-xl bg-ink px-4 py-2 text-sm font-semibold text-white" data-modal-close>Đóng</button></div>`;
         }
     }
 
-    function priorityBar(item, key) {
-        const v = item[key] || { score: 0, weight: 0, label: '—', contribution: 0 };
-        const colorMap = { 'M':'#10b981','S':'#f59e0b','P':'#ef4444','T':'#0ea5e9' };
-        const color = colorMap[key];
-        return `
-        <div>
-            <div class="mb-1 flex items-center justify-between text-xs">
-                <span class="font-semibold text-slate-700"><span style="color:${color}">●</span> ${escapeHtml(v.label)} <span class="text-slate-400">(${v.weight}%)</span></span>
-                <span class="font-mono text-slate-600">${v.score} → +${v.contribution}</span>
-            </div>
-            <div class="h-2 overflow-hidden rounded-full bg-slate-100">
-                <div class="h-full transition-all duration-700" style="width:${Math.min(100, v.score)}%;background:${color}"></div>
-            </div>
-        </div>`;
-    }
-
     function renderEventModalBody(e) {
-        const bd = e.priorityBreakdown;
         const dept = e.department ? e.department.name : '—';
         const myStatus = e.myStatus || '';
         const isPast = e.startTime && new Date(e.startTime) < new Date();
-        const score = Math.round((e.priorityPreview || 0) * 10) / 10;
-        const tone = priorityTone(score);
         const fill = (e.fillRate == null) ? 0 : e.fillRate;
+        const img = fixImg(e.imageUrl);
 
         const action = isPast
-            ? `<button class="rounded-xl bg-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-500" disabled>Đã diễn ra</button>`
+            ? `<button class="rounded-xl bg-fpt-100 px-5 py-2.5 text-sm font-bold text-ink-soft" disabled>Đã diễn ra</button>`
             : (myStatus === 'REGISTERED' || myStatus === 'WAITLIST')
-            ? `<button data-event-cancel data-reg-id="${e.myRegistrationId}" class="rounded-xl border border-rose-300 bg-white px-5 py-2.5 text-sm font-semibold text-rose-700 hover:bg-rose-50">Huỷ đăng ký</button>`
-            : `<button data-event-register="${e.id}" class="rounded-xl bg-gradient-to-r from-sky-600 to-blue-700 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-sky-500/30 hover:brightness-110">Đăng ký với điểm ưu tiên ${score}</button>`;
+            ? `<button data-event-cancel data-reg-id="${e.myRegistrationId}" class="rounded-xl border border-rose-300 bg-white px-5 py-2.5 text-sm font-bold text-rose-700 hover:bg-rose-50">Huỷ đăng ký</button>`
+            : `<button data-event-register="${e.id}" class="rounded-xl bg-gradient-to-r from-fpt-500 to-fpt-700 px-6 py-2.5 text-sm font-extrabold text-white shadow-glow hover:brightness-110">Đăng ký ngay</button>`;
 
-        const queueHtml = (e.queue || []).length === 0 ? '<p class="text-sm text-slate-500">Chưa có ai đăng ký.</p>' : `
-        <ol class="space-y-2">
-            ${e.queue.map((q, i) => `
-            <li class="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 px-3 py-2 text-sm">
-                <span class="flex items-center gap-3">
-                    <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white text-xs font-bold text-slate-700 shadow-sm">${i + 1}</span>
-                    <span>
-                        <span class="font-semibold text-slate-800">${escapeHtml(q.name)}</span>
-                        <span class="ml-1 text-xs text-slate-500">· ${escapeHtml(q.major || '—')}</span>
-                    </span>
-                </span>
-                <span class="flex items-center gap-2">
-                    ${statusBadge(q.status)}
-                    <span class="font-mono text-xs font-semibold text-slate-700">${q.priority == null ? '—' : Number(q.priority).toFixed(1)}</span>
-                </span>
-            </li>`).join('')}
-        </ol>`;
-
-        const feedbackHtml = (e.feedbacks || []).length === 0 ? '' : `
-        <section>
-            <h4 class="mb-3 text-sm font-bold text-slate-900">⭐ Phản hồi nổi bật</h4>
-            <div class="space-y-2">
+        const fbCount = (e.feedbacks || []).length;
+        const feedbackHtml = (!isPast || fbCount === 0) ? '' : `
+        <section data-fb-section>
+            <button type="button" data-fb-toggle
+                class="flex w-full items-center justify-between rounded-xl border border-fpt-100 bg-fpt-50/60 px-4 py-3 text-left text-sm font-extrabold text-ink transition hover:bg-fpt-100/60">
+                <span class="inline-flex items-center gap-2">⭐ Xem phản hồi của người tham dự <span class="rounded-full bg-fpt-500 px-2 py-0.5 text-[10px] font-bold text-white">${fbCount}</span></span>
+                <span data-fb-chev class="text-fpt-500 transition">▾</span>
+            </button>
+            <div data-fb-list class="mt-3 space-y-2" hidden>
                 ${e.feedbacks.map(f => `
-                <div class="rounded-xl border border-slate-100 bg-slate-50 p-3 text-sm">
-                    <div class="flex items-center gap-2"><span class="text-amber-500">${'★'.repeat(f.rating || 0)}${'☆'.repeat(5 - (f.rating || 0))}</span><span class="text-xs font-semibold text-slate-600">${escapeHtml(f.author)}</span></div>
-                    <p class="mt-1 text-slate-700">${escapeHtml(f.comment)}</p>
+                <div class="rounded-xl border border-fpt-100 bg-white p-3 text-sm shadow-sm">
+                    <div class="flex items-center gap-2"><span class="text-fpt-500">${'★'.repeat(f.rating || 0)}${'☆'.repeat(5 - (f.rating || 0))}</span><span class="text-xs font-semibold text-ink-muted">${escapeHtml(f.author)}</span></div>
+                    <p class="mt-1 text-ink">${escapeHtml(f.comment)}</p>
                 </div>`).join('')}
             </div>
         </section>`;
 
         return `
         <div class="relative">
-            <div class="relative h-56 sm:h-64">
-                ${e.imageUrl ? `<img src="${escapeAttr(e.imageUrl)}" alt="" class="h-full w-full object-cover">` : '<div class="card-img-fallback flex h-full w-full items-center justify-center text-6xl">🎓</div>'}
-                <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent"></div>
-                <button class="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-slate-700 shadow hover:bg-white" data-modal-close>×</button>
+            <div class="relative h-56 sm:h-72">
+                ${img ? `<img src="${escapeAttr(img)}" alt="" class="h-full w-full object-cover">` : '<div class="card-img-fallback grid h-full w-full place-items-center text-6xl">🎓</div>'}
+                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent"></div>
+                <button class="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-white/95 text-ink shadow hover:bg-white" data-modal-close aria-label="Đóng">✕</button>
                 <div class="absolute inset-x-5 bottom-5 text-white">
-                    <p class="text-xs font-bold uppercase tracking-widest text-sky-100">${escapeHtml(dept)}</p>
-                    <h2 class="mt-1 text-2xl font-bold leading-tight">${escapeHtml(e.title)}</h2>
+                    <p class="text-[11px] font-extrabold uppercase tracking-[0.2em] text-fpt-100">${escapeHtml(dept)}</p>
+                    <h2 class="mt-1 text-2xl font-extrabold leading-tight sm:text-3xl">${escapeHtml(e.title)}</h2>
                 </div>
             </div>
 
-            <div class="space-y-6 p-6">
+            <div class="space-y-5 p-6 sm:p-7">
                 <div class="grid gap-3 text-sm sm:grid-cols-2">
-                    <div class="flex items-center gap-2 text-slate-700"><span>📅</span><span><strong>Thời gian:</strong> ${formatDateTime(e.startTime)} – ${formatTime(e.endTime)}</span></div>
-                    <div class="flex items-center gap-2 text-slate-700"><span>📍</span><span><strong>Địa điểm:</strong> ${escapeHtml(e.location || '—')}</span></div>
-                    <div class="flex items-center gap-2 text-slate-700"><span>👥</span><span><strong>Số chỗ:</strong> ${e.registeredCount || 0}/${e.capacity || '—'} (đầy ${fill}%)</span></div>
-                    <div class="flex items-center gap-2 text-slate-700"><span>📊</span><span><strong>Trạng thái:</strong> ${statusBadge(e.status)}</span></div>
+                    <div class="flex items-center gap-2 text-ink"><span>📅</span><span><strong>Thời gian:</strong> ${formatDateTime(e.startTime)} – ${formatTime(e.endTime)}</span></div>
+                    <div class="flex items-center gap-2 text-ink"><span>📍</span><span><strong>Địa điểm:</strong> ${escapeHtml(e.location || '—')}</span></div>
+                    <div class="flex items-center gap-2 text-ink"><span>👥</span><span><strong>Số chỗ:</strong> ${e.registeredCount || 0}/${e.capacity || '—'} (đầy ${fill}%)</span></div>
+                    <div class="flex items-center gap-2 text-ink"><span>📊</span><span><strong>Trạng thái:</strong> ${statusBadge(e.status)}</span></div>
                 </div>
 
-                ${e.description ? `<p class="text-sm leading-relaxed text-slate-600">${escapeHtml(e.description)}</p>` : ''}
-
-                <section class="rounded-2xl border ${tone.border} ${tone.bg} p-4">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-xs font-bold uppercase tracking-widest ${tone.text}">Điểm ưu tiên của bạn</p>
-                            <p class="mt-1 text-3xl font-bold ${tone.text}">${score}<span class="ml-1 text-sm font-medium text-slate-500">/100 · ${tone.label}</span></p>
-                        </div>
-                        <div class="priority-ring flex h-16 w-16 items-center justify-center rounded-full" style="--ring-color:${tone.ring};--ring-pct:${Math.min(100,score)};">
-                            <span class="flex h-12 w-12 items-center justify-center rounded-full bg-white text-base font-bold ${tone.text}">${Math.round(score)}</span>
-                        </div>
-                    </div>
-                    ${bd ? `<div class="mt-4 space-y-3">${priorityBar(bd, 'M')}${priorityBar(bd, 'S')}${priorityBar(bd, 'P')}${priorityBar(bd, 'T')}</div>` : ''}
-                    <p class="mt-3 text-xs text-slate-500">Bạn sẽ chiếm slot nếu điểm cao hơn người có điểm thấp nhất hiện tại. Khi event đầy, hệ thống tự huy động lại theo thứ tự ưu tiên này.</p>
-                </section>
-
-                <section>
-                    <h4 class="mb-3 text-sm font-bold text-slate-900">🪪 Hàng đợi ưu tiên (top 8)</h4>
-                    ${queueHtml}
-                </section>
+                ${e.description ? `<p class="rounded-2xl bg-fpt-50/60 p-4 text-sm leading-relaxed text-ink">${escapeHtml(e.description)}</p>` : ''}
 
                 ${feedbackHtml}
 
-                <div class="flex justify-end gap-2 pt-2">
-                    <button class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50" data-modal-close>Đóng</button>
+                <div class="flex justify-end gap-2 pt-1">
+                    <button class="rounded-xl border border-fpt-100 bg-white px-4 py-2.5 text-sm font-bold text-ink hover:bg-fpt-50" data-modal-close>Đóng</button>
                     ${action}
                 </div>
             </div>
@@ -727,13 +771,12 @@
         }
         try {
             const result = await api('/student/events/' + eventId + '/register', { method: 'POST', body: {} });
-            const score = result.priorityScore == null ? '—' : Number(result.priorityScore).toFixed(1);
             if (result.alreadyRegistered) {
-                toast('Bạn đã đăng ký trước đó (' + result.status + ')', 'warn');
+                toast('Bạn đã đăng ký trước đó (' + (result.status || '') + ')', 'warn');
             } else if (result.status === 'REGISTERED') {
-                toast('🎉 Đăng ký thành công · Ưu tiên ' + score + (result.ticketCode ? ' · Vé ' + result.ticketCode : ''));
+                toast('🎉 Đăng ký thành công' + (result.ticketCode ? ' · Vé ' + result.ticketCode : ''));
             } else if (result.status === 'WAITLIST') {
-                toast('Bạn vào hàng chờ ưu tiên · điểm ' + score, 'warn');
+                toast('Bạn vào hàng chờ — sẽ tự lên slot nếu có người huỷ', 'warn');
             }
             closeModal();
             await Promise.all([loadEvents(), loadMe(), STATE.currentTab === 'mine' ? loadMyRegs() : Promise.resolve()]);
@@ -778,131 +821,87 @@
         $('#emptyMine').hidden = true;
         list.innerHTML = STATE.myRegs.map(r => {
             const e = r.event || {};
-            const tone = priorityTone(r.priorityScore || 0);
-            const att = r.attendance;
-            const t = r.ticket;
+            const att = r.attendance || {};
+            const regId = r.registrationId || r.id;
+            const dept = typeof e.department === 'string' ? e.department : (e.department && e.department.name) || '';
             const isPast = e.startTime && new Date(e.startTime) < new Date();
-            const canCancel = r.status === 'REGISTERED' || r.status === 'WAITLIST';
-            const canFeedback = att && att.status === 'ATTENDED' && !r.feedbackSubmitted;
+            const img = fixImg(e.imageUrl);
+            const canFeedback = isPast && (att.status === 'ATTENDED') && !r.feedbackSubmitted;
+
+            const fbBtn = canFeedback
+                ? `<button data-fb-event="${e.id}" data-fb-reg="${regId}" class="rounded-lg bg-gradient-to-r from-fpt-500 to-fpt-700 px-3 py-1.5 text-xs font-extrabold text-white shadow hover:brightness-110">⭐ Gửi feedback</button>`
+                : (r.feedbackSubmitted ? `<span class="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700">⭐ Đã gửi feedback</span>` : '');
 
             return `
-            <article class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md">
-                <div class="flex flex-col sm:flex-row">
-                    <div class="card-img-fallback h-32 w-full overflow-hidden sm:h-auto sm:w-48">
-                        ${e.imageUrl ? `<img src="${escapeAttr(e.imageUrl)}" alt="" class="h-full w-full object-cover">` : ''}
+            <div class="overflow-hidden rounded-2xl border border-fpt-100 bg-white shadow-sm transition hover:shadow-md sm:flex">
+                <div class="relative h-32 w-full overflow-hidden card-img-fallback sm:h-auto sm:w-52 sm:shrink-0">
+                    ${img ? `<img src="${escapeAttr(img)}" alt="" class="h-full w-full object-cover" loading="lazy" onerror="this.style.display='none'">` : '<div class="grid h-full w-full place-items-center text-3xl">🎓</div>'}
+                    ${dept ? `<span class="absolute left-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider text-fpt-700 shadow">${escapeHtml(dept)}</span>` : ''}
+                </div>
+                <div class="flex flex-1 flex-col gap-2 p-4 sm:p-5">
+                    <div class="flex flex-wrap items-center gap-2">
+                        ${statusBadge(r.status)}
+                        ${att.status ? statusBadge(att.status) : ''}
+                        ${r.ticket ? `<span class="inline-flex items-center gap-1 rounded-full bg-fpt-50 px-2.5 py-0.5 text-[10px] font-bold text-fpt-700">🎟 ${escapeHtml(r.ticket.code)}</span>` : ''}
                     </div>
-                    <div class="flex flex-1 flex-col p-4 sm:p-5">
-                        <div class="flex flex-wrap items-start justify-between gap-2">
-                            <div>
-                                <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">${escapeHtml(e.department || '—')}</p>
-                                <h3 class="text-base font-bold text-slate-900">${escapeHtml(e.title || '—')}</h3>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                ${statusBadge(r.status)}
-                                ${r.priorityScore != null ? `<span class="inline-flex items-center gap-1 rounded-full ${tone.bg} px-2.5 py-0.5 text-xs font-bold ${tone.text}">Ưu tiên ${Number(r.priorityScore).toFixed(1)}</span>` : ''}
-                            </div>
-                        </div>
-                        <div class="mt-2 grid grid-cols-2 gap-2 text-xs text-slate-600">
-                            <span>📅 ${formatDateTime(e.startTime)}</span>
-                            <span>📍 ${escapeHtml(e.location || '—')}</span>
-                            ${t ? `<span>🎫 Vé: <span class="font-mono font-semibold text-slate-800">${escapeHtml(t.code)}</span></span>` : ''}
-                            ${att ? `<span>${att.status === 'ATTENDED' ? '✅' : '❌'} ${att.status === 'ATTENDED' ? 'Đã check-in' : 'Vắng mặt'} ${formatTime(att.checkinTime)}</span>` : isPast ? `<span class="text-slate-400">Không có check-in</span>` : `<span class="text-slate-400">Chưa diễn ra</span>`}
-                        </div>
-                        ${r.note ? `<p class="mt-2 rounded-lg bg-amber-50 px-2.5 py-1.5 text-xs text-amber-800">${escapeHtml(r.note)}</p>` : ''}
-                        <div class="mt-3 flex flex-wrap gap-2">
-                            <button data-event-detail="${e.id}" class="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50">Xem chi tiết</button>
-                            ${t ? `<button data-show-ticket='${escapeAttr(JSON.stringify({ code: t.code, title: e.title, startTime: e.startTime, location: e.location, regName: STATE.me?.profile?.fullName, regCode: STATE.me?.profile?.studentCode }))}' class="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50">🎫 Xem vé</button>` : ''}
-                            ${canFeedback ? `<button data-feedback-event="${e.id}" data-feedback-title="${escapeAttr(e.title || '')}" class="rounded-xl bg-amber-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-600">⭐ Gửi feedback</button>` : ''}
-                            ${r.feedbackSubmitted ? `<span class="rounded-xl bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">✓ Đã feedback</span>` : ''}
-                            ${canCancel && !isPast ? `<button data-cancel-reg="${r.registrationId}" class="ml-auto rounded-xl border border-rose-200 bg-white px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-50">Huỷ</button>` : ''}
-                        </div>
+                    <button data-event-detail="${e.id}" class="text-left text-base font-extrabold text-ink hover:text-fpt-700">${escapeHtml(e.title || '—')}</button>
+                    <p class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-muted">
+                        <span>📅 ${formatDateTime(e.startTime)}</span>
+                        <span>📍 ${escapeHtml(e.location || '—')}</span>
+                    </p>
+                    <div class="mt-1 flex items-center gap-2">
+                        ${fbBtn}
+                        ${(!isPast && r.status === 'REGISTERED') ? `<button data-cancel-reg="${regId}" class="rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-xs font-bold text-rose-600 hover:bg-rose-50">Huỷ</button>` : ''}
+                        <button data-event-detail="${e.id}" class="ml-auto rounded-lg border border-fpt-100 bg-white px-3 py-1.5 text-xs font-bold text-ink hover:bg-fpt-50">Xem chi tiết</button>
                     </div>
                 </div>
-            </article>`;
+            </div>`;
         }).join('');
-
-        list.querySelectorAll('[data-event-detail]').forEach(btn =>
-            btn.addEventListener('click', () => showEventDetail(Number(btn.dataset.eventDetail))));
-        list.querySelectorAll('[data-cancel-reg]').forEach(btn =>
-            btn.addEventListener('click', () => cancelRegistration(Number(btn.dataset.cancelReg))));
-        list.querySelectorAll('[data-show-ticket]').forEach(btn =>
-            btn.addEventListener('click', () => showTicket(JSON.parse(btn.dataset.showTicket))));
-        list.querySelectorAll('[data-feedback-event]').forEach(btn =>
-            btn.addEventListener('click', () => openFeedback(Number(btn.dataset.feedbackEvent), btn.dataset.feedbackTitle)));
+        list.querySelectorAll('[data-event-detail]').forEach(el => el.addEventListener('click', () => showEventDetail(Number(el.dataset.eventDetail))));
+        list.querySelectorAll('[data-fb-event]').forEach(el => el.addEventListener('click', () => openFeedbackModal(Number(el.dataset.fbEvent))));
+        list.querySelectorAll('[data-cancel-reg]').forEach(el => el.addEventListener('click', () => cancelRegistration(Number(el.dataset.cancelReg))));
     }
 
-    // ----------------------------- TICKET MODAL -----------------------------
-    function showTicket(t) {
+    function openFeedbackModal(eventId) {
         openModal(`
         <div class="p-6">
-            <div class="overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-br from-sky-50 via-white to-indigo-50">
-                <div class="border-b border-dashed border-slate-300 px-5 py-4">
-                    <p class="text-xs font-bold uppercase tracking-widest text-sky-700">Vé sự kiện</p>
-                    <h3 class="mt-1 text-lg font-bold text-slate-900">${escapeHtml(t.title || '')}</h3>
-                </div>
-                <div class="grid gap-4 px-5 py-5 sm:grid-cols-[1fr_auto]">
-                    <div class="space-y-2 text-sm">
-                        <p><span class="text-slate-500">Họ tên:</span> <strong>${escapeHtml(t.regName || '—')}</strong></p>
-                        <p><span class="text-slate-500">MSSV:</span> <span class="font-mono">${escapeHtml(t.regCode || '—')}</span></p>
-                        <p><span class="text-slate-500">Thời gian:</span> ${formatDateTime(t.startTime)}</p>
-                        <p><span class="text-slate-500">Địa điểm:</span> ${escapeHtml(t.location || '—')}</p>
-                        <div class="mt-3 rounded-xl bg-slate-900 px-3 py-2 font-mono text-lg font-bold tracking-widest text-emerald-300 text-center">${escapeHtml(t.code)}</div>
-                    </div>
-                    <div class="flex h-32 w-32 items-center justify-center self-center rounded-2xl border-2 border-slate-200 bg-white">
-                        <img alt="QR" class="h-28 w-28" src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=10&data=${encodeURIComponent(t.code)}">
-                    </div>
+            <h3 class="text-lg font-extrabold text-ink">Gửi feedback sự kiện</h3>
+            <p class="mt-1 text-sm text-ink-muted">Phản hồi của bạn giúp ban tổ chức làm tốt hơn ở chương trình kế tiếp.</p>
+            <div class="mt-5">
+                <label class="text-xs font-bold uppercase tracking-wider text-ink-soft">Đánh giá</label>
+                <div id="ratingStars" class="mt-2 flex gap-1 text-3xl text-fpt-300" data-value="0">
+                    ${[1,2,3,4,5].map(i => `<button type="button" data-star="${i}" class="transition hover:scale-110">☆</button>`).join('')}
                 </div>
             </div>
-            <div class="mt-4 flex justify-end gap-2">
-                <button class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" data-modal-close>Đóng</button>
+            <div class="mt-4">
+                <label class="text-xs font-bold uppercase tracking-wider text-ink-soft">Bình luận (tuỳ chọn)</label>
+                <textarea id="fbComment" rows="4" placeholder="Bạn thấy sự kiện thế nào? Có điều gì muốn ban tổ chức cải thiện?"
+                    class="mt-2 w-full rounded-xl border border-fpt-100 bg-fpt-50/40 px-3 py-2 text-sm focus:border-fpt-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-fpt-200/40"></textarea>
+            </div>
+            <div class="mt-5 flex justify-end gap-2">
+                <button class="rounded-xl border border-fpt-100 bg-white px-4 py-2.5 text-sm font-bold text-ink hover:bg-fpt-50" data-modal-close>Huỷ</button>
+                <button id="btnSubmitFb" class="rounded-xl bg-gradient-to-r from-fpt-500 to-fpt-700 px-5 py-2.5 text-sm font-extrabold text-white shadow-glow hover:brightness-110">Gửi feedback</button>
             </div>
         </div>`);
-    }
 
-    // ----------------------------- FEEDBACK MODAL -----------------------------
-    function openFeedback(eventId, title) {
-        openModal(`
-        <div class="p-6">
-            <h3 class="text-lg font-bold text-slate-900">Gửi feedback</h3>
-            <p class="mt-1 text-sm text-slate-500">${escapeHtml(title)}</p>
-            <form id="feedbackForm" class="mt-4 space-y-4">
-                <div>
-                    <p class="mb-1 text-sm font-semibold text-slate-700">Đánh giá</p>
-                    <div id="ratingStars" class="flex gap-1 text-3xl">
-                        ${[1,2,3,4,5].map(i => `<button type="button" data-star="${i}" class="text-slate-300 transition hover:text-amber-500">★</button>`).join('')}
-                    </div>
-                    <input type="hidden" id="ratingValue" value="5">
-                </div>
-                <div>
-                    <label class="mb-1 block text-sm font-semibold text-slate-700">Nhận xét (tuỳ chọn)</label>
-                    <textarea id="commentArea" rows="4" maxlength="500" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-200" placeholder="Chia sẻ trải nghiệm của bạn..."></textarea>
-                </div>
-                <div class="flex justify-end gap-2">
-                    <button type="button" class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" data-modal-close>Huỷ</button>
-                    <button type="submit" class="rounded-xl bg-amber-500 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-amber-600">⭐ Gửi (+8 điểm)</button>
-                </div>
-            </form>
-        </div>`);
-
-        let rating = 5;
-        const setStars = (n) => {
-            $$('#ratingStars [data-star]').forEach(b => b.classList.toggle('text-amber-500', Number(b.dataset.star) <= n));
-            $('#ratingValue').value = String(n);
-            rating = n;
-        };
-        setStars(5);
-        $$('#ratingStars [data-star]').forEach(b => b.addEventListener('click', () => setStars(Number(b.dataset.star))));
-
-        $('#feedbackForm').addEventListener('submit', async (ev) => {
-            ev.preventDefault();
+        const stars = $('#ratingStars');
+        stars.querySelectorAll('[data-star]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const v = Number(btn.dataset.star);
+                stars.dataset.value = v;
+                stars.querySelectorAll('[data-star]').forEach(b => b.textContent = Number(b.dataset.star) <= v ? '★' : '☆');
+            });
+        });
+        $('#btnSubmitFb').addEventListener('click', async () => {
+            const rating = Number(stars.dataset.value);
+            if (rating < 1) { toast('Vui lòng chọn số sao', 'warn'); return; }
+            const comment = $('#fbComment').value.trim();
             try {
-                await api('/student/events/' + eventId + '/feedback', {
-                    method: 'POST',
-                    body: { rating, comment: $('#commentArea').value.trim() }
-                });
-                toast('🎉 Cảm ơn bạn! +8 điểm hoạt động');
+                await api('/student/events/' + eventId + '/feedback', { method: 'POST', body: { rating, comment } });
+                toast('🎉 Cảm ơn phản hồi của bạn!');
                 closeModal();
-                await Promise.all([loadMyRegs(), loadMe()]);
+                loadMyRegs();
+                loadMe();
             } catch (e) {
                 toast(e.message || 'Gửi feedback thất bại', 'error');
             }
@@ -911,84 +910,103 @@
 
     // ----------------------------- LEADERBOARD -----------------------------
     async function loadLeaderboard() {
-        $('#leaderboardList').innerHTML = new Array(5).fill(0).map(() => '<li class="skeleton mx-5 my-3 h-10 rounded"></li>').join('');
+        const list = $('#leaderboardList');
+        list.innerHTML = Array.from({length: 5}, () => '<li class="p-4"><div class="skeleton h-6 w-full rounded"></div></li>').join('');
         try {
             const data = await api('/student/leaderboard');
             STATE.leaderboard = data.items || [];
             renderLeaderboard();
         } catch (e) {
-            $('#leaderboardList').innerHTML = `<li class="p-6 text-center text-sm text-rose-600">${escapeHtml(e.message)}</li>`;
+            list.innerHTML = `<li class="p-6 text-sm text-rose-700">${escapeHtml(e.message)}</li>`;
         }
     }
 
     function renderLeaderboard() {
+        const list = $('#leaderboardList');
         if (!STATE.leaderboard.length) {
-            $('#leaderboardList').innerHTML = '<li class="p-6 text-center text-sm text-slate-500">Chưa có dữ liệu xếp hạng.</li>';
+            list.innerHTML = '<li class="p-8 text-center text-sm text-ink-muted">Chưa có dữ liệu xếp hạng.</li>';
             return;
         }
-        $('#leaderboardList').innerHTML = STATE.leaderboard.map(r => {
-            const isTop3 = r.rank <= 3;
-            const medal = r.rank === 1 ? '🥇' : r.rank === 2 ? '🥈' : r.rank === 3 ? '🥉' : `<span class="text-slate-400">#${r.rank}</span>`;
-            const highlight = r.isMe ? 'bg-sky-50' : '';
-            return `<li class="flex items-center gap-4 px-5 py-3 text-sm ${highlight}">
-                <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-lg font-bold">${medal}</div>
-                <div class="flex-1 min-w-0">
-                    <p class="truncate font-semibold text-slate-900">${escapeHtml(r.fullName)} ${r.isMe ? '<span class="ml-1 rounded bg-sky-200 px-1.5 py-0.5 text-[10px] font-bold uppercase text-sky-800">Bạn</span>' : ''}</p>
-                    <p class="truncate text-xs text-slate-500">${escapeHtml(r.major || '—')} · Kỳ ${r.semester || '—'}</p>
+        list.innerHTML = STATE.leaderboard.map(item => {
+            const medal = item.rank === 1 ? '🥇' : item.rank === 2 ? '🥈' : item.rank === 3 ? '🥉' : '#' + item.rank;
+            const me = item.isMe ? 'bg-fpt-50/60 ring-2 ring-fpt-300/60' : '';
+            return `
+            <li class="flex items-center gap-4 px-5 py-3.5 ${me}">
+                <span class="w-10 text-center text-lg font-extrabold text-fpt-700">${medal}</span>
+                <span class="grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br from-fpt-100 to-fpt-200 text-sm font-extrabold text-fpt-700">${escapeHtml((item.fullName || '?').split(' ').slice(-1)[0][0] || '?')}</span>
+                <div class="min-w-0 flex-1">
+                    <p class="truncate text-sm font-extrabold text-ink">${escapeHtml(item.fullName)} ${item.isMe ? '<span class="ml-1 rounded-full bg-fpt-200 px-2 py-0.5 text-[10px] font-bold text-fpt-800">bạn</span>' : ''}</p>
+                    <p class="truncate text-xs text-ink-muted">${escapeHtml(item.major || '—')} · Kỳ ${item.semester ?? '—'}</p>
                 </div>
-                <div class="text-right">
-                    <p class="font-bold text-slate-900">${(r.totalPoints || 0).toLocaleString('vi-VN')}</p>
-                    <p class="text-[10px] uppercase text-slate-500">điểm</p>
-                </div>
+                <span class="rounded-full bg-fpt-50 px-3 py-1 text-sm font-extrabold text-fpt-700">${item.totalPoints} điểm</span>
             </li>`;
         }).join('');
     }
 
     // ----------------------------- TABS -----------------------------
-    function switchTab(name) {
-        STATE.currentTab = name;
-        $$('.tab-btn').forEach(b => {
-            const active = b.dataset.tab === name;
-            b.classList.toggle('border-sky-600', active);
-            b.classList.toggle('text-slate-900', active);
-            b.classList.toggle('text-slate-500', !active);
-        });
-        $$('[data-tab-panel]').forEach(p => p.hidden = p.dataset.tabPanel !== name);
+    function showTab(tab) {
+        STATE.currentTab = tab;
+        $$('[data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+        const visiblePanel = tab === 'mine' ? 'mine' : tab === 'board' ? 'board' : 'discover';
+        $$('[data-tab-panel]').forEach(p => { p.hidden = p.dataset.tabPanel !== visiblePanel; });
 
-        if (name === 'mine' && !STATE.myRegs.length) loadMyRegs();
-        if (name === 'board' && !STATE.leaderboard.length) loadLeaderboard();
+        if (tab === 'all') {
+            $('#discoverTitle').textContent = 'Tất cả sự kiện';
+            STATE.filters.faculty = 'all';
+            $('#filterFaculty').value = 'all';
+            loadEvents();
+        } else if (tab === 'discover') {
+            $('#discoverTitle').textContent = 'Đề xuất cho bạn';
+            loadEvents();
+        } else if (tab === 'mine') {
+            loadMyRegs();
+        } else if (tab === 'board') {
+            loadLeaderboard();
+        }
+        // Đóng sidebar trên mobile sau khi click
+        if (window.innerWidth < 1024) closeSidebar();
     }
 
-    $$('.tab-btn').forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
+    // ----------------------------- SIDEBAR DRAWER -----------------------------
+    function openSidebar()  { $('#sidebar').classList.add('open'); $('#sidebarOverlay').hidden = false; }
+    function closeSidebar() { $('#sidebar').classList.remove('open'); $('#sidebarOverlay').hidden = true; }
+    $('#btnMenu').addEventListener('click', () => $('#sidebar').classList.contains('open') ? closeSidebar() : openSidebar());
+    $('#sidebarOverlay').addEventListener('click', closeSidebar);
 
     // ----------------------------- FILTERS -----------------------------
-    let searchTimer = null;
-    $('#globalSearch').addEventListener('input', (e) => {
-        clearTimeout(searchTimer);
-        searchTimer = setTimeout(() => {
-            STATE.filters.q = e.target.value.trim();
-            loadEvents();
-        }, 300);
+    $$('[data-chip="scope"]').forEach(b => b.addEventListener('click', () => {
+        $$('[data-chip="scope"]').forEach(x => x.classList.toggle('active', x === b));
+        STATE.filters.scope = b.dataset.value;
+        loadEvents();
+    }));
+    $('#filterFaculty').addEventListener('change', e => {
+        STATE.filters.faculty = e.target.value;
+        loadEvents();
     });
-    $('#filterScope').addEventListener('change', (e) => { STATE.filters.scope = e.target.value; loadEvents(); });
-    $('#filterFaculty').addEventListener('change', (e) => { STATE.filters.faculty = e.target.value; loadEvents(); });
-    $('#filterSort').addEventListener('change', (e) => { STATE.filters.sort = e.target.value; loadEvents(); });
+    let searchTimer;
+    $('#globalSearch').addEventListener('input', e => {
+        clearTimeout(searchTimer);
+        const v = e.target.value.trim();
+        searchTimer = setTimeout(() => { STATE.filters.q = v; loadEvents(); }, 250);
+    });
+
+    // ----------------------------- TAB BUTTONS -----------------------------
+    $$('[data-tab]').forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
 
     // ----------------------------- LOGOUT -----------------------------
-    $('#btnLogout').addEventListener('click', () => {
-        localStorage.clear();
+    function doLogout() {
         sessionStorage.clear();
         fetch(API_BASE + '/logout', { method: 'POST' }).catch(() => {}).finally(() => {
             location.href = API_BASE + '/login.html';
         });
-    });
+    }
+    $('#btnLogout').addEventListener('click', doLogout);
+    $('#btnLogoutSide').addEventListener('click', doLogout);
 
-    // ----------------------------- BOOT -----------------------------
-    switchTab('discover');
+    // ----------------------------- INIT -----------------------------
+    showTab('discover');
     loadMe();
-    loadEvents();
 })();
 </script>
-
 </body>
 </html>

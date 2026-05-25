@@ -1,54 +1,42 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid slice" role="img" aria-label="AI workshop FPT cover">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid slice" role="img" aria-label="AI and Machine Learning - FPT University">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#0c1426"/>
-      <stop offset="0.5" stop-color="#1e2a78"/>
-      <stop offset="1" stop-color="#4338ca"/>
+      <stop offset="0" stop-color="#0f172a"/>
+      <stop offset="0.55" stop-color="#4338ca"/>
+      <stop offset="1" stop-color="#06b6d4"/>
     </linearGradient>
-    <radialGradient id="node" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0" stop-color="#22d3ee"/>
-      <stop offset="1" stop-color="#22d3ee" stop-opacity="0"/>
+    <radialGradient id="glow" cx="0.85" cy="0.18" r="0.65">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.32"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
     </radialGradient>
+    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M48 0H0V48" fill="none" stroke="#ffffff" stroke-opacity="0.06" stroke-width="1"/>
+    </pattern>
   </defs>
   <rect width="1200" height="600" fill="url(#bg)"/>
-  <g opacity="0.7" stroke="#a78bfa" stroke-opacity="0.35" stroke-width="1" fill="none">
-    <path d="M820 100 L920 200 L820 320 L920 440 L820 540"/>
-    <path d="M900 100 L1000 220 L900 360 L1000 480"/>
-    <path d="M980 80  L1080 200 L980 340 L1080 480"/>
-    <path d="M1060 100 L1160 240 L1060 400"/>
+  <rect width="1200" height="600" fill="url(#grid)"/>
+  <rect width="1200" height="600" fill="url(#glow)"/>
+
+  <g opacity="0.18">
+    <circle cx="980" cy="120" r="220" fill="#ffffff"/>
+    <circle cx="1100" cy="540" r="140" fill="#fde68a"/>
+    <circle cx="180" cy="520" r="180" fill="#5eead4"/>
   </g>
-  <g fill="#22d3ee">
-    <circle cx="820" cy="100" r="9"/>
-    <circle cx="920" cy="200" r="9"/>
-    <circle cx="820" cy="320" r="9"/>
-    <circle cx="920" cy="440" r="9"/>
-    <circle cx="820" cy="540" r="9"/>
-    <circle cx="900" cy="100" r="9"/>
-    <circle cx="1000" cy="220" r="9"/>
-    <circle cx="900" cy="360" r="9"/>
-    <circle cx="1000" cy="480" r="9"/>
-    <circle cx="980" cy="80" r="9"/>
-    <circle cx="1080" cy="200" r="9"/>
-    <circle cx="980" cy="340" r="9"/>
-    <circle cx="1080" cy="480" r="9"/>
-    <circle cx="1060" cy="100" r="9"/>
-    <circle cx="1160" cy="240" r="9"/>
-    <circle cx="1060" cy="400" r="9"/>
+
+  <g transform="translate(64,64)">
+    <rect x="0" y="0" width="64" height="26" rx="5" fill="#f37021"/>
+    <text x="32" y="19" text-anchor="middle" font-family="Inter, Segoe UI, sans-serif" font-weight="900" font-size="17" fill="#ffffff">FPT</text>
+    <text x="76" y="19" font-family="Inter, Segoe UI, sans-serif" font-weight="700" font-size="14" fill="#ffffff" letter-spacing="0.22em">UNIVERSITY</text>
+    <text x="0" y="46" font-family="Inter, Segoe UI, sans-serif" font-weight="500" font-size="12" fill="#dbe7ff" letter-spacing="0.14em">CAMPUS EVENTS</text>
   </g>
-  <circle cx="920" cy="200" r="42" fill="url(#node)"/>
-  <circle cx="1000" cy="480" r="42" fill="url(#node)"/>
-  <g transform="translate(64,68)">
-    <rect x="0" y="0" width="58" height="22" rx="4" fill="#f37021"/>
-    <text x="29" y="17" text-anchor="middle" font-family="Inter, sans-serif" font-weight="900" font-size="16" fill="#ffffff">FPT</text>
-    <text x="68" y="17" font-family="Inter, sans-serif" font-weight="700" font-size="13" fill="#ffffff" letter-spacing="0.18em">UNIVERSITY</text>
-    <text x="0" y="42" font-family="Inter, sans-serif" font-weight="500" font-size="12" fill="#a5b4fc" letter-spacing="0.12em">ARTIFICIAL INTELLIGENCE</text>
+
+  <g transform="translate(64,250)">
+    <rect x="0" y="0" width="220" height="38" rx="19" fill="#ffffff"/>
+    <text x="110" y="25" text-anchor="middle" font-family="Inter, Segoe UI, sans-serif" font-weight="800" font-size="14" fill="#0b3a82" letter-spacing="0.1em">AI LAB</text>
   </g>
-  <g transform="translate(64,260)">
-    <rect x="0" y="0" width="220" height="36" rx="18" fill="#22d3ee"/>
-    <text x="110" y="24" text-anchor="middle" font-family="Inter, sans-serif" font-weight="800" font-size="13" fill="#0c1426" letter-spacing="0.08em">AI &amp; MACHINE LEARNING</text>
-  </g>
-  <text x="64" y="370" font-family="Inter, sans-serif" font-weight="800" font-size="60" fill="#ffffff">Train your future.</text>
-  <text x="64" y="430" font-family="Inter, sans-serif" font-weight="800" font-size="60" fill="#22d3ee">Predict the next.</text>
-  <text x="64" y="488" font-family="Inter, sans-serif" font-weight="500" font-size="20" fill="#cbd5e1">Workshop AI · GenAI · LLM cùng gi£ng viên &amp; chuyên gia ngành</text>
+
+  <text x="64" y="370" font-family="Inter, Segoe UI, sans-serif" font-weight="900" font-size="58" fill="#ffffff">AI and Machine Learning</text>
+  <text x="64" y="420" font-family="Inter, Segoe UI, sans-serif" font-weight="500" font-size="22" fill="#e7efff">Workshop, Talks, Hands-on Labs</text>
+  <text x="64" y="540" font-family="Inter, Segoe UI, sans-serif" font-weight="500" font-size="15" fill="#ffffff" fill-opacity="0.78">campus.fpt.edu.vn  -  Smart event management for FPT students</text>
 </svg>
