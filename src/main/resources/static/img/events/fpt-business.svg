@@ -1,32 +1,42 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Startup business FPT cover">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Business Case Lab - FPT University">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#052e16"/>
-      <stop offset="0.55" stop-color="#16a34a"/>
-      <stop offset="1" stop-color="#a7f3d0"/>
+      <stop offset="0" stop-color="#0f172a"/>
+      <stop offset="0.55" stop-color="#1e3a8a"/>
+      <stop offset="1" stop-color="#fbbf24"/>
     </linearGradient>
+    <radialGradient id="glow" cx="0.85" cy="0.18" r="0.65">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.32"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M48 0H0V48" fill="none" stroke="#ffffff" stroke-opacity="0.06" stroke-width="1"/>
+    </pattern>
   </defs>
   <rect width="1200" height="600" fill="url(#bg)"/>
-  <g opacity="0.15" stroke="#ffffff" fill="none" stroke-width="2">
-    <path d="M820 540 L900 460 L980 480 L1060 360 L1140 240"/>
-    <circle cx="820" cy="540" r="6"/>
-    <circle cx="900" cy="460" r="6"/>
-    <circle cx="980" cy="480" r="6"/>
-    <circle cx="1060" cy="360" r="6"/>
-    <circle cx="1140" cy="240" r="6"/>
+  <rect width="1200" height="600" fill="url(#grid)"/>
+  <rect width="1200" height="600" fill="url(#glow)"/>
+
+  <g opacity="0.18">
+    <circle cx="980" cy="120" r="220" fill="#ffffff"/>
+    <circle cx="1100" cy="540" r="140" fill="#fde68a"/>
+    <circle cx="180" cy="520" r="180" fill="#5eead4"/>
   </g>
-  <g transform="translate(64,68)">
-    <rect x="0" y="0" width="58" height="22" rx="4" fill="#f37021"/>
-    <text x="29" y="17" text-anchor="middle" font-family="Inter, sans-serif" font-weight="900" font-size="16" fill="#ffffff">FPT</text>
-    <text x="68" y="17" font-family="Inter, sans-serif" font-weight="700" font-size="13" fill="#ffffff" letter-spacing="0.18em">UNIVERSITY</text>
-    <text x="0" y="42" font-family="Inter, sans-serif" font-weight="500" font-size="12" fill="#bbf7d0" letter-spacing="0.12em">STARTUP · PITCH · GROWTH</text>
+
+  <g transform="translate(64,64)">
+    <rect x="0" y="0" width="64" height="26" rx="5" fill="#f37021"/>
+    <text x="32" y="19" text-anchor="middle" font-family="Inter, Segoe UI, sans-serif" font-weight="900" font-size="17" fill="#ffffff">FPT</text>
+    <text x="76" y="19" font-family="Inter, Segoe UI, sans-serif" font-weight="700" font-size="14" fill="#ffffff" letter-spacing="0.22em">UNIVERSITY</text>
+    <text x="0" y="46" font-family="Inter, Segoe UI, sans-serif" font-weight="500" font-size="12" fill="#dbe7ff" letter-spacing="0.14em">CAMPUS EVENTS</text>
   </g>
-  <g transform="translate(64,260)">
-    <rect x="0" y="0" width="220" height="36" rx="18" fill="#ffffff"/>
-    <text x="110" y="24" text-anchor="middle" font-family="Inter, sans-serif" font-weight="800" font-size="13" fill="#052e16" letter-spacing="0.08em">KHÞI NGHIÆP &amp; KINH DOANH</text>
+
+  <g transform="translate(64,250)">
+    <rect x="0" y="0" width="220" height="38" rx="19" fill="#ffffff"/>
+    <text x="110" y="25" text-anchor="middle" font-family="Inter, Segoe UI, sans-serif" font-weight="800" font-size="14" fill="#0b3a82" letter-spacing="0.1em">BUSINESS</text>
   </g>
-  <text x="64" y="370" font-family="Inter, sans-serif" font-weight="800" font-size="60" fill="#ffffff">Ý t°ßng thành s£n ph©m.</text>
-  <text x="64" y="432" font-family="Inter, sans-serif" font-weight="800" font-size="60" fill="#ffd166">S£n ph©m ra thË tr°Ýng.</text>
-  <text x="64" y="490" font-family="Inter, sans-serif" font-weight="500" font-size="20" fill="#f0fdf4">Pitch day · mentor chuyên gia · demo cùng quù §u t° ViÇt Nam</text>
+
+  <text x="64" y="370" font-family="Inter, Segoe UI, sans-serif" font-weight="900" font-size="58" fill="#ffffff">Business Case Lab</text>
+  <text x="64" y="420" font-family="Inter, Segoe UI, sans-serif" font-weight="500" font-size="22" fill="#e7efff">Strategy, Finance, Entrepreneurship</text>
+  <text x="64" y="540" font-family="Inter, Segoe UI, sans-serif" font-weight="500" font-size="15" fill="#ffffff" fill-opacity="0.78">campus.fpt.edu.vn  -  Smart event management for FPT students</text>
 </svg>

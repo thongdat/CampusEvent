@@ -128,21 +128,25 @@ public class StudentController {
         profile.put("totalPoints", user.getTotalPoints() == null ? 0 : user.getTotalPoints());
         body.put("profile", profile);
 
+        // Xếp hạng tổng (theo totalPoints) - dùng count đơn giản để không nặng DB.
+        Integer myPoints = user.getTotalPoints() == null ? 0 : user.getTotalPoints();
+        long higher = userRepository.findAll().stream()
+                .filter(u -> u.getRole() != null && "STUDENT".equalsIgnoreCase(u.getRole().getName()))
+                .filter(u -> Boolean.TRUE.equals(u.getStatus()))
+                .filter(u -> (u.getTotalPoints() == null ? 0 : u.getTotalPoints()) > myPoints)
+                .count();
+        long myRank = higher + 1;
+
         Map<String, Object> stats = new LinkedHashMap<>();
         stats.put("registered", registeredCount);
         stats.put("waitlist", waitlistCount);
         stats.put("attended", attendedCount);
         stats.put("feedback", feedbackCount);
         stats.put("upcoming", upcomingForStudent(student).size());
+        stats.put("rank", myRank);
+        stats.put("totalPoints", myPoints);
         body.put("stats", stats);
-
-        // Xếp hạng tổng (theo totalPoints) - dùng count đơn giản để không nặng DB.
-        Integer myPoints = user.getTotalPoints() == null ? 0 : user.getTotalPoints();
-        long higher = userRepository.findAll().stream()
-                .filter(u -> u.getRole() != null && "STUDENT".equalsIgnoreCase(u.getRole().getName()))
-                .filter(u -> (u.getTotalPoints() == null ? 0 : u.getTotalPoints()) > myPoints)
-                .count();
-        body.put("rank", higher + 1);
+        body.put("rank", myRank);
 
         return ResponseEntity.ok(body);
     }
@@ -171,7 +175,13 @@ public class StudentController {
         if ("upcoming".equalsIgnoreCase(scope)) {
             events = events.stream().filter(e -> e.getStartTime() != null && e.getStartTime().isAfter(now)).collect(Collectors.toList());
         } else if ("past".equalsIgnoreCase(scope)) {
-            events = events.stream().filter(e -> e.getStartTime() != null && e.getStartTime().isBefore(now)).collect(Collectors.toList());
+            // Chỉ giữ event đã diễn ra trong vòng 8 tháng gần đây - tránh quay về quá xa.
+            LocalDateTime eightMonthsAgo = now.minusMonths(8);
+            events = events.stream()
+                    .filter(e -> e.getStartTime() != null
+                            && e.getStartTime().isBefore(now)
+                            && e.getStartTime().isAfter(eightMonthsAgo))
+                    .collect(Collectors.toList());
         } else if ("today".equalsIgnoreCase(scope)) {
             LocalDateTime startOfDay = now.toLocalDate().atStartOfDay();
             LocalDateTime endOfDay = startOfDay.plusDays(1);
@@ -570,7 +580,7 @@ public class StudentController {
                 .filter(u -> u.getRole() != null && "STUDENT".equalsIgnoreCase(u.getRole().getName()))
                 .filter(u -> Boolean.TRUE.equals(u.getStatus()))
                 .sorted(Comparator.comparing((User u) -> u.getTotalPoints() == null ? 0 : u.getTotalPoints()).reversed())
-                .limit(20)
+                .limit(10)
                 .collect(Collectors.toList());
 
         List<Map<String, Object>> rows = new ArrayList<>();

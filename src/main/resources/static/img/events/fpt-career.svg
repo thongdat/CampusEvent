@@ -1,29 +1,42 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Career Day FPT cover">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Career Fair - FPT University">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#082f49"/>
-      <stop offset="0.5" stop-color="#0369a1"/>
-      <stop offset="1" stop-color="#f97316"/>
+      <stop offset="0" stop-color="#1e1b4b"/>
+      <stop offset="0.55" stop-color="#4f46e5"/>
+      <stop offset="1" stop-color="#ec4899"/>
     </linearGradient>
+    <radialGradient id="glow" cx="0.85" cy="0.18" r="0.65">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.32"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M48 0H0V48" fill="none" stroke="#ffffff" stroke-opacity="0.06" stroke-width="1"/>
+    </pattern>
   </defs>
   <rect width="1200" height="600" fill="url(#bg)"/>
-  <g opacity="0.16" fill="#ffffff">
-    <rect x="780" y="160" width="120" height="220" rx="10"/>
-    <rect x="920" y="100" width="120" height="280" rx="10"/>
-    <rect x="1060" y="200" width="120" height="180" rx="10"/>
+  <rect width="1200" height="600" fill="url(#grid)"/>
+  <rect width="1200" height="600" fill="url(#glow)"/>
+
+  <g opacity="0.18">
+    <circle cx="980" cy="120" r="220" fill="#ffffff"/>
+    <circle cx="1100" cy="540" r="140" fill="#fde68a"/>
+    <circle cx="180" cy="520" r="180" fill="#5eead4"/>
   </g>
-  <g transform="translate(64,68)">
-    <rect x="0" y="0" width="58" height="22" rx="4" fill="#f37021"/>
-    <text x="29" y="17" text-anchor="middle" font-family="Inter, sans-serif" font-weight="900" font-size="16" fill="#ffffff">FPT</text>
-    <text x="68" y="17" font-family="Inter, sans-serif" font-weight="700" font-size="13" fill="#ffffff" letter-spacing="0.18em">UNIVERSITY</text>
-    <text x="0" y="42" font-family="Inter, sans-serif" font-weight="500" font-size="12" fill="#e0f2fe" letter-spacing="0.12em">CAREER · INTERNSHIP · OJT</text>
+
+  <g transform="translate(64,64)">
+    <rect x="0" y="0" width="64" height="26" rx="5" fill="#f37021"/>
+    <text x="32" y="19" text-anchor="middle" font-family="Inter, Segoe UI, sans-serif" font-weight="900" font-size="17" fill="#ffffff">FPT</text>
+    <text x="76" y="19" font-family="Inter, Segoe UI, sans-serif" font-weight="700" font-size="14" fill="#ffffff" letter-spacing="0.22em">UNIVERSITY</text>
+    <text x="0" y="46" font-family="Inter, Segoe UI, sans-serif" font-weight="500" font-size="12" fill="#dbe7ff" letter-spacing="0.14em">CAMPUS EVENTS</text>
   </g>
-  <g transform="translate(64,260)">
-    <rect x="0" y="0" width="220" height="36" rx="18" fill="#ffffff"/>
-    <text x="110" y="24" text-anchor="middle" font-family="Inter, sans-serif" font-weight="800" font-size="13" fill="#082f49" letter-spacing="0.08em">CAREER DAY</text>
+
+  <g transform="translate(64,250)">
+    <rect x="0" y="0" width="220" height="38" rx="19" fill="#ffffff"/>
+    <text x="110" y="25" text-anchor="middle" font-family="Inter, Segoe UI, sans-serif" font-weight="800" font-size="14" fill="#0b3a82" letter-spacing="0.1em">CAREER</text>
   </g>
-  <text x="64" y="370" font-family="Inter, sans-serif" font-weight="800" font-size="60" fill="#ffffff">G·p gá doanh nghiÇp.</text>
-  <text x="64" y="432" font-family="Inter, sans-serif" font-weight="800" font-size="60" fill="#fde68a">Mß cánh cía sñ nghiÇp.</text>
-  <text x="64" y="490" font-family="Inter, sans-serif" font-weight="500" font-size="20" fill="#fff5e6">100+ công ty công nghÇ phÏng v¥n trñc ti¿p · OJT · c¡ hÙi viÇc làm th­t</text>
+
+  <text x="64" y="370" font-family="Inter, Segoe UI, sans-serif" font-weight="900" font-size="58" fill="#ffffff">Career Fair</text>
+  <text x="64" y="420" font-family="Inter, Segoe UI, sans-serif" font-weight="500" font-size="22" fill="#e7efff">Internship, CV Clinic, Mock Interview</text>
+  <text x="64" y="540" font-family="Inter, Segoe UI, sans-serif" font-weight="500" font-size="15" fill="#ffffff" fill-opacity="0.78">campus.fpt.edu.vn  -  Smart event management for FPT students</text>
 </svg>
