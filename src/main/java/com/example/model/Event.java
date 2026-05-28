@@ -36,6 +36,12 @@ public class Event {
     @Column(columnDefinition = "NVARCHAR(MAX)")
     private String imageUrls;
 
+    @Column(name = "google_form_url", columnDefinition = "NVARCHAR(1000)")
+    private String googleFormUrl;
+
+    @Column(name = "speakers", columnDefinition = "NVARCHAR(800)")
+    private String speakers;
+
     @Column(precision = 18, scale = 2)
     private BigDecimal budget;
     
@@ -134,6 +140,22 @@ public class Event {
 
     public void setImageUrls(String imageUrls) {
         this.imageUrls = imageUrls;
+    }
+
+    public String getGoogleFormUrl() {
+        return googleFormUrl;
+    }
+
+    public void setGoogleFormUrl(String googleFormUrl) {
+        this.googleFormUrl = googleFormUrl;
+    }
+
+    public String getSpeakers() {
+        return speakers;
+    }
+
+    public void setSpeakers(String speakers) {
+        this.speakers = speakers;
     }
 
     public BigDecimal getBudget() {

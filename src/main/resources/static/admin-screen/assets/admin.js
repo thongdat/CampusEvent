@@ -1263,6 +1263,10 @@
             .filter(role => role.name !== 'ADMIN')
             .map(role => ({ value: role.id, label: role.name }));
         const statusOptions = [{ value: 'true', label: 'ACTIVE' }, { value: 'false', label: 'LOCKED' }];
+        const departmentPositionOptions = [
+            { value: 'STAFF', label: 'Nhân sự khoa/Bộ môn' },
+            { value: 'HEAD', label: 'Trưởng khoa/Bộ môn' }
+        ];
 
         const openUserForm = (user = {}) => {
             const roleOptions = user.role === 'ADMIN'
@@ -1275,6 +1279,7 @@
                 { name: 'email', label: 'Email', type: 'email', required: true },
                 { name: 'phone', label: 'Số điện thoại', required: true },
                 { name: 'roleId', label: 'Role', type: 'select', options: roleOptions, required: true },
+                { name: 'departmentPosition', label: 'Chức vụ khoa/Bộ môn', type: 'select', options: departmentPositionOptions },
                 { name: 'active', label: 'Trạng thái', type: 'select', options: statusOptions },
                 { name: 'password', label: user.id ? 'Mật khẩu mới' : 'Mật khẩu', type: 'password' },
                 { name: 'major', label: 'Khoa/Major' },
@@ -1282,7 +1287,7 @@
                 { name: 'studentCode', label: 'Mã sinh viên' },
                 { name: 'totalPoints', label: 'Điểm', type: 'number' }
             ],
-            values: { ...user, roleId: user.roleId || managerRole?.id || safeRoleOptions[0]?.value || '', active: user.active === false ? 'false' : 'true' },
+            values: { ...user, roleId: user.roleId || managerRole?.id || safeRoleOptions[0]?.value || '', departmentPosition: user.departmentPosition || 'STAFF', active: user.active === false ? 'false' : 'true' },
             onSubmit: async payload => {
                 payload.active = payload.active === 'true';
                 if (!payload.password) delete payload.password;
@@ -1302,6 +1307,7 @@
                 ['Email', user.email],
                 ['Phone', user.phone],
                 ['Role', user.role],
+                ['Chức vụ khoa/Bộ môn', user.departmentPositionLabel || user.departmentPosition || 'STAFF'],
                 ['Khoa/Major', user.major],
                 ['Mã sinh viên', user.studentCode || 'N/A'],
                 ['Trạng thái', user.status],
@@ -1379,10 +1385,11 @@
                     ${selectBox('userSort', sortOptions)}
                     <span class="metric-hint">${number(filtered.length)} user</span>
                 </div>
-                ${table(['User', 'Role', 'Khoa', 'Status', 'Điểm', 'Hành động'], filtered.map(user => `
+                ${table(['User', 'Role', 'Chức vụ', 'Khoa', 'Status', 'Điểm', 'Hành động'], filtered.map(user => `
                     <tr>
                         <td><span class="cell-title">${h(user.fullName)}</span><span class="cell-sub">${h(user.email)}</span></td>
                         <td>${badge(user.role || 'N/A', tone(user.role))}</td>
+                        <td>${badge(user.departmentPositionLabel || user.departmentPosition || 'STAFF', user.departmentPosition === 'HEAD' ? 'green' : 'gray')}</td>
                         <td>${h(user.major || 'N/A')}<span class="cell-sub">${h(userFaculty(user))}${user.studentCode ? ' · ' + h(user.studentCode) : ''}</span></td>
                         <td>${badge(user.status, tone(user.status))}</td>
                         <td>${number(user.totalPoints)}</td>
@@ -1534,6 +1541,7 @@
         const managerCandidates = users.filter(user => user.role !== 'ADMIN');
         const managerFor = department =>
             users.find(user => String(user.id) === String(department.managerId))
+            || users.find(user => ['MANAGER', 'DEPARTMENT'].includes(user.role) && user.departmentPosition === 'HEAD' && normalize(user.major) === normalize(department.name))
             || users.find(user => ['MANAGER', 'DEPARTMENT'].includes(user.role) && normalize(user.major) === normalize(department.name));
         const grouped = departments.reduce((acc, department) => {
             const faculty = department.facultyName || facultyOfDepartment(department.name);
@@ -1582,6 +1590,7 @@
                     body: JSON.stringify({
                         ...selected,
                         roleId: managerRole?.id || selected.roleId,
+                        departmentPosition: 'HEAD',
                         major: department.name,
                         active: true
                     })

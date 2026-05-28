@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Check-in · AEMS Toolkit · FPT Campus Events</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        fpt: { 50: '#fff7ed', 100: '#ffedd5', 200: '#fed7aa', 300: '#fdba74', 400: '#fb923c', 500: '#f37021', 600: '#ea580c', 700: '#c2410c', 800: '#9a3412', 900: '#7c2d12' }
+                    },
+                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+                    boxShadow: {
+                        soft: '0 1px 3px 0 rgba(16, 24, 40, 0.04)',
+                        card: '0 4px 12px -2px rgba(16, 24, 40, 0.06)',
+                        pop: '0 18px 48px -24px rgba(67, 20, 7, 0.30)'
+                    }
+                }
+            }
+        };
+    </script>
+    <style>
+        body { font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+        [hidden] { display: none !important; }
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 999px; }
+        ::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+        .qr-wrap { background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: .85rem; position: relative; }
+        .qr-wrap img, .qr-wrap svg { display: block; width: 100%; height: auto; max-width: 240px; margin: 0 auto; }
+        .qr-skeleton { width: 100%; aspect-ratio: 1/1; max-width: 240px; margin: 0 auto; background: linear-gradient(110deg, #f1f5f9 8%, #e2e8f0 18%, #f1f5f9 33%); background-size: 200% 100%; border-radius: 12px; animation: shine 1.4s linear infinite; }
+        @keyframes shine { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
+        .progress { position: relative; height: 6px; background: #f1f5f9; border-radius: 999px; overflow: hidden; }
+        .progress > span { display: block; height: 100%; background: linear-gradient(90deg, #fb923c, #ea580c); border-radius: 999px; transition: width .3s; }
+        .rotate-bar { position: relative; height: 4px; background: #fed7aa; border-radius: 999px; overflow: hidden; margin-top: .55rem; }
+        .rotate-bar > span { display: block; height: 100%; background: linear-gradient(90deg, #f97316, #c2410c); border-radius: 999px; transition: width 1s linear; }
+        .qr-img-host img { transition: opacity .2s; }
+        .qr-img-host.swapping img { opacity: .35; }
+        .chip { display: inline-flex; align-items: center; gap: .35rem; padding: .25rem .65rem; border-radius: 999px; font-size: .6875rem; font-weight: 800; letter-spacing: .03em; }
+        .chip-on { background: #f0fdf4; color: #166534; }
+        .chip-soon { background: #fff7ed; color: #c2410c; }
+        .chip-off { background: #f1f5f9; color: #475569; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+        .anim { animation: fadeUp .25s ease; }
+
+        @media print {
+            body { background: white !important; }
+            .no-print { display: none !important; }
+            article.event-card { break-inside: avoid; page-break-inside: avoid; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+
+<!-- ===== Topbar ===== -->
+<header class="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur no-print">
+    <div class="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
+        <div class="flex items-center gap-3">
+            <a href="/api/screen-department.html" class="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-700" title="Về Department Console">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+            </a>
+            <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-fpt-500 to-fpt-700 text-white shadow-sm">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h6v6H3V4zm0 10h6v6H3v-6zM13 4h6v6h-6V4zm3 10h3v3h-3v-3zm-3 0h2v6h-2v-6zm5 3h3v3h-3v-3z"/></svg>
+            </div>
+            <div>
+                <h1 class="text-base font-extrabold leading-tight text-slate-900 sm:text-lg">QR Check-in Toolkit</h1>
+                <p class="text-[11px] font-semibold text-slate-500 sm:text-xs">Form check-in tự sinh · Ảnh + Mô tả + Diễn giả + Quiz · Token xoay 2 phút</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <button id="printBtn" class="hidden rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50 sm:inline-flex sm:items-center sm:gap-1.5" onclick="window.print()">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                In tất cả QR
+            </button>
+            <button id="logoutBtn" class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50">Đăng xuất</button>
+        </div>
+    </div>
+    <!-- Toolbar -->
+    <div class="border-t border-slate-100 bg-slate-50 px-4 py-2.5 sm:px-6">
+        <div class="mx-auto flex max-w-6xl flex-wrap items-center gap-2">
+            <div class="relative flex-1 min-w-[200px]">
+                <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
+                <input id="searchInput" type="text" placeholder="Tìm event theo tên, địa điểm, khoa…" class="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm focus:border-fpt-500 focus:ring-2 focus:ring-fpt-200 focus:outline-none">
+            </div>
+            <div class="flex flex-wrap items-center gap-1 rounded-lg bg-white p-0.5">
+                <button data-filter="upcoming" class="filter-chip rounded-md px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100">Sắp diễn ra & đang chạy</button>
+                <button data-filter="today" class="filter-chip rounded-md px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100">Hôm nay</button>
+            </div>
+            <a href="/api/screen-department.html#reports" class="ml-auto rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50">📊 Event đã kết thúc → Reports</a>
+        </div>
+    </div>
+</header>
+
+<!-- ===== Main ===== -->
+<main class="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+    <section class="anim mb-5 rounded-2xl border border-fpt-200 bg-gradient-to-br from-fpt-50 to-white p-4 sm:p-5 no-print">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex items-start gap-3">
+                <div class="flex h-10 w-10 flex-none items-center justify-center rounded-lg bg-fpt-500 text-white shadow-sm">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                <div class="flex-1">
+                    <h2 class="text-sm font-extrabold text-slate-900 sm:text-base">Google Form tự tạo cho từng event — không cần cấu hình</h2>
+                    <p class="mt-1 text-xs text-slate-600 sm:text-sm">
+                        Mở trang này → hệ thống <strong>tự gọi Google Forms API</strong> tạo 1 Google Form riêng cho mỗi event,
+                        tự lấy <strong>ảnh sự kiện · mô tả · diễn giả · thời gian · địa điểm</strong> từ DB,
+                        thêm 4 câu hỏi bắt buộc (<strong>Email · Họ tên · MSSV · Giới tính</strong>).
+                        Chiếu QR là sinh viên scan ngay được.
+                    </p>
+                    <p class="mt-1.5 text-[11px] text-slate-500">
+                        QR <strong>token xoay 2 phút/lần</strong> chống share screenshot.
+                        Yêu cầu: bạn đã đăng nhập Gmail có quyền Forms API (form sẽ vào Drive của bạn).
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div id="eventsRoot" class="space-y-4">
+        <div class="rounded-2xl border border-slate-200 bg-white p-10 text-center">
+            <div class="mx-auto mb-3 h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-fpt-500"></div>
+            <p class="text-sm font-semibold text-slate-500">Đang tải danh sách event…</p>
+        </div>
+    </div>
+</main>
+
+<!-- ===== QR Detail Modal (for "print one") ===== -->
+<div id="qrModal" class="fixed inset-0 z-30 hidden items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm no-print">
+    <div class="flex max-h-[92vh] w-full max-w-md flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+        <header class="flex items-center justify-between gap-3 border-b border-slate-200 px-5 py-4">
+            <div>
+                <h3 class="text-base font-extrabold text-slate-900" id="qrModalTitle">QR Check-in</h3>
+                <p class="text-xs text-slate-500" id="qrModalSub"></p>
+            </div>
+            <button id="qrModalClose" class="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </header>
+        <div class="overflow-y-auto px-6 py-6">
+            <div id="qrModalBody" class="text-center">
+                <div class="qr-wrap mx-auto" style="max-width:320px"><div id="qrModalImg"></div></div>
+                <p class="mt-4 break-all rounded-lg bg-slate-50 px-3 py-2 text-xs font-mono text-slate-600" id="qrModalUrl"></p>
+                <p class="mt-3 text-sm text-slate-600">Sinh viên quét QR bằng camera điện thoại để bắt đầu check-in.</p>
+            </div>
+        </div>
+        <footer class="flex items-center justify-end gap-2 border-t border-slate-200 bg-slate-50 px-5 py-3">
+            <button id="qrModalCopy" class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50">Copy link</button>
+            <button id="qrModalPrint" class="rounded-lg bg-gradient-to-br from-fpt-500 to-fpt-700 px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:brightness-110">In trang này</button>
+        </footer>
+    </div>
+</div>
+
+<!-- ===== Google Form URL Modal ===== -->
+<div id="formModal" class="fixed inset-0 z-30 hidden items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm no-print">
+    <div class="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+        <header class="flex items-center justify-between gap-3 border-b border-slate-200 px-6 py-4">
+            <div>
+                <h3 class="text-base font-extrabold text-slate-900">Form check-in cho event</h3>
+                <p class="text-xs text-slate-500" id="formModalEventTitle"></p>
+            </div>
+            <button id="formModalClose" class="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </header>
+        <div class="overflow-y-auto px-6 py-5 space-y-4">
+            <!-- ===== STATUS CARD — duy nhất ===== -->
+            <div id="formModalStatus" class="rounded-xl border-2 p-4">
+                <!-- Nội dung set bằng JS: ✓ Google Form sẵn sàng / ⌛ Đang tạo / ⚠ Lỗi -->
+            </div>
+
+            <div class="grid grid-cols-3 gap-2">
+                <button id="formModalPreview" class="rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-2.5 text-xs font-bold flex items-center justify-center gap-1.5">
+                    👁 Xem trước
+                </button>
+                <button id="formModalEditSpeakers" class="rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-3 py-2.5 text-xs font-bold flex items-center justify-center gap-1.5">
+                    🎤 Diễn giả
+                </button>
+                <button id="formModalAutoCreate" class="rounded-lg bg-white border border-fpt-300 hover:bg-fpt-50 text-fpt-700 px-3 py-2.5 text-xs font-bold flex items-center justify-center gap-1.5 disabled:opacity-50">
+                    <span id="formModalAutoCreateLabel">🔄 Tạo lại form</span>
+                </button>
+            </div>
+            <div id="formModalAutoMsg" class="hidden text-xs font-semibold leading-relaxed"></div>
+
+            <!-- ===== Speakers editor (hidden by default) ===== -->
+            <div id="speakersEditor" class="hidden rounded-xl bg-amber-50 border border-amber-200 p-4">
+                <label class="text-xs font-bold text-amber-900 block mb-1.5">🎤 Diễn giả / chuyên gia (sẽ hiển thị trên Google Form)</label>
+                <textarea id="speakersInput" rows="3" placeholder="VD:&#10;ThS. Nguyễn Văn A — Cloud Architect, AWS&#10;TS. Trần Thị B — AI/ML Lead, FPT Software" class="w-full rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm focus:border-fpt-500 focus:ring-2 focus:ring-fpt-200 focus:outline-none"></textarea>
+                <div class="mt-2 flex gap-2 justify-end">
+                    <button id="speakersCancel" class="text-xs font-bold text-slate-500 hover:underline">Hủy</button>
+                    <button id="speakersSave" class="rounded-md bg-fpt-500 text-white px-3 py-1.5 text-xs font-bold hover:bg-fpt-600">Lưu & Tạo lại form</button>
+                </div>
+            </div>
+
+            <!-- ===== Advanced (collapsed) ===== -->
+            <details class="rounded-xl border border-slate-200 bg-slate-50 text-xs">
+                <summary class="cursor-pointer px-3 py-2 font-bold text-slate-500 hover:bg-slate-100 rounded-xl">
+                    🔧 Nâng cao — Paste link Google Form có sẵn (override auto-tạo)
+                </summary>
+                <div class="border-t border-slate-200 px-3 py-3 space-y-2">
+                    <input id="formModalUrl" type="url" placeholder="https://docs.google.com/forms/d/e/.../viewform" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs font-mono focus:border-fpt-500 focus:ring-2 focus:ring-fpt-200 focus:outline-none">
+                    <div class="flex gap-2">
+                        <button id="formModalSave" class="flex-1 rounded-md bg-slate-700 text-white px-3 py-1.5 text-xs font-bold hover:bg-slate-800">Lưu link</button>
+                        <button id="formModalClear" class="text-xs font-bold text-red-600 hover:underline px-3">Xoá để dùng auto</button>
+                    </div>
+                </div>
+            </details>
+        </div>
+        <footer class="flex items-center justify-end gap-2 border-t border-slate-200 bg-slate-50 px-6 py-3">
+            <button id="formModalCancel" class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50">Đóng</button>
+        </footer>
+    </div>
+</div>
+
+<!-- ===== Toast ===== -->
+<div id="toast" class="pointer-events-none fixed bottom-5 left-1/2 -translate-x-1/2 translate-y-4 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white opacity-0 shadow-xl transition-all duration-200"></div>
+
+<script>
+(function () {
+    'use strict';
+
+    const $ = sel => document.querySelector(sel);
+    const $$ = sel => document.querySelectorAll(sel);
+    const root = $('#eventsRoot');
+
+    function toast(msg) {
+        const el = $('#toast');
+        el.textContent = msg;
+        el.classList.remove('translate-y-4', 'opacity-0');
+        clearTimeout(toast._t);
+        toast._t = setTimeout(() => el.classList.add('translate-y-4', 'opacity-0'), 1800);
+    }
+
+    function escapeHtml(s) {
+        return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+    function fmtTime(iso) {
+        if (!iso) return '—';
+        try { return new Date(iso).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }); }
+        catch (e) { return iso; }
+    }
+    function statusOf(ev) {
+        const now = Date.now();
+        const start = ev.startTime ? Date.parse(ev.startTime) : 0;
+        const end = ev.endTime ? Date.parse(ev.endTime) : start + 2 * 3600 * 1000;
+        if (end < now) return 'past';
+        if (start - now < 60 * 60 * 1000 && end > now) return 'live';
+        return 'upcoming';
+    }
+
+    // ----------- API -----------
+    function api(path, init) {
+        return fetch(path, init).then(r => {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+        });
+    }
+
+    let events = [];
+    let stats = {};
+    let filter = 'upcoming';
+    let searchTerm = '';
+
+    function loadAll() {
+        return Promise.all([
+            api('/api/admin/events').catch(() => []),
+            api('/api/admin/dashboard').catch(() => ({}))
+        ]).then(([evs, dash]) => {
+            events = Array.isArray(evs) ? evs : (evs?.items || evs?.events || []);
+            stats = dash || {};
+            render();
+        }).catch(err => {
+            root.innerHTML = `<div class="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-sm font-semibold text-rose-700">Không tải được dữ liệu: ${escapeHtml(err.message)}</div>`;
+        });
+    }
+
+    // Fetch quiz info & attendance count per event (lazy enrichment)
+    const enrichmentCache = new Map();
+    function enrich(eventId) {
+        if (enrichmentCache.has(eventId)) return Promise.resolve(enrichmentCache.get(eventId));
+        return api('/api/checkin/events/' + encodeURIComponent(eventId) + '/info')
+            .then(info => {
+                const data = { hasQuiz: info.hasQuiz, quizCount: (info.quiz || []).length, canCheckIn: info.canCheckIn };
+                enrichmentCache.set(eventId, data);
+                return data;
+            })
+            .catch(() => {
+                const data = { hasQuiz: false, quizCount: 0, canCheckIn: false };
+                enrichmentCache.set(eventId, data);
+                return data;
+            });
+    }
+
+    function statusChip(state, canCheckIn) {
+        if (state === 'live') return '<span class="chip chip-on">● ĐANG MỞ</span>';
+        if (state === 'upcoming' && canCheckIn) return '<span class="chip chip-on">● MỞ CHECK-IN</span>';
+        if (state === 'upcoming') return '<span class="chip chip-soon">Sắp diễn ra</span>';
+        return '<span class="chip chip-off">Đã kết thúc</span>';
+    }
+
+    // ----------- Form badge state -----------
+    // 'creating' | 'ok' | 'fallback' | 'pending'
+    const formStateMap = new Map();
+    function getFormStatus(ev) {
+        const cached = formStateMap.get(String(ev.id));
+        if (cached) return cached;
+        if (ev.hasGoogleForm) return 'ok';
+        return 'pending';
+    }
+    function formBadgeClass(ev) {
+        const st = getFormStatus(ev);
+        if (st === 'ok')       return 'border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100';
+        if (st === 'creating') return 'border-blue-300 bg-blue-50 text-blue-700 animate-pulse';
+        if (st === 'fallback') return 'border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100';
+        return 'border-slate-300 bg-slate-50 text-slate-700 hover:bg-slate-100';
+    }
+    function formBadgeText(ev) {
+        const st = getFormStatus(ev);
+        if (st === 'ok')       return '🔗 Google Form sẵn sàng';
+        if (st === 'creating') return '⌛ Đang tạo Google Form…';
+        if (st === 'fallback') return '⚠ Form nội bộ (Google API lỗi)';
+        return '⏳ Sẽ tự tạo Google Form';
+    }
+    function updateFormBadge(eventId) {
+        const ev = findEvent(eventId);
+        if (!ev) return;
+        const span = document.querySelector('[data-form-badge="' + eventId + '"]');
+        if (span) span.textContent = formBadgeText(ev);
+        const btn = span ? span.closest('.btn-edit-form') : null;
+        if (btn) {
+            // reset border/bg classes
+            btn.className = btn.className.replace(/border-(emerald|blue|amber|slate)-\d+/g, '')
+                                        .replace(/bg-(emerald|blue|amber|slate)-\d+/g, '')
+                                        .replace(/text-(emerald|blue|amber|slate)-\d+/g, '')
+                                        .replace(/hover:bg-(emerald|blue|amber|slate)-\d+/g, '')
+                                        .replace(/animate-pulse/g, '');
+            btn.className += ' ' + formBadgeClass(ev);
+        }
+    }
+
+    function eventCard(ev, idx) {
+        const state = statusOf(ev);
+        const reg = Number(ev.registrationCount || ev.registeredCount || 0);
+        const cap = Number(ev.capacity || 0);
+        const pct = cap > 0 ? Math.min(100, Math.round(reg / cap * 100)) : 0;
+
+        return `
+            <article class="event-card anim overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card" data-event-id="${ev.id}">
+                <div class="grid gap-0 md:grid-cols-[260px_1fr]">
+                    <!-- QR side -->
+                    <div class="border-b border-slate-100 bg-gradient-to-br from-fpt-50 to-white p-5 md:border-b-0 md:border-r">
+                        <div class="qr-wrap">
+                            <div class="qr-img-host" data-qr-host="${ev.id}">
+                                <div class="qr-skeleton"></div>
+                            </div>
+                            <div class="rotate-bar"><span data-qr-bar="${ev.id}" style="width:100%"></span></div>
+                            <div class="mt-1.5 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                                <span class="flex items-center gap-1 text-fpt-700">
+                                    <svg class="h-3 w-3 animate-spin" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                    QR động
+                                </span>
+                                <span data-qr-countdown="${ev.id}">⏱ 2:00</span>
+                            </div>
+                        </div>
+                        <div class="mt-3 flex flex-col gap-1.5">
+                            <button class="btn-open-qr inline-flex items-center justify-center gap-1.5 rounded-lg bg-gradient-to-br from-fpt-500 to-fpt-700 px-3 py-2 text-xs font-bold text-white shadow-sm hover:brightness-110"
+                                data-event-id="${ev.id}" data-event-title="${escapeHtml(ev.title || '')}">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+                                Phóng to để chiếu
+                            </button>
+                            <button class="btn-rotate-now rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50" data-event-id="${ev.id}">
+                                ↻ Xoay token ngay
+                            </button>
+                            <button class="btn-edit-form rounded-lg border px-3 py-2 text-xs font-bold ${formBadgeClass(ev)}" data-event-id="${ev.id}" data-current-url="${escapeHtml(ev.googleFormUrl || '')}">
+                                <span data-form-badge="${ev.id}">${formBadgeText(ev)}</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Info side -->
+                    <div class="flex flex-col gap-3 p-5">
+                        <div class="flex flex-wrap items-start justify-between gap-2">
+                            <h3 class="text-base font-extrabold leading-tight text-slate-900 sm:text-lg">${escapeHtml(ev.title || 'Untitled')}</h3>
+                            ${statusChip(state, true)}
+                        </div>
+                        <div class="grid gap-2 text-xs text-slate-600 sm:grid-cols-2">
+                            <div class="flex items-center gap-1.5"><svg class="h-4 w-4 text-fpt-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg> <span class="font-semibold">${fmtTime(ev.startTime)} → ${fmtTime(ev.endTime)}</span></div>
+                            <div class="flex items-center gap-1.5"><svg class="h-4 w-4 text-fpt-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg> <span>${escapeHtml(ev.location || '—')}</span></div>
+                            <div class="flex items-center gap-1.5"><svg class="h-4 w-4 text-fpt-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16M9 7h1m-1 4h1m-1 4h1m4-8h1m-1 4h1m-1 4h1M3 21h18"/></svg> <span>${escapeHtml(ev.departmentName || 'FPT')}</span></div>
+                            <div class="flex items-center gap-1.5" data-quiz-info-for="${ev.id}"><svg class="h-4 w-4 text-fpt-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg> <span>Đang kiểm tra quiz…</span></div>
+                        </div>
+                        <div>
+                            <div class="mb-1 flex items-center justify-between text-[11px] font-bold text-slate-600">
+                                <span>Đăng ký</span>
+                                <span>${reg} / ${cap} <span class="text-slate-400">· ${pct}%</span></span>
+                            </div>
+                            <div class="progress"><span style="width:${pct}%"></span></div>
+                        </div>
+                        <div class="mt-1 flex flex-wrap gap-2 border-t border-slate-100 pt-3">
+                            <a href="/api/department/attendance/events/${ev.id}/dashboard" target="_blank" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50">
+                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17V7m4 10V13m4 4v-2m4 6H3v-6h18v6zm0-10V5a2 2 0 00-2-2H5a2 2 0 00-2 2v6h18z"/></svg>
+                                Dashboard
+                            </a>
+                            <a href="/api/department/attendance/events/${ev.id}/feedback-stats" target="_blank" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50">
+                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                                Phản hồi
+                            </a>
+                            <button class="btn-preview-form ml-auto inline-flex items-center gap-1.5 rounded-lg border border-fpt-300 bg-fpt-50 px-3 py-1.5 text-xs font-bold text-fpt-700 hover:bg-fpt-100" data-event-id="${ev.id}">
+                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 14L21 3m0 0h-7m7 0v7M21 14v7H3V3h7"/></svg>
+                                Xem trước form
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </article>`;
+    }
+
+    function filteredEvents() {
+        const now = Date.now();
+        const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+        const todayEnd = new Date(); todayEnd.setHours(23, 59, 59, 999);
+
+        return events.filter(ev => {
+            const start = ev.startTime ? Date.parse(ev.startTime) : 0;
+            const end = ev.endTime ? Date.parse(ev.endTime) : start + 2 * 3600 * 1000;
+
+            // ALWAYS exclude events đã kết thúc (chúng thuộc về tab Reports trong Department Console)
+            if (end < now) return false;
+
+            // Optional "Hôm nay" filter
+            if (filter === 'today' && (start < todayStart.getTime() || start > todayEnd.getTime())) return false;
+
+            // Search
+            if (searchTerm) {
+                const t = searchTerm.toLowerCase();
+                const hay = ((ev.title || '') + ' ' + (ev.location || '') + ' ' + (ev.departmentName || '')).toLowerCase();
+                if (!hay.includes(t)) return false;
+            }
+            return true;
+        }).sort((a, b) => {
+            const sa = a.startTime ? Date.parse(a.startTime) : 0;
+            const sb = b.startTime ? Date.parse(b.startTime) : 0;
+            return sa - sb;
+        });
+    }
+
+    function render() {
+        const list = filteredEvents();
+        if (list.length === 0) {
+            root.innerHTML = `
+                <div class="rounded-2xl border border-slate-200 bg-white p-12 text-center">
+                    <svg class="mx-auto mb-3 h-14 w-14 text-slate-300" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                    <p class="text-sm font-extrabold text-slate-700">Không có event nào sắp diễn ra</p>
+                    <p class="mt-1 text-xs text-slate-500">AEMS Toolkit chỉ hiển thị event đang chạy hoặc sắp diễn ra. Event đã kết thúc → vào <a href="/api/screen-department.html#reports" class="font-bold text-fpt-700 hover:underline">Reports</a> trong Department Console.</p>
+                </div>`;
+            return;
+        }
+        root.innerHTML = list.map((ev, idx) => eventCard(ev, idx)).join('');
+        document.getElementById('printBtn').classList.remove('hidden');
+        bindEventActions();
+
+        // Lazy enrich each card with quiz info + start QR rotation
+        list.forEach(ev => {
+            enrich(ev.id).then(info => {
+                const slot = document.querySelector('[data-quiz-info-for="' + ev.id + '"] span');
+                if (!slot) return;
+                if (info.hasQuiz) slot.innerHTML = '<span class="font-bold text-emerald-600">' + info.quizCount + ' câu quiz</span>';
+                else slot.innerHTML = '<span class="text-slate-400">Chưa có quiz</span>';
+            });
+            rotateOne(ev.id);
+        });
+        startRotationLoop();
+
+        // Auto-tạo Google Form cho các event chưa có (background)
+        autoCreateFormsForEvents(list);
+    }
+
+    // ===== Auto-create Google Forms in background for events without form =====
+    function getCurrentUserEmail() {
+        try {
+            const raw = sessionStorage.getItem('user') || localStorage.getItem('user');
+            if (raw) {
+                const u = JSON.parse(raw);
+                if (u && u.email) return u.email;
+            }
+        } catch (e) {}
+        return null;
+    }
+
+    async function autoCreateFormsForEvents(list) {
+        const userEmail = getCurrentUserEmail();
+        if (!userEmail) {
+            // User chưa login Gmail → đánh dấu fallback cho mọi event chưa có form
+            list.filter(ev => !ev.hasGoogleForm).forEach(ev => {
+                formStateMap.set(String(ev.id), 'fallback');
+                updateFormBadge(ev.id);
+            });
+            return;
+        }
+
+        const needForm = list.filter(ev => !ev.hasGoogleForm);
+        if (!needForm.length) return;
+
+        // Sequential để tránh hit rate limit Google
+        for (const ev of needForm) {
+            formStateMap.set(String(ev.id), 'creating');
+            updateFormBadge(ev.id);
+            try {
+                const r = await fetch('/api/admin/events/' + encodeURIComponent(ev.id) + '/google-form/auto-create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: userEmail })
+                });
+                const data = await r.json().catch(() => ({}));
+                if (!r.ok || !data.googleFormUrl) {
+                    formStateMap.set(String(ev.id), 'fallback');
+                    updateFormBadge(ev.id);
+                    continue;
+                }
+                // Success: update event in list, refresh QR
+                const idx = events.findIndex(e => String(e.id) === String(ev.id));
+                if (idx >= 0) events[idx] = data;
+                const liIdx = list.findIndex(e => String(e.id) === String(ev.id));
+                if (liIdx >= 0) list[liIdx] = data;
+                formStateMap.set(String(ev.id), 'ok');
+                updateFormBadge(ev.id);
+                rotateOne(ev.id); // re-build QR with new Google Form URL
+            } catch (e) {
+                formStateMap.set(String(ev.id), 'fallback');
+                updateFormBadge(ev.id);
+            }
+            await new Promise(r => setTimeout(r, 300)); // nhịp 300ms cho dịu API
+        }
+    }
+
+    function bindEventActions() {
+        $$('.btn-open-qr').forEach(btn => btn.addEventListener('click', () => openQrModal(btn.dataset)));
+        $$('.btn-rotate-now').forEach(btn => btn.addEventListener('click', () => {
+            const id = btn.dataset.eventId;
+            toast('Đang xoay token mới…');
+            rotateOne(id, true);
+        }));
+        $$('.btn-preview-form').forEach(btn => btn.addEventListener('click', () => {
+            const id = btn.dataset.eventId;
+            const state = tokenState.get(String(id));
+            const url = state ? state.url : '/api/checkin.html?eventId=' + id;
+            window.open(url, '_blank');
+        }));
+        $$('.btn-edit-form').forEach(btn => btn.addEventListener('click', () => {
+            const id = btn.dataset.eventId;
+            const current = btn.dataset.currentUrl || '';
+            openFormModal(id, current);
+        }));
+    }
+
+    // ----------- Google Form URL config -----------
+    let formModalEventId = null;
+
+    function openFormModal(eventId, currentUrl) {
+        formModalEventId = eventId;
+        const ev = findEvent(eventId);
+        $('#formModalEventTitle').textContent = ev ? ev.title : ('Event #' + eventId);
+        $('#formModalUrl').value = currentUrl || '';
+        renderFormStatus();
+        $('#formModal').classList.remove('hidden');
+        $('#formModal').classList.add('flex');
+    }
+
+    function renderFormStatus() {
+        const ev = findEvent(formModalEventId);
+        if (!ev) return;
+        const st = getFormStatus(ev);
+        const box = $('#formModalStatus');
+        let html = '';
+        if (st === 'ok') {
+            html = `
+                <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-300 -m-4 p-4 rounded-xl">
+                    <div class="flex items-start gap-3">
+                        <div class="text-3xl">✅</div>
+                        <div class="flex-1">
+                            <h4 class="text-sm font-extrabold text-emerald-800">Google Form đã sẵn sàng</h4>
+                            <p class="text-xs text-slate-700 mt-1">QR đang trỏ thẳng tới Google Form thật. Sinh viên quét → mở form → điền → submit vào Google Sheets của bạn.</p>
+                            <a href="${escapeHtml(ev.googleFormUrl)}" target="_blank" class="mt-2 inline-flex items-center gap-1 text-xs font-bold text-emerald-700 hover:underline break-all">
+                                🔗 ${escapeHtml(ev.googleFormUrl)} ↗
+                            </a>
+                        </div>
+                    </div>
+                </div>`;
+        } else if (st === 'creating') {
+            html = `
+                <div class="bg-blue-50 border-blue-300 -m-4 p-4 rounded-xl">
+                    <div class="flex items-start gap-3">
+                        <svg class="h-6 w-6 mt-0.5 animate-spin text-blue-600" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                        <div class="flex-1">
+                            <h4 class="text-sm font-extrabold text-blue-800">Đang tạo Google Form…</h4>
+                            <p class="text-xs text-slate-700 mt-1">Hệ thống đang gọi Google Forms API tạo form với ảnh, mô tả, diễn giả và các câu hỏi của event này.</p>
+                        </div>
+                    </div>
+                </div>`;
+        } else if (st === 'fallback') {
+            html = `
+                <div class="bg-amber-50 border-amber-300 -m-4 p-4 rounded-xl">
+                    <div class="flex items-start gap-3">
+                        <div class="text-3xl">⚠</div>
+                        <div class="flex-1">
+                            <h4 class="text-sm font-extrabold text-amber-800">Không tạo được Google Form — đang dùng form nội bộ</h4>
+                            <p class="text-xs text-slate-700 mt-1">Có thể bạn chưa đăng nhập Gmail, hoặc Google Forms API chưa được bật. QR vẫn hoạt động (form nội bộ với cùng câu hỏi).</p>
+                            <p class="text-[11px] text-amber-700 mt-1.5">→ Đăng nhập Gmail rồi bấm "🔄 Tạo lại form" bên dưới.</p>
+                        </div>
+                    </div>
+                </div>`;
+        } else {
+            html = `
+                <div class="bg-slate-50 border-slate-300 -m-4 p-4 rounded-xl">
+                    <div class="flex items-start gap-3">
+                        <div class="text-3xl">⏳</div>
+                        <div class="flex-1">
+                            <h4 class="text-sm font-extrabold text-slate-700">Chưa có Google Form</h4>
+                            <p class="text-xs text-slate-600 mt-1">Bấm "🔄 Tạo lại form" để hệ thống tự tạo Google Form qua API.</p>
+                        </div>
+                    </div>
+                </div>`;
+        }
+        box.innerHTML = html;
+        box.className = 'rounded-xl p-0'; // padding moved inside via -m-4
+    }
+    function closeFormModal() {
+        $('#formModal').classList.add('hidden');
+        $('#formModal').classList.remove('flex');
+        formModalEventId = null;
+    }
+    function saveFormUrl(url) {
+        if (!formModalEventId) return;
+        const id = formModalEventId;
+        fetch('/api/admin/events/' + encodeURIComponent(id) + '/google-form-url', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ googleFormUrl: url })
+        }).then(async r => {
+            const data = await r.json().catch(() => ({}));
+            if (!r.ok) throw new Error(data.message || 'Không lưu được');
+            return data;
+        }).then(updated => {
+            const idx = events.findIndex(e => String(e.id) === String(id));
+            if (idx >= 0) events[idx] = updated;
+            toast(url ? '✓ Đã liên kết Google Form. QR đang đổi sang link mới…' : '✓ Đã bỏ liên kết, quay về form nội bộ.');
+            closeFormModal();
+            render();
+        }).catch(err => toast('Lỗi: ' + err.message));
+    }
+
+    // ----------- Dynamic QR rotation (per event) -----------
+    const tokenState = new Map(); // eventId → { token, url, expiredAt, mode }
+    const ROTATION_TICK_MS = 1000;
+
+    function findEvent(eventId) {
+        return events.find(e => String(e.id) === String(eventId));
+    }
+
+    function buildCheckinUrl(eventId, token) {
+        const ev = findEvent(eventId);
+        const eventTitle = ev ? (ev.title || '') : '';
+        // Nếu event có Google Form URL → trỏ thẳng tới Google Form, kèm prefill + rotating token
+        if (ev && ev.googleFormUrl) {
+            try {
+                const u = new URL(ev.googleFormUrl);
+                // Prefill chuẩn Google Forms: usp=pp_url + entry.X=Y
+                if (!u.searchParams.has('usp')) u.searchParams.set('usp', 'pp_url');
+                u.searchParams.set('fpt_event_id', String(eventId));
+                u.searchParams.set('fpt_event', eventTitle.slice(0, 80));
+                u.searchParams.set('fpt_token', token);
+                return u.toString();
+            } catch (e) {
+                return ev.googleFormUrl;
+            }
+        }
+        // Fallback: form nội bộ
+        return location.origin + '/api/checkin.html?eventId=' + encodeURIComponent(eventId)
+            + '&token=' + encodeURIComponent(token);
+    }
+
+    function buildQrImageUrl(url, size) {
+        return 'https://api.qrserver.com/v1/create-qr-code/?size=' + size + 'x' + size
+            + '&margin=12&data=' + encodeURIComponent(url);
+    }
+
+    function rotateOne(eventId, force) {
+        return fetch('/api/checkin/events/' + encodeURIComponent(eventId) + '/qr-token' + (force ? '?force=1' : ''))
+            .then(r => r.ok ? r.json() : null)
+            .then(data => {
+                if (!data || !data.token) return;
+                const checkinUrl = buildCheckinUrl(eventId, data.token);
+                const ev = findEvent(eventId);
+                tokenState.set(String(eventId), {
+                    token: data.token,
+                    url: checkinUrl,
+                    expiredAt: Date.parse(data.expiredAt),
+                    mode: ev && ev.googleFormUrl ? 'google' : 'local'
+                });
+                const host = document.querySelector('[data-qr-host="' + eventId + '"]');
+                if (host) {
+                    host.classList.add('swapping');
+                    setTimeout(() => {
+                        host.innerHTML = '<img alt="QR check-in" src="' + buildQrImageUrl(checkinUrl, 400) + '">';
+                        host.classList.remove('swapping');
+                    }, 180);
+                }
+                refreshOpenModal(eventId);
+            })
+            .catch(() => {/* ignore transient */});
+    }
+
+    function startRotationLoop() {
+        if (startRotationLoop._timer) return;
+        startRotationLoop._timer = setInterval(() => {
+            const now = Date.now();
+            tokenState.forEach((state, eventId) => {
+                const remaining = Math.max(0, state.expiredAt - now);
+                const totalMs = 120 * 1000;
+                const ratio = Math.min(1, remaining / totalMs);
+                const bar = document.querySelector('[data-qr-bar="' + eventId + '"]');
+                const cd = document.querySelector('[data-qr-countdown="' + eventId + '"]');
+                if (bar) bar.style.width = (ratio * 100) + '%';
+                if (cd) {
+                    const sec = Math.ceil(remaining / 1000);
+                    const mm = String(Math.floor(sec / 60));
+                    const ss = String(sec % 60).padStart(2, '0');
+                    cd.textContent = '⏱ ' + mm + ':' + ss;
+                }
+                if (remaining <= 0) {
+                    rotateOne(eventId);
+                }
+            });
+        }, ROTATION_TICK_MS);
+    }
+
+    function openQrModal(data) {
+        const eventId = data.eventId;
+        const state = tokenState.get(String(eventId));
+        const url = state ? state.url : '/api/checkin.html?eventId=' + eventId;
+        $('#qrModalTitle').textContent = 'QR Check-in · ' + (data.eventTitle || 'Event');
+        $('#qrModalSub').innerHTML = 'Chiếu màn hình này tại hội trường — QR sẽ tự đổi mỗi 2 phút.';
+        $('#qrModalUrl').textContent = url;
+        $('#qrModalImg').innerHTML = '<img alt="QR" src="' + buildQrImageUrl(url, 600) + '">';
+        $('#qrModalCopy').onclick = () => navigator.clipboard.writeText(url).then(() => toast('Đã copy link.'));
+        $('#qrModalPrint').onclick = () => window.print();
+        $('#qrModal').classList.remove('hidden');
+        $('#qrModal').classList.add('flex');
+
+        // Refresh modal image whenever token rotates while modal is open
+        $('#qrModal').dataset.eventId = String(eventId);
+    }
+
+    // Hook into rotation to refresh open modal
+    const originalRotate = rotateOne;
+    function refreshOpenModal(eventId) {
+        if ($('#qrModal').classList.contains('hidden')) return;
+        if ($('#qrModal').dataset.eventId !== String(eventId)) return;
+        const state = tokenState.get(String(eventId));
+        if (!state) return;
+        $('#qrModalUrl').textContent = state.url;
+        $('#qrModalImg').innerHTML = '<img alt="QR" src="' + buildQrImageUrl(state.url, 600) + '">';
+    }
+
+    function closeQrModal() {
+        $('#qrModal').classList.add('hidden');
+        $('#qrModal').classList.remove('flex');
+    }
+
+    // ----------- Bindings -----------
+    $('#qrModalClose').addEventListener('click', closeQrModal);
+    $('#qrModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeQrModal(); });
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') { closeQrModal(); closeFormModal(); }
+    });
+
+    $('#formModalClose').addEventListener('click', closeFormModal);
+    $('#formModalCancel').addEventListener('click', closeFormModal);
+    $('#formModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeFormModal(); });
+    $('#formModalSave').addEventListener('click', () => saveFormUrl($('#formModalUrl').value.trim()));
+    $('#formModalClear').addEventListener('click', () => {
+        if (confirm('Bỏ liên kết Google Form ngoài? QR sẽ quay về form tự sinh.')) saveFormUrl('');
+    });
+    $('#formModalUrl').addEventListener('keydown', e => {
+        if (e.key === 'Enter') saveFormUrl(e.target.value.trim());
+    });
+    $('#formModalAutoCreate').addEventListener('click', autoCreateForm);
+    $('#formModalPreview').addEventListener('click', () => {
+        if (!formModalEventId) return;
+        const state = tokenState.get(String(formModalEventId));
+        if (state) {
+            window.open(state.url, '_blank');
+        } else {
+            // chưa có token → fetch nhanh rồi mở
+            fetch('/api/checkin/events/' + encodeURIComponent(formModalEventId) + '/qr-token')
+                .then(r => r.ok ? r.json() : null)
+                .then(data => {
+                    const t = data && data.token ? data.token : 'preview';
+                    window.open(buildCheckinUrl(formModalEventId, t), '_blank');
+                })
+                .catch(() => window.open('/api/checkin.html?eventId=' + formModalEventId, '_blank'));
+        }
+    });
+    $('#formModalEditSpeakers').addEventListener('click', () => {
+        const editor = $('#speakersEditor');
+        const ev = findEvent(formModalEventId);
+        $('#speakersInput').value = ev && ev.speakers ? ev.speakers : '';
+        editor.classList.toggle('hidden');
+    });
+    $('#speakersCancel').addEventListener('click', () => $('#speakersEditor').classList.add('hidden'));
+    $('#speakersSave').addEventListener('click', saveSpeakers);
+
+    function saveSpeakers() {
+        if (!formModalEventId) return;
+        const id = formModalEventId;
+        const value = $('#speakersInput').value.trim();
+        fetch('/api/admin/events/' + encodeURIComponent(id) + '/speakers', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ speakers: value })
+        }).then(async r => {
+            const data = await r.json().catch(() => ({}));
+            if (!r.ok) throw new Error(data.message || 'Không lưu được');
+            return data;
+        }).then(updated => {
+            const idx = events.findIndex(e => String(e.id) === String(id));
+            if (idx >= 0) events[idx] = updated;
+            $('#speakersEditor').classList.add('hidden');
+            toast('✓ Đã lưu diễn giả. Tạo lại Google Form…');
+            // Auto-tạo lại form với diễn giả mới
+            autoCreateForm();
+        }).catch(err => toast('Lỗi: ' + err.message));
+    }
+
+    function autoCreateForm() {
+        if (!formModalEventId) return;
+        const id = formModalEventId;
+        const userEmail = getCurrentUserEmail() || prompt('Nhập email Gmail bạn vừa đăng nhập:', '') || '';
+        if (!userEmail) { toast('Cần email Gmail để tiếp tục.'); return; }
+
+        const btn = $('#formModalAutoCreate');
+        const label = $('#formModalAutoCreateLabel');
+        const msg = $('#formModalAutoMsg');
+        btn.disabled = true;
+        label.innerHTML = '⌛ Đang gọi API…';
+        msg.classList.add('hidden');
+        formStateMap.set(String(id), 'creating');
+        renderFormStatus();
+        updateFormBadge(id);
+
+        fetch('/api/admin/events/' + encodeURIComponent(id) + '/google-form/auto-create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: userEmail })
+        }).then(async r => {
+            const data = await r.json().catch(() => ({}));
+            if (!r.ok) throw new Error(data.message || data.error || ('HTTP ' + r.status));
+            return data;
+        }).then(updated => {
+            const idx = events.findIndex(e => String(e.id) === String(id));
+            if (idx >= 0) events[idx] = updated;
+            $('#formModalUrl').value = updated.googleFormUrl || '';
+            formStateMap.set(String(id), 'ok');
+            renderFormStatus();
+            updateFormBadge(id);
+            rotateOne(id); // re-build QR with new Google Form URL
+            toast('🎉 Đã tạo Google Form');
+        }).catch(err => {
+            formStateMap.set(String(id), 'fallback');
+            renderFormStatus();
+            updateFormBadge(id);
+            msg.className = 'text-xs font-semibold text-red-700 leading-relaxed bg-red-50 border border-red-200 rounded-lg p-2.5';
+            msg.textContent = '✗ ' + err.message;
+            msg.classList.remove('hidden');
+        }).finally(() => {
+            btn.disabled = false;
+            label.textContent = '🔄 Tạo lại form';
+        });
+    }
+
+    $$('.filter-chip').forEach(b => b.addEventListener('click', () => {
+        filter = b.dataset.filter;
+        $$('.filter-chip').forEach(x => {
+            const active = x.dataset.filter === filter;
+            x.classList.toggle('bg-fpt-500', active);
+            x.classList.toggle('text-white', active);
+            x.classList.toggle('shadow-sm', active);
+            x.classList.toggle('text-slate-600', !active);
+        });
+        render();
+    }));
+    // Set default active
+    $('[data-filter="upcoming"]').classList.add('bg-fpt-500', 'text-white', 'shadow-sm');
+    $('[data-filter="upcoming"]').classList.remove('text-slate-600');
+
+    let searchTimer = null;
+    $('#searchInput').addEventListener('input', e => {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => { searchTerm = e.target.value.trim(); render(); }, 150);
+    });
+
+    $('#logoutBtn').addEventListener('click', () => {
+        sessionStorage.clear();
+        localStorage.removeItem('authToken');
+        fetch('/api/logout', { method: 'POST' }).finally(() => { location.href = '/api/login.html'; });
+    });
+
+    // Boot
+    loadAll();
+})();
+</script>
+</body>
+</html>

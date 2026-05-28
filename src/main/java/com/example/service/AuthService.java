@@ -52,7 +52,14 @@ public class AuthService {
     private final ConcurrentHashMap<String, Map<String, Object>> pendingOtps = new ConcurrentHashMap<>();
 
     public LoginResponse login(LoginRequest request) {
-        Optional<User> optionalUser = userRepository.findByEmail(request.getEmail());
+        String loginEmail = request.getEmail() == null ? "" : request.getEmail().trim().toLowerCase();
+        Optional<User> optionalUser = userRepository.findByEmail(loginEmail);
+        if (optionalUser.isEmpty() && loginEmail.endsWith("@uni.edu.vn")) {
+            optionalUser = userRepository.findByEmail(loginEmail.replace("@uni.edu.vn", "@fpt.edu.vn"));
+        }
+        if (optionalUser.isEmpty() && loginEmail.endsWith("@fpt.edu.vn")) {
+            optionalUser = userRepository.findByEmail(loginEmail.replace("@fpt.edu.vn", "@uni.edu.vn"));
+        }
 
         if (optionalUser.isEmpty()) {
             return LoginResponse.error("Email hoặc mật khẩu không chính xác.", "INVALID_CREDENTIALS");
@@ -98,7 +105,8 @@ public class AuthService {
                 user.getEmail(),
                 user.getRole().getName(),
                 user.getMajor(),
-                AcademicStructure.facultyOf(user.getMajor())
+                AcademicStructure.facultyOf(user.getMajor()),
+                user.getDepartmentPosition()
         );
 
         return LoginResponse.success("Đăng nhập thành công!", userInfo);

@@ -47,6 +47,9 @@ public class User {
     @Column
     private Integer totalPoints = 0;
 
+    @Column(length = 30)
+    private String departmentPosition = "STAFF"; // HEAD, STAFF
+
     public User() {}
 
     public User(String fullName, String email, String password, String phone, LocalDateTime createdAt, Boolean status, Role role) {
@@ -162,5 +165,13 @@ public class User {
 
     public void setTotalPoints(Integer totalPoints) {
         this.totalPoints = totalPoints;
+    }
+
+    public String getDepartmentPosition() {
+        return departmentPosition;
+    }
+
+    public void setDepartmentPosition(String departmentPosition) {
+        this.departmentPosition = departmentPosition;
     }
 }

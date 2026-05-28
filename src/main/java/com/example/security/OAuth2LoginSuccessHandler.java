@@ -8,6 +8,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.core.OAuth2AccessToken;
+import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -37,6 +42,12 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
     @Autowired
     private ActivityLogRepository activityLogRepository;
 
+    @Autowired
+    private OAuth2AuthorizedClientService authorizedClientService;
+
+    @Autowired
+    private OAuth2TokenStore tokenStore;
+
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException {
@@ -49,6 +60,26 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         if (email == null) {
             response.sendRedirect("/api/login.html?oauth=error");
             return;
+        }
+
+        // Lưu access token để gọi Google Forms/Drive API sau này
+        try {
+            if (authentication instanceof OAuth2AuthenticationToken) {
+                OAuth2AuthenticationToken oauth = (OAuth2AuthenticationToken) authentication;
+                OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient(
+                        oauth.getAuthorizedClientRegistrationId(), oauth.getName());
+                if (client != null) {
+                    OAuth2AccessToken accessToken = client.getAccessToken();
+                    OAuth2RefreshToken refreshToken = client.getRefreshToken();
+                    tokenStore.put(email,
+                            accessToken.getTokenValue(),
+                            accessToken.getExpiresAt(),
+                            refreshToken != null ? refreshToken.getTokenValue() : null);
+                    logger.info("Đã lưu Google access token cho {}, expires={}", email, accessToken.getExpiresAt());
+                }
+            }
+        } catch (Exception ex) {
+            logger.warn("Không lưu được Google access token: {}", ex.getMessage());
         }
 
         Optional<User> optionalUser = userRepository.findByEmail(email);

@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Thống kê phản hồi — AEMS</title>
+    <link rel="stylesheet" th:href="@{/css/aems.css}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body class="aems">
+<div class="aems-stripe"></div>
+<main class="aems-shell">
+    <header class="aems-header">
+        <div class="aems-header__brand">
+            <span class="aems-header__mark">⭐</span>
+            <div>
+                <span class="aems-eyebrow">AEMS · Phản hồi sinh viên</span>
+                <h1 class="aems-header__title">Báo cáo cảm nhận về event</h1>
+                <p class="aems-header__sub">Theo dõi rating từng tiêu chí và đọc comment để cải thiện chương trình kế tiếp.</p>
+            </div>
+        </div>
+        <a class="aems-btn aems-btn--primary" th:href="@{'/department/attendance/events/' + ${eventId} + '/dashboard'}">📊 Dashboard event</a>
+    </header>
+
+    <section class="aems-grid" style="margin-bottom: 1.5rem;">
+        <div class="aems-metric">
+            <p class="aems-metric__label">⭐ Tổng thể</p>
+            <p class="aems-metric__value" th:text="${stats.averageEventRating != null ? #numbers.formatDecimal(stats.averageEventRating, 1, 1) : '0.0'} + ' / 5'">0</p>
+            <p class="aems-metric__hint">Trung bình mọi rating</p>
+        </div>
+        <div class="aems-metric">
+            <p class="aems-metric__label">📚 Nội dung</p>
+            <p class="aems-metric__value" th:text="${stats.averageContentRating != null ? #numbers.formatDecimal(stats.averageContentRating, 1, 1) : '0.0'} + ' / 5'">0</p>
+        </div>
+        <div class="aems-metric">
+            <p class="aems-metric__label">🎤 Diễn giả</p>
+            <p class="aems-metric__value" th:text="${stats.averageSpeakerRating != null ? #numbers.formatDecimal(stats.averageSpeakerRating, 1, 1) : '0.0'} + ' / 5'">0</p>
+        </div>
+        <div class="aems-metric">
+            <p class="aems-metric__label">🛠 Tổ chức</p>
+            <p class="aems-metric__value" th:text="${stats.averageOrganizationRating != null ? #numbers.formatDecimal(stats.averageOrganizationRating, 1, 1) : '0.0'} + ' / 5'">0</p>
+        </div>
+    </section>
+
+    <section class="aems-card">
+        <div class="aems-card__head">
+            <h2 class="aems-card__title">Bình luận của sinh viên</h2>
+            <span class="aems-badge aems-badge--fpt" th:text="${#lists.size(stats.comments)} + ' bình luận'">0</span>
+        </div>
+        <div class="aems-card__body" style="display: grid; gap: .85rem;">
+            <div th:each="c : ${stats.comments}" style="padding: .85rem 1rem; background: var(--aems-fpt-wash); border-radius: 12px; border-left: 4px solid var(--aems-fpt);">
+                <p style="margin: 0; color: var(--aems-ink); line-height: 1.5;" th:text="${c}"></p>
+            </div>
+            <p th:if="${#lists.isEmpty(stats.comments)}" style="margin: 0; text-align: center; padding: 2rem; color: var(--aems-ink-muted);">
+                Chưa có bình luận nào.
+            </p>
+        </div>
+    </section>
+</main>
+</body>
+</html>

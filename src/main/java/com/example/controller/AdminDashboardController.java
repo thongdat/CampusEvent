@@ -23,7 +23,13 @@ import com.example.repository.RoleRepository;
 import com.example.repository.StudentRepository;
 import com.example.repository.TicketRepository;
 import com.example.repository.UserRepository;
+import com.example.model.QuizQuestion;
+import com.example.repository.QuizQuestionRepository;
+import com.example.security.OAuth2TokenStore;
 import com.example.service.EmailService;
+import com.example.service.GoogleFormsApiService;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.data.domain.Page;
@@ -82,6 +88,10 @@ public class AdminDashboardController {
     private final ActivityLogRepository activityLogRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+    private final QuizQuestionRepository quizQuestionRepository;
+    private final GoogleFormsApiService googleFormsApiService;
+    private final OAuth2TokenStore oauthTokenStore;
+    private static final ObjectMapper QUIZ_MAPPER = new ObjectMapper();
 
     public AdminDashboardController(
             UserRepository userRepository,
@@ -97,7 +107,10 @@ public class AdminDashboardController {
             EmailLogRepository emailLogRepository,
             ActivityLogRepository activityLogRepository,
             PasswordEncoder passwordEncoder,
-            EmailService emailService) {
+            EmailService emailService,
+            QuizQuestionRepository quizQuestionRepository,
+            GoogleFormsApiService googleFormsApiService,
+            OAuth2TokenStore oauthTokenStore) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.departmentRepository = departmentRepository;
@@ -112,6 +125,9 @@ public class AdminDashboardController {
         this.activityLogRepository = activityLogRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
+        this.quizQuestionRepository = quizQuestionRepository;
+        this.googleFormsApiService = googleFormsApiService;
+        this.oauthTokenStore = oauthTokenStore;
     }
 
     @GetMapping("/dashboard")
@@ -483,6 +499,65 @@ public class AdminDashboardController {
         return buildEvent(eventRepository.save(event));
     }
 
+    @PostMapping("/events/{id}/google-form/auto-create")
+    @Transactional
+    public Map<String, Object> autoCreateGoogleForm(@PathVariable Long id, @RequestBody(required = false) Map<String, Object> payload) {
+        Event event = eventRepository.findById(id).orElseThrow(() -> notFound("Không tìm thấy event."));
+        String email = payload == null ? null : (payload.get("email") == null ? null : String.valueOf(payload.get("email")).trim());
+        if (email == null || email.isBlank()) {
+            throw badRequest("Cần email user đang đăng nhập (Gmail) để gọi Google Forms API.");
+        }
+        OAuth2TokenStore.TokenInfo token = oauthTokenStore.get(email);
+        if (token == null || !token.isValid()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
+                    "Không tìm thấy access token Gmail còn hiệu lực cho " + email + ". "
+                            + "Vui lòng đăng xuất → đăng nhập lại bằng Gmail và cấp quyền Forms/Drive.");
+        }
+        try {
+            String formUrl = googleFormsApiService.createFormForEvent(event, token.accessToken);
+            event.setGoogleFormUrl(formUrl);
+            Event saved = eventRepository.save(event);
+            Map<String, Object> result = buildEvent(saved);
+            result.put("createdFormUrl", formUrl);
+            result.put("message", "Đã tạo Google Form thành công.");
+            return result;
+        } catch (GoogleFormsApiService.GoogleApiException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, ex.getMessage());
+        }
+    }
+
+    @PutMapping("/events/{id}/speakers")
+    @Transactional
+    public Map<String, Object> updateEventSpeakers(@PathVariable Long id, @RequestBody Map<String, Object> payload) {
+        Event event = eventRepository.findById(id).orElseThrow(() -> notFound("Không tìm thấy event."));
+        Object raw = payload.get("speakers");
+        String speakers = raw == null ? "" : String.valueOf(raw).trim();
+        event.setSpeakers(speakers.isEmpty() ? null : speakers);
+        return buildEvent(eventRepository.save(event));
+    }
+
+    @PutMapping("/events/{id}/google-form-url")
+    @Transactional
+    public Map<String, Object> updateEventGoogleFormUrl(@PathVariable Long id, @RequestBody Map<String, Object> payload) {
+        Event event = eventRepository.findById(id).orElseThrow(() -> notFound("Không tìm thấy event."));
+        Object raw = payload.get("googleFormUrl");
+        String url = raw == null ? "" : String.valueOf(raw).trim();
+        if (url.isEmpty()) {
+            event.setGoogleFormUrl(null);
+        } else {
+            String lower = url.toLowerCase(Locale.ROOT);
+            boolean ok = lower.startsWith("https://docs.google.com/forms/")
+                    || lower.startsWith("https://forms.gle/")
+                    || lower.startsWith("https://forms.office.com/")
+                    || lower.startsWith("http://localhost"); // cho phép dev
+            if (!ok) {
+                throw badRequest("URL phải là link Google Forms (docs.google.com/forms/ hoặc forms.gle/)");
+            }
+            event.setGoogleFormUrl(url);
+        }
+        return buildEvent(eventRepository.save(event));
+    }
+
     @DeleteMapping("/events/{id}")
     @Transactional
     public Map<String, Object> deleteEvent(@PathVariable Long id) {
@@ -574,6 +649,7 @@ public class AdminDashboardController {
         savedEvent.setStatus("PUBLISHED");
         applyEventMediaAndBudget(savedEvent, publishPayload);
         savedEvent = eventRepository.save(savedEvent);
+        copyQuizToEvent(savedEvent, proposal.getQuizPayload());
         Map<String, Object> result = buildProposal(proposal);
         eventProposalRepository.delete(proposal);
         result.put("removedFromWorkflow", true);
@@ -700,7 +776,10 @@ public class AdminDashboardController {
         item.put("roleId", user.getRole() != null ? user.getRole().getId() : null);
         item.put("role", user.getRole() != null ? user.getRole().getName() : "");
         item.put("roleDescription", user.getRole() != null ? textOrEmpty(user.getRole().getDescription()) : "");
+        item.put("departmentPosition", firstNonBlank(user.getDepartmentPosition(), defaultDepartmentPosition(user), "STAFF"));
+        item.put("departmentPositionLabel", departmentPositionLabel(firstNonBlank(user.getDepartmentPosition(), defaultDepartmentPosition(user), "STAFF")));
         item.put("major", firstNonBlank(user.getMajor(), student != null ? student.getMajor() : null, "N/A"));
+        item.put("facultyName", AcademicStructure.facultyOf(firstNonBlank(user.getMajor(), student != null ? student.getMajor() : null, "")));
         item.put("studentId", student != null ? student.getId() : null);
         item.put("studentCode", student != null ? textOrEmpty(student.getStudentCode()) : "");
         item.put("semester", firstNonNull(user.getSemester(), student != null ? student.getYear() : null, 0));
@@ -776,7 +855,8 @@ public class AdminDashboardController {
                     return sameKey(major, departmentName) || sameKey(major, facultyName);
                 })
                 .sorted(Comparator
-                        .comparing((User user) -> "MANAGER".equalsIgnoreCase(user.getRole().getName()) ? 0 : 1)
+                        .comparing((User user) -> "HEAD".equalsIgnoreCase(user.getDepartmentPosition()) ? 0 : 1)
+                        .thenComparing(user -> "MANAGER".equalsIgnoreCase(user.getRole().getName()) ? 0 : 1)
                         .thenComparing(User::getFullName, Comparator.nullsLast(String::compareToIgnoreCase)))
                 .findFirst()
                 .orElse(null);
@@ -925,7 +1005,7 @@ public class AdminDashboardController {
                         .map(attendance -> eventHasStarted
                                 && attendance.getCheckinTime() != null
                                 && !attendance.getCheckinTime().isAfter(asOf)
-                                && "ATTENDED".equalsIgnoreCase(attendance.getStatus()))
+                                && !"ABSENT".equalsIgnoreCase(attendance.getStatus()))
                         .orElse(false))
                 .count();
         long waitlist = registrations.stream()
@@ -963,6 +1043,9 @@ public class AdminDashboardController {
                 ? round(registrations.size() * 100.0 / event.getCapacity())
                 : 0);
         item.put("featured", event.getCapacity() != null && event.getCapacity() >= 200);
+        item.put("googleFormUrl", textOrEmpty(event.getGoogleFormUrl()));
+        item.put("hasGoogleForm", event.getGoogleFormUrl() != null && !event.getGoogleFormUrl().isBlank());
+        item.put("speakers", textOrEmpty(event.getSpeakers()));
         return item;
     }
 
@@ -1004,6 +1087,9 @@ public class AdminDashboardController {
         item.put("facultyName", proposal.getDepartment() != null ? AcademicStructure.facultyOf(proposal.getDepartment().getName()) : "Khác");
         item.put("committeeName", committeeNameForProposal(proposal));
         item.put("committeeStatus", "ASSIGNED");
+        List<Map<String, Object>> quizQuestions = parseQuizPayload(proposal.getQuizPayload());
+        item.put("quizQuestions", quizQuestions);
+        item.put("quizQuestionCount", quizQuestions.size());
         return item;
     }
 
@@ -1119,10 +1205,105 @@ public class AdminDashboardController {
         proposal.setBudget(budget);
         proposal.setNote(textOrNull(stringValue(payload, "note", textOrEmpty(proposal.getNote()))));
         proposal.setDepartment(resolveDepartment(longValue(payload, "departmentId", proposal.getDepartment() != null ? proposal.getDepartment().getId() : null)));
+        applyQuizPayload(proposal, payload);
         if (creating) {
             proposal.setStatus("PENDING");
             proposal.setCreatedAt(currentDateTime());
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void applyQuizPayload(EventProposal proposal, Map<String, Object> payload) {
+        Object raw = payload.get("quizQuestions");
+        if (raw == null) {
+            return;
+        }
+        if (raw instanceof String s) {
+            String trimmed = s.trim();
+            proposal.setQuizPayload(trimmed.isEmpty() ? null : trimmed);
+            return;
+        }
+        if (!(raw instanceof List)) {
+            return;
+        }
+        List<Map<String, Object>> list = (List<Map<String, Object>>) raw;
+        List<Map<String, Object>> sanitized = new ArrayList<>();
+        for (Map<String, Object> item : list) {
+            if (item == null) {
+                continue;
+            }
+            String text = textOrEmpty(String.valueOf(item.getOrDefault("questionText", ""))).trim();
+            if (text.isEmpty()) {
+                continue;
+            }
+            Map<String, Object> clean = new LinkedHashMap<>();
+            clean.put("questionText", text);
+            String type = String.valueOf(item.getOrDefault("questionType", "MULTIPLE_CHOICE")).trim();
+            clean.put("questionType", type.isEmpty() ? "MULTIPLE_CHOICE" : type.toUpperCase(Locale.ROOT));
+            clean.put("optionA", textOrEmpty(String.valueOf(item.getOrDefault("optionA", ""))));
+            clean.put("optionB", textOrEmpty(String.valueOf(item.getOrDefault("optionB", ""))));
+            clean.put("optionC", textOrEmpty(String.valueOf(item.getOrDefault("optionC", ""))));
+            clean.put("optionD", textOrEmpty(String.valueOf(item.getOrDefault("optionD", ""))));
+            clean.put("correctAnswer", textOrEmpty(String.valueOf(item.getOrDefault("correctAnswer", "A"))).toUpperCase(Locale.ROOT));
+            Object points = item.getOrDefault("points", 1);
+            int p = 1;
+            try { p = points instanceof Number n ? n.intValue() : Integer.parseInt(String.valueOf(points)); } catch (Exception ignored) {}
+            clean.put("points", Math.max(1, p));
+            sanitized.add(clean);
+        }
+        if (sanitized.isEmpty()) {
+            proposal.setQuizPayload(null);
+            return;
+        }
+        try {
+            proposal.setQuizPayload(QUIZ_MAPPER.writeValueAsString(sanitized));
+        } catch (Exception ex) {
+            throw badRequest("Không thể lưu danh sách câu hỏi quiz: " + ex.getMessage());
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Map<String, Object>> parseQuizPayload(String payload) {
+        if (payload == null || payload.isBlank()) {
+            return List.of();
+        }
+        try {
+            return QUIZ_MAPPER.readValue(payload, new TypeReference<List<Map<String, Object>>>() {});
+        } catch (Exception ex) {
+            return List.of();
+        }
+    }
+
+    private void copyQuizToEvent(Event event, String quizPayload) {
+        List<Map<String, Object>> questions = parseQuizPayload(quizPayload);
+        if (questions.isEmpty()) {
+            return;
+        }
+        if (quizQuestionRepository.countByEventId(event.getId()) > 0) {
+            return;
+        }
+        for (Map<String, Object> q : questions) {
+            QuizQuestion question = new QuizQuestion();
+            question.setEvent(event);
+            question.setQuestionText(String.valueOf(q.getOrDefault("questionText", "")));
+            question.setQuestionType(String.valueOf(q.getOrDefault("questionType", "MULTIPLE_CHOICE")).toUpperCase(Locale.ROOT));
+            question.setOptionA(toNullable(q.get("optionA")));
+            question.setOptionB(toNullable(q.get("optionB")));
+            question.setOptionC(toNullable(q.get("optionC")));
+            question.setOptionD(toNullable(q.get("optionD")));
+            question.setCorrectAnswer(toNullable(q.get("correctAnswer")));
+            Object points = q.getOrDefault("points", 1);
+            int p = 1;
+            try { p = points instanceof Number n ? n.intValue() : Integer.parseInt(String.valueOf(points)); } catch (Exception ignored) {}
+            question.setPoints(Math.max(1, p));
+            quizQuestionRepository.save(question);
+        }
+    }
+
+    private String toNullable(Object value) {
+        if (value == null) return null;
+        String s = String.valueOf(value).trim();
+        return s.isEmpty() ? null : s;
     }
 
     private int compareEventsForAdmin(Event left, Event right) {
@@ -1189,6 +1370,29 @@ public class AdminDashboardController {
         user.setMajor(textOrNull(stringValue(payload, "major", "")));
         user.setSemester(intValue(payload, "semester", null));
         user.setTotalPoints(intValue(payload, "totalPoints", creating ? 0 : firstNonNull(user.getTotalPoints(), 0)));
+        String position = stringValue(payload, "departmentPosition", creating ? defaultDepartmentPosition(user, role) : firstNonBlank(user.getDepartmentPosition(), defaultDepartmentPosition(user, role), "STAFF"));
+        user.setDepartmentPosition(normalizeDepartmentPosition(position));
+    }
+
+    private String defaultDepartmentPosition(User user) {
+        return defaultDepartmentPosition(user, user.getRole());
+    }
+
+    private String defaultDepartmentPosition(User user, Role role) {
+        String roleName = role == null ? "" : textOrEmpty(role.getName()).toUpperCase(Locale.ROOT);
+        return "MANAGER".equals(roleName) ? "HEAD" : "STAFF";
+    }
+
+    private String normalizeDepartmentPosition(String value) {
+        String normalized = textOrEmpty(value).toUpperCase(Locale.ROOT);
+        if ("HEAD".equals(normalized) || "TRUONG_KHOA".equals(normalized) || "TRUONG_BO_MON".equals(normalized)) {
+            return "HEAD";
+        }
+        return "STAFF";
+    }
+
+    private String departmentPositionLabel(String value) {
+        return "HEAD".equalsIgnoreCase(value) ? "Trưởng khoa/Bộ môn" : "Nhân sự khoa/Bộ môn";
     }
 
     private void upsertStudentForUser(User user, Map<String, Object> payload) {
