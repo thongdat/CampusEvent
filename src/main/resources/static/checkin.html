@@ -398,7 +398,7 @@
     }
     if (!qrToken) {
         renderMessage('warn', 'QR đã hết hạn',
-            'Mã QR xoay mỗi 2 phút. Vui lòng quét lại mã QR đang hiển thị trên màn hình.');
+            'Mã QR xoay mỗi 30 giây. Vui lòng quét lại mã QR đang hiển thị trên màn hình.');
         return;
     }
 
@@ -429,11 +429,7 @@
         .catch(err => renderMessage('error', 'Không tải được sự kiện', err.message));
 
     function renderForm() {
-        if (!event.canCheckIn) {
-            renderMessage('warn', 'Chưa mở check-in',
-                'Hệ thống mở check-in từ 60 phút trước khi sự kiện bắt đầu cho đến lúc kết thúc.');
-            return;
-        }
+        // DEMO: mở check-in mọi lúc, không chặn theo cửa sổ thời gian.
 
         const quizHtml = (event.hasQuiz && event.quiz.length) ? renderQuiz(event.quiz) : '';
 

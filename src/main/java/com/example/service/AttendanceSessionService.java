@@ -20,6 +20,9 @@ public class AttendanceSessionService {
     public static final String CHECK_IN = "CHECK_IN";
     public static final String MID_SESSION = "MID_SESSION";
 
+    /** Thời gian sống của token QR động (giây). QR đổi nội dung mỗi 30 giây để chống share ảnh chụp. */
+    public static final int TOKEN_TTL_SECONDS = 30;
+
     private final SecureRandom secureRandom = new SecureRandom();
     private final AttendanceSessionRepository sessionRepository;
     private final EventRepository eventRepository;
@@ -39,7 +42,7 @@ public class AttendanceSessionService {
         secureRandom.nextBytes(bytes);
         String token = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
         LocalDateTime now = LocalDateTime.now();
-        AttendanceSession session = new AttendanceSession(event, token, sessionType, now, now.plusMinutes(2), "ACTIVE");
+        AttendanceSession session = new AttendanceSession(event, token, sessionType, now, now.plusSeconds(TOKEN_TTL_SECONDS), "ACTIVE");
         return sessionRepository.save(session);
     }
 

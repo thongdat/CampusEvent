@@ -118,12 +118,12 @@ public class CheckinController {
         result.put("quiz", quiz);
         result.put("hasQuiz", !quiz.isEmpty());
         result.put("canCheckIn", canCheckIn);
-        result.put("checkInOpenAt", event.getStartTime() != null ? event.getStartTime().minusMinutes(60) : null);
-        result.put("checkInCloseAt", event.getEndTime());
+        result.put("checkInOpenAt", null); // DEMO: mở check-in mọi lúc
+        result.put("checkInCloseAt", null);
         return result;
     }
 
-    /** Token hiện tại (xoay mỗi 2 phút) — dùng cho AEMS Toolkit render QR. */
+    /** Token hiện tại (xoay mỗi 30 giây) — dùng cho AEMS Toolkit render QR. */
     @GetMapping("/events/{eventId}/qr-token")
     public Map<String, Object> currentQrToken(@PathVariable Long eventId,
                                               @RequestParam(value = "force", required = false) String force) {
@@ -137,7 +137,7 @@ public class CheckinController {
         out.put("eventId", eventId);
         out.put("token", session.getToken());
         out.put("expiredAt", session.getExpiredAt().toString());
-        out.put("rotateSeconds", 120);
+        out.put("rotateSeconds", com.example.service.AttendanceSessionService.TOKEN_TTL_SECONDS);
         return out;
     }
 
@@ -183,7 +183,7 @@ public class CheckinController {
 
         if (token.isBlank() || !sessionService.validateToken(eventId, token, AttendanceSessionService.CHECK_IN)) {
             throw responseError(HttpStatus.UNAUTHORIZED,
-                    "Mã QR đã hết hạn (xoay mỗi 2 phút). Vui lòng quét lại mã QR đang được chiếu trên màn hình.");
+                    "Mã QR đã hết hạn (xoay mỗi 30 giây). Vui lòng quét lại mã QR đang được chiếu trên màn hình.");
         }
 
         Student student = resolveStudent(studentCode, email)
@@ -280,9 +280,8 @@ public class CheckinController {
     }
 
     private boolean canCheckInWindow(Event event, LocalDateTime now) {
-        LocalDateTime open = event.getStartTime() != null ? event.getStartTime().minusMinutes(60) : now.minusMinutes(1);
-        LocalDateTime close = event.getEndTime() != null ? event.getEndTime() : now.plusYears(1);
-        return !now.isBefore(open) && !now.isAfter(close);
+        // DEMO: mở check-in thoải mái, không giới hạn cửa sổ 60 phút trước giờ bắt đầu.
+        return true;
     }
 
     private Optional<Student> resolveStudent(String studentCode, String email) {

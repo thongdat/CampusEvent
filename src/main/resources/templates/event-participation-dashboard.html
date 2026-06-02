@@ -22,7 +22,6 @@
         <div class="aems-flex">
             <a class="aems-btn" th:href="@{'/department/attendance/events/' + ${eventId} + '/qr'}">QR check-in</a>
             <a class="aems-btn" th:href="@{'/department/quiz/events/' + ${eventId}}">Quản lý quiz</a>
-            <button class="aems-btn aems-btn--danger" onclick="markAbsent()">Đánh dấu vắng</button>
         </div>
     </header>
 
@@ -57,11 +56,7 @@
 </main>
 <script th:inline="javascript">
 const eventId = [[${eventId}]];
-async function markAbsent() {
-    if (!confirm('Đánh dấu tất cả sinh viên đăng ký nhưng chưa check-in là VẮNG?')) return;
-    const res = await fetch(`/api/department/attendance/events/${eventId}/mark-absent`, {method:'POST'});
-    if (res.ok) location.reload(); else alert(await res.text());
-}
+// Đánh vắng giờ chạy TỰ ĐỘNG: hệ thống tự đánh vắng + đóng event 15 phút sau khi kết thúc.
 </script>
 </body>
 </html>

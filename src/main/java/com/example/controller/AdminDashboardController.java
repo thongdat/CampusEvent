@@ -27,6 +27,7 @@ import com.example.model.QuizQuestion;
 import com.example.repository.QuizQuestionRepository;
 import com.example.security.OAuth2TokenStore;
 import com.example.service.EmailService;
+import com.example.service.EventFormSyncService;
 import com.example.service.GoogleFormsApiService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -91,6 +92,8 @@ public class AdminDashboardController {
     private final QuizQuestionRepository quizQuestionRepository;
     private final GoogleFormsApiService googleFormsApiService;
     private final OAuth2TokenStore oauthTokenStore;
+    @org.springframework.beans.factory.annotation.Autowired
+    private EventFormSyncService eventFormSyncService;
     private static final ObjectMapper QUIZ_MAPPER = new ObjectMapper();
 
     public AdminDashboardController(
@@ -501,7 +504,54 @@ public class AdminDashboardController {
 
     @PostMapping("/events/{id}/google-form/auto-create")
     @Transactional
-    public Map<String, Object> autoCreateGoogleForm(@PathVariable Long id, @RequestBody(required = false) Map<String, Object> payload) {
+    public Map<String, Object> autoCreateCheckinForm(@PathVariable Long id, @RequestBody(required = false) Map<String, Object> payload) {
+        return autoCreateGoogleFormInternal(id, payload, false);
+    }
+
+    @PostMapping("/events/{id}/google-form/auto-create-checkout")
+    @Transactional
+    public Map<String, Object> autoCreateCheckoutForm(@PathVariable Long id, @RequestBody(required = false) Map<String, Object> payload) {
+        return autoCreateGoogleFormInternal(id, payload, true);
+    }
+
+    /**
+     * Đồng bộ câu trả lời từ Google Form về DB.
+     *  body: { email: <gmail user đăng nhập>, kind: 'in'|'out' }
+     */
+    @PostMapping("/events/{id}/google-form/sync")
+    public Map<String, Object> syncGoogleFormResponses(@PathVariable Long id,
+                                                       @RequestBody(required = false) Map<String, Object> payload) {
+        String email = payload == null ? null : (payload.get("email") == null ? null : String.valueOf(payload.get("email")).trim());
+        String kind  = payload == null ? "in"  : (payload.get("kind")  == null ? "in"  : String.valueOf(payload.get("kind")).trim().toLowerCase());
+        if (email == null || email.isBlank()) {
+            throw badRequest("Cần email user đang đăng nhập (Gmail) để sync.");
+        }
+        OAuth2TokenStore.TokenInfo token = oauthTokenStore.get(email);
+        if (token == null || !token.isValid()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
+                    "Token Gmail đã hết hạn. Vui lòng đăng xuất → đăng nhập lại bằng " + email + ".");
+        }
+        try {
+            EventFormSyncService.SyncResult r = "out".equals(kind)
+                    ? eventFormSyncService.syncCheckout(id, token.accessToken)
+                    : eventFormSyncService.syncCheckin(id, token.accessToken);
+            Map<String, Object> res = r.toMap();
+            boolean out = "out".equals(kind);
+            res.put("kind", out ? "CHECK-OUT" : "CHECK-IN");
+            if (out) {
+                res.put("message", String.format("Check-out: %d phản hồi · %d khớp · %d hoàn thành · %d feedback.",
+                        r.totalResponses, r.matched, r.updated, r.feedbacksAdded));
+            } else {
+                res.put("message", String.format("Check-in: %d phản hồi · %d hợp lệ (email khớp) · %d mới · %d cập nhật · %d đánh vắng.",
+                        r.totalResponses, r.matched, r.created, r.updated, r.absentMarked));
+            }
+            return res;
+        } catch (GoogleFormsApiService.GoogleApiException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, ex.getMessage());
+        }
+    }
+
+    private Map<String, Object> autoCreateGoogleFormInternal(Long id, Map<String, Object> payload, boolean isCheckout) {
         Event event = eventRepository.findById(id).orElseThrow(() -> notFound("Không tìm thấy event."));
         String email = payload == null ? null : (payload.get("email") == null ? null : String.valueOf(payload.get("email")).trim());
         if (email == null || email.isBlank()) {
@@ -514,12 +564,23 @@ public class AdminDashboardController {
                             + "Vui lòng đăng xuất → đăng nhập lại bằng Gmail và cấp quyền Forms/Drive.");
         }
         try {
-            String formUrl = googleFormsApiService.createFormForEvent(event, token.accessToken);
-            event.setGoogleFormUrl(formUrl);
+            GoogleFormsApiService.CreatedForm created = isCheckout
+                    ? googleFormsApiService.createCheckoutForm(event, token.accessToken, loadQuizItems(event.getId()))
+                    : googleFormsApiService.createCheckinForm(event, token.accessToken);
+            if (isCheckout) {
+                event.setCheckoutFormUrl(created.responderUri);
+                event.setCheckoutFormId(created.formId);
+                event.setCheckoutSheetId(created.sheetId);
+            } else {
+                event.setGoogleFormUrl(created.responderUri);
+                event.setCheckinFormId(created.formId);
+                event.setCheckinSheetId(created.sheetId);
+            }
             Event saved = eventRepository.save(event);
             Map<String, Object> result = buildEvent(saved);
-            result.put("createdFormUrl", formUrl);
-            result.put("message", "Đã tạo Google Form thành công.");
+            result.put("createdFormUrl", created.responderUri);
+            result.put("kind", isCheckout ? "CHECKOUT" : "CHECKIN");
+            result.put("message", "Đã tạo " + (isCheckout ? "Google Form CHECK-OUT" : "Google Form CHECK-IN") + " thành công.");
             return result;
         } catch (GoogleFormsApiService.GoogleApiException ex) {
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, ex.getMessage());
@@ -542,20 +603,31 @@ public class AdminDashboardController {
         Event event = eventRepository.findById(id).orElseThrow(() -> notFound("Không tìm thấy event."));
         Object raw = payload.get("googleFormUrl");
         String url = raw == null ? "" : String.valueOf(raw).trim();
-        if (url.isEmpty()) {
-            event.setGoogleFormUrl(null);
-        } else {
-            String lower = url.toLowerCase(Locale.ROOT);
-            boolean ok = lower.startsWith("https://docs.google.com/forms/")
-                    || lower.startsWith("https://forms.gle/")
-                    || lower.startsWith("https://forms.office.com/")
-                    || lower.startsWith("http://localhost"); // cho phép dev
-            if (!ok) {
-                throw badRequest("URL phải là link Google Forms (docs.google.com/forms/ hoặc forms.gle/)");
-            }
-            event.setGoogleFormUrl(url);
-        }
+        event.setGoogleFormUrl(normaliseFormUrl(url));
         return buildEvent(eventRepository.save(event));
+    }
+
+    @PutMapping("/events/{id}/google-form-url-checkout")
+    @Transactional
+    public Map<String, Object> updateEventCheckoutFormUrl(@PathVariable Long id, @RequestBody Map<String, Object> payload) {
+        Event event = eventRepository.findById(id).orElseThrow(() -> notFound("Không tìm thấy event."));
+        Object raw = payload.get("checkoutFormUrl");
+        String url = raw == null ? "" : String.valueOf(raw).trim();
+        event.setCheckoutFormUrl(normaliseFormUrl(url));
+        return buildEvent(eventRepository.save(event));
+    }
+
+    private String normaliseFormUrl(String url) {
+        if (url == null || url.isBlank()) return null;
+        String lower = url.toLowerCase(Locale.ROOT);
+        boolean ok = lower.startsWith("https://docs.google.com/forms/")
+                || lower.startsWith("https://forms.gle/")
+                || lower.startsWith("https://forms.office.com/")
+                || lower.startsWith("http://localhost");
+        if (!ok) {
+            throw badRequest("URL phải là link Google Forms (docs.google.com/forms/ hoặc forms.gle/)");
+        }
+        return url;
     }
 
     @DeleteMapping("/events/{id}")
@@ -1011,6 +1083,11 @@ public class AdminDashboardController {
         long waitlist = registrations.stream()
                 .filter(registration -> "WAITLIST".equalsIgnoreCase(registration.getStatus()))
                 .count();
+        // Chỉ đếm đăng ký đang hiệu lực (REGISTERED) để KHỚP với Dashboard điểm danh,
+        // không tính waitlist/cancelled → tránh lệch số gây hiểu nhầm.
+        long registeredCount = registrations.stream()
+                .filter(registration -> "REGISTERED".equalsIgnoreCase(registration.getStatus()))
+                .count();
         double averageRating = feedbacks.stream()
                 .map(Feedback::getRating)
                 .filter(Objects::nonNull)
@@ -1034,7 +1111,7 @@ public class AdminDashboardController {
         item.put("departmentId", event.getDepartment() != null ? event.getDepartment().getId() : null);
         item.put("departmentName", event.getDepartment() != null ? textOrEmpty(event.getDepartment().getName()) : "");
         item.put("facultyName", event.getDepartment() != null ? AcademicStructure.facultyOf(event.getDepartment().getName()) : "Khác");
-        item.put("registrationCount", registrations.size());
+        item.put("registrationCount", registeredCount);
         item.put("waitlistCount", waitlist);
         item.put("attendanceCount", attended);
         item.put("feedbackCount", feedbacks.size());
@@ -1045,6 +1122,13 @@ public class AdminDashboardController {
         item.put("featured", event.getCapacity() != null && event.getCapacity() >= 200);
         item.put("googleFormUrl", textOrEmpty(event.getGoogleFormUrl()));
         item.put("hasGoogleForm", event.getGoogleFormUrl() != null && !event.getGoogleFormUrl().isBlank());
+        item.put("checkinFormId", textOrEmpty(event.getCheckinFormId()));
+        item.put("checkinSheetId", textOrEmpty(event.getCheckinSheetId()));
+        item.put("checkoutFormUrl", textOrEmpty(event.getCheckoutFormUrl()));
+        item.put("hasCheckoutForm", event.getCheckoutFormUrl() != null && !event.getCheckoutFormUrl().isBlank());
+        item.put("checkoutFormId", textOrEmpty(event.getCheckoutFormId()));
+        item.put("checkoutSheetId", textOrEmpty(event.getCheckoutSheetId()));
+        item.put("lastSheetSyncAt", event.getLastSheetSyncAt());
         item.put("speakers", textOrEmpty(event.getSpeakers()));
         return item;
     }
@@ -1304,6 +1388,21 @@ public class AdminDashboardController {
         if (value == null) return null;
         String s = String.valueOf(value).trim();
         return s.isEmpty() ? null : s;
+    }
+
+    /** Đọc quiz của event → DTO để truyền cho Google Forms API (thêm vào form check-in). */
+    private List<GoogleFormsApiService.QuizItem> loadQuizItems(Long eventId) {
+        List<QuizQuestion> questions = quizQuestionRepository.findByEventId(eventId);
+        List<GoogleFormsApiService.QuizItem> items = new ArrayList<>();
+        for (QuizQuestion q : questions) {
+            if (q.getQuestionText() == null || q.getQuestionText().isBlank()) continue;
+            List<String> options = new ArrayList<>();
+            for (String opt : new String[]{q.getOptionA(), q.getOptionB(), q.getOptionC(), q.getOptionD()}) {
+                if (opt != null && !opt.isBlank()) options.add(opt.trim());
+            }
+            items.add(new GoogleFormsApiService.QuizItem(q.getQuestionText().trim(), options));
+        }
+        return items;
     }
 
     private int compareEventsForAdmin(Event left, Event right) {

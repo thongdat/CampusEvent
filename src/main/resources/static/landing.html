@@ -799,5 +799,30 @@
         });
     })();
 </script>
+<script>
+    // Nhận biết phiên đăng nhập: nếu đã đăng nhập, các nút "Đăng nhập" trên trang chủ
+    // chuyển thành "Vào hệ thống" và trỏ thẳng dashboard theo vai trò → KHÔNG bắt đăng nhập lại.
+    (function () {
+        var raw = sessionStorage.getItem('user') || localStorage.getItem('user');
+        if (!raw) return;
+        var user;
+        try { user = JSON.parse(raw); } catch (e) { return; }
+        if (!user || !user.role) return;
+
+        var routes = {
+            ADMIN: 'admin-screen/overview.html',
+            MANAGER: 'screen-department.html',
+            DEPARTMENT: 'screen-department.html',
+            COMMITTEE: 'screen-committee.html',
+            STUDENT: 'screen-student.html'
+        };
+        var dashboard = routes[String(user.role).toUpperCase()] || 'screen-student.html';
+
+        document.querySelectorAll('a[href="login.html"]').forEach(function (a) {
+            a.setAttribute('href', dashboard);
+            a.textContent = 'Vào hệ thống';
+        });
+    })();
+</script>
 </body>
 </html>

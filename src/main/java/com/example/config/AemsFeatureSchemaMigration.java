@@ -23,6 +23,13 @@ public class AemsFeatureSchemaMigration implements ApplicationRunner {
         addColumnIfMissing("student", "gender", "NVARCHAR(10) NULL");
         addColumnIfMissing("users", "department_position", "VARCHAR(30) NULL");
         addColumnIfMissing("event", "google_form_url", "NVARCHAR(1000) NULL");
+        addColumnIfMissing("event", "checkin_form_id", "NVARCHAR(120) NULL");
+        addColumnIfMissing("event", "checkin_sheet_id", "NVARCHAR(120) NULL");
+        addColumnIfMissing("event", "checkout_form_url", "NVARCHAR(1000) NULL");
+        addColumnIfMissing("event", "checkout_form_id", "NVARCHAR(120) NULL");
+        addColumnIfMissing("event", "checkout_sheet_id", "NVARCHAR(120) NULL");
+        addColumnIfMissing("event", "last_sheet_sync_at", "DATETIME2 NULL");
+        addColumnIfMissing("event", "auto_closed_at", "DATETIME2 NULL");
         addColumnIfMissing("event", "speakers", "NVARCHAR(800) NULL");
 
         addColumnIfMissing("attendance", "mid_verify_time", "DATETIME2 NULL");

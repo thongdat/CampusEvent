@@ -9,6 +9,9 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizationRequestResolver;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
@@ -22,7 +25,8 @@ public class SecurityConfig {
     private OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http,
+                                           ClientRegistrationRepository clientRegistrationRepository) throws Exception {
         http
             .csrf().disable()
             .authorizeHttpRequests(authz -> authz
@@ -32,6 +36,10 @@ public class SecurityConfig {
             .httpBasic().disable()
             // Bật OAuth2 Login với Google
             .oauth2Login(oauth2 -> oauth2
+                .authorizationEndpoint(ep -> ep
+                    .authorizationRequestResolver(
+                        consentAuthorizationRequestResolver(clientRegistrationRepository))
+                )
                 .userInfoEndpoint(userInfo -> userInfo
                     .userService(customOAuth2UserService)
                 )
@@ -41,6 +49,20 @@ public class SecurityConfig {
             );
 
         return http.build();
+    }
+
+    /**
+     * Xin refresh token (access_type=offline) để có thể gia hạn access token.
+     * KHÔNG ép prompt=consent → Google chỉ hiện màn hình cấp quyền LẦN ĐẦU mỗi tài khoản;
+     * các lần đăng nhập sau vào thẳng, không hỏi lại.
+     */
+    private OAuth2AuthorizationRequestResolver consentAuthorizationRequestResolver(
+            ClientRegistrationRepository repo) {
+        DefaultOAuth2AuthorizationRequestResolver resolver =
+                new DefaultOAuth2AuthorizationRequestResolver(repo, "/oauth2/authorization");
+        resolver.setAuthorizationRequestCustomizer(builder -> builder
+                .additionalParameters(params -> params.put("access_type", "offline")));
+        return resolver;
     }
 
     @Bean

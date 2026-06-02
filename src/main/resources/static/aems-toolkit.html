@@ -39,6 +39,11 @@
         .progress > span { display: block; height: 100%; background: linear-gradient(90deg, #fb923c, #ea580c); border-radius: 999px; transition: width .3s; }
         .rotate-bar { position: relative; height: 4px; background: #fed7aa; border-radius: 999px; overflow: hidden; margin-top: .55rem; }
         .rotate-bar > span { display: block; height: 100%; background: linear-gradient(90deg, #f97316, #c2410c); border-radius: 999px; transition: width 1s linear; }
+        .qr-side-checkin  { background: linear-gradient(135deg, #fff7ed 0%, #ffffff 70%); }
+        .qr-side-checkout { background: linear-gradient(135deg, #ecfdf5 0%, #ffffff 70%); }
+        .qr-tag { display: inline-flex; align-items: center; gap: .35rem; padding: .2rem .55rem; border-radius: 999px; font-size: .625rem; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; }
+        .qr-tag-in  { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; }
+        .qr-tag-out { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
         .qr-img-host img { transition: opacity .2s; }
         .qr-img-host.swapping img { opacity: .35; }
         .chip { display: inline-flex; align-items: center; gap: .35rem; padding: .25rem .65rem; border-radius: 999px; font-size: .6875rem; font-weight: 800; letter-spacing: .03em; }
@@ -69,7 +74,7 @@
             </div>
             <div>
                 <h1 class="text-base font-extrabold leading-tight text-slate-900 sm:text-lg">QR Check-in Toolkit</h1>
-                <p class="text-[11px] font-semibold text-slate-500 sm:text-xs">Form check-in tự sinh · Ảnh + Mô tả + Diễn giả + Quiz · Token xoay 2 phút</p>
+                <p class="text-[11px] font-semibold text-slate-500 sm:text-xs">Check-IN (điểm danh email) · Check-OUT (quiz + feedback) · Token xoay 30 giây</p>
             </div>
         </div>
         <div class="flex items-center gap-2">
@@ -91,7 +96,7 @@
                 <button data-filter="upcoming" class="filter-chip rounded-md px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100">Sắp diễn ra & đang chạy</button>
                 <button data-filter="today" class="filter-chip rounded-md px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100">Hôm nay</button>
             </div>
-            <a href="/api/screen-department.html#reports" class="ml-auto rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50">📊 Event đã kết thúc → Reports</a>
+            <a href="/api/screen-department.html#reports" class="ml-auto rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50">📊 Reports</a>
         </div>
     </div>
 </header>
@@ -99,26 +104,32 @@
 <!-- ===== Main ===== -->
 <main class="mx-auto max-w-6xl px-4 py-6 sm:px-6">
     <section class="anim mb-5 rounded-2xl border border-fpt-200 bg-gradient-to-br from-fpt-50 to-white p-4 sm:p-5 no-print">
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div class="flex items-start gap-3">
-                <div class="flex h-10 w-10 flex-none items-center justify-center rounded-lg bg-fpt-500 text-white shadow-sm">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                </div>
-                <div class="flex-1">
-                    <h2 class="text-sm font-extrabold text-slate-900 sm:text-base">Google Form tự tạo cho từng event — không cần cấu hình</h2>
-                    <p class="mt-1 text-xs text-slate-600 sm:text-sm">
-                        Mở trang này → hệ thống <strong>tự gọi Google Forms API</strong> tạo 1 Google Form riêng cho mỗi event,
-                        tự lấy <strong>ảnh sự kiện · mô tả · diễn giả · thời gian · địa điểm</strong> từ DB,
-                        thêm 4 câu hỏi bắt buộc (<strong>Email · Họ tên · MSSV · Giới tính</strong>).
-                        Chiếu QR là sinh viên scan ngay được.
+        <div class="grid gap-4 sm:grid-cols-2">
+            <div class="flex items-start gap-3 rounded-xl border border-fpt-200 bg-white/70 p-3.5">
+                <div class="flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-fpt-500 text-white text-sm font-extrabold">IN</div>
+                <div>
+                    <h3 class="text-sm font-extrabold text-fpt-800">Check-IN form (Google) — tối giản</h3>
+                    <p class="mt-0.5 text-[11px] text-slate-600 leading-relaxed">
+                        Chỉ <strong>Email (xác thực) · Họ tên · MSSV</strong>. QR <strong>xoay 30 giây</strong> chống share.
+                        Email khớp hệ thống = check-in OK; đăng ký mà không quét = <strong class="text-rose-600">vắng</strong>.
                     </p>
-                    <p class="mt-1.5 text-[11px] text-slate-500">
-                        QR <strong>token xoay 2 phút/lần</strong> chống share screenshot.
-                        Yêu cầu: bạn đã đăng nhập Gmail có quyền Forms API (form sẽ vào Drive của bạn).
+                </div>
+            </div>
+            <div class="flex items-start gap-3 rounded-xl border border-emerald-200 bg-white/70 p-3.5">
+                <div class="flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-emerald-500 text-white text-sm font-extrabold">OUT</div>
+                <div>
+                    <h3 class="text-sm font-extrabold text-emerald-800">Check-OUT form (Google) — quiz + feedback</h3>
+                    <p class="mt-0.5 text-[11px] text-slate-600 leading-relaxed">
+                        Quiz nhỏ (Khoa soạn) + 4 thang điểm 1-5⭐ + góp ý. Chỉ ai <strong>đã check-in</strong> mới tính
+                        <strong>hoàn thành đủ buổi</strong>; chưa check-in vẫn <strong class="text-rose-600">vắng</strong>.
                     </p>
                 </div>
             </div>
         </div>
+        <p class="mt-3 text-[11px] text-slate-500 text-center">
+            ✨ Hệ thống <strong>tự gọi Google Forms API</strong> tạo cả 2 form cho mỗi event. Bấm <strong>Sync</strong> để kéo phản hồi về thống kê Khoa.
+            Yêu cầu: bạn đã đăng nhập Gmail có quyền Forms/Drive API.
+        </p>
     </section>
 
     <div id="eventsRoot" class="space-y-4">
@@ -302,43 +313,53 @@
         return '<span class="chip chip-off">Đã kết thúc</span>';
     }
 
-    // ----------- Form badge state -----------
+    // ----------- Form badge state (per event + per kind 'in'/'out') -----------
     // 'creating' | 'ok' | 'fallback' | 'pending'
-    const formStateMap = new Map();
-    function getFormStatus(ev) {
-        const cached = formStateMap.get(String(ev.id));
+    const formStateMap = new Map(); // key: `${eventId}|${kind}` → state
+
+    function formKey(eventId, kind) { return String(eventId) + '|' + kind; }
+
+    function eventHasForm(ev, kind) {
+        return kind === 'out' ? !!ev.checkoutFormUrl : !!ev.googleFormUrl;
+    }
+    function eventFormUrl(ev, kind) {
+        return kind === 'out' ? (ev.checkoutFormUrl || '') : (ev.googleFormUrl || '');
+    }
+    function getFormStatus(ev, kind) {
+        const cached = formStateMap.get(formKey(ev.id, kind));
         if (cached) return cached;
-        if (ev.hasGoogleForm) return 'ok';
+        if (eventHasForm(ev, kind)) return 'ok';
         return 'pending';
     }
-    function formBadgeClass(ev) {
-        const st = getFormStatus(ev);
-        if (st === 'ok')       return 'border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100';
+    function formBadgeClass(ev, kind) {
+        const st = getFormStatus(ev, kind);
+        const baseOk  = kind === 'out' ? 'border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                                       : 'border-fpt-300 bg-fpt-50 text-fpt-700 hover:bg-fpt-100';
+        if (st === 'ok')       return baseOk;
         if (st === 'creating') return 'border-blue-300 bg-blue-50 text-blue-700 animate-pulse';
         if (st === 'fallback') return 'border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100';
         return 'border-slate-300 bg-slate-50 text-slate-700 hover:bg-slate-100';
     }
-    function formBadgeText(ev) {
-        const st = getFormStatus(ev);
-        if (st === 'ok')       return '🔗 Google Form sẵn sàng';
-        if (st === 'creating') return '⌛ Đang tạo Google Form…';
-        if (st === 'fallback') return '⚠ Form nội bộ (Google API lỗi)';
-        return '⏳ Sẽ tự tạo Google Form';
+    function formBadgeText(ev, kind) {
+        const st = getFormStatus(ev, kind);
+        if (st === 'ok')       return kind === 'out' ? '✓ Form check-out sẵn sàng' : '✓ Form check-in sẵn sàng';
+        if (st === 'creating') return '⌛ Đang tạo form…';
+        if (st === 'fallback') return '⚠ Lỗi tạo form';
+        return '⏳ Sẽ tự tạo';
     }
-    function updateFormBadge(eventId) {
+    function updateFormBadge(eventId, kind) {
         const ev = findEvent(eventId);
         if (!ev) return;
-        const span = document.querySelector('[data-form-badge="' + eventId + '"]');
-        if (span) span.textContent = formBadgeText(ev);
+        const span = document.querySelector('[data-form-badge="' + eventId + '|' + kind + '"]');
+        if (span) span.textContent = formBadgeText(ev, kind);
         const btn = span ? span.closest('.btn-edit-form') : null;
         if (btn) {
-            // reset border/bg classes
-            btn.className = btn.className.replace(/border-(emerald|blue|amber|slate)-\d+/g, '')
-                                        .replace(/bg-(emerald|blue|amber|slate)-\d+/g, '')
-                                        .replace(/text-(emerald|blue|amber|slate)-\d+/g, '')
-                                        .replace(/hover:bg-(emerald|blue|amber|slate)-\d+/g, '')
+            btn.className = btn.className.replace(/border-(emerald|blue|amber|slate|fpt)-\d+/g, '')
+                                        .replace(/bg-(emerald|blue|amber|slate|fpt)-\d+/g, '')
+                                        .replace(/text-(emerald|blue|amber|slate|fpt)-\d+/g, '')
+                                        .replace(/hover:bg-(emerald|blue|amber|slate|fpt)-\d+/g, '')
                                         .replace(/animate-pulse/g, '');
-            btn.className += ' ' + formBadgeClass(ev);
+            btn.className += ' ' + formBadgeClass(ev, kind);
         }
     }
 
@@ -350,72 +371,116 @@
 
         return `
             <article class="event-card anim overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card" data-event-id="${ev.id}">
-                <div class="grid gap-0 md:grid-cols-[260px_1fr]">
-                    <!-- QR side -->
-                    <div class="border-b border-slate-100 bg-gradient-to-br from-fpt-50 to-white p-5 md:border-b-0 md:border-r">
+                <!-- ===== HEADER: title + status + meta ===== -->
+                <header class="border-b border-slate-100 px-5 py-4">
+                    <div class="flex flex-wrap items-start justify-between gap-2">
+                        <h3 class="text-base font-extrabold leading-tight text-slate-900 sm:text-lg">${escapeHtml(ev.title || 'Untitled')}</h3>
+                        ${statusChip(state, true)}
+                    </div>
+                    <div class="mt-2 grid gap-1.5 text-xs text-slate-600 sm:grid-cols-2 lg:grid-cols-4">
+                        <div class="flex items-center gap-1.5"><svg class="h-4 w-4 text-fpt-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg> <span class="font-semibold">${fmtTime(ev.startTime)} → ${fmtTime(ev.endTime)}</span></div>
+                        <div class="flex items-center gap-1.5"><svg class="h-4 w-4 text-fpt-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg> <span>${escapeHtml(ev.location || '—')}</span></div>
+                        <div class="flex items-center gap-1.5"><svg class="h-4 w-4 text-fpt-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16M9 7h1m-1 4h1m-1 4h1m4-8h1m-1 4h1m-1 4h1M3 21h18"/></svg> <span>${escapeHtml(ev.departmentName || 'FPT')}</span></div>
+                        <div class="flex items-center gap-1.5" data-quiz-info-for="${ev.id}"><svg class="h-4 w-4 text-fpt-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg> <span>Đang kiểm tra quiz…</span></div>
+                    </div>
+                    <div class="mt-2.5">
+                        <div class="mb-1 flex items-center justify-between text-[11px] font-bold text-slate-600">
+                            <span>Đăng ký</span>
+                            <span>${reg} / ${cap} <span class="text-slate-400">· ${pct}%</span></span>
+                        </div>
+                        <div class="progress"><span style="width:${pct}%"></span></div>
+                    </div>
+                </header>
+
+                <!-- ===== 2 cột QR: CHECK-IN | CHECK-OUT ===== -->
+                <div class="grid gap-0 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-slate-100">
+                    <!-- LEFT: CHECK-IN (orange) -->
+                    <div class="qr-side-checkin p-5">
+                        <div class="mb-2.5 flex items-center justify-between">
+                            <span class="qr-tag qr-tag-in">● Check-IN</span>
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-fpt-700 flex items-center gap-1">
+                                <svg class="h-3 w-3 animate-spin" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                QR động 30s
+                            </span>
+                        </div>
                         <div class="qr-wrap">
-                            <div class="qr-img-host" data-qr-host="${ev.id}">
+                            <div class="qr-img-host" data-qr-host="${ev.id}|in">
                                 <div class="qr-skeleton"></div>
                             </div>
-                            <div class="rotate-bar"><span data-qr-bar="${ev.id}" style="width:100%"></span></div>
-                            <div class="mt-1.5 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                                <span class="flex items-center gap-1 text-fpt-700">
-                                    <svg class="h-3 w-3 animate-spin" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                                    QR động
-                                </span>
-                                <span data-qr-countdown="${ev.id}">⏱ 2:00</span>
+                            <div class="rotate-bar"><span data-qr-bar="${ev.id}|in" style="width:100%"></span></div>
+                            <div class="mt-1.5 flex items-center justify-end text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                                <span data-qr-countdown="${ev.id}|in">⏱ 0:30</span>
                             </div>
                         </div>
-                        <div class="mt-3 flex flex-col gap-1.5">
-                            <button class="btn-open-qr inline-flex items-center justify-center gap-1.5 rounded-lg bg-gradient-to-br from-fpt-500 to-fpt-700 px-3 py-2 text-xs font-bold text-white shadow-sm hover:brightness-110"
-                                data-event-id="${ev.id}" data-event-title="${escapeHtml(ev.title || '')}">
+                        <div class="mt-3 grid grid-cols-2 gap-1.5">
+                            <button class="btn-open-qr col-span-2 inline-flex items-center justify-center gap-1.5 rounded-lg bg-gradient-to-br from-fpt-500 to-fpt-700 px-3 py-2 text-xs font-bold text-white shadow-sm hover:brightness-110"
+                                data-event-id="${ev.id}" data-kind="in" data-event-title="${escapeHtml(ev.title || '')}">
                                 <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
                                 Phóng to để chiếu
                             </button>
-                            <button class="btn-rotate-now rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50" data-event-id="${ev.id}">
-                                ↻ Xoay token ngay
+                            <button class="btn-rotate-now rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-bold text-slate-700 hover:bg-slate-50" data-event-id="${ev.id}">
+                                ↻ Xoay token
                             </button>
-                            <button class="btn-edit-form rounded-lg border px-3 py-2 text-xs font-bold ${formBadgeClass(ev)}" data-event-id="${ev.id}" data-current-url="${escapeHtml(ev.googleFormUrl || '')}">
-                                <span data-form-badge="${ev.id}">${formBadgeText(ev)}</span>
+                            <button class="btn-edit-form rounded-lg border px-3 py-1.5 text-[11px] font-bold ${formBadgeClass(ev, 'in')}"
+                                    data-event-id="${ev.id}" data-kind="in" data-current-url="${escapeHtml(ev.googleFormUrl || '')}">
+                                <span data-form-badge="${ev.id}|in">${formBadgeText(ev, 'in')}</span>
                             </button>
                         </div>
                     </div>
 
-                    <!-- Info side -->
-                    <div class="flex flex-col gap-3 p-5">
-                        <div class="flex flex-wrap items-start justify-between gap-2">
-                            <h3 class="text-base font-extrabold leading-tight text-slate-900 sm:text-lg">${escapeHtml(ev.title || 'Untitled')}</h3>
-                            ${statusChip(state, true)}
+                    <!-- RIGHT: CHECK-OUT (emerald) -->
+                    <div class="qr-side-checkout p-5">
+                        <div class="mb-2.5 flex items-center justify-between">
+                            <span class="qr-tag qr-tag-out">● Check-OUT</span>
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-700">📋 QR cuối buổi</span>
                         </div>
-                        <div class="grid gap-2 text-xs text-slate-600 sm:grid-cols-2">
-                            <div class="flex items-center gap-1.5"><svg class="h-4 w-4 text-fpt-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg> <span class="font-semibold">${fmtTime(ev.startTime)} → ${fmtTime(ev.endTime)}</span></div>
-                            <div class="flex items-center gap-1.5"><svg class="h-4 w-4 text-fpt-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg> <span>${escapeHtml(ev.location || '—')}</span></div>
-                            <div class="flex items-center gap-1.5"><svg class="h-4 w-4 text-fpt-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16M9 7h1m-1 4h1m-1 4h1m4-8h1m-1 4h1m-1 4h1M3 21h18"/></svg> <span>${escapeHtml(ev.departmentName || 'FPT')}</span></div>
-                            <div class="flex items-center gap-1.5" data-quiz-info-for="${ev.id}"><svg class="h-4 w-4 text-fpt-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg> <span>Đang kiểm tra quiz…</span></div>
-                        </div>
-                        <div>
-                            <div class="mb-1 flex items-center justify-between text-[11px] font-bold text-slate-600">
-                                <span>Đăng ký</span>
-                                <span>${reg} / ${cap} <span class="text-slate-400">· ${pct}%</span></span>
+                        <div class="qr-wrap">
+                            <div class="qr-img-host" data-qr-host="${ev.id}|out">
+                                <div class="qr-skeleton"></div>
                             </div>
-                            <div class="progress"><span style="width:${pct}%"></span></div>
+                            <div class="mt-2 text-center text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                                Feedback &amp; xác nhận tham dự đủ buổi
+                            </div>
                         </div>
-                        <div class="mt-1 flex flex-wrap gap-2 border-t border-slate-100 pt-3">
-                            <a href="/api/department/attendance/events/${ev.id}/dashboard" target="_blank" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50">
-                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17V7m4 10V13m4 4v-2m4 6H3v-6h18v6zm0-10V5a2 2 0 00-2-2H5a2 2 0 00-2 2v6h18z"/></svg>
-                                Dashboard
-                            </a>
-                            <a href="/api/department/attendance/events/${ev.id}/feedback-stats" target="_blank" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50">
-                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-                                Phản hồi
-                            </a>
-                            <button class="btn-preview-form ml-auto inline-flex items-center gap-1.5 rounded-lg border border-fpt-300 bg-fpt-50 px-3 py-1.5 text-xs font-bold text-fpt-700 hover:bg-fpt-100" data-event-id="${ev.id}">
-                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 14L21 3m0 0h-7m7 0v7M21 14v7H3V3h7"/></svg>
-                                Xem trước form
+                        <div class="mt-3 grid grid-cols-2 gap-1.5">
+                            <button class="btn-open-qr col-span-2 inline-flex items-center justify-center gap-1.5 rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-700 px-3 py-2 text-xs font-bold text-white shadow-sm hover:brightness-110"
+                                data-event-id="${ev.id}" data-kind="out" data-event-title="${escapeHtml(ev.title || '')}">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+                                Phóng to để chiếu
+                            </button>
+                            <button class="btn-preview-form rounded-lg border border-emerald-300 bg-white px-3 py-1.5 text-[11px] font-bold text-emerald-700 hover:bg-emerald-50" data-event-id="${ev.id}" data-kind="out">
+                                👁 Xem trước
+                            </button>
+                            <button class="btn-edit-form rounded-lg border px-3 py-1.5 text-[11px] font-bold ${formBadgeClass(ev, 'out')}"
+                                    data-event-id="${ev.id}" data-kind="out" data-current-url="${escapeHtml(ev.checkoutFormUrl || '')}">
+                                <span data-form-badge="${ev.id}|out">${formBadgeText(ev, 'out')}</span>
                             </button>
                         </div>
                     </div>
                 </div>
+
+                <!-- ===== FOOTER: thao tác chung ===== -->
+                <footer class="flex flex-wrap items-center gap-2 border-t border-slate-100 bg-slate-50/60 px-5 py-3">
+                    <a href="/api/department/attendance/events/${ev.id}/dashboard" target="_blank" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50">
+                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17V7m4 10V13m4 4v-2m4 6H3v-6h18v6zm0-10V5a2 2 0 00-2-2H5a2 2 0 00-2 2v6h18z"/></svg>
+                        Dashboard
+                    </a>
+                    <a href="/api/department/attendance/events/${ev.id}/feedback-stats" target="_blank" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50">
+                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                        Phản hồi
+                    </a>
+                    <div class="ml-auto flex flex-wrap items-center gap-1.5">
+                        <button class="btn-sync-form inline-flex items-center gap-1.5 rounded-lg border border-fpt-300 bg-white px-3 py-1.5 text-xs font-bold text-fpt-700 hover:bg-fpt-50" data-event-id="${ev.id}" data-kind="in">
+                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                            <span>Sync Check-IN</span>
+                        </button>
+                        <button class="btn-sync-form inline-flex items-center gap-1.5 rounded-lg border border-emerald-300 bg-white px-3 py-1.5 text-xs font-bold text-emerald-700 hover:bg-emerald-50" data-event-id="${ev.id}" data-kind="out">
+                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                            <span>Sync Check-OUT</span>
+                        </button>
+                    </div>
+                </footer>
+                <div class="hidden border-t border-slate-100 px-5 py-2 text-xs font-bold" data-sync-result="${ev.id}"></div>
             </article>`;
     }
 
@@ -428,8 +493,10 @@
             const start = ev.startTime ? Date.parse(ev.startTime) : 0;
             const end = ev.endTime ? Date.parse(ev.endTime) : start + 2 * 3600 * 1000;
 
-            // ALWAYS exclude events đã kết thúc (chúng thuộc về tab Reports trong Department Console)
-            if (end < now) return false;
+            // Giữ thêm 15' ân hạn sau khi kết thúc (cho check-in/out muộn), rồi mới ẩn
+            // (event đã đóng thuộc về tab Reports trong Department Console)
+            const GRACE_MS = 15 * 60 * 1000;
+            if (end + GRACE_MS < now) return false;
 
             // Optional "Hôm nay" filter
             if (filter === 'today' && (start < todayStart.getTime() || start > todayEnd.getTime())) return false;
@@ -463,7 +530,7 @@
         document.getElementById('printBtn').classList.remove('hidden');
         bindEventActions();
 
-        // Lazy enrich each card with quiz info + start QR rotation
+        // Lazy enrich each card with quiz info + render both QR sides
         list.forEach(ev => {
             enrich(ev.id).then(info => {
                 const slot = document.querySelector('[data-quiz-info-for="' + ev.id + '"] span');
@@ -471,15 +538,36 @@
                 if (info.hasQuiz) slot.innerHTML = '<span class="font-bold text-emerald-600">' + info.quizCount + ' câu quiz</span>';
                 else slot.innerHTML = '<span class="text-slate-400">Chưa có quiz</span>';
             });
-            rotateOne(ev.id);
+            rotateOne(ev.id, 'in');
+            renderCheckoutQr(ev.id);
         });
         startRotationLoop();
 
-        // Auto-tạo Google Form cho các event chưa có (background)
-        autoCreateFormsForEvents(list);
+        autoCreateFormsForEvents(list, 'in');
+        autoCreateFormsForEvents(list, 'out');
+    }
+
+    function renderCheckoutQr(eventId) {
+        const ev = findEvent(eventId);
+        if (!ev) return;
+        const host = document.querySelector('[data-qr-host="' + eventId + '|out"]');
+        if (!host) return;
+        if (!ev.checkoutFormUrl) {
+            host.innerHTML = '<div class="qr-skeleton"></div>';
+            return;
+        }
+        const url = ev.checkoutFormUrl;
+        tokenState.set(formKey(eventId, 'out'), { token: '-', url: url, expiredAt: 0, mode: 'static-out' });
+        host.classList.add('swapping');
+        setTimeout(() => {
+            host.innerHTML = '<img alt="QR check-out" src="' + buildQrImageUrl(url, 400) + '">';
+            host.classList.remove('swapping');
+        }, 180);
     }
 
     // ===== Auto-create Google Forms in background for events without form =====
+    // Email gọi Google Forms/Drive API = email user đăng nhập (đăng nhập bằng Google
+    // nên đây cũng chính là tài khoản có token Forms/Drive).
     function getCurrentUserEmail() {
         try {
             const raw = sessionStorage.getItem('user') || localStorage.getItem('user');
@@ -491,49 +579,50 @@
         return null;
     }
 
-    async function autoCreateFormsForEvents(list) {
+    async function autoCreateFormsForEvents(list, kind /* 'in' | 'out' */) {
         const userEmail = getCurrentUserEmail();
         if (!userEmail) {
-            // User chưa login Gmail → đánh dấu fallback cho mọi event chưa có form
-            list.filter(ev => !ev.hasGoogleForm).forEach(ev => {
-                formStateMap.set(String(ev.id), 'fallback');
-                updateFormBadge(ev.id);
+            list.filter(ev => !eventHasForm(ev, kind)).forEach(ev => {
+                formStateMap.set(formKey(ev.id, kind), 'fallback');
+                updateFormBadge(ev.id, kind);
             });
             return;
         }
 
-        const needForm = list.filter(ev => !ev.hasGoogleForm);
+        const needForm = list.filter(ev => !eventHasForm(ev, kind));
         if (!needForm.length) return;
 
-        // Sequential để tránh hit rate limit Google
+        const endpoint = kind === 'out' ? 'auto-create-checkout' : 'auto-create';
+
         for (const ev of needForm) {
-            formStateMap.set(String(ev.id), 'creating');
-            updateFormBadge(ev.id);
+            formStateMap.set(formKey(ev.id, kind), 'creating');
+            updateFormBadge(ev.id, kind);
             try {
-                const r = await fetch('/api/admin/events/' + encodeURIComponent(ev.id) + '/google-form/auto-create', {
+                const r = await fetch('/api/admin/events/' + encodeURIComponent(ev.id) + '/google-form/' + endpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email: userEmail })
                 });
                 const data = await r.json().catch(() => ({}));
-                if (!r.ok || !data.googleFormUrl) {
-                    formStateMap.set(String(ev.id), 'fallback');
-                    updateFormBadge(ev.id);
+                const newUrl = kind === 'out' ? data.checkoutFormUrl : data.googleFormUrl;
+                if (!r.ok || !newUrl) {
+                    formStateMap.set(formKey(ev.id, kind), 'fallback');
+                    updateFormBadge(ev.id, kind);
                     continue;
                 }
-                // Success: update event in list, refresh QR
                 const idx = events.findIndex(e => String(e.id) === String(ev.id));
                 if (idx >= 0) events[idx] = data;
                 const liIdx = list.findIndex(e => String(e.id) === String(ev.id));
                 if (liIdx >= 0) list[liIdx] = data;
-                formStateMap.set(String(ev.id), 'ok');
-                updateFormBadge(ev.id);
-                rotateOne(ev.id); // re-build QR with new Google Form URL
+                formStateMap.set(formKey(ev.id, kind), 'ok');
+                updateFormBadge(ev.id, kind);
+                if (kind === 'in') rotateOne(ev.id, 'in');
+                else renderCheckoutQr(ev.id);
             } catch (e) {
-                formStateMap.set(String(ev.id), 'fallback');
-                updateFormBadge(ev.id);
+                formStateMap.set(formKey(ev.id, kind), 'fallback');
+                updateFormBadge(ev.id, kind);
             }
-            await new Promise(r => setTimeout(r, 300)); // nhịp 300ms cho dịu API
+            await new Promise(r => setTimeout(r, 300));
         }
     }
 
@@ -542,28 +631,80 @@
         $$('.btn-rotate-now').forEach(btn => btn.addEventListener('click', () => {
             const id = btn.dataset.eventId;
             toast('Đang xoay token mới…');
-            rotateOne(id, true);
+            rotateOne(id, 'in', true);
         }));
         $$('.btn-preview-form').forEach(btn => btn.addEventListener('click', () => {
             const id = btn.dataset.eventId;
-            const state = tokenState.get(String(id));
-            const url = state ? state.url : '/api/checkin.html?eventId=' + id;
+            const kind = btn.dataset.kind || 'in';
+            const state = tokenState.get(formKey(id, kind));
+            const fallback = kind === 'out'
+                ? (findEvent(id) && findEvent(id).checkoutFormUrl ? findEvent(id).checkoutFormUrl : '#')
+                : '/api/checkin.html?eventId=' + id;
+            const url = state ? state.url : fallback;
             window.open(url, '_blank');
         }));
         $$('.btn-edit-form').forEach(btn => btn.addEventListener('click', () => {
             const id = btn.dataset.eventId;
+            const kind = btn.dataset.kind || 'in';
             const current = btn.dataset.currentUrl || '';
-            openFormModal(id, current);
+            openFormModal(id, kind, current);
         }));
+        $$('.btn-sync-form').forEach(btn => btn.addEventListener('click', () => {
+            const id = btn.dataset.eventId;
+            const kind = btn.dataset.kind || 'in';
+            syncFormResponses(id, kind, btn);
+        }));
+    }
+
+    function syncFormResponses(eventId, kind, btn) {
+        const userEmail = getCurrentUserEmail() || prompt('Nhập email Gmail bạn vừa đăng nhập:', '') || '';
+        if (!userEmail) { toast('Cần email Gmail để sync.'); return; }
+
+        const resultBox = document.querySelector('[data-sync-result="' + eventId + '"]');
+        const original = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<svg class="h-3.5 w-3.5 animate-spin" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg><span>Đang sync…</span>';
+
+        fetch('/api/admin/events/' + encodeURIComponent(eventId) + '/google-form/sync', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: userEmail, kind: kind })
+        }).then(async r => {
+            const data = await r.json().catch(() => ({}));
+            if (!r.ok) throw new Error(data.message || data.error || ('HTTP ' + r.status));
+            return data;
+        }).then(result => {
+            if (resultBox) {
+                const theme = kind === 'out' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-fpt-50 text-fpt-800 border-fpt-200';
+                resultBox.className = 'border-t border-slate-100 px-5 py-2.5 text-xs font-bold border-l-4 ' + theme;
+                resultBox.innerHTML = '✓ ' + escapeHtml(result.message || 'Sync xong')
+                    + ' <span class="text-slate-500 font-normal">· Phản hồi='+result.totalResponses+' · Match='+result.matched+' · Mới='+result.created+' · Cập nhật='+result.updated+' · Feedback='+result.feedbacksAdded+'</span>';
+                resultBox.classList.remove('hidden');
+            }
+            toast('✓ Đã sync ' + (kind === 'out' ? 'CHECK-OUT' : 'CHECK-IN'));
+        }).catch(err => {
+            if (resultBox) {
+                resultBox.className = 'border-t border-slate-100 px-5 py-2.5 text-xs font-bold bg-red-50 text-red-700 border-l-4 border-red-300';
+                resultBox.textContent = '✗ ' + err.message;
+                resultBox.classList.remove('hidden');
+            }
+            toast('Lỗi sync: ' + err.message);
+        }).finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = original;
+        });
     }
 
     // ----------- Google Form URL config -----------
     let formModalEventId = null;
+    let formModalKind = 'in'; // 'in' | 'out'
 
-    function openFormModal(eventId, currentUrl) {
+    function openFormModal(eventId, kind, currentUrl) {
         formModalEventId = eventId;
+        formModalKind = kind || 'in';
         const ev = findEvent(eventId);
-        $('#formModalEventTitle').textContent = ev ? ev.title : ('Event #' + eventId);
+        const kindLabel = formModalKind === 'out' ? 'Check-OUT (Feedback)' : 'Check-IN';
+        $('#formModalEventTitle').innerHTML = '<span class="font-bold ' + (formModalKind === 'out' ? 'text-emerald-700' : 'text-fpt-700') + '">[' + kindLabel + ']</span> ' + escapeHtml(ev ? ev.title : ('Event #' + eventId));
         $('#formModalUrl').value = currentUrl || '';
         renderFormStatus();
         $('#formModal').classList.remove('hidden');
@@ -573,19 +714,25 @@
     function renderFormStatus() {
         const ev = findEvent(formModalEventId);
         if (!ev) return;
-        const st = getFormStatus(ev);
+        const kind = formModalKind;
+        const st = getFormStatus(ev, kind);
+        const currentUrl = eventFormUrl(ev, kind);
+        const kindLabel = kind === 'out' ? 'Check-OUT (Feedback)' : 'Check-IN';
+        const themeOk = kind === 'out' ? 'from-emerald-50 to-emerald-100 border-emerald-300' : 'from-fpt-50 to-fpt-100 border-fpt-300';
+        const txtOk   = kind === 'out' ? 'text-emerald-800' : 'text-fpt-800';
+        const linkOk  = kind === 'out' ? 'text-emerald-700' : 'text-fpt-700';
         const box = $('#formModalStatus');
         let html = '';
         if (st === 'ok') {
             html = `
-                <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-300 -m-4 p-4 rounded-xl">
+                <div class="bg-gradient-to-br ${themeOk} -m-4 p-4 rounded-xl">
                     <div class="flex items-start gap-3">
                         <div class="text-3xl">✅</div>
                         <div class="flex-1">
-                            <h4 class="text-sm font-extrabold text-emerald-800">Google Form đã sẵn sàng</h4>
-                            <p class="text-xs text-slate-700 mt-1">QR đang trỏ thẳng tới Google Form thật. Sinh viên quét → mở form → điền → submit vào Google Sheets của bạn.</p>
-                            <a href="${escapeHtml(ev.googleFormUrl)}" target="_blank" class="mt-2 inline-flex items-center gap-1 text-xs font-bold text-emerald-700 hover:underline break-all">
-                                🔗 ${escapeHtml(ev.googleFormUrl)} ↗
+                            <h4 class="text-sm font-extrabold ${txtOk}">Google Form ${kindLabel} đã sẵn sàng</h4>
+                            <p class="text-xs text-slate-700 mt-1">QR đang trỏ thẳng tới Google Form thật. Sinh viên quét → mở form → điền → submit vào Google Sheets.</p>
+                            <a href="${escapeHtml(currentUrl)}" target="_blank" class="mt-2 inline-flex items-center gap-1 text-xs font-bold ${linkOk} hover:underline break-all">
+                                🔗 ${escapeHtml(currentUrl)} ↗
                             </a>
                         </div>
                     </div>
@@ -596,8 +743,8 @@
                     <div class="flex items-start gap-3">
                         <svg class="h-6 w-6 mt-0.5 animate-spin text-blue-600" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                         <div class="flex-1">
-                            <h4 class="text-sm font-extrabold text-blue-800">Đang tạo Google Form…</h4>
-                            <p class="text-xs text-slate-700 mt-1">Hệ thống đang gọi Google Forms API tạo form với ảnh, mô tả, diễn giả và các câu hỏi của event này.</p>
+                            <h4 class="text-sm font-extrabold text-blue-800">Đang tạo Google Form ${kindLabel}…</h4>
+                            <p class="text-xs text-slate-700 mt-1">Hệ thống đang gọi Google Forms API tạo form với câu hỏi tương ứng.</p>
                         </div>
                     </div>
                 </div>`;
@@ -607,8 +754,8 @@
                     <div class="flex items-start gap-3">
                         <div class="text-3xl">⚠</div>
                         <div class="flex-1">
-                            <h4 class="text-sm font-extrabold text-amber-800">Không tạo được Google Form — đang dùng form nội bộ</h4>
-                            <p class="text-xs text-slate-700 mt-1">Có thể bạn chưa đăng nhập Gmail, hoặc Google Forms API chưa được bật. QR vẫn hoạt động (form nội bộ với cùng câu hỏi).</p>
+                            <h4 class="text-sm font-extrabold text-amber-800">Không tạo được Google Form ${kindLabel}</h4>
+                            <p class="text-xs text-slate-700 mt-1">Có thể bạn chưa đăng nhập Gmail, hoặc Google Forms API chưa được bật.</p>
                             <p class="text-[11px] text-amber-700 mt-1.5">→ Đăng nhập Gmail rồi bấm "🔄 Tạo lại form" bên dưới.</p>
                         </div>
                     </div>
@@ -619,27 +766,32 @@
                     <div class="flex items-start gap-3">
                         <div class="text-3xl">⏳</div>
                         <div class="flex-1">
-                            <h4 class="text-sm font-extrabold text-slate-700">Chưa có Google Form</h4>
+                            <h4 class="text-sm font-extrabold text-slate-700">Chưa có Google Form ${kindLabel}</h4>
                             <p class="text-xs text-slate-600 mt-1">Bấm "🔄 Tạo lại form" để hệ thống tự tạo Google Form qua API.</p>
                         </div>
                     </div>
                 </div>`;
         }
         box.innerHTML = html;
-        box.className = 'rounded-xl p-0'; // padding moved inside via -m-4
+        box.className = 'rounded-xl p-0';
     }
+
     function closeFormModal() {
         $('#formModal').classList.add('hidden');
         $('#formModal').classList.remove('flex');
         formModalEventId = null;
     }
+
     function saveFormUrl(url) {
         if (!formModalEventId) return;
         const id = formModalEventId;
-        fetch('/api/admin/events/' + encodeURIComponent(id) + '/google-form-url', {
+        const kind = formModalKind;
+        const endpoint = kind === 'out' ? 'google-form-url-checkout' : 'google-form-url';
+        const body = kind === 'out' ? { checkoutFormUrl: url } : { googleFormUrl: url };
+        fetch('/api/admin/events/' + encodeURIComponent(id) + '/' + endpoint, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ googleFormUrl: url })
+            body: JSON.stringify(body)
         }).then(async r => {
             const data = await r.json().catch(() => ({}));
             if (!r.ok) throw new Error(data.message || 'Không lưu được');
@@ -647,7 +799,7 @@
         }).then(updated => {
             const idx = events.findIndex(e => String(e.id) === String(id));
             if (idx >= 0) events[idx] = updated;
-            toast(url ? '✓ Đã liên kết Google Form. QR đang đổi sang link mới…' : '✓ Đã bỏ liên kết, quay về form nội bộ.');
+            toast(url ? '✓ Đã liên kết Google Form. QR đang đổi sang link mới…' : '✓ Đã bỏ liên kết.');
             closeFormModal();
             render();
         }).catch(err => toast('Lỗi: ' + err.message));
@@ -678,7 +830,7 @@
                 return ev.googleFormUrl;
             }
         }
-        // Fallback: form nội bộ
+        // Fallback: form nội bộ (chỉ dùng khi chưa tạo được Google Form)
         return location.origin + '/api/checkin.html?eventId=' + encodeURIComponent(eventId)
             + '&token=' + encodeURIComponent(token);
     }
@@ -688,20 +840,26 @@
             + '&margin=12&data=' + encodeURIComponent(url);
     }
 
-    function rotateOne(eventId, force) {
+    function rotateOne(eventId, kind, force) {
+        kind = kind || 'in';
+        if (kind === 'out') {
+            renderCheckoutQr(eventId);
+            return Promise.resolve();
+        }
         return fetch('/api/checkin/events/' + encodeURIComponent(eventId) + '/qr-token' + (force ? '?force=1' : ''))
             .then(r => r.ok ? r.json() : null)
             .then(data => {
                 if (!data || !data.token) return;
                 const checkinUrl = buildCheckinUrl(eventId, data.token);
                 const ev = findEvent(eventId);
-                tokenState.set(String(eventId), {
+                tokenState.set(formKey(eventId, 'in'), {
                     token: data.token,
                     url: checkinUrl,
                     expiredAt: Date.parse(data.expiredAt),
+                    rotateSeconds: data.rotateSeconds || 30,
                     mode: ev && ev.googleFormUrl ? 'google' : 'local'
                 });
-                const host = document.querySelector('[data-qr-host="' + eventId + '"]');
+                const host = document.querySelector('[data-qr-host="' + eventId + '|in"]');
                 if (host) {
                     host.classList.add('swapping');
                     setTimeout(() => {
@@ -709,7 +867,7 @@
                         host.classList.remove('swapping');
                     }, 180);
                 }
-                refreshOpenModal(eventId);
+                refreshOpenModal(eventId, 'in');
             })
             .catch(() => {/* ignore transient */});
     }
@@ -718,12 +876,14 @@
         if (startRotationLoop._timer) return;
         startRotationLoop._timer = setInterval(() => {
             const now = Date.now();
-            tokenState.forEach((state, eventId) => {
+            tokenState.forEach((state, key) => {
+                if (state.mode === 'static-out') return; // check-out QR không xoay
+                const [eventId, kind] = key.split('|');
                 const remaining = Math.max(0, state.expiredAt - now);
-                const totalMs = 120 * 1000;
+                const totalMs = (state.rotateSeconds || 30) * 1000;
                 const ratio = Math.min(1, remaining / totalMs);
-                const bar = document.querySelector('[data-qr-bar="' + eventId + '"]');
-                const cd = document.querySelector('[data-qr-countdown="' + eventId + '"]');
+                const bar = document.querySelector('[data-qr-bar="' + key + '"]');
+                const cd = document.querySelector('[data-qr-countdown="' + key + '"]');
                 if (bar) bar.style.width = (ratio * 100) + '%';
                 if (cd) {
                     const sec = Math.ceil(remaining / 1000);
@@ -732,7 +892,7 @@
                     cd.textContent = '⏱ ' + mm + ':' + ss;
                 }
                 if (remaining <= 0) {
-                    rotateOne(eventId);
+                    rotateOne(eventId, kind);
                 }
             });
         }, ROTATION_TICK_MS);
@@ -740,10 +900,21 @@
 
     function openQrModal(data) {
         const eventId = data.eventId;
-        const state = tokenState.get(String(eventId));
-        const url = state ? state.url : '/api/checkin.html?eventId=' + eventId;
-        $('#qrModalTitle').textContent = 'QR Check-in · ' + (data.eventTitle || 'Event');
-        $('#qrModalSub').innerHTML = 'Chiếu màn hình này tại hội trường — QR sẽ tự đổi mỗi 2 phút.';
+        const kind = data.kind || 'in';
+        const state = tokenState.get(formKey(eventId, kind));
+        const ev = findEvent(eventId);
+        const fallback = kind === 'out'
+            ? (ev && ev.checkoutFormUrl ? ev.checkoutFormUrl : '#')
+            : '/api/checkin.html?eventId=' + eventId;
+        const url = state ? state.url : fallback;
+
+        const kindLabel = kind === 'out' ? 'Check-OUT &amp; Feedback' : 'Check-IN';
+        const subText = kind === 'out'
+            ? 'Chiếu cuối buổi để sinh viên scan → mở Google Form feedback (xác nhận tham dự đủ buổi).'
+            : 'Chiếu trong suốt buổi — QR sẽ tự đổi mỗi 30 giây chống share screenshot.';
+
+        $('#qrModalTitle').innerHTML = 'QR ' + kindLabel + ' · ' + escapeHtml(data.eventTitle || 'Event');
+        $('#qrModalSub').textContent = subText;
         $('#qrModalUrl').textContent = url;
         $('#qrModalImg').innerHTML = '<img alt="QR" src="' + buildQrImageUrl(url, 600) + '">';
         $('#qrModalCopy').onclick = () => navigator.clipboard.writeText(url).then(() => toast('Đã copy link.'));
@@ -751,16 +922,15 @@
         $('#qrModal').classList.remove('hidden');
         $('#qrModal').classList.add('flex');
 
-        // Refresh modal image whenever token rotates while modal is open
         $('#qrModal').dataset.eventId = String(eventId);
+        $('#qrModal').dataset.kind = kind;
     }
 
-    // Hook into rotation to refresh open modal
-    const originalRotate = rotateOne;
-    function refreshOpenModal(eventId) {
+    function refreshOpenModal(eventId, kind) {
         if ($('#qrModal').classList.contains('hidden')) return;
         if ($('#qrModal').dataset.eventId !== String(eventId)) return;
-        const state = tokenState.get(String(eventId));
+        if ($('#qrModal').dataset.kind !== kind) return;
+        const state = tokenState.get(formKey(eventId, kind));
         if (!state) return;
         $('#qrModalUrl').textContent = state.url;
         $('#qrModalImg').innerHTML = '<img alt="QR" src="' + buildQrImageUrl(state.url, 600) + '">';
@@ -791,19 +961,24 @@
     $('#formModalAutoCreate').addEventListener('click', autoCreateForm);
     $('#formModalPreview').addEventListener('click', () => {
         if (!formModalEventId) return;
-        const state = tokenState.get(String(formModalEventId));
-        if (state) {
+        const state = tokenState.get(formKey(formModalEventId, formModalKind));
+        if (state && state.url) {
             window.open(state.url, '_blank');
-        } else {
-            // chưa có token → fetch nhanh rồi mở
-            fetch('/api/checkin/events/' + encodeURIComponent(formModalEventId) + '/qr-token')
-                .then(r => r.ok ? r.json() : null)
-                .then(data => {
-                    const t = data && data.token ? data.token : 'preview';
-                    window.open(buildCheckinUrl(formModalEventId, t), '_blank');
-                })
-                .catch(() => window.open('/api/checkin.html?eventId=' + formModalEventId, '_blank'));
+            return;
         }
+        if (formModalKind === 'out') {
+            const ev = findEvent(formModalEventId);
+            if (ev && ev.checkoutFormUrl) window.open(ev.checkoutFormUrl, '_blank');
+            else toast('Form check-out chưa được tạo. Bấm "🔄 Tạo lại form" trước.');
+            return;
+        }
+        fetch('/api/checkin/events/' + encodeURIComponent(formModalEventId) + '/qr-token')
+            .then(r => r.ok ? r.json() : null)
+            .then(data => {
+                const t = data && data.token ? data.token : 'preview';
+                window.open(buildCheckinUrl(formModalEventId, t), '_blank');
+            })
+            .catch(() => window.open('/api/checkin.html?eventId=' + formModalEventId, '_blank'));
     });
     $('#formModalEditSpeakers').addEventListener('click', () => {
         const editor = $('#speakersEditor');
@@ -831,7 +1006,6 @@
             if (idx >= 0) events[idx] = updated;
             $('#speakersEditor').classList.add('hidden');
             toast('✓ Đã lưu diễn giả. Tạo lại Google Form…');
-            // Auto-tạo lại form với diễn giả mới
             autoCreateForm();
         }).catch(err => toast('Lỗi: ' + err.message));
     }
@@ -839,6 +1013,7 @@
     function autoCreateForm() {
         if (!formModalEventId) return;
         const id = formModalEventId;
+        const kind = formModalKind;
         const userEmail = getCurrentUserEmail() || prompt('Nhập email Gmail bạn vừa đăng nhập:', '') || '';
         if (!userEmail) { toast('Cần email Gmail để tiếp tục.'); return; }
 
@@ -848,11 +1023,12 @@
         btn.disabled = true;
         label.innerHTML = '⌛ Đang gọi API…';
         msg.classList.add('hidden');
-        formStateMap.set(String(id), 'creating');
+        formStateMap.set(formKey(id, kind), 'creating');
         renderFormStatus();
-        updateFormBadge(id);
+        updateFormBadge(id, kind);
 
-        fetch('/api/admin/events/' + encodeURIComponent(id) + '/google-form/auto-create', {
+        const endpoint = kind === 'out' ? 'auto-create-checkout' : 'auto-create';
+        fetch('/api/admin/events/' + encodeURIComponent(id) + '/google-form/' + endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email: userEmail })
@@ -863,16 +1039,18 @@
         }).then(updated => {
             const idx = events.findIndex(e => String(e.id) === String(id));
             if (idx >= 0) events[idx] = updated;
-            $('#formModalUrl').value = updated.googleFormUrl || '';
-            formStateMap.set(String(id), 'ok');
+            const newUrl = kind === 'out' ? updated.checkoutFormUrl : updated.googleFormUrl;
+            $('#formModalUrl').value = newUrl || '';
+            formStateMap.set(formKey(id, kind), 'ok');
             renderFormStatus();
-            updateFormBadge(id);
-            rotateOne(id); // re-build QR with new Google Form URL
-            toast('🎉 Đã tạo Google Form');
+            updateFormBadge(id, kind);
+            if (kind === 'in') rotateOne(id, 'in');
+            else renderCheckoutQr(id);
+            toast('🎉 Đã tạo Google Form ' + (kind === 'out' ? 'CHECK-OUT' : 'CHECK-IN'));
         }).catch(err => {
-            formStateMap.set(String(id), 'fallback');
+            formStateMap.set(formKey(id, kind), 'fallback');
             renderFormStatus();
-            updateFormBadge(id);
+            updateFormBadge(id, kind);
             msg.className = 'text-xs font-semibold text-red-700 leading-relaxed bg-red-50 border border-red-200 rounded-lg p-2.5';
             msg.textContent = '✗ ' + err.message;
             msg.classList.remove('hidden');
