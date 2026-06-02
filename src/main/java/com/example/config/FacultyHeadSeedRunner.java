@@ -56,6 +56,9 @@ public class FacultyHeadSeedRunner implements ApplicationRunner {
 
         // 5 Trưởng khoa (HEAD) — đại diện 5 faculty từ AcademicStructure
         ensureUser("head.cntt@fpt.edu.vn", "Nguyễn Trưởng Khoa CNTT", manager, "HEAD", "Công nghệ Thông tin", "0901100001");
+        // Tài khoản Google thật làm Trưởng khoa CNTT — đăng nhập "Sign in with Google"
+        // để vừa có token Google (tạo/sync Form) vừa có quyền trưởng khoa, không cần liên kết riêng.
+        ensureUser("hovanthongdat90@gmail.com", "Hồ Văn Thông Đạt", manager, "HEAD", "Công nghệ Thông tin", "0901100006");
         ensureUser("head.kinhte@fpt.edu.vn", "Lê Trưởng Khoa Kinh tế", manager, "HEAD", "Kinh tế", "0901100002");
         ensureUser("head.thietke@fpt.edu.vn", "Trần Trưởng Khoa Thiết kế", manager, "HEAD", "Thiết kế Mỹ thuật số", "0901100003");
         ensureUser("head.ngonngu@fpt.edu.vn", "Phạm Trưởng Khoa Ngôn ngữ", manager, "HEAD", "Ngôn ngữ Anh", "0901100004");
