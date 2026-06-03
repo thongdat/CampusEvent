@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Verify giữa buổi — AEMS</title>
+    <link rel="stylesheet" th:href="@{/css/aems.css}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body class="aems">
+<div class="aems-stripe"></div>
+<main class="aems-shell">
+    <header class="aems-header">
+        <div class="aems-header__brand">
+            <span class="aems-header__mark">MV</span>
+            <div>
+                <span class="aems-eyebrow">AEMS · Verify giữa buổi</span>
+                <h1 class="aems-header__title">Chống bỏ về sớm</h1>
+                <p class="aems-header__sub">Mở mã giữa buổi để xác nhận sinh viên còn ở lại — bảo vệ chất lượng tham dự.</p>
+            </div>
+        </div>
+        <a class="aems-btn" th:href="@{'/department/attendance/events/' + ${eventId} + '/qr'}">← Về QR check-in</a>
+    </header>
+
+    <section class="aems-card">
+        <div class="aems-card__head">
+            <h2 class="aems-card__title">Mã verify hiện tại</h2>
+            <span class="aems-badge aems-badge--warn" id="status">Chưa kích hoạt</span>
+        </div>
+        <div class="aems-card__body">
+            <div class="aems-qr-wrap">
+                <img id="qrImage" alt="Mid-session QR" style="display:none;">
+                <div id="placeholder" style="text-align:center; color: var(--aems-ink-muted); padding: 2rem;">
+                    <p style="font-size: 3rem; margin: 0;">⏱</p>
+                    <p style="margin: .5rem 0 0;">Bấm nút bên dưới để mở mã verify mới.</p>
+                </div>
+                <code id="tokenText" class="aems-token" style="display:none;"></code>
+                <p id="expiresText" class="aems-expires"></p>
+            </div>
+            <div style="margin-top: 1rem;">
+                <label class="aems-label">URL sinh viên quét</label>
+                <input id="scanUrl" class="aems-input" readonly>
+            </div>
+            <div class="aems-flex" style="justify-content:center; margin-top: 1rem;">
+                <button class="aems-btn aems-btn--primary" onclick="openMid()">Mở mã verify 3 phút mới</button>
+            </div>
+        </div>
+    </section>
+</main>
+<script th:inline="javascript">
+const eventId = [[${eventId}]];
+async function openMid() {
+    const res = await fetch(`/api/department/attendance/events/${eventId}/mid-session/open`, { method: 'POST' });
+    if (!res.ok) { alert('Không mở được mã: ' + await res.text()); return; }
+    const data = await res.json();
+    document.getElementById('placeholder').style.display = 'none';
+    const img = document.getElementById('qrImage');
+    img.src = data.qrSvgDataUri;
+    img.style.display = 'block';
+    const t = document.getElementById('tokenText');
+    t.textContent = data.token;
+    t.style.display = 'inline-block';
+    document.getElementById('scanUrl').value = location.origin + data.scanUrl;
+    document.getElementById('expiresText').textContent = 'Hết hạn lúc: ' + new Date(data.expiredAt).toLocaleTimeString('vi-VN');
+    document.getElementById('status').textContent = '● Đang phát';
+    document.getElementById('status').className = 'aems-badge aems-badge--ok';
+}
+</script>
+</body>
+</html>

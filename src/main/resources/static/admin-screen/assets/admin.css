@@ -776,6 +776,28 @@ button {
     color: var(--orange-dark);
 }
 
+/* KPI có màu chủ đề để phân biệt nhanh từng nhóm chỉ số. */
+.metric.tone-blue { background: linear-gradient(180deg, var(--blue-soft) 0%, #fff 100%); border-color: #bfdbfe; }
+.metric.tone-blue .metric-value { color: var(--blue); }
+.metric.tone-orange { background: linear-gradient(180deg, var(--orange-soft) 0%, #fff 100%); border-color: #fed7aa; }
+.metric.tone-orange .metric-value { color: var(--orange-dark); }
+.metric.tone-teal { background: linear-gradient(180deg, var(--teal-soft) 0%, #fff 100%); border-color: #99f6e4; }
+.metric.tone-teal .metric-value { color: var(--teal); }
+.metric.tone-green { background: linear-gradient(180deg, var(--green-soft) 0%, #fff 100%); border-color: #a7f3d0; }
+.metric.tone-green .metric-value { color: var(--green); }
+
+/* Metric lồng trong panel (vd "Cần xử lý") làm phẳng để không chồng bóng đổ. */
+.panel .metric {
+    background: var(--paper-2);
+    border-color: var(--line);
+    box-shadow: none;
+}
+
+.panel .metric:hover {
+    transform: none;
+    box-shadow: none;
+}
+
 .split-grid {
     display: grid;
     grid-template-columns: minmax(0, 1.35fr) minmax(18rem, .75fr);
@@ -1900,12 +1922,16 @@ tbody tr.selected {
         padding-right: 1rem;
     }
 
-    .metric-grid,
     .triple-grid,
     .kanban,
-    .form-grid,
-    .skeleton-grid {
+    .form-grid {
         grid-template-columns: 1fr;
+    }
+
+    /* Giữ KPI 2 cột trên điện thoại lớn cho cảm giác dashboard, chỉ về 1 cột ở màn rất nhỏ. */
+    .metric-grid,
+    .skeleton-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .timeline-item {
@@ -1917,6 +1943,11 @@ tbody tr.selected {
     .page-subtitle,
     .breadcrumb {
         display: none;
+    }
+
+    .metric-grid,
+    .skeleton-grid {
+        grid-template-columns: 1fr;
     }
 
     .page-title {

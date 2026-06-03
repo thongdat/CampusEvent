@@ -87,6 +87,7 @@ public class LoginResponse {
         private String role;
         private String major;
         private String faculty;
+        private String departmentPosition;
 
         public UserInfo() {}
 
@@ -95,12 +96,17 @@ public class LoginResponse {
         }
 
         public UserInfo(Long id, String fullName, String email, String role, String major, String faculty) {
+            this(id, fullName, email, role, major, faculty, null);
+        }
+
+        public UserInfo(Long id, String fullName, String email, String role, String major, String faculty, String departmentPosition) {
             this.id = id;
             this.fullName = fullName;
             this.email = email;
             this.role = role;
             this.major = major;
             this.faculty = faculty;
+            this.departmentPosition = departmentPosition;
         }
 
         public Long getId() { return id; }
@@ -120,5 +126,8 @@ public class LoginResponse {
 
         public String getFaculty() { return faculty; }
         public void setFaculty(String faculty) { this.faculty = faculty; }
+
+        public String getDepartmentPosition() { return departmentPosition; }
+        public void setDepartmentPosition(String departmentPosition) { this.departmentPosition = departmentPosition; }
     }
 }

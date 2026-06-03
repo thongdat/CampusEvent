@@ -36,6 +36,34 @@ public class Event {
     @Column(columnDefinition = "NVARCHAR(MAX)")
     private String imageUrls;
 
+    @Column(name = "google_form_url", columnDefinition = "NVARCHAR(1000)")
+    private String googleFormUrl;
+
+    @Column(name = "checkin_form_id", columnDefinition = "NVARCHAR(120)")
+    private String checkinFormId;
+
+    @Column(name = "checkin_sheet_id", columnDefinition = "NVARCHAR(120)")
+    private String checkinSheetId;
+
+    @Column(name = "checkout_form_url", columnDefinition = "NVARCHAR(1000)")
+    private String checkoutFormUrl;
+
+    @Column(name = "checkout_form_id", columnDefinition = "NVARCHAR(120)")
+    private String checkoutFormId;
+
+    @Column(name = "checkout_sheet_id", columnDefinition = "NVARCHAR(120)")
+    private String checkoutSheetId;
+
+    @Column(name = "last_sheet_sync_at")
+    private LocalDateTime lastSheetSyncAt;
+
+    // Thời điểm hệ thống tự đóng event (đánh vắng + kết thúc) sau khi kết thúc 15 phút.
+    @Column(name = "auto_closed_at")
+    private LocalDateTime autoClosedAt;
+
+    @Column(name = "speakers", columnDefinition = "NVARCHAR(800)")
+    private String speakers;
+
     @Column(precision = 18, scale = 2)
     private BigDecimal budget;
     
@@ -134,6 +162,43 @@ public class Event {
 
     public void setImageUrls(String imageUrls) {
         this.imageUrls = imageUrls;
+    }
+
+    public String getGoogleFormUrl() {
+        return googleFormUrl;
+    }
+
+    public void setGoogleFormUrl(String googleFormUrl) {
+        this.googleFormUrl = googleFormUrl;
+    }
+
+    public String getCheckinFormId() { return checkinFormId; }
+    public void setCheckinFormId(String checkinFormId) { this.checkinFormId = checkinFormId; }
+
+    public String getCheckinSheetId() { return checkinSheetId; }
+    public void setCheckinSheetId(String checkinSheetId) { this.checkinSheetId = checkinSheetId; }
+
+    public String getCheckoutFormUrl() { return checkoutFormUrl; }
+    public void setCheckoutFormUrl(String checkoutFormUrl) { this.checkoutFormUrl = checkoutFormUrl; }
+
+    public String getCheckoutFormId() { return checkoutFormId; }
+    public void setCheckoutFormId(String checkoutFormId) { this.checkoutFormId = checkoutFormId; }
+
+    public String getCheckoutSheetId() { return checkoutSheetId; }
+    public void setCheckoutSheetId(String checkoutSheetId) { this.checkoutSheetId = checkoutSheetId; }
+
+    public LocalDateTime getLastSheetSyncAt() { return lastSheetSyncAt; }
+    public void setLastSheetSyncAt(LocalDateTime lastSheetSyncAt) { this.lastSheetSyncAt = lastSheetSyncAt; }
+
+    public LocalDateTime getAutoClosedAt() { return autoClosedAt; }
+    public void setAutoClosedAt(LocalDateTime autoClosedAt) { this.autoClosedAt = autoClosedAt; }
+
+    public String getSpeakers() {
+        return speakers;
+    }
+
+    public void setSpeakers(String speakers) {
+        this.speakers = speakers;
     }
 
     public BigDecimal getBudget() {

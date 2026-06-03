@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Check-in sự kiện · FPT Campus Events</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --fpt-500:#f37021; --fpt-600:#ea580c; --fpt-700:#c2410c;
+            --bg:#f0ebf8; /* Google Forms purple-grey */
+            --ink:#202124; --muted:#5f6368;
+            --border:#dadce0; --hover:#f1f3f4;
+            --error:#d93025;
+        }
+        body {
+            font-family: 'Roboto', 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--ink);
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+        .container { max-width: 720px; margin: 0 auto; padding: 24px 12px 80px; }
+
+        /* Banner */
+        .banner {
+            background: linear-gradient(135deg, var(--fpt-500), var(--fpt-700));
+            border-radius: 12px 12px 0 0;
+            padding: 14px 24px;
+            color: white;
+            display: flex; align-items: center; gap: 12px;
+            box-shadow: 0 1px 3px rgba(60,64,67,.15);
+        }
+        .banner svg { width: 28px; height: 28px; flex: 0 0 28px; }
+        .banner .title { font-weight: 700; font-size: 0.875rem; letter-spacing: .02em; }
+        .banner .sub { font-size: 0.6875rem; opacity: .85; }
+
+        /* Hero image banner */
+        .hero {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16/7;
+            min-height: 180px;
+            max-height: 320px;
+            overflow: hidden;
+            background: linear-gradient(135deg, var(--fpt-500), var(--fpt-700));
+        }
+        .hero img {
+            position: absolute; inset: 0;
+            width: 100%; height: 100%;
+            object-fit: cover;
+        }
+        .hero::after {
+            content: '';
+            position: absolute; inset: 0;
+            background: linear-gradient(180deg, rgba(0,0,0,0) 30%, rgba(0,0,0,.55) 100%);
+        }
+        .hero-content {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            padding: 16px 20px;
+            z-index: 2;
+            color: white;
+        }
+        .hero-badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            background: rgba(255,255,255,.95); color: var(--fpt-700);
+            padding: 3px 9px; border-radius: 999px;
+            font-size: 0.6875rem; font-weight: 800; letter-spacing: .03em;
+            margin-bottom: 8px;
+        }
+        /* Header card */
+        .header-card {
+            background: white;
+            border-left: 10px solid var(--fpt-500);
+            border-bottom: 1px solid var(--border);
+            padding: 24px 24px 20px;
+            position: relative;
+        }
+        .header-card h1 {
+            font-family: 'Roboto', sans-serif;
+            font-weight: 500; font-size: 1.625rem; line-height: 1.25;
+            color: var(--ink);
+            margin-bottom: 10px;
+            word-break: break-word;
+        }
+        .header-card .desc { color: var(--muted); font-size: 0.875rem; line-height: 1.6; margin: 8px 0; white-space: pre-wrap; }
+        .header-card .event-meta {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+            margin-top: 14px; padding-top: 14px;
+            border-top: 1px solid var(--border);
+            font-size: 0.8125rem; color: var(--muted);
+        }
+        @media (max-width: 540px) { .header-card .event-meta { grid-template-columns: 1fr; } }
+        .header-card .event-meta div { display: flex; align-items: flex-start; gap: 8px; }
+        .header-card .event-meta svg { width: 16px; height: 16px; color: var(--fpt-500); flex: 0 0 16px; margin-top: 2px; }
+        .header-card .event-meta strong { color: var(--ink); font-weight: 600; }
+        .header-card .required-note {
+            margin-top: 14px;
+            color: var(--error);
+            font-size: 0.8125rem;
+            font-weight: 500;
+        }
+
+        /* Speakers section */
+        .speakers-card {
+            background: linear-gradient(135deg, #fff7ed, #ffedd5);
+            border: 1px solid var(--fpt-200, #fed7aa);
+            border-radius: 0;
+            padding: 14px 24px;
+            border-bottom: 1px solid var(--border);
+        }
+        .speakers-card .label {
+            font-size: 0.6875rem; font-weight: 800; letter-spacing: .08em;
+            color: var(--fpt-700); text-transform: uppercase;
+            margin-bottom: 4px;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .speakers-card .content { color: #7c2d12; font-size: 0.875rem; font-weight: 500; line-height: 1.5; }
+
+        /* Question card (Google form style) */
+        .q-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 22px 24px;
+            margin-top: 12px;
+            transition: border-color .15s;
+            position: relative;
+        }
+        .q-card:hover { border-color: #bdc1c6; }
+        .q-card:focus-within {
+            border-left: 4px solid var(--fpt-500);
+            padding-left: 21px;
+        }
+
+        .q-label {
+            display: block;
+            font-weight: 400;
+            color: var(--ink);
+            font-size: 0.9375rem;
+            line-height: 1.5;
+            margin-bottom: 4px;
+        }
+        .q-label .req { color: var(--error); margin-left: 3px; font-weight: 700; }
+        .q-hint { font-size: 0.75rem; color: var(--muted); margin-bottom: 12px; }
+
+        /* Inputs — Google form underline style */
+        .input-line {
+            width: 100%;
+            border: 0;
+            border-bottom: 1px solid var(--border);
+            padding: 8px 0;
+            font-family: inherit;
+            font-size: 0.875rem;
+            color: var(--ink);
+            background: transparent;
+            transition: border-color .15s, border-width .15s;
+        }
+        .input-line:focus {
+            outline: 0;
+            border-bottom: 2px solid var(--fpt-500);
+            padding-bottom: 7px; /* offset 2px border */
+        }
+        .input-line::placeholder { color: #9aa0a6; font-size: 0.875rem; }
+
+        /* Radio (Nam/Nữ) — Google form style */
+        .radio-group { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
+        .radio-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color .15s;
+        }
+        .radio-item:hover { background-color: var(--hover); }
+        .radio-item input[type="radio"] {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 20px; height: 20px;
+            border: 2px solid #5f6368;
+            border-radius: 50%;
+            cursor: pointer;
+            position: relative;
+            transition: border-color .15s;
+            margin: 0;
+            flex: 0 0 20px;
+        }
+        .radio-item input[type="radio"]:checked {
+            border-color: var(--fpt-500);
+        }
+        .radio-item input[type="radio"]:checked::after {
+            content: '';
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 10px; height: 10px;
+            background: var(--fpt-500);
+            border-radius: 50%;
+        }
+        .radio-item .radio-label { font-size: 0.875rem; color: var(--ink); }
+
+        /* Quiz section header */
+        .section-header {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px 24px;
+            margin-top: 12px;
+            border-top: 6px solid var(--fpt-500);
+        }
+        .section-header h2 { font-weight: 500; font-size: 1.125rem; color: var(--ink); margin-bottom: 4px; }
+        .section-header p { color: var(--muted); font-size: 0.8125rem; }
+
+        /* Submit row */
+        .submit-row {
+            margin-top: 20px;
+            display: flex; align-items: center; justify-content: space-between;
+            flex-wrap: wrap; gap: 12px;
+        }
+        .btn-submit {
+            padding: 10px 32px;
+            background: var(--fpt-500);
+            color: white;
+            border: 0;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 0.875rem;
+            font-weight: 500;
+            letter-spacing: .02em;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(60,64,67,.3);
+            transition: background-color .15s, box-shadow .15s;
+            display: inline-flex; align-items: center; gap: 8px;
+        }
+        .btn-submit:hover:not(:disabled) {
+            background: var(--fpt-600);
+            box-shadow: 0 1px 2px rgba(60,64,67,.3), 0 1px 3px rgba(60,64,67,.15);
+        }
+        .btn-submit:disabled { opacity: .6; cursor: not-allowed; }
+        .clear-link {
+            color: var(--fpt-700);
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 4px;
+        }
+        .clear-link:hover { background: var(--hover); }
+
+        /* Footer note */
+        .footer-note {
+            text-align: center;
+            padding: 24px 12px;
+            font-size: 0.6875rem;
+            color: var(--muted);
+            line-height: 1.7;
+        }
+        .footer-note .logo {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-weight: 700; color: var(--fpt-700);
+            margin-bottom: 4px;
+        }
+
+        /* Loading / message states */
+        .state-message {
+            background: white;
+            border-radius: 8px;
+            padding: 48px 24px;
+            text-align: center;
+            color: var(--muted);
+        }
+        .spinner {
+            width: 36px; height: 36px;
+            border: 3px solid #e0e0e0; border-top-color: var(--fpt-500);
+            border-radius: 50%; animation: spin .7s linear infinite;
+            margin: 0 auto 16px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .alert {
+            margin-top: 12px;
+            padding: 10px 14px;
+            border-radius: 4px;
+            background: #fce8e6;
+            color: var(--error);
+            font-size: 0.8125rem;
+            font-weight: 500;
+            display: none;
+        }
+        .alert.show { display: block; }
+        .alert.warn { background: #fef7e0; color: #b06000; }
+
+        /* Quiz question (multiple choice) */
+        .quiz-options { display: flex; flex-direction: column; gap: 4px; margin-top: 12px; }
+        .opt {
+            display: flex; align-items: flex-start; gap: 12px;
+            padding: 10px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color .15s;
+        }
+        .opt:hover { background: var(--hover); }
+        .opt input { display: none; }
+        .opt .opt-marker {
+            width: 20px; height: 20px; flex: 0 0 20px;
+            border: 2px solid #5f6368;
+            border-radius: 50%;
+            position: relative;
+            transition: border-color .15s;
+            margin-top: 2px;
+        }
+        .opt input:checked + .opt-marker { border-color: var(--fpt-500); }
+        .opt input:checked + .opt-marker::after {
+            content: '';
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 10px; height: 10px;
+            background: var(--fpt-500);
+            border-radius: 50%;
+        }
+        .opt .opt-text { font-size: 0.875rem; color: var(--ink); line-height: 1.5; }
+
+        /* Success */
+        .success-card {
+            background: white;
+            border-radius: 8px;
+            border-left: 10px solid #16a34a;
+            padding: 28px 24px;
+            text-align: center;
+        }
+        .success-ring {
+            width: 80px; height: 80px; margin: 0 auto 16px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            display: grid; place-items: center;
+            box-shadow: 0 8px 24px -8px rgba(22,163,74,.4);
+            animation: pop .4s cubic-bezier(.22, 1, .36, 1);
+        }
+        .success-ring svg { width: 40px; height: 40px; color: white; }
+        @keyframes pop { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+        .success-card h2 { font-family: 'Roboto'; font-weight: 400; font-size: 1.5rem; margin-bottom: 8px; color: #14532d; }
+        .success-card .student-info { margin: 16px 0; padding: 12px; background: #f0fdf4; border-radius: 8px; font-size: 0.875rem; color: #14532d; text-align: left; }
+        .success-card .student-info strong { font-weight: 700; }
+        .success-card .student-info .row { display: flex; justify-content: space-between; padding: 4px 0; }
+
+        @media (max-width: 600px) {
+            .container { padding: 16px 6px 60px; }
+            .header-card { padding: 24px 16px 16px; }
+            .header-card h1 { font-size: 1.5rem; }
+            .q-card { padding: 18px 16px; }
+            .section-header { padding: 16px 18px; }
+            .submit-row { justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="banner">
+        <svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <div>
+            <div class="title">FPT Campus Events · Check-in</div>
+            <div class="sub">Hệ thống xác nhận tham gia sự kiện</div>
+        </div>
+    </div>
+
+    <div id="content">
+        <div class="state-message" style="border-radius:0 0 8px 8px;">
+            <div class="spinner"></div>
+            <div>Đang tải thông tin sự kiện…</div>
+        </div>
+    </div>
+
+    <div class="footer-note">
+        <div class="logo">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4"/></svg>
+            FPT University
+        </div>
+        Nội dung biểu mẫu không do Google tạo. <span style="color:#9aa0a6;">|</span> Hệ thống AEMS · Dynamic QR rotates every 2 minutes
+    </div>
+</div>
+
+<script>
+(function () {
+    'use strict';
+
+    const params = new URLSearchParams(location.search);
+    const eventId = params.get('eventId') || params.get('id');
+    const qrToken = params.get('token') || '';
+    const $ = sel => document.querySelector(sel);
+
+    if (!eventId) {
+        renderMessage('error', 'Thiếu mã sự kiện', 'Liên kết QR không hợp lệ. Vui lòng quét lại mã QR từ Ban tổ chức.');
+        return;
+    }
+    if (!qrToken) {
+        renderMessage('warn', 'QR đã hết hạn',
+            'Mã QR xoay mỗi 30 giây. Vui lòng quét lại mã QR đang hiển thị trên màn hình.');
+        return;
+    }
+
+    function escapeHtml(s) {
+        return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+    function formatDateTime(iso) {
+        if (!iso) return '—';
+        try { return new Date(iso).toLocaleString('vi-VN', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }); }
+        catch (e) { return iso; }
+    }
+    function renderMessage(kind, title, sub) {
+        $('#content').innerHTML = `
+            <div class="state-message" style="border-radius:0 0 8px 8px;">
+                <svg style="width:48px;height:48px;margin:0 auto 12px;color:${kind==='error'?'#d93025':'#f59e0b'};" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
+                <div style="font-weight:700;color:var(--ink);font-size:1rem;margin-bottom:4px;">${escapeHtml(title)}</div>
+                <div>${escapeHtml(sub)}</div>
+            </div>`;
+    }
+
+    let event = null;
+    let answers = {};
+    let formState = { email:'', fullName:'', studentCode:'', gender:'' };
+
+    fetch('/api/checkin/events/' + encodeURIComponent(eventId) + '/info')
+        .then(r => { if (!r.ok) throw new Error('Không tìm thấy sự kiện'); return r.json(); })
+        .then(data => { event = data; renderForm(); })
+        .catch(err => renderMessage('error', 'Không tải được sự kiện', err.message));
+
+    function renderForm() {
+        // DEMO: mở check-in mọi lúc, không chặn theo cửa sổ thời gian.
+
+        const quizHtml = (event.hasQuiz && event.quiz.length) ? renderQuiz(event.quiz) : '';
+
+        const speakersHtml = (event.speakers && event.speakers.trim()) ? `
+            <div class="speakers-card">
+                <div class="label">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
+                    Diễn giả / Chuyên gia
+                </div>
+                <div class="content">${escapeHtml(event.speakers)}</div>
+            </div>` : '';
+
+        $('#content').innerHTML = `
+            <!-- Hero banner -->
+            <div class="hero">
+                <img src="${escapeHtml(event.imageUrl)}" alt="${escapeHtml(event.title || '')}" loading="eager">
+                <div class="hero-content">
+                    <span class="hero-badge">
+                        <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4"/></svg>
+                        SỰ KIỆN CHÍNH THỨC · FPT
+                    </span>
+                </div>
+            </div>
+
+            <!-- Event header -->
+            <div class="header-card">
+                <h1>${escapeHtml(event.title || 'Sự kiện FPT')}</h1>
+                ${event.description ? `<p class="desc">${escapeHtml(event.description)}</p>` : ''}
+                <div class="event-meta">
+                    ${event.startTime ? `<div><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg><div><div style="color:var(--muted);font-size:.6875rem;text-transform:uppercase;letter-spacing:.05em;">Thời gian</div><strong>${formatDateTime(event.startTime)}<br>→ ${formatDateTime(event.endTime)}</strong></div></div>` : ''}
+                    ${event.location ? `<div><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg><div><div style="color:var(--muted);font-size:.6875rem;text-transform:uppercase;letter-spacing:.05em;">Địa điểm</div><strong>${escapeHtml(event.location)}</strong></div></div>` : ''}
+                    ${event.departmentName ? `<div><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16M9 7h1m-1 4h1m-1 4h1m4-8h1m-1 4h1m-1 4h1M3 21h18"/></svg><div><div style="color:var(--muted);font-size:.6875rem;text-transform:uppercase;letter-spacing:.05em;">Đơn vị tổ chức</div><strong>${escapeHtml(event.departmentName)}</strong></div></div>` : ''}
+                    ${event.capacity ? `<div><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg><div><div style="color:var(--muted);font-size:.6875rem;text-transform:uppercase;letter-spacing:.05em;">Sức chứa</div><strong>${event.capacity} sinh viên</strong></div></div>` : ''}
+                </div>
+                <p class="required-note">* Câu hỏi bắt buộc bên dưới</p>
+            </div>
+
+            ${speakersHtml}
+
+            <!-- Email -->
+            <div class="q-card">
+                <label class="q-label">Email <span class="req">*</span></label>
+                <p class="q-hint">Email FPT của bạn (vd: ten.mssv@fpt.edu.vn)</p>
+                <input type="email" id="fEmail" class="input-line" placeholder="Câu trả lời của bạn" required autocomplete="email">
+            </div>
+
+            <!-- Full name -->
+            <div class="q-card">
+                <label class="q-label">Họ và tên <span class="req">*</span></label>
+                <input type="text" id="fFullName" class="input-line" placeholder="Câu trả lời của bạn" required autocomplete="name">
+            </div>
+
+            <!-- Student code -->
+            <div class="q-card">
+                <label class="q-label">Mã số sinh viên (MSSV) <span class="req">*</span></label>
+                <p class="q-hint">Mã số đầy đủ trên thẻ sinh viên, vd: HE176543</p>
+                <input type="text" id="fStudentCode" class="input-line" placeholder="Câu trả lời của bạn" required style="text-transform:uppercase">
+            </div>
+
+            <!-- Gender -->
+            <div class="q-card">
+                <label class="q-label">Giới tính <span class="req">*</span></label>
+                <div class="radio-group" id="fGenderGroup">
+                    <label class="radio-item"><input type="radio" name="gender" value="Nam"><span class="radio-label">Nam</span></label>
+                    <label class="radio-item"><input type="radio" name="gender" value="Nữ"><span class="radio-label">Nữ</span></label>
+                    <label class="radio-item"><input type="radio" name="gender" value="Khác"><span class="radio-label">Khác / Không muốn nói</span></label>
+                </div>
+            </div>
+
+            ${quizHtml ? `
+                <div class="section-header">
+                    <h2>Quiz xác thực</h2>
+                    <p>Trả lời ${event.quiz.length} câu hỏi sau để hoàn tất check-in.</p>
+                </div>
+                ${quizHtml}` : ''}
+
+            <div class="submit-row">
+                <button type="button" class="btn-submit" id="btnSubmit">
+                    Gửi & Check-in
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                </button>
+                <span class="clear-link" id="btnClear">Xoá biểu mẫu</span>
+            </div>
+            <div class="alert" id="alertBox"></div>`;
+
+        // Bind quiz radios
+        document.querySelectorAll('input[name^="q_"]').forEach(input => {
+            input.addEventListener('change', e => {
+                answers[e.target.name.replace('q_','')] = e.target.value;
+            });
+        });
+
+        document.getElementById('btnSubmit').addEventListener('click', submitForm);
+        document.getElementById('btnClear').addEventListener('click', () => {
+            if (confirm('Bạn có chắc muốn xoá hết câu trả lời?')) location.reload();
+        });
+    }
+
+    function renderQuiz(quiz) {
+        return quiz.map((q, idx) => {
+            const opts = ['A','B','C','D']
+                .map(letter => ({ letter, text: q['option'+letter] }))
+                .filter(o => o.text && String(o.text).trim());
+            const optsHtml = opts.map(o => `
+                <label class="opt">
+                    <input type="radio" name="q_${q.id}" value="${o.letter}">
+                    <span class="opt-marker"></span>
+                    <span class="opt-text"><strong>${o.letter}.</strong> ${escapeHtml(o.text)}</span>
+                </label>`).join('');
+            return `
+                <div class="q-card">
+                    <label class="q-label">${idx + 1}. ${escapeHtml(q.questionText)} <span class="req">*</span></label>
+                    <div class="quiz-options">${optsHtml}</div>
+                </div>`;
+        }).join('');
+    }
+
+    function showAlert(message, kind) {
+        const box = document.getElementById('alertBox');
+        if (!box) return;
+        box.textContent = message;
+        box.className = 'alert show' + (kind === 'warn' ? ' warn' : '');
+        box.scrollIntoView({ behavior:'smooth', block:'center' });
+    }
+
+    function submitForm() {
+        const btn = document.getElementById('btnSubmit');
+        const alertBox = document.getElementById('alertBox');
+        alertBox.classList.remove('show');
+
+        const email = document.getElementById('fEmail').value.trim();
+        const fullName = document.getElementById('fFullName').value.trim();
+        const studentCode = document.getElementById('fStudentCode').value.trim().toUpperCase();
+        const gender = (document.querySelector('input[name="gender"]:checked') || {}).value || '';
+
+        if (!email)       return showAlert('Vui lòng nhập email.', 'warn');
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showAlert('Email không hợp lệ.', 'warn');
+        if (!fullName)    return showAlert('Vui lòng nhập họ và tên.', 'warn');
+        if (!studentCode) return showAlert('Vui lòng nhập mã số sinh viên.', 'warn');
+        if (!gender)      return showAlert('Vui lòng chọn giới tính.', 'warn');
+
+        if (event.hasQuiz) {
+            const missing = event.quiz.find(q => !answers[q.id]);
+            if (missing) return showAlert('Vui lòng trả lời đầy đủ các câu hỏi quiz trước khi gửi.', 'warn');
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = 'Đang gửi…';
+
+        const body = {
+            token: qrToken,
+            email, fullName, studentCode, gender,
+            answers: event.hasQuiz ? event.quiz.map(q => ({
+                questionId: q.id, selectedAnswer: answers[q.id]
+            })) : []
+        };
+
+        fetch('/api/checkin/events/' + encodeURIComponent(eventId) + '/submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        }).then(async r => {
+            const data = await r.json().catch(() => ({}));
+            if (!r.ok) throw new Error(data.message || data.error || 'Check-in thất bại');
+            return data;
+        }).then(data => renderSuccess(data, { email, fullName, studentCode, gender }))
+          .catch(err => {
+              showAlert(err.message || 'Có lỗi xảy ra, vui lòng thử lại.');
+              btn.disabled = false;
+              btn.innerHTML = `Gửi & Check-in <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>`;
+          });
+    }
+
+    function renderSuccess(data, form) {
+        $('#content').innerHTML = `
+            <div class="header-card" style="border-left-color:#16a34a;">
+                <h1 style="color:#14532d;">Đã nhận biểu mẫu</h1>
+                <p class="desc">Cảm ơn bạn đã tham gia <strong>${escapeHtml(event.title || '')}</strong></p>
+            </div>
+            <div class="q-card" style="border-left:10px solid #16a34a;padding-left:18px;">
+                <div class="success-ring" style="width:64px;height:64px;margin:0 0 16px;">
+                    <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                </div>
+                <h2 style="font-weight:500;font-size:1.125rem;color:#14532d;margin-bottom:12px;">Check-in thành công!</h2>
+                <div class="student-info">
+                    <div class="row"><span>Họ tên</span><strong>${escapeHtml(form.fullName)}</strong></div>
+                    <div class="row"><span>MSSV</span><strong>${escapeHtml(form.studentCode)}</strong></div>
+                    <div class="row"><span>Email</span><strong style="font-size:.8125rem">${escapeHtml(form.email)}</strong></div>
+                    <div class="row"><span>Giới tính</span><strong>${escapeHtml(form.gender)}</strong></div>
+                    <div class="row"><span>Thời gian</span><strong>${formatDateTime(data.checkinTime)}</strong></div>
+                    ${data.quizPercent ? `<div class="row"><span>Điểm quiz</span><strong>${Math.round(data.quizPercent)}%</strong></div>` : ''}
+                </div>
+                <p style="font-size:.8125rem;color:var(--muted);margin-top:8px;">Bạn có thể đóng tab này. Phản hồi đã được ghi nhận.</p>
+            </div>`;
+    }
+})();
+</script>
+</body>
+</html>

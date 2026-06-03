@@ -72,6 +72,30 @@
         ::-webkit-scrollbar-thumb:hover { background: #fdba74; }
         ::-webkit-scrollbar-track { background: #fff7ed; }
 
+        /* ===== FLUID RESPONSIVE GRIDS (không phụ thuộc breakpoint) ===== */
+        /* Card grid tự co-giãn: tối thiểu 290px, lấp đầy chiều ngang */
+        .grid-fluid-cards {
+            display: grid;
+            gap: 1.25rem;
+            grid-template-columns: repeat(auto-fill, minmax(min(100%, 290px), 1fr));
+        }
+        /* Footer cột tự co-giãn theo độ rộng */
+        .grid-fluid-footer {
+            display: grid;
+            gap: 2rem;
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+        }
+        /* Hero stats: 3 ô không bao giờ vỡ, tự co min-width */
+        .grid-hero-stats {
+            display: grid;
+            gap: 0.75rem;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+        /* Ngăn flex children tràn ngang (text dài, dropdown, search) */
+        .min-w-0-all > * { min-width: 0; }
+        /* Khoá overflow ngang toàn trang — phòng khi 1 element bị tràn */
+        html, body { overflow-x: hidden; }
+
         /* Sidebar item active accent */
         .sb-item { transition: all .18s ease; }
         .sb-item.active {
@@ -129,7 +153,7 @@
 
 <!-- ============================ TASKBAR / TOP HEADER ============================ -->
 <header class="sticky top-0 z-40 border-b border-fpt-100 bg-white/85 backdrop-blur-xl">
-    <div class="mx-auto flex h-16 max-w-screen-2xl items-center gap-3 px-4 sm:px-6 lg:px-8">
+    <div class="mx-auto flex h-16 max-w-screen-2xl items-center gap-3 px-4 sm:px-6 lg:px-8 min-w-0-all">
         <button id="btnMenu" class="grid h-10 w-10 place-items-center rounded-xl border border-fpt-100 bg-white text-fpt-700 hover:bg-fpt-50 lg:hidden" aria-label="Mở menu">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round"/></svg>
         </button>
@@ -183,7 +207,7 @@
     </div>
 </header>
 
-<div class="mx-auto flex max-w-screen-2xl">
+<div class="mx-auto flex max-w-screen-2xl min-w-0-all">
 
     <!-- ============================ SIDEBAR ============================ -->
     <aside id="sidebar" class="border-r border-fpt-100 bg-white/95 backdrop-blur-xl">
@@ -247,32 +271,32 @@
             <div class="hero-blob-1 pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full"></div>
             <div class="hero-blob-2 pointer-events-none absolute -bottom-24 -left-16 h-64 w-64 rounded-full"></div>
 
-            <div class="relative grid items-center gap-6 lg:grid-cols-[1.5fr_1fr]">
-                <div>
+            <div class="relative grid items-center gap-6 xl:grid-cols-[1.5fr_1fr]">
+                <div class="min-w-0">
                     <p class="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-fpt-700 shadow-sm backdrop-blur">
                         <span class="h-1.5 w-1.5 rounded-full bg-fpt-500"></span>
                         Sự kiện sinh viên FPT
                     </p>
-                    <h1 class="mt-3 text-3xl font-extrabold leading-tight text-ink sm:text-4xl">
+                    <h1 class="mt-3 text-2xl font-extrabold leading-tight text-ink sm:text-3xl lg:text-4xl">
                         Xin chào <span id="heroName" class="bg-gradient-to-r from-fpt-600 to-fpt-800 bg-clip-text text-transparent">bạn</span> 👋
                     </h1>
-                    <p class="mt-3 max-w-2xl text-base text-ink-muted">
+                    <p class="mt-3 max-w-2xl text-sm text-ink-muted sm:text-base">
                         Đây là những sự kiện được đề xuất riêng cho bạn — dựa trên ngành học, kỳ và hoạt động gần đây. Cuộn xuống và tìm cái phù hợp nhất.
                     </p>
                 </div>
 
-                <div class="grid grid-cols-3 gap-3 lg:gap-4">
-                    <div class="rounded-2xl border border-fpt-100 bg-white/85 p-3.5 backdrop-blur sm:p-4">
+                <div class="grid-hero-stats">
+                    <div class="rounded-2xl border border-fpt-100 bg-white/85 p-3 backdrop-blur sm:p-4">
                         <p class="text-[10px] font-bold uppercase tracking-wider text-ink-soft">Đăng ký</p>
-                        <p id="statRegistered" class="mt-1 text-2xl font-extrabold text-fpt-700">—</p>
+                        <p id="statRegistered" class="mt-1 text-xl font-extrabold text-fpt-700 sm:text-2xl">—</p>
                     </div>
-                    <div class="rounded-2xl border border-fpt-100 bg-white/85 p-3.5 backdrop-blur sm:p-4">
+                    <div class="rounded-2xl border border-fpt-100 bg-white/85 p-3 backdrop-blur sm:p-4">
                         <p class="text-[10px] font-bold uppercase tracking-wider text-ink-soft">Đã dự</p>
-                        <p id="statAttended" class="mt-1 text-2xl font-extrabold text-fpt-700">—</p>
+                        <p id="statAttended" class="mt-1 text-xl font-extrabold text-fpt-700 sm:text-2xl">—</p>
                     </div>
-                    <div class="rounded-2xl border border-fpt-100 bg-white/85 p-3.5 backdrop-blur sm:p-4">
+                    <div class="rounded-2xl border border-fpt-100 bg-white/85 p-3 backdrop-blur sm:p-4">
                         <p class="text-[10px] font-bold uppercase tracking-wider text-ink-soft">Hạng</p>
-                        <p id="statRank" class="mt-1 text-2xl font-extrabold text-fpt-700">—</p>
+                        <p id="statRank" class="mt-1 text-xl font-extrabold text-fpt-700 sm:text-2xl">—</p>
                     </div>
                 </div>
             </div>
@@ -298,7 +322,7 @@
                 </select>
             </div>
 
-            <div id="eventGrid" class="grid gap-5 sm:grid-cols-2 xl:grid-cols-3"></div>
+            <div id="eventGrid" class="grid-fluid-cards"></div>
 
             <div id="emptyDiscover" hidden class="rounded-3xl border-2 border-dashed border-fpt-200 bg-fpt-50/40 p-14 text-center">
                 <div class="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-white text-3xl shadow-sm">🌅</div>
@@ -337,8 +361,8 @@
 
 <!-- ============================ FOOTER ============================ -->
 <footer class="mt-12 border-t border-fpt-100 bg-gradient-to-br from-fpt-900 via-fpt-800 to-fpt-700 text-fpt-50">
-    <div class="mx-auto grid max-w-screen-2xl gap-8 px-4 py-12 sm:px-6 md:grid-cols-3 lg:px-8">
-        <div>
+    <div class="mx-auto grid-fluid-footer max-w-screen-2xl px-4 py-12 sm:px-6 lg:px-8">
+        <div class="min-w-0">
             <div class="flex items-center gap-2.5 font-extrabold text-white">
                 <span class="grid h-10 w-10 place-items-center rounded-xl bg-white/15 backdrop-blur">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5a6 3 0 0 0 12 0v-5"/></svg>
@@ -351,7 +375,7 @@
             <p class="mt-4 text-sm leading-6 text-fpt-100/80">Hệ thống quản lý sự kiện sinh viên Đại học FPT — đăng ký, vé QR, check-in và phản hồi gọn trong một nơi.</p>
         </div>
 
-        <div>
+        <div class="min-w-0">
             <p class="text-xs font-bold uppercase tracking-[0.18em] text-fpt-200">Khám phá</p>
             <ul class="mt-4 space-y-2 text-sm">
                 <li><a href="landing.html" class="text-fpt-100/80 hover:text-white">Trang chủ</a></li>
@@ -361,7 +385,7 @@
             </ul>
         </div>
 
-        <div>
+        <div class="min-w-0">
             <p class="text-xs font-bold uppercase tracking-[0.18em] text-fpt-200">Hỗ trợ</p>
             <ul class="mt-4 space-y-2 text-sm">
                 <li><a href="forgot-password.html" class="text-fpt-100/80 hover:text-white">Quên mật khẩu</a></li>
