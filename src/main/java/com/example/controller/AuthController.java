@@ -15,7 +15,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/auth")
-@CrossOrigin(origins = "*")
 public class AuthController {
 
     @GetMapping("/test")
@@ -147,13 +146,4 @@ public class AuthController {
         return ResponseEntity.ok(result);
     }
 
-    /**
-     * GET /api/auth/init-passwords
-     * Khởi tạo mật khẩu BCrypt cho tất cả tài khoản seed.
-     */
-    @GetMapping("/init-passwords")
-    public ResponseEntity<Map<String, Object>> initPasswords() {
-        Map<String, Object> result = authService.initSeedPasswords();
-        return ResponseEntity.ok(result);
-    }
 }

@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Feedback checkout — AEMS</title>
+    <link rel="stylesheet" th:href="@{/css/aems.css}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body class="aems">
+<div class="aems-stripe"></div>
+<main class="aems-shell" style="max-width: 720px;">
+    <header class="aems-header">
+        <div class="aems-header__brand">
+            <span class="aems-header__mark">⭐</span>
+            <div>
+                <span class="aems-eyebrow">AEMS · Bước 2/2 trước checkout</span>
+                <h1 class="aems-header__title">Đánh giá event</h1>
+                <p class="aems-header__sub">Phản hồi của bạn giúp khoa cải thiện chương trình kế tiếp.</p>
+            </div>
+        </div>
+    </header>
+
+    <form id="feedbackForm" class="aems-card">
+        <div class="aems-card__body" style="display: grid; gap: 1.25rem;">
+            <div class="aems-row">
+                <div>
+                    <label class="aems-label">📚 Chất lượng nội dung</label>
+                    <div class="aems-rating-radio">
+                        <input type="radio" id="cr1" name="contentRating" value="1"><label for="cr1">1</label>
+                        <input type="radio" id="cr2" name="contentRating" value="2"><label for="cr2">2</label>
+                        <input type="radio" id="cr3" name="contentRating" value="3"><label for="cr3">3</label>
+                        <input type="radio" id="cr4" name="contentRating" value="4"><label for="cr4">4</label>
+                        <input type="radio" id="cr5" name="contentRating" value="5" checked><label for="cr5">5</label>
+                    </div>
+                </div>
+                <div>
+                    <label class="aems-label">🎤 Diễn giả</label>
+                    <div class="aems-rating-radio">
+                        <input type="radio" id="sr1" name="speakerRating" value="1"><label for="sr1">1</label>
+                        <input type="radio" id="sr2" name="speakerRating" value="2"><label for="sr2">2</label>
+                        <input type="radio" id="sr3" name="speakerRating" value="3"><label for="sr3">3</label>
+                        <input type="radio" id="sr4" name="speakerRating" value="4"><label for="sr4">4</label>
+                        <input type="radio" id="sr5" name="speakerRating" value="5" checked><label for="sr5">5</label>
+                    </div>
+                </div>
+            </div>
+            <div class="aems-row">
+                <div>
+                    <label class="aems-label">🛠 Tổ chức</label>
+                    <div class="aems-rating-radio">
+                        <input type="radio" id="or1" name="organizationRating" value="1"><label for="or1">1</label>
+                        <input type="radio" id="or2" name="organizationRating" value="2"><label for="or2">2</label>
+                        <input type="radio" id="or3" name="organizationRating" value="3"><label for="or3">3</label>
+                        <input type="radio" id="or4" name="organizationRating" value="4"><label for="or4">4</label>
+                        <input type="radio" id="or5" name="organizationRating" value="5" checked><label for="or5">5</label>
+                    </div>
+                </div>
+                <div>
+                    <label class="aems-label">⭐ Tổng thể</label>
+                    <div class="aems-rating-radio">
+                        <input type="radio" id="ov1" name="overallRating" value="1"><label for="ov1">1</label>
+                        <input type="radio" id="ov2" name="overallRating" value="2"><label for="ov2">2</label>
+                        <input type="radio" id="ov3" name="overallRating" value="3"><label for="ov3">3</label>
+                        <input type="radio" id="ov4" name="overallRating" value="4"><label for="ov4">4</label>
+                        <input type="radio" id="ov5" name="overallRating" value="5" checked><label for="ov5">5</label>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <label class="aems-label" for="comment">💬 Bình luận thêm (không bắt buộc)</label>
+                <textarea id="comment" name="comment" class="aems-textarea" rows="4" placeholder="Bạn thích điều gì nhất? Có gợi ý cải thiện gì không?"></textarea>
+            </div>
+            <div class="aems-flex" style="justify-content: space-between;">
+                <a class="aems-btn" th:href="@{'/student/attendance/events/' + ${eventId} + '/checkout'}">← Quay lại quiz</a>
+                <div class="aems-flex">
+                    <button type="submit" class="aems-btn aems-btn--primary">Gửi feedback</button>
+                    <button type="button" class="aems-btn aems-btn--primary" onclick="completeCheckout()" style="background: linear-gradient(135deg, #047857, #065f46);">✓ Hoàn tất checkout</button>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <div id="result" style="margin-top: 1.25rem;"></div>
+</main>
+<script th:inline="javascript">
+const eventId = [[${eventId}]];
+const email = (JSON.parse(sessionStorage.getItem('user') || '{}').email) || sessionStorage.getItem('userEmail') || '';
+document.getElementById('feedbackForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    if (!email) { alert('Vui lòng đăng nhập trước.'); return; }
+    const body = Object.fromEntries(new FormData(e.target).entries());
+    ['contentRating','speakerRating','organizationRating','overallRating'].forEach(k => body[k] = Number(body[k]));
+    const res = await fetch(`/api/student/feedback/events/${eventId}/submit`, {
+        method:'POST', headers:{'Content-Type':'application/json','X-User-Email':email},
+        body: JSON.stringify(body)
+    });
+    if (res.ok) alert('Đã gửi feedback. Hãy bấm "Hoàn tất checkout" để kết thúc.');
+    else alert('Lỗi: ' + await res.text());
+});
+async function completeCheckout() {
+    if (!email) { alert('Vui lòng đăng nhập trước.'); return; }
+    const res = await fetch(`/api/student/attendance/events/${eventId}/checkout`, {
+        method:'POST', headers: {'X-User-Email': email}
+    });
+    if (res.ok) {
+        const d = await res.json();
+        document.getElementById('result').innerHTML = `
+            <div class="aems-status-banner">
+                <h2>✓ Checkout hoàn tất</h2>
+                <p>Điểm tham gia của bạn: <strong>${(d.participationScore || 0).toFixed(1)}/100</strong> · ${d.classification || ''}</p>
+            </div>`;
+    } else alert('Lỗi: ' + await res.text());
+}
+</script>
+</body>
+</html>

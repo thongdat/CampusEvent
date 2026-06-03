@@ -81,6 +81,20 @@
         localStorage.setItem('userName', name);
         localStorage.setItem('userRole', role);
 
+        // Nếu trước khi đăng nhập có trang check-in chờ → quay về đó luôn
+        var pendingReturn = localStorage.getItem('postLoginReturn');
+        if (pendingReturn) {
+            try {
+                var safeUrl = new URL(pendingReturn, window.location.origin);
+                if (safeUrl.origin === window.location.origin) {
+                    localStorage.removeItem('postLoginReturn');
+                    setTimeout(function() { window.location.href = safeUrl.toString(); }, 900);
+                    return;
+                }
+            } catch (e) { /* ignore */ }
+            localStorage.removeItem('postLoginReturn');
+        }
+
         // Chuyển hướng theo role sau 2 giây
         var routes = {
             'ADMIN': 'admin-screen/overview.html',

@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dashboard tham dự — AEMS</title>
+    <link rel="stylesheet" th:href="@{/css/aems.css}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body class="aems">
+<div class="aems-stripe"></div>
+<main class="aems-shell">
+    <header class="aems-header">
+        <div class="aems-header__brand">
+            <span class="aems-header__mark">📊</span>
+            <div>
+                <span class="aems-eyebrow">AEMS · Tham dự &amp; điểm tham gia</span>
+                <h1 class="aems-header__title">Dashboard tổng quan event</h1>
+                <p class="aems-header__sub">Theo dõi check-in, mid-verify, checkout, quiz và rating từ một nơi duy nhất.</p>
+            </div>
+        </div>
+        <div class="aems-flex">
+            <a class="aems-btn" th:href="@{'/department/attendance/events/' + ${eventId} + '/qr'}">QR check-in</a>
+            <a class="aems-btn" th:href="@{'/department/quiz/events/' + ${eventId}}">Quản lý quiz</a>
+        </div>
+    </header>
+
+    <section class="aems-status-banner" style="margin-bottom: 1.5rem;">
+        <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem;">
+            <div>
+                <h2>Điểm tham gia trung bình: <span th:text="${stats.averageParticipationScore != null ? #numbers.formatDecimal(stats.averageParticipationScore, 1, 1) : '0.0'}">0</span> / 100</h2>
+                <p>Tỉ lệ tham dự: <strong th:text="${stats.attendanceRate != null ? #numbers.formatDecimal(stats.attendanceRate, 1, 1) : '0'} + '%'"></strong>
+                   · Tỉ lệ no-show: <strong th:text="${stats.noShowRate != null ? #numbers.formatDecimal(stats.noShowRate, 1, 1) : '0'} + '%'"></strong></p>
+            </div>
+            <div style="font-size: 3rem;" th:utext="${stats.averageParticipationScore != null and stats.averageParticipationScore &gt;= 70 ? '⭐' : '🎯'}">⭐</div>
+        </div>
+    </section>
+
+    <h3 style="margin: 0 0 .75rem; font-size: 1rem; color: var(--aems-fpt-deep); text-transform: uppercase; letter-spacing: .12em;">Tham dự</h3>
+    <section class="aems-grid" style="margin-bottom: 1.5rem;">
+        <div class="aems-metric"><p class="aems-metric__label">Đăng ký</p><p class="aems-metric__value" th:text="${stats.totalRegisteredStudents ?: 0}">0</p><p class="aems-metric__hint">Tổng sinh viên đã đăng ký</p></div>
+        <div class="aems-metric"><p class="aems-metric__label">Check-in</p><p class="aems-metric__value" th:text="${stats.checkedInStudents ?: 0}">0</p><p class="aems-metric__hint">Đã quét QR đầu buổi</p></div>
+        <div class="aems-metric"><p class="aems-metric__label">Mid-verify</p><p class="aems-metric__value" th:text="${stats.midVerifiedStudents ?: 0}">0</p><p class="aems-metric__hint">Còn ở giữa buổi</p></div>
+        <div class="aems-metric"><p class="aems-metric__label">Checkout</p><p class="aems-metric__value" th:text="${stats.checkedOutStudents ?: 0}">0</p><p class="aems-metric__hint">Đã hoàn tất ra về</p></div>
+        <div class="aems-metric"><p class="aems-metric__label">Completed</p><p class="aems-metric__value" th:text="${stats.completedStudents ?: 0}">0</p><p class="aems-metric__hint">Quiz + feedback đầy đủ</p></div>
+        <div class="aems-metric"><p class="aems-metric__label">Vắng</p><p class="aems-metric__value" style="color:#b91c1c;" th:text="${stats.absentStudents ?: 0}">0</p><p class="aems-metric__hint">Đăng ký nhưng không check-in</p></div>
+        <div class="aems-metric"><p class="aems-metric__label">Dở dang</p><p class="aems-metric__value" style="color:#92400e;" th:text="${stats.incompleteStudents ?: 0}">0</p><p class="aems-metric__hint">Check-in nhưng không checkout</p></div>
+    </section>
+
+    <h3 style="margin: 0 0 .75rem; font-size: 1rem; color: var(--aems-fpt-deep); text-transform: uppercase; letter-spacing: .12em;">Quiz &amp; phản hồi</h3>
+    <section class="aems-grid">
+        <div class="aems-metric"><p class="aems-metric__label">Điểm quiz TB</p><p class="aems-metric__value" th:text="${stats.averageQuizScore != null ? #numbers.formatDecimal(stats.averageQuizScore, 1, 1) : '0.0'}">0</p></div>
+        <div class="aems-metric"><p class="aems-metric__label">% hoàn thành quiz</p><p class="aems-metric__value" th:text="${stats.quizCompletionRate != null ? #numbers.formatDecimal(stats.quizCompletionRate, 1, 0) : '0'} + '%'">0%</p></div>
+        <div class="aems-metric"><p class="aems-metric__label">Rating event TB</p><p class="aems-metric__value" th:text="${stats.averageEventRating != null ? #numbers.formatDecimal(stats.averageEventRating, 1, 1) : '0.0'}">0</p><p class="aems-metric__hint">Thang 1–5 ⭐</p></div>
+    </section>
+</main>
+<script th:inline="javascript">
+const eventId = [[${eventId}]];
+// Đánh vắng giờ chạy TỰ ĐỘNG: hệ thống tự đánh vắng + đóng event 15 phút sau khi kết thúc.
+</script>
+</body>
+</html>

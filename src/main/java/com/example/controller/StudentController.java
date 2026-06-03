@@ -21,7 +21,6 @@ import com.example.service.PriorityRankingService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -59,7 +58,6 @@ import java.util.stream.Collectors;
  */
 @RestController
 @RequestMapping(value = "/student", produces = "application/json;charset=UTF-8")
-@CrossOrigin(origins = "*")
 public class StudentController {
 
     private static final DateTimeFormatter ISO = DateTimeFormatter.ISO_LOCAL_DATE_TIME;

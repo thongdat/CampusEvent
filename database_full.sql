@@ -90,7 +90,7 @@ CREATE TABLE users (
 GO
 
 CREATE UNIQUE INDEX UX_users_phone ON users(phone)
-    WHERE phone IS NOT NULL AND phone <> '';
+WHERE phone IS NOT NULL AND phone <> '';
 GO
 
 CREATE TABLE student (
@@ -542,7 +542,7 @@ GO
 DECLARE @stuRoleId2 BIGINT = (SELECT id FROM role WHERE name = 'STUDENT');
 
 INSERT INTO registration (registration_date, status, note, event_id, student_id)
-SELECT
+    SELECT
     DATEADD(HOUR, -1 * ((ABS(CHECKSUM(NEWID())) % 240) + 24), e.start_time),
     CASE
         WHEN ((CAST(e.id AS INT) * 7 + CAST(s.id AS INT)) % 23) = 0 THEN 'WAITLIST'
@@ -723,7 +723,7 @@ JOIN event   e ON e.id = r.event_id
 WHERE r.status = 'REGISTERED';
 
 INSERT INTO activity_log (user_id, activity_type, description, points_earned, created_at)
-SELECT
+    SELECT
     u.id, 'CHECK_IN',
     N'Check-in ' + e.title + N' (' + a.status + N')',
     CASE WHEN a.status = 'ATTENDED' THEN 10 ELSE 0 END,

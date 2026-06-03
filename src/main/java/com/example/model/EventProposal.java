@@ -44,7 +44,10 @@ public class EventProposal {
     
     @Column(nullable = false)
     private LocalDateTime createdAt;
-    
+
+    @Column(name = "quiz_payload", columnDefinition = "NVARCHAR(MAX)")
+    private String quizPayload;
+
     @ManyToOne
     @JoinColumn(name = "departmentId", nullable = false)
     private Department department;
@@ -164,5 +167,13 @@ public class EventProposal {
 
     public void setDepartment(Department department) {
         this.department = department;
+    }
+
+    public String getQuizPayload() {
+        return quizPayload;
+    }
+
+    public void setQuizPayload(String quizPayload) {
+        this.quizPayload = quizPayload;
     }
 }
