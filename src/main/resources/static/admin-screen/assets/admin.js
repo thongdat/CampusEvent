@@ -640,9 +640,10 @@
         refreshIcons();
     }
 
-    function metric(label, value, hint = '') {
+    function metric(label, value, hint = '', tone = '') {
+        const toneClass = tone ? ` tone-${tone}` : '';
         return `
-            <article class="metric">
+            <article class="metric${toneClass}">
                 <p class="metric-label">${h(label)}</p>
                 <p class="metric-value">${h(value)}</p>
                 <p class="metric-hint">${h(hint)}</p>
@@ -1148,10 +1149,10 @@
         const upcoming = events.filter(item => new Date(item.startTime) >= new Date()).slice(0, 6);
         content(`
             <div class="metric-grid">
-                ${metric('Tổng user', number(stats.totalUsers), `${number(stats.activeUsers)} active · ${number(stats.lockedUsers)} locked`)}
-                ${metric('Events', number(stats.totalEvents), `${number(stats.todayEvents)} hôm nay · ${number(stats.upcomingEvents)} sắp tới`)}
-                ${metric('Registrations', number(stats.totalRegistrations), `${number(stats.attendanceCount)} attendance`)}
-                ${metric('Feedback', `${Number(stats.averageRating || reports.averageRating || 0).toLocaleString('vi-VN', { maximumFractionDigits: 1 })}/5`, `${number(feedback.length)} phản hồi`)}
+                ${metric('Tổng user', number(stats.totalUsers), `${number(stats.activeUsers)} active · ${number(stats.lockedUsers)} locked`, 'blue')}
+                ${metric('Events', number(stats.totalEvents), `${number(stats.todayEvents)} hôm nay · ${number(stats.upcomingEvents)} sắp tới`, 'orange')}
+                ${metric('Registrations', number(stats.totalRegistrations), `${number(stats.attendanceCount)} attendance`, 'teal')}
+                ${metric('Feedback', `${Number(stats.averageRating || reports.averageRating || 0).toLocaleString('vi-VN', { maximumFractionDigits: 1 })}/5`, `${number(feedback.length)} phản hồi`, 'green')}
             </div>
             <div class="split-grid">
                 <section class="panel">

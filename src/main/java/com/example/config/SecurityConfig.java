@@ -13,6 +13,7 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizationRequestResolver;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 
 @Configuration
 @EnableWebSecurity
@@ -29,6 +30,14 @@ public class SecurityConfig {
                                            ClientRegistrationRepository clientRegistrationRepository) throws Exception {
         http
             .csrf().disable()
+            // Header bảo mật: chống clickjacking (chặn nhúng iframe — app không dùng iframe)
+            // và hạn chế rò rỉ referrer sang site khác. X-Content-Type-Options: nosniff
+            // đã được Spring Security bật mặc định.
+            .headers(headers -> {
+                headers.frameOptions(frame -> frame.deny());
+                headers.referrerPolicy(ref -> ref.policy(
+                        ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN));
+            })
             .authorizeHttpRequests(authz -> authz
                 .anyRequest().permitAll()
             )

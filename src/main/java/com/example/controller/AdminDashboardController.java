@@ -39,7 +39,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -68,7 +67,6 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(value = "/admin", produces = "application/json;charset=UTF-8")
-@CrossOrigin(origins = "*")
 public class AdminDashboardController {
 
     private static final List<String> ACTIVE_PROPOSAL_STATUSES = List.of("PENDING", "APPROVED", "REVISION", "REJECTED");

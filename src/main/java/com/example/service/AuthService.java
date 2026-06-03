@@ -21,7 +21,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -48,11 +47,24 @@ public class AuthService {
     @Autowired
     private EmailService emailService;
 
+    @Autowired
+    private com.example.security.AttemptLimiter attemptLimiter;
+
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     private final ConcurrentHashMap<String, Map<String, Object>> pendingOtps = new ConcurrentHashMap<>();
 
     public LoginResponse login(LoginRequest request) {
         String loginEmail = request.getEmail() == null ? "" : request.getEmail().trim().toLowerCase();
+
+        // Chống brute-force: khoá tạm sau nhiều lần sai liên tiếp cho cùng một email.
+        String loginKey = "login:" + loginEmail;
+        long lockedSeconds = attemptLimiter.lockedSeconds(loginKey);
+        if (lockedSeconds > 0) {
+            return LoginResponse.error(
+                    "Bạn đã nhập sai quá nhiều lần. Vui lòng thử lại sau " + ((lockedSeconds / 60) + 1) + " phút.",
+                    "TOO_MANY_ATTEMPTS");
+        }
+
         Optional<User> optionalUser = userRepository.findByEmail(loginEmail);
         if (optionalUser.isEmpty() && loginEmail.endsWith("@uni.edu.vn")) {
             optionalUser = userRepository.findByEmail(loginEmail.replace("@uni.edu.vn", "@fpt.edu.vn"));
@@ -62,6 +74,7 @@ public class AuthService {
         }
 
         if (optionalUser.isEmpty()) {
+            attemptLimiter.recordFailure(loginKey);
             return LoginResponse.error("Email hoặc mật khẩu không chính xác.", "INVALID_CREDENTIALS");
         }
 
@@ -73,8 +86,8 @@ public class AuthService {
         if (stored.startsWith("$2a$") || stored.startsWith("$2b$") || stored.startsWith("$2y$")) {
             matched = passwordEncoder.matches(input, stored);
         } else if (stored.startsWith("plain:")) {
-            // Seed password chưa được hash. Nếu khớp thì tự BCrypt rồi save lại,
-            // tránh việc user phải gọi /api/auth/init-passwords thủ công.
+            // Seed password chưa được hash. Nếu khớp thì tự BCrypt rồi lưu lại
+            // ngay trong lần đăng nhập đầu tiên (không còn endpoint init thủ công).
             String literal = stored.substring("plain:".length());
             matched = literal.equals(input);
             if (matched) {
@@ -87,12 +100,16 @@ public class AuthService {
         }
 
         if (!matched) {
+            attemptLimiter.recordFailure(loginKey);
             return LoginResponse.error("Email hoặc mật khẩu không chính xác.", "INVALID_CREDENTIALS");
         }
 
         if (!Boolean.TRUE.equals(user.getStatus())) {
             return LoginResponse.error("Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.", "ACCOUNT_LOCKED");
         }
+
+        // Đăng nhập thành công → xoá bộ đếm thất bại.
+        attemptLimiter.reset(loginKey);
 
         ActivityLog log = new ActivityLog(user, "EMAIL_LOGIN", "Đăng nhập bằng email", EMAIL_LOGIN_POINTS);
         activityLogRepository.save(log);
@@ -149,6 +166,9 @@ public class AuthService {
     public RegisterResponse register(RegisterRequest request) {
         String password = request.getPassword() == null ? "" : request.getPassword();
         String confirmPassword = request.getConfirmPassword() == null ? "" : request.getConfirmPassword();
+        if (password.length() < 8) {
+            return RegisterResponse.error("Mật khẩu phải có ít nhất 8 ký tự.");
+        }
         if (!password.equals(confirmPassword)) {
             return RegisterResponse.error("Mật khẩu xác nhận không khớp.");
         }
@@ -184,6 +204,11 @@ public class AuthService {
             return RegisterResponse.error("Chưa có mã OTP nào được gửi. Vui lòng yêu cầu gửi lại.");
         }
 
+        String otpKey = "otp-register:" + email;
+        if (attemptLimiter.isLocked(otpKey)) {
+            return RegisterResponse.error("Bạn đã nhập sai OTP quá nhiều lần. Vui lòng yêu cầu mã mới sau ít phút.");
+        }
+
         LocalDateTime expiry = (LocalDateTime) otpData.get("expiry");
         String storedOtp = (String) otpData.get("otp");
 
@@ -193,8 +218,10 @@ public class AuthService {
         }
 
         if (!otpCode.trim().equals(storedOtp)) {
+            attemptLimiter.recordFailure(otpKey);
             return RegisterResponse.error("Mã OTP không chính xác.");
         }
+        attemptLimiter.reset(otpKey);
 
         String selectedDepartment = "";
         String selectedFaculty = "";
@@ -324,6 +351,12 @@ public class AuthService {
         }
 
         User user = optionalUser.get();
+        String otpKey = "otp-reset:" + (email == null ? "" : email.trim().toLowerCase());
+        if (attemptLimiter.isLocked(otpKey)) {
+            result.put("success", false);
+            result.put("message", "Bạn đã nhập sai OTP quá nhiều lần. Vui lòng yêu cầu mã mới sau ít phút.");
+            return result;
+        }
         if (user.getOtpCode() == null || user.getOtpExpiry() == null) {
             result.put("success", false);
             result.put("message", "Chưa có mã OTP nào được gửi. Vui lòng yêu cầu lại.");
@@ -340,11 +373,13 @@ public class AuthService {
         }
 
         if (!otpCode.equals(user.getOtpCode())) {
+            attemptLimiter.recordFailure(otpKey);
             result.put("success", false);
             result.put("message", "Mã OTP không chính xác.");
             return result;
         }
 
+        attemptLimiter.reset(otpKey);
         result.put("success", true);
         result.put("message", "Xác minh thành công! Bạn có thể đặt lại mật khẩu.");
         return result;
@@ -360,7 +395,14 @@ public class AuthService {
         }
 
         User user = optionalUser.get();
+        String otpKey = "otp-reset:" + (email == null ? "" : email.trim().toLowerCase());
+        if (attemptLimiter.isLocked(otpKey)) {
+            result.put("success", false);
+            result.put("message", "Bạn đã nhập sai OTP quá nhiều lần. Vui lòng yêu cầu mã mới sau ít phút.");
+            return result;
+        }
         if (user.getOtpCode() == null || !otpCode.equals(user.getOtpCode())) {
+            attemptLimiter.recordFailure(otpKey);
             result.put("success", false);
             result.put("message", "Mã OTP không hợp lệ.");
             return result;
@@ -372,6 +414,7 @@ public class AuthService {
             return result;
         }
 
+        attemptLimiter.reset(otpKey);
         user.setPassword(passwordEncoder.encode(newPassword));
         user.setOtpCode(null);
         user.setOtpExpiry(null);
@@ -382,38 +425,4 @@ public class AuthService {
         return result;
     }
 
-    /**
-     * Hash lại các mật khẩu seed trong database.
-     * - Nếu password bắt đầu bằng "plain:abc123" → hash "abc123" (giữ mật khẩu riêng).
-     *   Cho phép phân biệt admin123 / dept123 / com123 / stu123 trong seed FPT.
-     * - Nếu password đã ở dạng BCrypt ($2a$) → bỏ qua.
-     * - Trường hợp khác (legacy "hashed_password_xxx") → fallback "12345678".
-     */
-    public Map<String, Object> initSeedPasswords() {
-        Map<String, Object> result = new HashMap<>();
-        String fallback = "12345678";
-        List<User> allUsers = userRepository.findAll();
-        int count = 0;
-
-        for (User user : allUsers) {
-            String pwd = user.getPassword();
-            if (pwd == null || pwd.startsWith("$2a$")) {
-                continue;
-            }
-            String target;
-            if (pwd.startsWith("plain:") && pwd.length() > "plain:".length()) {
-                target = pwd.substring("plain:".length());
-            } else {
-                target = fallback;
-            }
-            user.setPassword(passwordEncoder.encode(target));
-            userRepository.save(user);
-            count++;
-        }
-
-        result.put("success", true);
-        result.put("message", "Đã cập nhật " + count + " tài khoản. Mật khẩu seed prefix 'plain:' được giữ nguyên, các tài khoản cũ dùng fallback '" + fallback + "'.");
-        result.put("updatedCount", count);
-        return result;
-    }
 }

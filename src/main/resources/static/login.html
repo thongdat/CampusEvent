@@ -787,33 +787,10 @@
                 }
             })
             .catch(function() {
-                // Fallback: nếu backend chưa chạy, dùng mock data để demo
+                // Không có "đăng nhập giả lập" phía client. Mọi xác thực đều qua backend
+                // để tránh lộ thông tin tài khoản và bỏ qua kiểm tra bảo mật.
                 btn.classList.remove('loading'); btn.disabled = false;
-                var MOCK = [
-                    { email: 'admin@example.com', password: 'admin1234', role: 'ADMIN', locked: false },
-                    { email: 'department@example.com', password: 'dept1234', role: 'DEPARTMENT', locked: false, major: 'Công nghệ Thông tin', faculty: 'Công nghệ Thông tin' },
-                    { email: 'committee@example.com', password: 'com12345', role: 'COMMITTEE', locked: false },
-                    { email: 'student@example.com', password: 'student123', role: 'STUDENT', locked: false, major: 'Công nghệ Thông tin', faculty: 'Công nghệ Thông tin' },
-                    { email: 'student@fpt.edu.vn', password: 'student123', role: 'STUDENT', locked: false, major: 'Kỹ thuật phần mềm', faculty: 'Công nghệ Thông tin' },
-                    { email: 'sv1@fpt.edu.vn', password: 'stu12345', role: 'STUDENT', locked: false, major: 'Kỹ thuật phần mềm', faculty: 'Công nghệ Thông tin' },
-                    { email: 'locked@example.com', password: 'locked123', role: 'ADMIN', locked: true }
-                ];
-                var user = MOCK.find(function(u) { return u.email === email && u.password === pass; });
-                if (!user) {
-                    emailInput.classList.add('input-error');
-                    passInput.classList.add('input-error');
-                    showMsg('Email hoặc mật khẩu không chính xác.', 'error');
-                    return;
-                }
-                if (user.locked) {
-                    showMsg('Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.', 'locked');
-                    return;
-                }
-                sessionStorage.setItem('user', JSON.stringify({ fullName: 'Demo User', email: user.email, role: user.role, major: user.major || '', faculty: user.faculty || '' }));
-                localStorage.setItem('userName', 'Demo User');
-                localStorage.setItem('userRole', user.role);
-                showMsg('Đăng nhập thành công! (offline mode)', 'success');
-                setTimeout(function() { redirectByRole(user.role); }, 1200);
+                showMsg('Không kết nối được máy chủ. Vui lòng thử lại sau.', 'error');
             });
         });
 
