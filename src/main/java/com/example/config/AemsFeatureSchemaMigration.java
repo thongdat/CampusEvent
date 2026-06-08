@@ -31,6 +31,8 @@ public class AemsFeatureSchemaMigration implements ApplicationRunner {
         addColumnIfMissing("event", "last_sheet_sync_at", "DATETIME2 NULL");
         addColumnIfMissing("event", "auto_closed_at", "DATETIME2 NULL");
         addColumnIfMissing("event", "speakers", "NVARCHAR(800) NULL");
+        addColumnIfMissing("event", "organizer", "NVARCHAR(200) NULL");
+        addColumnIfMissing("event", "support_staff_needed", "INT NULL");
 
         addColumnIfMissing("attendance", "mid_verify_time", "DATETIME2 NULL");
         addColumnIfMissing("attendance", "checkout_time", "DATETIME2 NULL");
@@ -39,7 +41,11 @@ public class AemsFeatureSchemaMigration implements ApplicationRunner {
         addColumnIfMissing("attendance", "event_id", "BIGINT NULL");
         addColumnIfMissing("attendance", "student_id", "BIGINT NULL");
 
-        addColumnIfMissing(resolveProposalTable(), "quiz_payload", "NVARCHAR(MAX) NULL");
+        String proposalTable = resolveProposalTable();
+        addColumnIfMissing(proposalTable, "quiz_payload", "NVARCHAR(MAX) NULL");
+        addColumnIfMissing(proposalTable, "organizer", "NVARCHAR(200) NULL");
+        addColumnIfMissing(proposalTable, "support_staff_needed", "INT NULL");
+        addColumnIfMissing(proposalTable, "proposed_end_date", "DATETIME2 NULL");
 
         executeIfTableMissing("attendance_session",
                 "CREATE TABLE attendance_session (" +

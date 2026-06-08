@@ -64,7 +64,7 @@
 
 <div class="flex min-h-screen">
     <!-- ===== Sidebar ===== -->
-    <aside id="sidebar" class="fixed inset-y-0 left-0 z-30 flex w-64 flex-col border-r border-slate-200 bg-white transition-transform lg:static lg:translate-x-0 -translate-x-full">
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-30 flex w-64 flex-col border-r border-slate-200 bg-white transition-transform lg:sticky lg:top-0 lg:h-screen lg:self-start lg:translate-x-0 -translate-x-full">
         <!-- Brand -->
         <div class="flex h-16 items-center gap-3 border-b border-slate-200 px-5">
             <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-fpt-500 to-fpt-700 text-white font-extrabold shadow-pop">D</span>
@@ -198,12 +198,24 @@
             <section>
                 <div class="mb-3 flex items-center gap-2">
                     <span class="flex h-6 w-6 items-center justify-center rounded-md bg-fpt-100 text-xs font-extrabold text-fpt-700">2</span>
-                    <h3 class="text-sm font-extrabold text-slate-900">Thời gian, địa điểm, ngân sách</h3>
+                    <h3 class="text-sm font-extrabold text-slate-900">Thời gian, nhân sự, ngân sách</h3>
                 </div>
                 <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <label class="block">
-                        <span class="mb-1 block text-xs font-bold text-slate-700">Ngày giờ đề xuất *</span>
+                        <span class="mb-1 block text-xs font-bold text-slate-700">Bắt đầu *</span>
                         <input id="proposalDate" type="datetime-local" required class="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-fpt-500 focus:ring-2 focus:ring-fpt-200 focus:outline-none">
+                    </label>
+                    <label class="block">
+                        <span class="mb-1 block text-xs font-bold text-slate-700">Kết thúc *</span>
+                        <input id="proposalEndDate" type="datetime-local" required class="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-fpt-500 focus:ring-2 focus:ring-fpt-200 focus:outline-none">
+                    </label>
+                    <label class="block">
+                        <span class="mb-1 block text-xs font-bold text-slate-700">Người chịu trách nhiệm *</span>
+                        <input id="proposalOrganizer" maxlength="200" placeholder="VD: Nguyễn Văn A — Bí thư Đoàn khoa" class="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-fpt-500 focus:ring-2 focus:ring-fpt-200 focus:outline-none">
+                    </label>
+                    <label class="block">
+                        <span class="mb-1 block text-xs font-bold text-slate-700">Số người hỗ trợ cần</span>
+                        <input id="proposalSupportStaff" type="number" min="0" value="0" placeholder="VD: 5" class="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-fpt-500 focus:ring-2 focus:ring-fpt-200 focus:outline-none">
                     </label>
                     <label class="block">
                         <span class="mb-1 block text-xs font-bold text-slate-700">Địa điểm</span>
@@ -213,7 +225,7 @@
                         <span class="mb-1 block text-xs font-bold text-slate-700">Sức chứa *</span>
                         <input id="proposalCapacity" type="number" min="1" value="80" required class="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-fpt-500 focus:ring-2 focus:ring-fpt-200 focus:outline-none">
                     </label>
-                    <label class="block">
+                    <label class="block sm:col-span-2">
                         <span class="mb-1 block text-xs font-bold text-slate-700">Ngân sách (VND)</span>
                         <input id="proposalBudget" type="number" min="0" step="10000" value="0" class="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-fpt-500 focus:ring-2 focus:ring-fpt-200 focus:outline-none">
                     </label>
@@ -249,11 +261,6 @@
                     <h3 class="text-sm font-extrabold text-slate-900">Điểm danh <span class="text-fpt-700">CHECK-IN</span> (QR đầu buổi)</h3>
                     <span class="ml-auto rounded bg-fpt-100 px-2 py-0.5 text-[10px] font-extrabold text-fpt-700">Tự động</span>
                 </div>
-                <p class="mb-3 rounded-lg border border-fpt-200 bg-fpt-50 px-3 py-2 text-xs font-medium text-fpt-900 leading-relaxed">
-                    Hệ thống tự sinh <strong>Google Form CHECK-IN tối giản</strong>. Sinh viên quét QR động (xoay 30 giây) → điền form → submit.
-                    Hệ thống <strong>so email Google (đã xác thực) với tài khoản trong hệ thống</strong>:
-                    trùng = <span class="text-emerald-700 font-bold">check-in thành công</span>; sinh viên đã đăng ký mà không check-in = <span class="text-rose-600 font-bold">đánh vắng</span>.
-                </p>
                 <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-2.5">
                     <div class="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 mb-1">📋 Form check-in chỉ gồm:</div>
                     <div class="flex items-start gap-2 text-xs"><span class="flex h-5 w-5 flex-none items-center justify-center rounded bg-fpt-200 text-[10px] font-extrabold text-fpt-800">1</span><span class="text-slate-700"><strong>Email</strong> (Google tự thu thập &amp; xác thực — dùng để đối chiếu danh tính)</span></div>
@@ -269,11 +276,6 @@
                     <h3 class="text-sm font-extrabold text-slate-900">Quiz <span class="text-emerald-700">CHECK-OUT</span> &amp; Feedback (QR cuối buổi)</h3>
                     <span class="ml-auto rounded bg-emerald-100 px-2 py-0.5 text-[10px] font-extrabold text-emerald-700">Quiz tuỳ chỉnh</span>
                 </div>
-                <p class="mb-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-900 leading-relaxed">
-                    Cuối buổi, sinh viên quét QR check-out → làm <strong>quiz nhỏ (bạn soạn bên dưới)</strong> + đánh giá buổi học.
-                    Chỉ sinh viên <strong>đã check-in</strong> mới được tính <span class="text-emerald-700 font-bold">hoàn thành đủ buổi</span>;
-                    ai chưa check-in mà bấm check-out vẫn ở trạng thái <span class="text-rose-600 font-bold">vắng</span>.
-                </p>
 
                 <div class="mb-2 text-[11px] font-extrabold uppercase tracking-wider text-slate-500">✍️ Câu hỏi quiz cuối buổi (bạn tự soạn):</div>
                 <div id="quizQuestionsList" class="space-y-3"></div>
@@ -408,6 +410,8 @@
         if (options.body && !headers['Content-Type']) headers['Content-Type'] = 'application/json';
         return fetch(path.indexOf('/api/') === 0 ? path : API_BASE + path, Object.assign({}, options, { headers }))
             .then(r => {
+                if (r.status === 401) { location.href = '/api/login.html'; throw new Error('HTTP 401'); }
+                if (r.status === 403) { toast('Bạn không có quyền truy cập chức năng này.'); throw new Error('HTTP 403'); }
                 if (!r.ok) return r.text().then(t => { throw new Error(t || 'HTTP ' + r.status); });
                 return r.status === 204 ? null : r.json();
             });
@@ -578,9 +582,13 @@
                                         <td class="px-5 py-3.5">
                                             <p class="font-semibold text-slate-900">${h(p.title || 'Untitled')}</p>
                                             <p class="mt-0.5 line-clamp-1 text-xs text-slate-500">${h(p.description || '—').substring(0, 90)}</p>
+                                            ${p.organizer ? `<p class="mt-1 text-[11px] font-semibold text-fpt-700">🧑‍💼 ${h(p.organizer)}${(p.supportStaffNeeded > 0) ? ` · 🤝 ${p.supportStaffNeeded} hỗ trợ` : ''}</p>` : ''}
                                         </td>
                                         <td class="px-5 py-3.5 text-slate-700">${h(p.departmentName || '—')}</td>
-                                        <td class="px-5 py-3.5 text-slate-700">${fmtDate(p.proposedDate)}</td>
+                                        <td class="px-5 py-3.5 text-slate-700">
+                                            <p>${fmtDate(p.proposedDate)}</p>
+                                            ${p.proposedEndDate ? `<p class="mt-0.5 text-xs text-slate-500">→ ${fmtDate(p.proposedEndDate)}</p>` : ''}
+                                        </td>
                                         <td class="px-5 py-3.5">${statusBadge(p.status)}</td>
                                         <td class="px-5 py-3.5 text-right">
                                             <button type="button" data-edit="${p.id}" class="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-800" title="Xem/sửa">
@@ -830,6 +838,13 @@
         $('#proposalImage').value = (proposal && proposal.imageUrl) || '';
         selectedProposalImage = (proposal && proposal.imageUrl) || '';
         $('#proposalDate').value = toDtInput(proposal && proposal.proposedDate);
+        const startVal = $('#proposalDate').value;
+        const endSeed = (proposal && proposal.proposedEndDate)
+            ? proposal.proposedEndDate
+            : (startVal ? new Date(new Date(startVal).getTime() + 2 * 60 * 60 * 1000) : null);
+        $('#proposalEndDate').value = toDtInput(endSeed);
+        $('#proposalOrganizer').value = (proposal && proposal.organizer) || '';
+        $('#proposalSupportStaff').value = (proposal && proposal.supportStaffNeeded != null) ? proposal.supportStaffNeeded : 0;
 
         const defaultFaculty = (proposal && (proposal.faculty || facultyOf(proposal.departmentName))) || facultyOf(user.major || '') || user.faculty || (store.structure[0] && store.structure[0].faculty) || '';
         populateFacultySelect(defaultFaculty);
@@ -853,6 +868,9 @@
             title: $('#proposalTitle').value.trim(),
             description: $('#proposalDescription').value.trim(),
             proposedDate: $('#proposalDate').value ? new Date($('#proposalDate').value).toISOString() : null,
+            proposedEndDate: $('#proposalEndDate').value ? new Date($('#proposalEndDate').value).toISOString() : null,
+            organizer: $('#proposalOrganizer').value.trim(),
+            supportStaffNeeded: Number($('#proposalSupportStaff').value || 0),
             departmentId: departmentId ? Number(departmentId) : null,
             departmentName,
             faculty,
@@ -1025,6 +1043,18 @@
         const payload = proposalPayload();
         if (!payload.title || !payload.description || !payload.proposedDate || !payload.departmentId) {
             toast('Vui lòng nhập đủ thông tin bắt buộc.');
+            return;
+        }
+        if (!payload.proposedEndDate) {
+            toast('Vui lòng chọn giờ kết thúc.');
+            return;
+        }
+        if (new Date(payload.proposedEndDate) <= new Date(payload.proposedDate)) {
+            toast('Giờ kết thúc phải sau giờ bắt đầu.');
+            return;
+        }
+        if (!payload.organizer) {
+            toast('Vui lòng nhập người chịu trách nhiệm.');
             return;
         }
         const req = id

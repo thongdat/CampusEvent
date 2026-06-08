@@ -64,6 +64,12 @@ public class Event {
     @Column(name = "speakers", columnDefinition = "NVARCHAR(800)")
     private String speakers;
 
+    @Column(name = "organizer", columnDefinition = "NVARCHAR(200)")
+    private String organizer;
+
+    @Column(name = "support_staff_needed")
+    private Integer supportStaffNeeded;
+
     @Column(precision = 18, scale = 2)
     private BigDecimal budget;
     
@@ -199,6 +205,22 @@ public class Event {
 
     public void setSpeakers(String speakers) {
         this.speakers = speakers;
+    }
+
+    public String getOrganizer() {
+        return organizer;
+    }
+
+    public void setOrganizer(String organizer) {
+        this.organizer = organizer;
+    }
+
+    public Integer getSupportStaffNeeded() {
+        return supportStaffNeeded;
+    }
+
+    public void setSupportStaffNeeded(Integer supportStaffNeeded) {
+        this.supportStaffNeeded = supportStaffNeeded;
     }
 
     public BigDecimal getBudget() {

@@ -5,11 +5,13 @@ import com.example.dto.LoginRequest;
 import com.example.dto.LoginResponse;
 import com.example.dto.RegisterRequest;
 import com.example.dto.RegisterResponse;
+import com.example.security.SessionAuth;
 import com.example.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.util.Map;
 
@@ -35,10 +37,16 @@ public class AuthController {
      * UC01 – Đăng nhập hệ thống (tất cả vai trò)
      */
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request,
+                                               HttpServletRequest httpRequest) {
         LoginResponse response = authService.login(request);
 
         if (response.isSuccess()) {
+            LoginResponse.UserInfo user = response.getUser();
+            if (user != null) {
+                // Mở phiên server làm danh tính tin cậy cho phân quyền
+                SessionAuth.set(httpRequest, user.getId(), user.getEmail(), user.getRole());
+            }
             return ResponseEntity.ok(response);
         }
 

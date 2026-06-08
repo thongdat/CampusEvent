@@ -2,8 +2,12 @@ package com.example.controller;
 
 import com.example.model.Event;
 import com.example.model.EventProposal;
+import com.example.model.QuizQuestion;
 import com.example.repository.EventProposalRepository;
 import com.example.repository.EventRepository;
+import com.example.repository.QuizQuestionRepository;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -43,13 +47,18 @@ public class CommitteeController {
 
     private static final DateTimeFormatter ISO = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
     private static final List<String> ALL_STATUSES = List.of("PENDING", "REVISION", "APPROVED", "REJECTED");
+    private static final ObjectMapper QUIZ_MAPPER = new ObjectMapper();
 
     private final EventProposalRepository proposalRepository;
     private final EventRepository eventRepository;
+    private final QuizQuestionRepository quizQuestionRepository;
 
-    public CommitteeController(EventProposalRepository proposalRepository, EventRepository eventRepository) {
+    public CommitteeController(EventProposalRepository proposalRepository,
+                               EventRepository eventRepository,
+                               QuizQuestionRepository quizQuestionRepository) {
         this.proposalRepository = proposalRepository;
         this.eventRepository = eventRepository;
+        this.quizQuestionRepository = quizQuestionRepository;
     }
 
     /**
@@ -117,7 +126,8 @@ public class CommitteeController {
 
         LocalDateTime start = payload != null ? parseDate(payload.get("startTime"), proposal.getProposedDate()) : proposal.getProposedDate();
         if (start == null) start = LocalDateTime.now().plusDays(7);
-        LocalDateTime end = payload != null ? parseDate(payload.get("endTime"), start.plusHours(3)) : start.plusHours(3);
+        LocalDateTime defaultEnd = proposal.getProposedEndDate() != null ? proposal.getProposedEndDate() : start.plusHours(3);
+        LocalDateTime end = payload != null ? parseDate(payload.get("endTime"), defaultEnd) : defaultEnd;
         if (!end.isAfter(start)) {
             end = start.plusHours(3);
         }
@@ -148,6 +158,13 @@ public class CommitteeController {
         event.setCapacity(capacityFinal);
         event.setLocation(resolvedLocationFinal);
         event.setStatus("PUBLISHED");
+        String organizer = payload == null ? proposal.getOrganizer()
+                : firstNonBlank(stringValue(payload, "organizer"), proposal.getOrganizer());
+        event.setOrganizer(organizer);
+        Integer supportStaff = payload != null
+                ? parseInt(payload.get("supportStaffNeeded"), proposal.getSupportStaffNeeded())
+                : proposal.getSupportStaffNeeded();
+        event.setSupportStaffNeeded(supportStaff);
         if (proposal.getImageUrl() != null && !proposal.getImageUrl().isBlank()) {
             event.setImageUrl(proposal.getImageUrl());
         }
@@ -159,12 +176,20 @@ public class CommitteeController {
         }
         Event saved = eventRepository.save(event);
 
+        // Mang quiz (do khoa soạn trong proposal) sang event trước khi xoá proposal,
+        // nếu không quiz check-out sẽ bị mất.
+        copyQuizToEvent(saved, proposal.getQuizPayload());
+
+        // Duyệt = bước cuối: event đã được tạo & công khai cho sinh viên,
+        // nên proposal hoàn thành vòng đời → rời khỏi hàng đợi "đề xuất"
+        // (tránh tình trạng đã duyệt nhưng vẫn nằm trong danh sách chờ).
         proposal.setStatus("APPROVED");
         proposal.setNote(note != null && !note.isBlank() ? note : "Đã duyệt");
-        proposalRepository.save(proposal);
 
         Map<String, Object> response = toDetail(proposal);
         response.put("event", eventCard(saved));
+        response.put("removedFromWorkflow", true);
+        proposalRepository.delete(proposal);
         return ResponseEntity.ok(response);
     }
 
@@ -229,6 +254,9 @@ public class CommitteeController {
         m.put("title", p.getTitle());
         m.put("status", p.getStatus());
         m.put("proposedDate", iso(p.getProposedDate()));
+        m.put("proposedEndDate", iso(p.getProposedEndDate()));
+        m.put("organizer", p.getOrganizer());
+        m.put("supportStaffNeeded", p.getSupportStaffNeeded());
         m.put("createdAt", iso(p.getCreatedAt()));
         m.put("imageUrl", p.getImageUrl());
         m.put("location", p.getLocation());
@@ -265,6 +293,56 @@ public class CommitteeController {
 
     private String iso(LocalDateTime time) {
         return time == null ? null : time.format(ISO);
+    }
+
+    /** Tạo các câu hỏi quiz cho event từ quizPayload (JSON) của proposal. Idempotent. */
+    private void copyQuizToEvent(Event event, String quizPayload) {
+        if (quizPayload == null || quizPayload.isBlank() || event.getId() == null) {
+            return;
+        }
+        if (quizQuestionRepository.countByEventId(event.getId()) > 0) {
+            return;
+        }
+        List<Map<String, Object>> questions;
+        try {
+            questions = QUIZ_MAPPER.readValue(quizPayload, new TypeReference<List<Map<String, Object>>>() {});
+        } catch (Exception ex) {
+            return;
+        }
+        for (Map<String, Object> q : questions) {
+            if (q == null) {
+                continue;
+            }
+            String text = String.valueOf(q.getOrDefault("questionText", "")).trim();
+            if (text.isEmpty()) {
+                continue;
+            }
+            QuizQuestion question = new QuizQuestion();
+            question.setEvent(event);
+            question.setQuestionText(text);
+            question.setQuestionType(String.valueOf(q.getOrDefault("questionType", "MULTIPLE_CHOICE")).toUpperCase(Locale.ROOT));
+            question.setOptionA(quizNullable(q.get("optionA")));
+            question.setOptionB(quizNullable(q.get("optionB")));
+            question.setOptionC(quizNullable(q.get("optionC")));
+            question.setOptionD(quizNullable(q.get("optionD")));
+            question.setCorrectAnswer(quizNullable(q.get("correctAnswer")));
+            int points = 1;
+            try {
+                Object raw = q.getOrDefault("points", 1);
+                points = raw instanceof Number n ? n.intValue() : Integer.parseInt(String.valueOf(raw));
+            } catch (Exception ignored) {
+            }
+            question.setPoints(Math.max(1, points));
+            quizQuestionRepository.save(question);
+        }
+    }
+
+    private String quizNullable(Object value) {
+        if (value == null) {
+            return null;
+        }
+        String s = String.valueOf(value).trim();
+        return s.isEmpty() ? null : s;
     }
 
     private boolean contains(String haystack, String needle) {
