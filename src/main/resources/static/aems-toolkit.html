@@ -264,8 +264,20 @@
     }
 
     // ----------- API -----------
+    function handleAuthError(status) {
+        if (status === 401) {
+            location.href = '/api/login.html';
+            return true;
+        }
+        if (status === 403) {
+            alert('Bạn không có quyền truy cập chức năng này.');
+            return true;
+        }
+        return false;
+    }
     function api(path, init) {
         return fetch(path, init).then(r => {
+            if (r.status === 401 || r.status === 403) { handleAuthError(r.status); throw new Error('HTTP ' + r.status); }
             if (!r.ok) throw new Error('HTTP ' + r.status);
             return r.json();
         });

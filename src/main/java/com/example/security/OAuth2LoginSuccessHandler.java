@@ -121,6 +121,10 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
             logger.info("Đã ghi activity log + cộng {} điểm cho user: email={}, totalPoints={}",
                     GOOGLE_LOGIN_POINTS, email, user.getTotalPoints());
 
+            // Mở phiên server làm danh tính tin cậy cho phân quyền (giống login mật khẩu)
+            SessionAuth.set(request, user.getId(), email,
+                    user.getRole() != null ? user.getRole().getName() : null);
+
             // Redirect về frontend oauth-success.html
             String redirectUrl = "/api/oauth-success.html"
                     + "?email=" + URLEncoder.encode(email, StandardCharsets.UTF_8)

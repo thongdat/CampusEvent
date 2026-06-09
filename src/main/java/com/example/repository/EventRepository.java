@@ -26,4 +26,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
     /** Event đã kết thúc (endTime < cutoff) nhưng chưa được hệ thống tự đóng. */
     List<Event> findByAutoClosedAtIsNullAndEndTimeIsNotNullAndEndTimeLessThan(LocalDateTime cutoff);
+
+    /** Event sắp diễn ra trong khoảng [from, to) — dùng để gửi thư mời trước sự kiện. */
+    List<Event> findByStartTimeGreaterThanEqualAndStartTimeLessThan(LocalDateTime from, LocalDateTime to);
 }
