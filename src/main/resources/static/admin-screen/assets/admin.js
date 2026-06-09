@@ -12,7 +12,6 @@
         { group: 'Người dùng', id: 'departments', label: 'Khoa & Bộ môn', icon: 'building-2', href: 'departments.html', keywords: 'departments khoa bo mon' },
         { group: 'Sự kiện', id: 'proposals', label: 'Đề xuất', icon: 'clipboard-list', href: 'proposals.html', keywords: 'proposals de xuat workflow' },
         { group: 'Sự kiện', id: 'events', label: 'Sự kiện', icon: 'calendar-days', href: 'events.html', keywords: 'events su kien lich' },
-        { group: 'Sự kiện', id: 'committees', label: 'Hội đồng', icon: 'users-round', href: 'committees.html', keywords: 'committees hoi dong duyet' },
         { group: 'Sự kiện', id: 'registrations', label: 'Đăng ký', icon: 'ticket-check', href: 'registrations.html', keywords: 'registrations dang ky waitlist attendance' },
         { group: 'Sự kiện', id: 'feedback', label: 'Phản hồi', icon: 'message-square-heart', href: 'feedback.html', keywords: 'feedback phan hoi rating' },
         { group: 'Hệ thống', id: 'email', label: 'Email & Thông báo', icon: 'mail-check', href: 'email.html', keywords: 'email mail notification thong bao' },
@@ -28,7 +27,6 @@
         departments: ['Khoa & Bộ môn', 'Cây tổ chức, thêm/sửa/xoá khoa, bộ môn và gán trưởng khoa.', 'Khoa & Bộ môn'],
         proposals: ['Đề xuất sự kiện', 'Theo dõi proposal, phân hội đồng, công bố hoặc loại bỏ.', 'Đề xuất'],
         events: ['Quản lý sự kiện', 'Tạo/sửa/huỷ event, ngân sách, sức chứa và event nổi bật.', 'Sự kiện'],
-        committees: ['Hội đồng duyệt', 'Danh sách hội đồng, thành viên và bảng workflow duyệt.', 'Hội đồng'],
         registrations: ['Đăng ký & Điểm danh', 'Danh sách đăng ký, waitlist và check-in của sinh viên.', 'Đăng ký'],
         feedback: ['Phản hồi & Đánh giá', 'Danh sách feedback, phân tích rating và xử lý bình luận.', 'Phản hồi'],
         email: ['Email & Thông báo', 'Email templates, gửi thông báo, announcement và lịch sử email.', 'Email']
@@ -40,11 +38,6 @@
         { faculty: 'Thiết kế & Truyền thông', departments: ['Thiết kế Mỹ thuật số', 'Thiết kế Đồ họa', 'Truyền thông đa phương tiện'] },
         { faculty: 'Ngôn ngữ', departments: ['Ngôn ngữ Anh', 'Ngôn ngữ Nhật'] },
         { faculty: 'Du lịch - Khách sạn', departments: ['Du lịch - Khách sạn', 'Hospitality Management'] }
-    ];
-
-    const permissionRows = [
-        'Dashboard', 'Users', 'Roles', 'Departments', 'Proposals', 'Events',
-        'Committees', 'Registrations', 'Feedback', 'Reports', 'Email', 'System'
     ];
 
     const state = {
@@ -202,6 +195,13 @@
             },
             ...options
         });
+        if (response.status === 401) {
+            window.location.href = '/api/login.html';
+            throw new Error('Bạn cần đăng nhập để tiếp tục.');
+        }
+        if (response.status === 403) {
+            throw new Error('Bạn không có quyền truy cập chức năng này.');
+        }
         if (!response.ok) {
             let message = `HTTP ${response.status}`;
             try {
@@ -640,11 +640,15 @@
         refreshIcons();
     }
 
-    function metric(label, value, hint = '', tone = '') {
+    function metric(label, value, hint = '', tone = '', iconName = '') {
         const toneClass = tone ? ` tone-${tone}` : '';
+        const iconBadge = iconName ? `<span class="metric-icon">${icon(iconName, 'h-4 w-4')}</span>` : '';
         return `
             <article class="metric${toneClass}">
-                <p class="metric-label">${h(label)}</p>
+                <div class="metric-top">
+                    <p class="metric-label">${h(label)}</p>
+                    ${iconBadge}
+                </div>
                 <p class="metric-value">${h(value)}</p>
                 <p class="metric-hint">${h(hint)}</p>
             </article>`;
@@ -1149,10 +1153,10 @@
         const upcoming = events.filter(item => new Date(item.startTime) >= new Date()).slice(0, 6);
         content(`
             <div class="metric-grid">
-                ${metric('Tổng user', number(stats.totalUsers), `${number(stats.activeUsers)} active · ${number(stats.lockedUsers)} locked`, 'blue')}
-                ${metric('Events', number(stats.totalEvents), `${number(stats.todayEvents)} hôm nay · ${number(stats.upcomingEvents)} sắp tới`, 'orange')}
-                ${metric('Registrations', number(stats.totalRegistrations), `${number(stats.attendanceCount)} attendance`, 'teal')}
-                ${metric('Feedback', `${Number(stats.averageRating || reports.averageRating || 0).toLocaleString('vi-VN', { maximumFractionDigits: 1 })}/5`, `${number(feedback.length)} phản hồi`, 'green')}
+                ${metric('Tổng user', number(stats.totalUsers), `${number(stats.activeUsers)} active · ${number(stats.lockedUsers)} locked`, 'blue', 'users')}
+                ${metric('Events', number(stats.totalEvents), `${number(stats.todayEvents)} hôm nay · ${number(stats.upcomingEvents)} sắp tới`, 'orange', 'calendar-days')}
+                ${metric('Registrations', number(stats.totalRegistrations), `${number(stats.attendanceCount)} attendance`, 'teal', 'clipboard-check')}
+                ${metric('Feedback', `${Number(stats.averageRating || reports.averageRating || 0).toLocaleString('vi-VN', { maximumFractionDigits: 1 })}/5`, `${number(feedback.length)} phản hồi`, 'green', 'star')}
             </div>
             <div class="split-grid">
                 <section class="panel">
@@ -1204,8 +1208,7 @@
             ${moduleChecklist([
                 { title: 'User / Role / Department', status: 'CRUD', copy: 'Tạo, sửa, khóa, reset mật khẩu, gán role và quản lý khoa.' },
                 { title: 'Proposal / Event / Registration', status: 'Workflow', tone: 'orange', copy: 'Theo dõi duyệt proposal, publish event, capacity, waitlist và attendance.' },
-                { title: 'Feedback / Reports / Email', status: 'Analytics', tone: 'blue', copy: 'Phân tích rating, export báo cáo, template email và lịch sử gửi.' },
-                { title: 'Security / Deployment', status: 'Ops', tone: 'teal', copy: 'Cấu hình OAuth2, captcha, SMTP, backup, server và container status.' }
+                { title: 'Feedback / Reports / Email', status: 'Analytics', tone: 'blue', copy: 'Phân tích rating, export báo cáo, template email và lịch sử gửi.' }
             ])}
         `);
     }
@@ -1484,23 +1487,12 @@
             }
         });
 
-        const permissionMatrix = roles.map(role => `
-            <tr>
-                <td><span class="cell-title">${h(role.name)}</span><span class="cell-sub">${h(role.description || '')}</span></td>
-                ${permissionRows.map(permission => {
-                    const checked = role.name === 'ADMIN' || (role.name === 'DEPARTMENT' && ['Dashboard', 'Departments', 'Proposals', 'Events', 'Reports'].includes(permission))
-                        || (role.name === 'COMMITTEE' && ['Dashboard', 'Proposals', 'Events', 'Registrations', 'Feedback'].includes(permission))
-                        || (role.name === 'STUDENT' && ['Events', 'Registrations', 'Feedback'].includes(permission));
-                    return `<td>${checked ? badge('Allow', 'green') : badge('No', 'gray')}</td>`;
-                }).join('')}
-            </tr>`).join('');
-
         content(`
             <div class="metric-grid">
-                ${metric('Roles', number(roles.length), 'Role List')}
-                ${metric('Assigned users', number(users.length), 'User đang có role')}
-                ${metric('Admin users', number(users.filter(user => user.role === 'ADMIN').length), 'Quản trị viên')}
-                ${metric('Permission modules', number(permissionRows.length), 'Module phân quyền')}
+                ${metric('Roles', number(roles.length), 'Role List', 'blue', 'shield-check')}
+                ${metric('Người dùng', number(users.length), 'User đang có role', 'teal', 'users')}
+                ${metric('Admin', number(users.filter(user => user.role === 'ADMIN').length), 'Quản trị viên', 'orange', 'user-cog')}
+                ${metric('Sinh viên', number(users.filter(user => user.role === 'STUDENT').length), 'Tài khoản sinh viên', 'green', 'graduation-cap')}
             </div>
             ${table(['Role', 'Description', 'Users', 'Actions'], roles.map(role => `
                 <tr>
@@ -1512,17 +1504,6 @@
                         <button class="icon-btn danger" data-delete-role="${role.id}">${icon('trash-2')}</button>
                     </div></td>
                 </tr>`))}
-            <section class="panel">
-                <div class="panel-header">
-                    <div>
-                        <h2 class="panel-title">Permission Management</h2>
-                        <p class="panel-note">Ma trận quyền theo module. Role ADMIN có toàn quyền.</p>
-                    </div>
-                </div>
-                <div class="table-panel" style="margin-top:.85rem"><div class="table-scroll">
-                    <table><thead><tr><th>Role</th>${permissionRows.map(item => `<th>${h(item)}</th>`).join('')}</tr></thead><tbody>${permissionMatrix}</tbody></table>
-                </div></div>
-            </section>
         `);
         document.getElementById('addRole').onclick = () => openRoleForm();
         document.getElementById('assignRole').onclick = assignRole;
@@ -1992,87 +1973,6 @@
         ]);
     }
 
-    async function renderCommittees() {
-        state.page = 'committees';
-        shell(`<button class="btn primary" id="createCommittee">${icon('plus')}Create Committee</button>`);
-        const [users, proposals] = await Promise.all([load('/users', []), load('/proposals', [])]);
-        let committees = getCommittees();
-
-        const save = () => localSet('committees', committees);
-        const openCommitteeForm = (committee = {}) => openForm({
-            title: committee.id ? 'Edit Committee' : 'Create Committee',
-            fields: [
-                { name: 'name', label: 'Tên committee', required: true },
-                { name: 'status', label: 'Status', type: 'select', options: ['ACTIVE', 'REVIEW', 'PAUSED'].map(value => ({ value, label: value })) }
-            ],
-            values: committee,
-            onSubmit: async payload => {
-                if (committee.id) Object.assign(committee, payload);
-                else committees.push({ id: `committee-${Date.now()}`, name: payload.name, status: payload.status, members: [] });
-                save();
-                toast('Đã lưu committee.');
-                renderCommittees();
-            }
-        });
-
-        const manageMembers = committee => openForm({
-            title: 'Assign Members',
-            fields: [{ name: 'memberId', label: 'Thêm thành viên', type: 'select', options: users.map(user => ({ value: user.id, label: `${user.fullName} - ${user.role}` })) }],
-            onSubmit: async payload => {
-                committee.members = [...new Set([...(committee.members || []), payload.memberId])];
-                save();
-                toast('Đã thêm thành viên.');
-                renderCommittees();
-            }
-        });
-
-        const workflow = ['PENDING', 'REVISION', 'APPROVED', 'PUBLISHED'].map(status => `
-            <div class="kanban-column">
-                <h3 class="kanban-title">${h(status)}</h3>
-                ${proposals.filter(item => String(item.status).toUpperCase() === status).slice(0, 5).map(item => `
-                    <div class="mini-card"><strong>${h(item.title)}</strong><span>${h(item.departmentName)} · ${dateTime(item.proposedDate)}</span></div>
-                `).join('') || '<div class="empty">Trống</div>'}
-            </div>`).join('');
-
-        content(`
-            <div class="metric-grid">
-                ${metric('Committees', number(committees.length), 'Committee List')}
-                ${metric('Members assigned', number(committees.reduce((sum, item) => sum + (item.members || []).length, 0)), 'Tổng thành viên')}
-                ${metric('Active', number(committees.filter(item => item.status === 'ACTIVE').length), 'Đang hoạt động')}
-                ${metric('Pending proposals', number(proposals.filter(item => item.status === 'PENDING').length), 'Workflow duyệt')}
-            </div>
-            ${table(['Committee', 'Members', 'Status', 'Actions'], committees.map(committee => {
-                const memberNames = (committee.members || []).map(id => users.find(user => String(user.id) === String(id))?.fullName).filter(Boolean);
-                return `<tr>
-                    <td><span class="cell-title">${h(committee.name)}</span></td>
-                    <td>${memberNames.length ? h(memberNames.join(', ')) : badge('Chưa có', 'amber')}</td>
-                    <td>${badge(committee.status, tone(committee.status))}</td>
-                    <td><div class="row-actions">
-                        <button class="icon-btn" data-committee-members="${committee.id}">${icon('user-plus')}</button>
-                        <button class="icon-btn" data-committee-edit="${committee.id}">${icon('pencil')}</button>
-                        <button class="icon-btn danger" data-committee-remove="${committee.id}">${icon('user-minus')}</button>
-                    </div></td>
-                </tr>`;
-            }))}
-            <section class="panel">
-                <h2 class="panel-title">Approval Workflow</h2>
-                <p class="panel-note">Theo dõi proposal qua các trạng thái duyệt.</p>
-                <div class="kanban" style="margin-top:.85rem">${workflow}</div>
-            </section>
-        `);
-        document.getElementById('createCommittee').onclick = () => openCommitteeForm();
-        document.querySelectorAll('[data-committee-members]').forEach(button => button.onclick = () => manageMembers(committees.find(item => item.id === button.dataset.committeeMembers)));
-        document.querySelectorAll('[data-committee-edit]').forEach(button => button.onclick = () => openCommitteeForm(committees.find(item => item.id === button.dataset.committeeEdit)));
-        document.querySelectorAll('[data-committee-remove]').forEach(button => button.onclick = () => {
-            const committee = committees.find(item => item.id === button.dataset.committeeRemove);
-            if ((committee.members || []).length) committee.members.pop();
-            else committees = committees.filter(item => item.id !== committee.id);
-            save();
-            toast('Đã xóa thành viên hoặc committee trống.');
-            renderCommittees();
-        });
-    }
-
     async function renderRegistrations() {
         state.page = 'registrations';
         shell();
@@ -2389,7 +2289,6 @@
         logs: renderLogs,
         proposals: renderProposals,
         events: renderEvents,
-        committees: renderCommittees,
         registrations: renderRegistrations,
         feedback: renderFeedback
     };

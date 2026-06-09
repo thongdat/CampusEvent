@@ -691,7 +691,8 @@ public class AdminDashboardController {
             throw badRequest("Chỉ proposal đã APPROVED mới được publish thành event.");
         }
         LocalDateTime start = localDateTimeValue(payload, "startTime", proposal.getProposedDate());
-        LocalDateTime end = localDateTimeValue(payload, "endTime", start.plusHours(2));
+        LocalDateTime defaultEnd = proposal.getProposedEndDate() != null ? proposal.getProposedEndDate() : start.plusHours(2);
+        LocalDateTime end = localDateTimeValue(payload, "endTime", defaultEnd);
         validateEventWindow(start, end);
         Integer capacity = intValue(payload, "capacity", firstNonNull(proposal.getCapacity(), 100));
         if (capacity == null || capacity <= 0) {
@@ -716,6 +717,10 @@ public class AdminDashboardController {
         publishPayload.putIfAbsent("location", firstNonBlank(proposal.getLocation(), savedEvent.getLocation(), "FPT Campus"));
         savedEvent.setLocation(textOrNull(stringValue(publishPayload, "location", firstNonBlank(savedEvent.getLocation(), proposal.getLocation(), "FPT Campus"))));
         savedEvent.setCapacity(capacity);
+        savedEvent.setEndTime(end);
+        savedEvent.setOrganizer(textOrNull(stringValue(publishPayload, "organizer", textOrEmpty(proposal.getOrganizer()))));
+        savedEvent.setSupportStaffNeeded(intValue(publishPayload, "supportStaffNeeded",
+                firstNonNull(proposal.getSupportStaffNeeded(), 0)));
         savedEvent.setStatus("PUBLISHED");
         applyEventMediaAndBudget(savedEvent, publishPayload);
         savedEvent = eventRepository.save(savedEvent);
@@ -1128,6 +1133,8 @@ public class AdminDashboardController {
         item.put("checkoutSheetId", textOrEmpty(event.getCheckoutSheetId()));
         item.put("lastSheetSyncAt", event.getLastSheetSyncAt());
         item.put("speakers", textOrEmpty(event.getSpeakers()));
+        item.put("organizer", textOrEmpty(event.getOrganizer()));
+        item.put("supportStaffNeeded", firstNonNull(event.getSupportStaffNeeded(), 0));
         return item;
     }
 
@@ -1161,6 +1168,9 @@ public class AdminDashboardController {
         item.put("imageUrls", imageListForResponse(proposal.getImageUrl(), proposal.getImageUrls()));
         item.put("budget", firstNonNull(proposal.getBudget(), BigDecimal.ZERO));
         item.put("proposedDate", proposal.getProposedDate());
+        item.put("proposedEndDate", proposal.getProposedEndDate());
+        item.put("organizer", textOrEmpty(proposal.getOrganizer()));
+        item.put("supportStaffNeeded", firstNonNull(proposal.getSupportStaffNeeded(), 0));
         item.put("status", textOrEmpty(proposal.getStatus()));
         item.put("note", textOrEmpty(proposal.getNote()));
         item.put("createdAt", proposal.getCreatedAt());
@@ -1273,10 +1283,23 @@ public class AdminDashboardController {
         proposal.setDescription(textOrNull(stringValue(payload, "description", "")));
         proposal.setLocation(textOrNull(stringValue(payload, "location", textOrEmpty(proposal.getLocation()))));
         proposal.setProposedDate(localDateTimeValue(payload, "proposedDate", creating ? currentDateTime().plusDays(14) : proposal.getProposedDate()));
+        // Khung giờ kết thúc: nếu không nhập, mặc định +2 giờ so với giờ bắt đầu.
+        LocalDateTime proposedEnd = localDateTimeValue(payload, "proposedEndDate",
+                proposal.getProposedEndDate() != null ? proposal.getProposedEndDate() : proposal.getProposedDate().plusHours(2));
+        if (proposedEnd != null && !proposedEnd.isAfter(proposal.getProposedDate())) {
+            throw badRequest("Giờ kết thúc phải sau giờ bắt đầu.");
+        }
+        proposal.setProposedEndDate(proposedEnd);
         proposal.setCapacity(intValue(payload, "capacity", firstNonNull(proposal.getCapacity(), 100)));
         if (proposal.getCapacity() == null || proposal.getCapacity() <= 0) {
             throw badRequest("Sức chứa phải lớn hơn 0.");
         }
+        proposal.setOrganizer(textOrNull(stringValue(payload, "organizer", textOrEmpty(proposal.getOrganizer()))));
+        Integer supportStaff = intValue(payload, "supportStaffNeeded", firstNonNull(proposal.getSupportStaffNeeded(), 0));
+        if (supportStaff != null && supportStaff < 0) {
+            throw badRequest("Số người hỗ trợ không hợp lệ.");
+        }
+        proposal.setSupportStaffNeeded(supportStaff);
         List<String> images = imageListFromPayload(payload, textOrEmpty(proposal.getImageUrl()), proposal.getImageUrls());
         proposal.setImageUrl(images.isEmpty() ? null : images.get(0));
         proposal.setImageUrls(joinImageUrls(images));

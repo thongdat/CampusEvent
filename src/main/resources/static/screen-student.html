@@ -93,8 +93,10 @@
         }
         /* Ngăn flex children tràn ngang (text dài, dropdown, search) */
         .min-w-0-all > * { min-width: 0; }
-        /* Khoá overflow ngang toàn trang — phòng khi 1 element bị tràn */
-        html, body { overflow-x: hidden; }
+        /* Khoá overflow ngang toàn trang — phòng khi 1 element bị tràn.
+         * Dùng "clip" thay "hidden": vẫn chặn tràn ngang nhưng KHÔNG tạo scroll
+         * container ở root → sidebar position:sticky vẫn đi theo cuộn đúng cách. */
+        html, body { overflow-x: clip; }
 
         /* Sidebar item active accent */
         .sb-item { transition: all .18s ease; }
@@ -110,6 +112,10 @@
         .chip { transition: all .15s ease; }
         .chip.active { background: linear-gradient(135deg,#f37021,#c2410c); color:#fff; border-color: transparent; box-shadow: 0 10px 22px -10px rgba(243,112,33,.55); }
 
+        /* Segmented view toggle (Đề xuất / Tất cả) */
+        .view-tab { color: #6b7280; }
+        .view-tab.active { background: linear-gradient(135deg,#f37021,#c2410c); color:#fff; box-shadow: 0 8px 18px -10px rgba(243,112,33,.6); }
+
         /* Event card hover */
         .ev-card { transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease; }
         .ev-card:hover { transform: translateY(-4px); box-shadow: 0 28px 60px -28px rgba(31,19,13,.25); border-color: #fed7aa; }
@@ -117,9 +123,6 @@
         .ev-card:hover img { transform: scale(1.06); }
 
         /* Hero shapes */
-        .hero-blob-1 { background: radial-gradient(circle, rgba(255,237,213,.5) 0%, transparent 70%); }
-        .hero-blob-2 { background: radial-gradient(circle, rgba(254,215,170,.55) 0%, transparent 70%); }
-
         /* SIDEBAR LAYOUT
          * Desktop (>=1024px): sticky inside flex row, follows scroll.
          * Mobile (<1024px):   fixed drawer, hidden offscreen, slides in via .open. */
@@ -153,7 +156,7 @@
 
 <!-- ============================ TASKBAR / TOP HEADER ============================ -->
 <header class="sticky top-0 z-40 border-b border-fpt-100 bg-white/85 backdrop-blur-xl">
-    <div class="mx-auto flex h-16 max-w-screen-2xl items-center gap-3 px-4 sm:px-6 lg:px-8 min-w-0-all">
+    <div class="flex h-16 w-full items-center gap-3 px-4 sm:px-6 lg:px-8 min-w-0-all">
         <button id="btnMenu" class="grid h-10 w-10 place-items-center rounded-xl border border-fpt-100 bg-white text-fpt-700 hover:bg-fpt-50 lg:hidden" aria-label="Mở menu">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round"/></svg>
         </button>
@@ -207,7 +210,7 @@
     </div>
 </header>
 
-<div class="mx-auto flex max-w-screen-2xl min-w-0-all">
+<div class="flex w-full min-w-0-all">
 
     <!-- ============================ SIDEBAR ============================ -->
     <aside id="sidebar" class="border-r border-fpt-100 bg-white/95 backdrop-blur-xl">
@@ -216,11 +219,7 @@
                 <p class="px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-ink-soft">Khám phá</p>
                 <button data-tab="discover" class="sb-item active flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-fpt-600"><path d="M12 2 4 6v6c0 5 3.4 9.4 8 10 4.6-.6 8-5 8-10V6l-8-4z"/></svg>
-                    Sự kiện đề xuất
-                </button>
-                <button data-tab="all" class="sb-item flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-ink-muted">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-fpt-500"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-                    Tất cả sự kiện
+                    Sự kiện
                 </button>
                 <button data-tab="mine" class="sb-item flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-ink-muted">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-fpt-500"><path d="M20 12V4H4v16h8"/><path d="M20 19l-3 3-2-2"/><path d="M9 10h6"/></svg>
@@ -248,12 +247,14 @@
             </nav>
 
             <div class="border-t border-fpt-100 p-4">
-                <div class="rounded-2xl bg-gradient-to-br from-fpt-500 via-fpt-600 to-fpt-700 p-4 text-white shadow-glow">
-                    <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-fpt-100">Hôm nay</p>
-                    <p id="todayCount" class="mt-1 text-2xl font-extrabold">—</p>
-                    <p class="text-xs text-fpt-100">sự kiện diễn ra trong ngày</p>
-                    <button type="button" data-tab="discover" class="mt-3 inline-flex items-center gap-1 rounded-full bg-white/15 px-3 py-1.5 text-xs font-bold backdrop-blur transition hover:bg-white/25">
-                        Xem ngay →
+                <div class="rounded-2xl border border-fpt-100 bg-fpt-50/70 p-4">
+                    <span class="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-fpt-500 to-fpt-700 text-white shadow-glow">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                    </span>
+                    <p class="mt-3 text-sm font-extrabold text-ink">Không bỏ lỡ sự kiện nào của FPTU!</p>
+                    <p class="mt-1 text-xs leading-5 text-ink-muted">Theo dõi và đăng ký các sự kiện mới nhất ngay hôm nay.</p>
+                    <button type="button" data-tab="discover" class="mt-3 inline-flex w-full items-center justify-center gap-1 rounded-xl bg-gradient-to-r from-fpt-500 to-fpt-700 px-3 py-2 text-xs font-bold text-white shadow-glow transition hover:brightness-110">
+                        Khám phá ngay →
                     </button>
                 </div>
             </div>
@@ -265,38 +266,44 @@
 
     <!-- ============================ MAIN ============================ -->
     <main class="min-w-0 flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+      <div class="flex gap-6 xl:gap-8">
+       <!-- CỘT GIỮA -->
+       <div class="min-w-0 flex-1">
 
         <!-- HERO -->
-        <section class="relative overflow-hidden rounded-3xl border border-fpt-100 bg-gradient-to-br from-fpt-50 via-white to-fpt-100/40 px-6 py-8 sm:px-10 sm:py-12">
-            <div class="hero-blob-1 pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full"></div>
-            <div class="hero-blob-2 pointer-events-none absolute -bottom-24 -left-16 h-64 w-64 rounded-full"></div>
+        <section class="relative isolate overflow-hidden rounded-3xl px-6 py-10 text-white shadow-glow sm:px-10 sm:py-14">
+            <!-- Ảnh nền khuôn viên FPT University -->
+            <img src="img/fpt-campus.jpg" alt="" aria-hidden="true"
+                 class="absolute inset-0 -z-10 h-full w-full object-cover object-center">
+            <!-- Giữ ảnh gốc (không phủ cam), chỉ tối nhẹ phía trái để chữ luôn đọc rõ -->
+            <div class="absolute inset-0 -z-10 bg-gradient-to-r from-black/60 via-black/25 to-transparent"></div>
 
-            <div class="relative grid items-center gap-6 xl:grid-cols-[1.5fr_1fr]">
-                <div class="min-w-0">
-                    <p class="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-fpt-700 shadow-sm backdrop-blur">
-                        <span class="h-1.5 w-1.5 rounded-full bg-fpt-500"></span>
-                        Sự kiện sinh viên FPT
-                    </p>
-                    <h1 class="mt-3 text-2xl font-extrabold leading-tight text-ink sm:text-3xl lg:text-4xl">
-                        Xin chào <span id="heroName" class="bg-gradient-to-r from-fpt-600 to-fpt-800 bg-clip-text text-transparent">bạn</span> 👋
-                    </h1>
-                    <p class="mt-3 max-w-2xl text-sm text-ink-muted sm:text-base">
-                        Đây là những sự kiện được đề xuất riêng cho bạn — dựa trên ngành học, kỳ và hoạt động gần đây. Cuộn xuống và tìm cái phù hợp nhất.
-                    </p>
+            <div class="relative max-w-3xl">
+                <div class="inline-flex items-center gap-2.5">
+                    <span class="grid h-11 w-11 place-items-center rounded-2xl bg-white/20 text-white ring-1 ring-white/40 backdrop-blur">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5a6 3 0 0 0 12 0v-5"/></svg>
+                    </span>
+                    <span class="leading-tight drop-shadow">
+                        <span class="block text-sm font-extrabold">Campus Events</span>
+                        <span class="block text-[10px] font-bold uppercase tracking-[0.2em] text-white/85">FPT University</span>
+                    </span>
                 </div>
+                <h1 class="mt-5 text-2xl font-extrabold leading-tight drop-shadow-md sm:text-3xl lg:text-4xl">
+                    Xin chào <span id="heroName" class="text-amber-100">bạn</span> 👋
+                </h1>
 
-                <div class="grid-hero-stats">
-                    <div class="rounded-2xl border border-fpt-100 bg-white/85 p-3 backdrop-blur sm:p-4">
-                        <p class="text-[10px] font-bold uppercase tracking-wider text-ink-soft">Đăng ký</p>
-                        <p id="statRegistered" class="mt-1 text-xl font-extrabold text-fpt-700 sm:text-2xl">—</p>
+                <div class="grid-hero-stats mt-7 max-w-md">
+                    <div class="rounded-2xl bg-white/15 p-3 ring-1 ring-white/30 backdrop-blur-md sm:p-4">
+                        <p class="text-[10px] font-bold uppercase tracking-wider text-white/85">Đăng ký</p>
+                        <p id="statRegistered" class="mt-1 text-xl font-extrabold text-white sm:text-2xl">—</p>
                     </div>
-                    <div class="rounded-2xl border border-fpt-100 bg-white/85 p-3 backdrop-blur sm:p-4">
-                        <p class="text-[10px] font-bold uppercase tracking-wider text-ink-soft">Đã dự</p>
-                        <p id="statAttended" class="mt-1 text-xl font-extrabold text-fpt-700 sm:text-2xl">—</p>
+                    <div class="rounded-2xl bg-white/15 p-3 ring-1 ring-white/30 backdrop-blur-md sm:p-4">
+                        <p class="text-[10px] font-bold uppercase tracking-wider text-white/85">Đã dự</p>
+                        <p id="statAttended" class="mt-1 text-xl font-extrabold text-white sm:text-2xl">—</p>
                     </div>
-                    <div class="rounded-2xl border border-fpt-100 bg-white/85 p-3 backdrop-blur sm:p-4">
-                        <p class="text-[10px] font-bold uppercase tracking-wider text-ink-soft">Hạng</p>
-                        <p id="statRank" class="mt-1 text-xl font-extrabold text-fpt-700 sm:text-2xl">—</p>
+                    <div class="rounded-2xl bg-white/15 p-3 ring-1 ring-white/30 backdrop-blur-md sm:p-4">
+                        <p class="text-[10px] font-bold uppercase tracking-wider text-white/85">Hạng</p>
+                        <p id="statRank" class="mt-1 text-xl font-extrabold text-white sm:text-2xl">—</p>
                     </div>
                 </div>
             </div>
@@ -304,10 +311,10 @@
 
         <!-- ============================ PANEL: DISCOVER / ALL ============================ -->
         <section data-tab-panel="discover" class="mt-8 space-y-5">
-            <div class="flex flex-wrap items-end justify-between gap-3">
-                <div>
-                    <h2 id="discoverTitle" class="text-xl font-extrabold text-ink sm:text-2xl">Đề xuất cho bạn</h2>
-                    <p class="mt-1 text-sm text-ink-muted">Hệ thống tự sắp xếp theo mức độ phù hợp với hồ sơ của bạn — chọn cái bạn thích.</p>
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <div class="inline-flex rounded-full border border-fpt-200 bg-white p-1 shadow-sm">
+                    <button data-view="recommended" class="view-tab rounded-full px-4 py-2 text-sm font-bold transition active">Đề xuất cho bạn</button>
+                    <button data-view="all" class="view-tab rounded-full px-4 py-2 text-sm font-bold transition text-ink-muted">Tất cả sự kiện</button>
                 </div>
                 <span id="resultCount" class="rounded-full bg-fpt-50 px-3 py-1.5 text-xs font-bold text-fpt-700">—</span>
             </div>
@@ -328,6 +335,13 @@
                 <div class="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-white text-3xl shadow-sm">🌅</div>
                 <p class="mt-4 text-base font-extrabold text-ink">Chưa có sự kiện phù hợp ở đây</p>
                 <p class="mt-1 text-sm text-ink-muted">Đổi sang "Tất cả khoa" hoặc xoá từ khoá tìm kiếm để xem thêm.</p>
+            </div>
+
+            <div id="seeAllWrap" class="flex justify-center pt-2">
+                <button id="btnSeeAll" class="inline-flex items-center gap-2 rounded-full border border-fpt-200 bg-white px-6 py-2.5 text-sm font-bold text-fpt-700 shadow-sm transition hover:bg-fpt-50">
+                    Xem tất cả sự kiện
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
             </div>
         </section>
 
@@ -356,38 +370,76 @@
             </div>
         </section>
 
+       </div>
+       <!-- ============================ CỘT PHẢI ============================ -->
+       <aside class="hidden w-80 shrink-0 xl:block">
+         <div class="sticky top-20 space-y-5">
+
+           <!-- Sự kiện sắp tới -->
+           <section class="rounded-2xl border border-fpt-100 bg-white p-5 shadow-soft">
+               <div class="flex items-center justify-between">
+                   <h3 class="text-sm font-extrabold text-ink">Sự kiện sắp tới</h3>
+                   <button id="railSeeAll" class="text-xs font-bold text-fpt-600 hover:text-fpt-700">Xem tất cả</button>
+               </div>
+               <div id="railUpcoming" class="mt-4 space-y-3"></div>
+           </section>
+
+           <!-- Thành tích của bạn -->
+           <section class="rounded-2xl border border-fpt-100 bg-gradient-to-br from-fpt-50 to-white p-5 shadow-soft">
+               <h3 class="text-sm font-extrabold text-ink">Thành tích của bạn</h3>
+               <div class="mt-3 flex flex-col items-center text-center">
+                   <div class="relative grid h-20 w-20 place-items-center">
+                       <svg viewBox="0 0 24 24" class="h-20 w-20 text-fpt-500" fill="currentColor"><path d="M12 2l2.4 4.9 5.4.8-3.9 3.8.9 5.4-4.8-2.5-4.8 2.5.9-5.4L4.2 7.7l5.4-.8z" opacity=".15"/></svg>
+                       <span class="absolute text-2xl">🏅</span>
+                   </div>
+                   <p id="railRank" class="mt-2 text-3xl font-extrabold text-fpt-700">#—</p>
+                   <p class="text-xs font-semibold text-ink-muted">Hạng hiện tại</p>
+               </div>
+               <div class="mt-4">
+                   <div class="flex items-center justify-between text-[11px] font-bold text-ink-muted">
+                       <span id="railPoints">0 điểm</span>
+                       <span id="railTarget">500 điểm</span>
+                   </div>
+                   <div class="mt-1.5 h-2 overflow-hidden rounded-full bg-fpt-100">
+                       <div id="railProgress" class="h-full rounded-full bg-gradient-to-r from-fpt-500 to-fpt-700" style="width:0%"></div>
+                   </div>
+                   <p class="mt-2 text-xs leading-5 text-ink-muted">Cố gắng tham gia thêm sự kiện để tăng hạng của bạn nhé!</p>
+               </div>
+           </section>
+
+         </div>
+       </aside>
+
+      </div>
     </main>
 </div>
 
 <!-- ============================ FOOTER ============================ -->
-<footer class="mt-12 border-t border-fpt-100 bg-gradient-to-br from-fpt-900 via-fpt-800 to-fpt-700 text-fpt-50">
-    <div class="mx-auto grid-fluid-footer max-w-screen-2xl px-4 py-12 sm:px-6 lg:px-8">
+<footer class="mt-8 border-t border-fpt-100 bg-gradient-to-br from-fpt-900 via-fpt-800 to-fpt-700 text-fpt-50">
+    <div class="grid-fluid-footer w-full px-4 py-6 sm:px-6 lg:px-8">
         <div class="min-w-0">
-            <div class="flex items-center gap-2.5 font-extrabold text-white">
-                <span class="grid h-10 w-10 place-items-center rounded-xl bg-white/15 backdrop-blur">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5a6 3 0 0 0 12 0v-5"/></svg>
+            <div class="flex items-center gap-2 font-extrabold text-white">
+                <span class="grid h-8 w-8 place-items-center rounded-lg bg-white/15 backdrop-blur">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5a6 3 0 0 0 12 0v-5"/></svg>
                 </span>
                 <span>
-                    <span class="block text-base">Campus Events</span>
-                    <span class="block text-[10px] font-bold uppercase tracking-[0.2em] text-fpt-200">FPT University</span>
+                    <span class="block text-sm">Campus Events</span>
+                    <span class="block text-[9px] font-bold uppercase tracking-[0.2em] text-fpt-200">FPT University</span>
                 </span>
             </div>
-            <p class="mt-4 text-sm leading-6 text-fpt-100/80">Hệ thống quản lý sự kiện sinh viên Đại học FPT — đăng ký, vé QR, check-in và phản hồi gọn trong một nơi.</p>
+            <p class="mt-2 text-xs leading-5 text-fpt-100/80">Hệ thống quản lý sự kiện sinh viên Đại học FPT — đăng ký, vé QR, check-in và phản hồi gọn trong một nơi.</p>
         </div>
 
         <div class="min-w-0">
-            <p class="text-xs font-bold uppercase tracking-[0.18em] text-fpt-200">Khám phá</p>
-            <ul class="mt-4 space-y-2 text-sm">
+            <p class="text-[11px] font-bold uppercase tracking-[0.18em] text-fpt-200">Khám phá</p>
+            <ul class="mt-2 space-y-1 text-xs">
                 <li><a href="landing.html" class="text-fpt-100/80 hover:text-white">Trang chủ</a></li>
-                <li><a href="role-screens.html" class="text-fpt-100/80 hover:text-white">Vai trò &amp; demo account</a></li>
-                <li><a href="screen-department.html" class="text-fpt-100/80 hover:text-white">Console khoa</a></li>
-                <li><a href="screen-committee.html" class="text-fpt-100/80 hover:text-white">Console hội đồng</a></li>
             </ul>
         </div>
 
         <div class="min-w-0">
-            <p class="text-xs font-bold uppercase tracking-[0.18em] text-fpt-200">Hỗ trợ</p>
-            <ul class="mt-4 space-y-2 text-sm">
+            <p class="text-[11px] font-bold uppercase tracking-[0.18em] text-fpt-200">Hỗ trợ</p>
+            <ul class="mt-2 space-y-1 text-xs">
                 <li><a href="forgot-password.html" class="text-fpt-100/80 hover:text-white">Quên mật khẩu</a></li>
                 <li><a href="mailto:support@fpt.edu.vn" class="text-fpt-100/80 hover:text-white">support@fpt.edu.vn</a></li>
                 <li class="text-fpt-100/60">Hotline FPTU: <span class="text-white">(024)/(028) 7300 1866</span></li>
@@ -395,7 +447,7 @@
         </div>
     </div>
     <div class="border-t border-white/10">
-        <div class="mx-auto flex max-w-screen-2xl flex-col gap-2 px-4 py-5 text-xs text-fpt-100/70 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+        <div class="flex w-full flex-col gap-1 px-4 py-3 text-[11px] text-fpt-100/70 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
             <span>© 2026 Campus Events · Đại học FPT — Toàn cầu · Công nghệ · Khởi nghiệp.</span>
             <span>Made with <span class="text-fpt-300">♥</span> for FPT students.</span>
         </div>
@@ -425,7 +477,8 @@
         myRegs: [],
         leaderboard: [],
         filters: { q: '', scope: 'upcoming', faculty: 'all' },
-        currentTab: 'discover'
+        currentTab: 'discover',
+        view: 'recommended'
     };
 
     // ----------------------------- SESSION -----------------------------
@@ -451,6 +504,10 @@
             opts.body = JSON.stringify(opts.body);
         }
         const res = await fetch(API_BASE + path, Object.assign({}, opts, { headers }));
+        if (res.status === 401) {
+            window.location.href = '/api/login.html';
+            throw Object.assign(new Error('HTTP 401'), { status: 401 });
+        }
         if (!res.ok) {
             const text = await res.text().catch(() => '');
             const err = new Error('HTTP ' + res.status + ': ' + (text || res.statusText));
@@ -589,9 +646,75 @@
             $('#statAttended').textContent   = stats.attended ?? 0;
             $('#statRank').textContent       = stats.rank ? '#' + stats.rank : '—';
             $('#badgeMine').textContent      = stats.registered ?? 0;
+            paintAchievement(stats);
         } catch (e) {
             console.warn('loadMe failed', e);
         }
+    }
+
+    // Card "Thành tích của bạn" ở cột phải
+    function paintAchievement(stats) {
+        const points = Number(stats.totalPoints ?? 0);
+        const rank = stats.rank;
+        // Mốc mục tiêu động: bội số 100 kế tiếp (tối thiểu 500) để thanh tiến độ luôn có ý nghĩa
+        const target = Math.max(500, Math.ceil((points + 1) / 100) * 100);
+        const pct = target > 0 ? Math.min(100, Math.round(points * 100 / target)) : 0;
+        const railRank = $('#railRank');
+        if (railRank) railRank.textContent = rank ? '#' + rank : '#—';
+        const railPoints = $('#railPoints');
+        if (railPoints) railPoints.textContent = points + ' điểm';
+        const railTarget = $('#railTarget');
+        if (railTarget) railTarget.textContent = target + ' điểm';
+        const railProgress = $('#railProgress');
+        if (railProgress) railProgress.style.width = pct + '%';
+    }
+
+    // Danh sách "Sự kiện sắp tới" ở cột phải (độc lập với bộ lọc cột giữa)
+    async function loadRailUpcoming() {
+        const box = $('#railUpcoming');
+        if (!box) return;
+        box.innerHTML = Array.from({ length: 3 }, () =>
+            '<div class="flex gap-3"><div class="skeleton h-12 w-12 rounded-lg"></div><div class="flex-1 space-y-1"><div class="skeleton h-4 w-3/4 rounded"></div><div class="skeleton h-3 w-1/2 rounded"></div></div></div>').join('');
+        try {
+            const data = await api('/student/events?scope=upcoming&sort=priority');
+            const items = (data.items || []).slice(0, 5);
+            if (!items.length) {
+                box.innerHTML = '<p class="text-xs text-ink-muted">Chưa có sự kiện sắp tới.</p>';
+                return;
+            }
+            box.innerHTML = items.map(e => {
+                const img = fixImg(e.imageUrl);
+                const dept = e.department ? e.department.name : 'FPT Campus';
+                const when = e.startTime ? (formatDateShort(e.startTime) + ' · ' + formatTime(e.startTime)) : '';
+                return `
+                <button data-rail-event="${e.id}" class="flex w-full items-center gap-3 rounded-xl p-1.5 text-left transition hover:bg-fpt-50">
+                    <span class="h-12 w-12 shrink-0 overflow-hidden rounded-lg card-img-fallback">
+                        ${img ? `<img src="${escapeAttr(img)}" alt="" class="h-full w-full object-cover" loading="lazy" onerror="this.style.display='none'">` : '<span class="grid h-full w-full place-items-center text-lg">🎓</span>'}
+                    </span>
+                    <span class="min-w-0 flex-1">
+                        <span class="block truncate text-xs font-extrabold text-ink">${escapeHtml(e.title)}</span>
+                        <span class="mt-0.5 block truncate text-[11px] text-ink-muted">📅 ${when}</span>
+                        <span class="block truncate text-[11px] text-ink-soft">📍 ${escapeHtml(e.location || dept)}</span>
+                    </span>
+                </button>`;
+            }).join('');
+            box.querySelectorAll('[data-rail-event]').forEach(el =>
+                el.addEventListener('click', () => showEventDetail(Number(el.dataset.railEvent))));
+        } catch (e) {
+            box.innerHTML = '<p class="text-xs text-rose-600">Không tải được sự kiện.</p>';
+        }
+    }
+
+    // "Xem tất cả sự kiện": chuyển sang view "Tất cả" + scope "Sắp tới"
+    function showAllEvents() {
+        STATE.view = 'all';
+        $$('[data-view]').forEach(x => x.classList.toggle('active', x.dataset.view === 'all'));
+        if (STATE.currentTab !== 'discover') {
+            showTab('discover');
+        } else {
+            renderEvents();
+        }
+        $('#eventGrid')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     // ----------------------------- LOAD EVENTS -----------------------------
@@ -617,11 +740,6 @@
                 });
             }
 
-            // Today count for sidebar widget
-            const today = new Date().toDateString();
-            const todayN = STATE.events.filter(e => e.startTime && new Date(e.startTime).toDateString() === today).length;
-            $('#todayCount').textContent = todayN;
-
             renderEvents();
         } catch (e) {
             $('#eventGrid').innerHTML = `<div class="col-span-full rounded-2xl border-2 border-dashed border-rose-200 bg-rose-50 p-8 text-center text-sm text-rose-700">${escapeHtml(e.message)}</div>`;
@@ -631,7 +749,13 @@
     function renderEvents() {
         const grid = $('#eventGrid');
         const empty = $('#emptyDiscover');
-        const list = STATE.events;
+        let list = STATE.events;
+        // "Đề xuất cho bạn": chỉ hiện sự kiện phù hợp ngành/khoa (ưu tiên cao).
+        // Nếu chưa có sự kiện phù hợp thì hiển thị toàn bộ để không bị trống.
+        if (STATE.view === 'recommended') {
+            const relevant = list.filter(e => (e.priorityMajor || 0) >= 60);
+            list = relevant.length ? relevant : list;
+        }
         $('#resultCount').textContent = list.length + ' sự kiện';
         if (!list.length) {
             grid.innerHTML = '';
@@ -974,13 +1098,7 @@
         const visiblePanel = tab === 'mine' ? 'mine' : tab === 'board' ? 'board' : 'discover';
         $$('[data-tab-panel]').forEach(p => { p.hidden = p.dataset.tabPanel !== visiblePanel; });
 
-        if (tab === 'all') {
-            $('#discoverTitle').textContent = 'Tất cả sự kiện';
-            STATE.filters.faculty = 'all';
-            $('#filterFaculty').value = 'all';
-            loadEvents();
-        } else if (tab === 'discover') {
-            $('#discoverTitle').textContent = 'Đề xuất cho bạn';
+        if (tab === 'discover') {
             loadEvents();
         } else if (tab === 'mine') {
             loadMyRegs();
@@ -1017,6 +1135,14 @@
     // ----------------------------- TAB BUTTONS -----------------------------
     $$('[data-tab]').forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
 
+    // ----------------------------- VIEW TOGGLE (Đề xuất / Tất cả) -----------------------------
+    $$('[data-view]').forEach(b => b.addEventListener('click', () => {
+        STATE.view = b.dataset.view;
+        $$('[data-view]').forEach(x => x.classList.toggle('active', x === b));
+        // Render lại từ dữ liệu đã có, không cần gọi API
+        renderEvents();
+    }));
+
     // ----------------------------- LOGOUT -----------------------------
     function doLogout() {
         sessionStorage.clear();
@@ -1027,9 +1153,14 @@
     $('#btnLogout').addEventListener('click', doLogout);
     $('#btnLogoutSide').addEventListener('click', doLogout);
 
+    // ----------------------------- SEE ALL BUTTONS -----------------------------
+    $('#btnSeeAll')?.addEventListener('click', showAllEvents);
+    $('#railSeeAll')?.addEventListener('click', showAllEvents);
+
     // ----------------------------- INIT -----------------------------
     showTab('discover');
     loadMe();
+    loadRailUpcoming();
 })();
 </script>
 </body>

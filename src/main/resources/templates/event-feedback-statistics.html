@@ -42,6 +42,62 @@
         </div>
     </section>
 
+    <!-- ===================== PHÂN TÍCH AI ===================== -->
+    <section class="aems-card" style="margin-bottom: 1.5rem; border-top: 4px solid var(--aems-fpt);">
+        <div class="aems-card__head">
+            <h2 class="aems-card__title">🤖 Phân tích AI từ phản hồi sinh viên</h2>
+            <span class="aems-badge aems-badge--fpt" th:text="${ai.source}">AI</span>
+        </div>
+        <div class="aems-card__body" style="display: grid; gap: 1.1rem;">
+
+            <p th:if="${ai.available == false}" style="margin: 0; text-align: center; padding: 1.5rem; color: var(--aems-ink-muted);"
+               th:text="${ai.summary}">Chưa có dữ liệu.</p>
+
+            <div th:if="${ai.available}" style="display: grid; gap: 1.1rem;">
+                <!-- Tóm tắt -->
+                <div style="padding: 1rem 1.15rem; background: var(--aems-fpt-wash); border-radius: 14px; border-left: 4px solid var(--aems-fpt);">
+                    <p style="margin: 0 0 .35rem; font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: var(--aems-fpt);">Tóm tắt</p>
+                    <p style="margin: 0; line-height: 1.65; color: var(--aems-ink);" th:text="${ai.summary}"></p>
+                </div>
+
+                <!-- Cảm xúc -->
+                <div>
+                    <p style="margin: 0 0 .5rem; font-size: .8rem; font-weight: 800; color: var(--aems-ink);">Cảm xúc của sinh viên</p>
+                    <div style="display: flex; height: 14px; border-radius: 999px; overflow: hidden; background: #eee;">
+                        <span th:style="${'width:' + ai.sentiment.positiveRate + '%;background:#16a34a;'}" title="Tích cực"></span>
+                        <span th:style="${'width:' + (100 - ai.sentiment.positiveRate - ai.sentiment.negativeRate) + '%;background:#cbd5e1;'}" title="Trung lập"></span>
+                        <span th:style="${'width:' + ai.sentiment.negativeRate + '%;background:#dc2626;'}" title="Tiêu cực"></span>
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 1rem; margin-top: .55rem; font-size: .8rem;">
+                        <span style="color:#16a34a; font-weight:700;">● Tích cực: <span th:text="${ai.sentiment.positive}">0</span> (<span th:text="${ai.sentiment.positiveRate}">0</span>%)</span>
+                        <span style="color:#64748b; font-weight:700;">● Trung lập: <span th:text="${ai.sentiment.neutral}">0</span></span>
+                        <span style="color:#dc2626; font-weight:700;">● Tiêu cực: <span th:text="${ai.sentiment.negative}">0</span> (<span th:text="${ai.sentiment.negativeRate}">0</span>%)</span>
+                    </div>
+                </div>
+
+                <!-- Chủ đề nổi bật -->
+                <div th:if="${not #lists.isEmpty(ai.themes)}">
+                    <p style="margin: 0 0 .5rem; font-size: .8rem; font-weight: 800; color: var(--aems-ink);">Chủ đề được nhắc đến</p>
+                    <div style="display: flex; flex-wrap: wrap; gap: .5rem;">
+                        <span th:each="t : ${ai.themes}"
+                              th:classappend="${t.tone}"
+                              th:style="${(t.tone == 'negative') ? 'padding:.3rem .7rem;border-radius:999px;font-size:.78rem;font-weight:700;background:#fee2e2;color:#b91c1c;' : ((t.tone == 'positive') ? 'padding:.3rem .7rem;border-radius:999px;font-size:.78rem;font-weight:700;background:#dcfce7;color:#15803d;' : 'padding:.3rem .7rem;border-radius:999px;font-size:.78rem;font-weight:700;background:#f1f5f9;color:#475569;')}">
+                            <span th:text="${t.label}">Chủ đề</span> · <span th:text="${t.count}">0</span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Khuyến nghị -->
+                <div th:if="${not #lists.isEmpty(ai.recommendations)}">
+                    <p style="margin: 0 0 .5rem; font-size: .8rem; font-weight: 800; color: var(--aems-ink);">💡 Khuyến nghị cải thiện</p>
+                    <ul style="margin: 0; padding-left: 1.1rem; display: grid; gap: .4rem; color: var(--aems-ink); line-height: 1.55;">
+                        <li th:each="r : ${ai.recommendations}" th:text="${r}"></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <section class="aems-card">
         <div class="aems-card__head">
             <h2 class="aems-card__title">Bình luận của sinh viên</h2>

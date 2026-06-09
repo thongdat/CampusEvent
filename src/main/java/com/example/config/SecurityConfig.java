@@ -45,6 +45,10 @@ public class SecurityConfig {
             .httpBasic().disable()
             // Bật OAuth2 Login với Google
             .oauth2Login(oauth2 -> oauth2
+                // Dùng trang đăng nhập riêng (login.html) — tắt trang mặc định
+                // "Login with OAuth 2.0" của Spring (trang hiển thị lỗi
+                // [authorization_request_not_found] khi luồng Google bị hủy/hết hạn).
+                .loginPage("/login.html")
                 .authorizationEndpoint(ep -> ep
                     .authorizationRequestResolver(
                         consentAuthorizationRequestResolver(clientRegistrationRepository))

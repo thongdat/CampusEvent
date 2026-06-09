@@ -35,7 +35,16 @@ public class EventProposal {
     
     @Column(nullable = false)
     private LocalDateTime proposedDate;
-    
+
+    @Column(name = "proposed_end_date")
+    private LocalDateTime proposedEndDate;
+
+    @Column(columnDefinition = "NVARCHAR(200)")
+    private String organizer;
+
+    @Column(name = "support_staff_needed")
+    private Integer supportStaffNeeded;
+
     @Column(nullable = false, length = 50)
     private String status; // PENDING, APPROVED, REVISION, REJECTED
     
@@ -135,6 +144,30 @@ public class EventProposal {
 
     public void setProposedDate(LocalDateTime proposedDate) {
         this.proposedDate = proposedDate;
+    }
+
+    public LocalDateTime getProposedEndDate() {
+        return proposedEndDate;
+    }
+
+    public void setProposedEndDate(LocalDateTime proposedEndDate) {
+        this.proposedEndDate = proposedEndDate;
+    }
+
+    public String getOrganizer() {
+        return organizer;
+    }
+
+    public void setOrganizer(String organizer) {
+        this.organizer = organizer;
+    }
+
+    public Integer getSupportStaffNeeded() {
+        return supportStaffNeeded;
+    }
+
+    public void setSupportStaffNeeded(Integer supportStaffNeeded) {
+        this.supportStaffNeeded = supportStaffNeeded;
     }
 
     public String getStatus() {

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Có lỗi xảy ra · Campus Events FPT</title>
+    <style>
+        :root { --fpt: #f37021; --fpt-deep: #c2410c; --ink: #1f2937; --muted: #6b7280; }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; min-height: 100vh;
+            font-family: 'Segoe UI', system-ui, -apple-system, Roboto, Arial, sans-serif;
+            color: var(--ink);
+            display: flex; align-items: center; justify-content: center; padding: 24px;
+            background: linear-gradient(135deg, #fff7ed 0%, #ffffff 55%, #ffedd5 100%);
+        }
+        .card {
+            width: 100%; max-width: 540px; text-align: center;
+            background: #fff; border: 1px solid #fed7aa; border-radius: 24px;
+            padding: 44px 32px; box-shadow: 0 24px 60px -28px rgba(243, 112, 33, .45);
+        }
+        .badge {
+            width: 76px; height: 76px; margin: 0 auto 20px;
+            display: grid; place-items: center; border-radius: 20px; color: #fff;
+            background: linear-gradient(135deg, var(--fpt), var(--fpt-deep));
+            box-shadow: 0 14px 30px -12px rgba(243, 112, 33, .6);
+        }
+        h1 { margin: 0 0 8px; font-size: 26px; font-weight: 800; }
+        p { margin: 0 auto 24px; max-width: 420px; color: var(--muted); line-height: 1.6; font-size: 15px; }
+        .actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+        a.btn {
+            text-decoration: none; font-weight: 700; font-size: 14px; border-radius: 999px;
+            padding: 12px 22px; transition: filter .15s ease;
+        }
+        a.primary { color: #fff; background: linear-gradient(135deg, var(--fpt), var(--fpt-deep)); }
+        a.primary:hover { filter: brightness(1.08); }
+        a.ghost { color: var(--fpt-deep); background: #fff; border: 1px solid #fed7aa; }
+        a.ghost:hover { background: #fff7ed; }
+        .brand { margin-top: 28px; font-size: 12px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: var(--fpt); }
+    </style>
+</head>
+<body>
+    <main class="card">
+        <div class="badge">
+            <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+        </div>
+        <h1>Rất tiếc, có lỗi xảy ra</h1>
+        <p>Trang bạn truy cập không tồn tại hoặc hệ thống gặp sự cố tạm thời. Bạn hãy quay lại trang chủ hoặc đăng nhập lại nhé.</p>
+        <div class="actions">
+            <a class="btn primary" href="/api/landing.html">Về trang chủ</a>
+            <a class="btn ghost" href="/api/login.html">Đăng nhập</a>
+        </div>
+        <div class="brand">Campus Events · FPT University</div>
+    </main>
+</body>
+</html>
