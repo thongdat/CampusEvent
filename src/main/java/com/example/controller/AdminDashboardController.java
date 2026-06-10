@@ -747,6 +747,33 @@ public class AdminDashboardController {
                 .collect(Collectors.toList());
     }
 
+    @PostMapping("/registrations")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> createRegistration(@RequestBody Map<String, Object> payload) {
+        Event event = eventRepository.findById(longValue(payload, "eventId", null))
+                .orElseThrow(() -> badRequest("Sự kiện không tồn tại."));
+        Student student = upsertStudentFromRegistrationPayload(payload);
+
+        registrationRepository.findByEventIdAndStudentId(event.getId(), student.getId())
+                .ifPresent(existing -> {
+                    throw badRequest("Sinh viên này đã có trong danh sách sự kiện.");
+                });
+
+        String status = normalizeStatus(stringValue(payload, "status", "REGISTERED"), List.of("REGISTERED", "WAITLIST", "CANCELLED"), "Status đăng ký không hợp lệ.");
+        Registration registration = new Registration(
+                currentDateTime(),
+                status,
+                textOrNull(stringValue(payload, "note", "Thêm thủ công bởi admin")),
+                event,
+                student
+        );
+        Registration saved = registrationRepository.save(registration);
+
+        Map<String, Object> result = buildRegistration(saved);
+        result.put("emailStatus", sendRegistrationEmail(saved));
+        return ResponseEntity.status(HttpStatus.CREATED).body(result);
+    }
+
     @PutMapping("/registrations/{id}/status")
     @Transactional
     public Map<String, Object> updateRegistrationStatus(@PathVariable Long id, @RequestBody Map<String, Object> payload) {
@@ -1537,6 +1564,95 @@ public class AdminDashboardController {
         student.setYear(firstNonNull(user.getSemester(), intValue(payload, "semester", 1)));
         student.setUser(user);
         studentRepository.save(student);
+    }
+
+    private Student upsertStudentFromRegistrationPayload(Map<String, Object> payload) {
+        String email = requiredString(payload, "email").toLowerCase(Locale.ROOT);
+        String fullName = requiredString(payload, "fullName");
+        String studentCode = requiredString(payload, "studentCode").trim().toUpperCase(Locale.ROOT);
+        String major = requiredString(payload, "major");
+        Integer semester = intValue(payload, "semester", 1);
+
+        Role studentRole = roleRepository.findByName("STUDENT");
+        if (studentRole == null) {
+            throw badRequest("Chưa cấu hình role STUDENT.");
+        }
+
+        Student student = studentRepository.findByStudentCode(studentCode).orElse(null);
+        User user = userRepository.findByEmail(email).orElse(null);
+        if (student != null && user != null && !Objects.equals(student.getUser().getId(), user.getId())) {
+            throw badRequest("MSSV và email đang thuộc hai tài khoản khác nhau.");
+        }
+
+        if (student != null) {
+            user = student.getUser();
+        }
+        if (user == null) {
+            user = new User();
+            user.setEmail(email);
+            user.setPassword(passwordEncoder.encode("12345678"));
+            user.setCreatedAt(currentDateTime());
+            user.setStatus(true);
+        }
+
+        user.setFullName(fullName);
+        user.setRole(studentRole);
+        user.setMajor(major);
+        user.setSemester(semester);
+        user.setTotalPoints(firstNonNull(user.getTotalPoints(), 0));
+        user.setDepartmentPosition("STAFF");
+        User savedUser = userRepository.save(user);
+
+        if (student == null) {
+            student = studentRepository.findByUserId(savedUser.getId()).orElse(new Student());
+        }
+        student.setStudentCode(studentCode);
+        student.setMajor(major);
+        student.setYear(semester);
+        student.setUser(savedUser);
+        return studentRepository.save(student);
+    }
+
+    private String sendRegistrationEmail(Registration registration) {
+        Student student = registration.getStudent();
+        User user = student != null ? student.getUser() : null;
+        Event event = registration.getEvent();
+        String toEmail = user != null ? textOrEmpty(user.getEmail()) : "";
+        if (toEmail.isBlank() || event == null) {
+            return "SKIPPED";
+        }
+
+        String subject = "AEMS - Xác nhận tham dự " + textOrEmpty(event.getTitle());
+        String content = "Xin chào " + textOrEmpty(user.getFullName()) + ",\n\n"
+                + "Bạn đã được thêm vào danh sách tham dự sự kiện: " + textOrEmpty(event.getTitle()) + ".\n"
+                + "Thời gian: " + (event.getStartTime() != null ? event.getStartTime().format(DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy")) : "Sẽ thông báo") + "\n"
+                + "Địa điểm: " + firstNonBlank(event.getLocation(), "FPT Campus", "FPT Campus") + "\n"
+                + "Trạng thái đăng ký: " + textOrEmpty(registration.getStatus()) + "\n\n"
+                + "Vui lòng kiểm tra thông tin và có mặt đúng giờ để check-in.";
+
+        Map<String, Object> logPayload = new LinkedHashMap<>();
+        logPayload.put("toEmail", toEmail);
+        logPayload.put("subject", subject);
+        logPayload.put("content", content);
+        logPayload.put("sentAt", currentDateTime().toString());
+        logPayload.put("userId", user.getId());
+        logPayload.put("eventId", event.getId());
+        logPayload.put("registrationId", registration.getId());
+
+        try {
+            emailService.sendPlainEmail(toEmail, subject, content);
+            logPayload.put("status", "SENT");
+            EmailLog emailLog = new EmailLog();
+            applyEmailPayload(emailLog, logPayload, true);
+            emailLogRepository.save(emailLog);
+            return "SENT";
+        } catch (Exception exception) {
+            logPayload.put("status", "FAILED");
+            EmailLog emailLog = new EmailLog();
+            applyEmailPayload(emailLog, logPayload, true);
+            emailLogRepository.save(emailLog);
+            return "FAILED";
+        }
     }
 
     private void applyEmailPayload(EmailLog emailLog, Map<String, Object> payload, boolean creating) {

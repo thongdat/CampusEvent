@@ -226,14 +226,37 @@
         .event-live-card {
             border: 1px solid rgba(226, 232, 240, 0.9);
             background: #fff;
-            box-shadow: 0 18px 48px -34px rgba(67, 20, 7, 0.38);
+            box-shadow: 0 18px 48px -30px rgba(67, 20, 7, 0.36);
+            transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
         }
 
         .event-live-card img {
             transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
         }
 
-        .event-live-card:hover img { transform: scale(1.045); }
+        .event-live-card:hover {
+            border-color: rgba(243, 112, 33, 0.3);
+            box-shadow: 0 28px 70px -38px rgba(67, 20, 7, 0.44);
+            transform: translateY(-4px);
+        }
+
+        .event-live-card:hover img { transform: scale(1.04); }
+
+        .event-live-card .event-card-media {
+            height: 9rem;
+        }
+
+        @media (min-width: 640px) {
+            .event-live-card .event-card-media {
+                height: 9.75rem;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .event-live-card .event-card-media {
+                height: 10.5rem;
+            }
+        }
 
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after {
@@ -392,8 +415,8 @@
                 </a>
             </div>
 
-            <div id="landing-events" class="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-                <article class="event-live-card rounded-3xl p-6" data-reveal>
+            <div id="landing-events" class="mx-auto mt-10 grid max-w-6xl gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <article class="event-live-card rounded-xl p-3" data-reveal>
                     <p class="text-sm font-bold text-ink-muted">Đang tải sự kiện từ database...</p>
                 </article>
             </div>
@@ -734,32 +757,28 @@
             var capacity = Number(event.capacity || 0);
             var registered = Number(event.registrationCount || 0);
             var fill = capacity > 0 ? Math.min(100, Math.round(registered * 100 / capacity)) : 0;
-            return '<article data-reveal class="event-live-card overflow-hidden rounded-3xl">' +
-                '<div class="aspect-[16/10] overflow-hidden"><img src="' + escapeHtml(eventImage(event)) + '" alt="' + escapeHtml(event.title) + '" class="h-full w-full object-cover" width="900" height="560"></div>' +
-                '<div class="p-6">' +
-                '<div class="flex items-center justify-between gap-3">' +
-                '<span class="rounded-full bg-orange-50 px-3 py-1 text-xs font-extrabold text-orange-deep">' + escapeHtml(statusCopy(event)) + '</span>' +
-                '<span class="text-xs font-bold text-ink-soft">' + escapeHtml(event.departmentName || 'Campus') + '</span>' +
+            return '<article data-reveal class="event-live-card overflow-hidden rounded-xl">' +
+                '<div class="event-card-media overflow-hidden"><img src="' + escapeHtml(eventImage(event)) + '" alt="' + escapeHtml(event.title) + '" class="h-full w-full object-cover" width="640" height="360"></div>' +
+                '<div class="p-4">' +
+                '<div class="flex items-center justify-between gap-2">' +
+                '<span class="rounded-full bg-orange-50 px-2.5 py-0.5 text-[11px] font-extrabold text-orange-deep">' + escapeHtml(statusCopy(event)) + '</span>' +
+                '<span class="truncate text-[11px] font-bold text-ink-soft">' + escapeHtml(event.departmentName || 'Campus') + '</span>' +
                 '</div>' +
-                '<h3 class="mt-4 min-h-[3.2rem] text-lg font-extrabold leading-snug text-ink">' + escapeHtml(event.title) + '</h3>' +
-                '<p class="mt-2 text-sm leading-6 text-ink-muted">' + eventDate(event.startTime) + ' · ' + escapeHtml(event.location || 'FPT Campus') + '</p>' +
-                '<div class="mt-4 h-2 overflow-hidden rounded-full bg-orange-100"><span class="block h-full rounded-full bg-gradient-to-r from-orange-fpt to-forest" style="width:' + fill + '%"></span></div>' +
-                '<p class="mt-2 text-xs font-bold text-ink-muted">' + number(registered) + ' / ' + number(capacity) + ' lượt đăng ký</p>' +
+                '<h3 class="mt-2.5 line-clamp-2 min-h-[2.75rem] text-base font-extrabold leading-snug text-ink">' + escapeHtml(event.title) + '</h3>' +
+                '<p class="mt-2 truncate text-xs leading-5 text-ink-muted">' + eventDate(event.startTime) + ' · ' + escapeHtml(event.location || 'FPT Campus') + '</p>' +
+                '<div class="mt-3 h-1.5 overflow-hidden rounded-full bg-orange-100"><span class="block h-full rounded-full bg-gradient-to-r from-orange-fpt to-forest" style="width:' + fill + '%"></span></div>' +
+                '<p class="mt-1.5 text-[11px] font-bold text-ink-muted">' + number(registered) + ' / ' + number(capacity) + ' lượt đăng ký</p>' +
                 '</div>' +
                 '</article>';
         }
 
         function paintLandingData(events, overview) {
             events = (Array.isArray(events) && events.length ? events : fallbackEvents).slice().sort(compareEvents);
-            var nowMs = Date.now();
-            var upcoming = events.filter(function (event) {
-                var t = new Date(event && event.startTime || 0).getTime();
-                return Number.isFinite(t) && t >= nowMs;
-            });
-            var display = upcoming.length ? upcoming : events;
+            var topEventLimit = 6;
+            var topEvents = events.slice(0, topEventLimit);
             var eventWrap = document.getElementById('landing-events');
             if (eventWrap) {
-                eventWrap.innerHTML = display.slice(0, 6).map(eventCard).join('');
+                eventWrap.innerHTML = topEvents.map(eventCard).join('');
                 eventWrap.querySelectorAll('[data-reveal]').forEach(function (element) {
                     revealObserver.observe(element);
                 });
@@ -819,7 +838,7 @@
             a.setAttribute('href', dashboard);
         });
     })();
-    // abc
+    // abcc
 </script>
 </body>
 </html>

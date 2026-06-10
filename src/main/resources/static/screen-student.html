@@ -186,6 +186,22 @@
                 <span class="h-1.5 w-1.5 rounded-full bg-fpt-500 animate-pulse"></span>
                 Live
             </span>
+            <div class="relative">
+                <button type="button" id="btnNotifications" class="relative grid h-10 w-10 place-items-center rounded-xl border border-fpt-100 bg-white text-fpt-700 shadow-sm transition hover:border-fpt-200 hover:bg-fpt-50" aria-label="Thông báo">
+                    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                    <span id="notificationBadge" hidden class="absolute -right-1 -top-1 min-w-[1.15rem] rounded-full bg-rose-600 px-1 text-center text-[10px] font-extrabold leading-[1.15rem] text-white shadow">0</span>
+                </button>
+                <div id="notificationPanel" hidden class="absolute right-0 z-50 mt-2 w-80 overflow-hidden rounded-2xl border border-fpt-100 bg-white text-sm shadow-2xl animate-pop">
+                    <div class="flex items-center justify-between border-b border-fpt-50 px-4 py-3">
+                        <div>
+                            <p class="font-extrabold text-ink">Thông báo</p>
+                            <p class="text-[11px] text-ink-muted">Sự kiện mới và đăng ký của bạn</p>
+                        </div>
+                        <button type="button" id="btnMarkNotifications" class="text-[11px] font-bold text-fpt-700 hover:underline">Đã xem</button>
+                    </div>
+                    <div id="notificationList" class="max-h-96 overflow-y-auto"></div>
+                </div>
+            </div>
             <details class="relative">
                 <summary class="flex cursor-pointer list-none items-center gap-2 rounded-full border border-fpt-100 bg-white py-1.5 pl-2 pr-3 text-sm font-semibold text-ink shadow-sm transition hover:border-fpt-200 hover:shadow-md">
                     <span id="accountInitials" class="grid h-7 w-7 place-items-center rounded-full bg-gradient-to-br from-fpt-500 to-fpt-700 text-[11px] font-bold text-white">SV</span>
@@ -476,6 +492,7 @@
         events: [],
         myRegs: [],
         leaderboard: [],
+        notifications: [],
         filters: { q: '', scope: 'upcoming', faculty: 'all' },
         currentTab: 'discover',
         view: 'recommended'
@@ -490,6 +507,7 @@
     }
     const sessionUser = readUser();
     const userEmail = sessionUser ? sessionUser.email : null;
+    const NOTIFICATION_SEEN_KEY = 'campus-events:student-notifications-seen:' + (userEmail || 'guest');
 
     if (!userEmail) {
         setBasicAccount({ fullName: 'Khách', email: '', major: '', semester: null });
@@ -615,6 +633,91 @@
         ).join('');
     }
 
+    function notificationSeenKeys() {
+        try {
+            return new Set(JSON.parse(localStorage.getItem(NOTIFICATION_SEEN_KEY) || '[]'));
+        } catch (e) {
+            return new Set();
+        }
+    }
+    function notificationTime(item) {
+        return new Date(item.at || 0).getTime() || 0;
+    }
+    function buildNotifications(events = STATE.events, regs = STATE.myRegs) {
+        const now = Date.now();
+        const upcoming = (events || [])
+            .filter(e => e.startTime && new Date(e.startTime).getTime() >= now)
+            .slice()
+            .sort((a, b) => new Date(a.startTime || 0) - new Date(b.startTime || 0))
+            .slice(0, 5)
+            .map(e => ({
+                key: 'event:' + e.id,
+                type: 'event',
+                title: 'Sự kiện mới đang mở',
+                body: `${e.title || 'Untitled'} · ${formatDateTime(e.startTime)}`,
+                at: e.createdAt || e.startTime,
+                eventId: e.id
+            }));
+        const registrations = (regs || []).slice(0, 5).map(r => {
+            const e = r.event || {};
+            return {
+                key: 'registration:' + (r.registrationId || r.id || e.id),
+                type: 'registration',
+                title: String(r.status || '').toUpperCase() === 'WAITLIST' ? 'Bạn đang trong hàng chờ' : 'Cập nhật đăng ký',
+                body: `${e.title || 'Sự kiện'} · ${r.status || 'REGISTERED'}`,
+                at: r.updatedAt || r.registrationDate || e.startTime,
+                eventId: e.id
+            };
+        });
+        STATE.notifications = upcoming.concat(registrations)
+            .filter(item => item.at)
+            .sort((a, b) => notificationTime(b) - notificationTime(a))
+            .slice(0, 8);
+        renderNotifications();
+    }
+    function renderNotifications() {
+        const list = $('#notificationList');
+        const badge = $('#notificationBadge');
+        if (!list || !badge) return;
+        const seen = notificationSeenKeys();
+        const unread = STATE.notifications.filter(item => !seen.has(item.key)).length;
+        badge.hidden = unread === 0;
+        badge.textContent = unread > 9 ? '9+' : String(unread);
+        list.innerHTML = STATE.notifications.length ? STATE.notifications.map(item => `
+            <button type="button" data-notify-event="${item.eventId || ''}" class="flex w-full gap-3 px-4 py-3 text-left transition hover:bg-fpt-50">
+                <span class="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-xl ${item.type === 'event' ? 'bg-fpt-100 text-fpt-700' : 'bg-emerald-50 text-emerald-700'}">
+                    ${item.type === 'event' ? '🔔' : '✓'}
+                </span>
+                <span class="min-w-0 flex-1">
+                    <span class="block truncate text-sm font-extrabold text-ink">${escapeHtml(item.title)}</span>
+                    <span class="mt-0.5 block line-clamp-2 text-xs leading-5 text-ink-muted">${escapeHtml(item.body)}</span>
+                    <span class="mt-1 block text-[11px] font-semibold text-ink-soft">${relativeFromNow(item.at)}</span>
+                </span>
+                ${!seen.has(item.key) ? '<span class="mt-2 h-2 w-2 shrink-0 rounded-full bg-rose-500"></span>' : ''}
+            </button>`).join('') : '<div class="px-4 py-8 text-center text-sm text-ink-muted">Chưa có thông báo mới.</div>';
+        list.querySelectorAll('[data-notify-event]').forEach(btn => btn.addEventListener('click', () => {
+            const id = Number(btn.dataset.notifyEvent || 0);
+            $('#notificationPanel').hidden = true;
+            markNotificationsSeen();
+            if (id) showEventDetail(id);
+        }));
+    }
+    function markNotificationsSeen() {
+        localStorage.setItem(NOTIFICATION_SEEN_KEY, JSON.stringify(STATE.notifications.map(item => item.key)));
+        renderNotifications();
+    }
+    async function refreshNotifications() {
+        try {
+            const [eventsData, regsData] = await Promise.all([
+                api('/student/events?scope=upcoming&sort=priority'),
+                userEmail ? api('/student/my-registrations') : Promise.resolve({ items: [] })
+            ]);
+            buildNotifications(eventsData.items || [], regsData.items || []);
+        } catch (e) {
+            buildNotifications();
+        }
+    }
+
     // ----------------------------- ACCOUNT -----------------------------
     function setBasicAccount(profile) {
         const fullName = profile.fullName || 'Sinh viên';
@@ -729,6 +832,7 @@
             if (STATE.filters.faculty && STATE.filters.faculty !== 'all') qs.set('faculty', STATE.filters.faculty);
             const data = await api('/student/events?' + qs.toString());
             STATE.events = data.items || [];
+            buildNotifications(STATE.events, STATE.myRegs);
 
             // Populate faculty filter once
             const sel = $('#filterFaculty');
@@ -770,9 +874,6 @@
 
     function eventCard(e) {
         const dept = e.department ? e.department.name : '—';
-        const fill = (e.fillRate == null) ? 0 : e.fillRate;
-        const fillColor = fill >= 95 ? 'bg-rose-500' : fill >= 70 ? 'bg-amber-500' : 'bg-emerald-500';
-        const seats = (e.capacity == null) ? '—' : `${e.registeredCount}/${e.capacity}`;
         const myStatus = e.myStatus || '';
         const isRegistered = myStatus === 'REGISTERED' || myStatus === 'WAITLIST';
         const isPast = e.startTime && new Date(e.startTime) < new Date();
@@ -812,19 +913,14 @@
                         <span class="line-clamp-1 flex items-center gap-1">📅 ${when}</span>
                         <span class="line-clamp-1 flex items-center gap-1">📍 ${escapeHtml(e.location || '—')}</span>
                     </div>
-                    <div>
-                        <div class="flex items-center justify-between text-xs">
-                            <span class="font-semibold text-ink-muted">${seats} chỗ</span>
-                            <span class="font-extrabold ${fill >= 95 ? 'text-rose-600' : fill >= 70 ? 'text-amber-600' : 'text-emerald-600'}">${fill}% đầy</span>
-                        </div>
-                        <div class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-fpt-50">
-                            <div class="h-full ${fillColor}" style="width:${Math.min(100, fill)}%"></div>
-                        </div>
-                    </div>
                     ${btn}
                 </div>
             </div>
         </article>`;
+    }
+
+    function speakerText(event) {
+        return (event.speakers || event.organizer || event.host || event.presenter || '').trim() || 'Đang cập nhật';
     }
 
     // ----------------------------- EVENT DETAIL MODAL -----------------------------
@@ -852,8 +948,8 @@
         const dept = e.department ? e.department.name : '—';
         const myStatus = e.myStatus || '';
         const isPast = e.startTime && new Date(e.startTime) < new Date();
-        const fill = (e.fillRate == null) ? 0 : e.fillRate;
         const img = fixImg(e.imageUrl);
+        const speakers = speakerText(e);
 
         const action = isPast
             ? `<button class="rounded-xl bg-fpt-100 px-5 py-2.5 text-sm font-bold text-ink-soft" disabled>Đã diễn ra</button>`
@@ -894,7 +990,7 @@
                 <div class="grid gap-3 text-sm sm:grid-cols-2">
                     <div class="flex items-center gap-2 text-ink"><span>📅</span><span><strong>Thời gian:</strong> ${formatDateTime(e.startTime)} – ${formatTime(e.endTime)}</span></div>
                     <div class="flex items-center gap-2 text-ink"><span>📍</span><span><strong>Địa điểm:</strong> ${escapeHtml(e.location || '—')}</span></div>
-                    <div class="flex items-center gap-2 text-ink"><span>👥</span><span><strong>Số chỗ:</strong> ${e.registeredCount || 0}/${e.capacity || '—'} (đầy ${fill}%)</span></div>
+                    <div class="flex items-start gap-2 text-ink"><span>🎤</span><span><strong>Diễn giả:</strong> ${escapeHtml(speakers).replace(/\n/g, '<br>')}</span></div>
                     <div class="flex items-center gap-2 text-ink"><span>📊</span><span><strong>Trạng thái:</strong> ${statusBadge(e.status)}</span></div>
                 </div>
 
@@ -927,7 +1023,7 @@
                 toast('Bạn vào hàng chờ — sẽ tự lên slot nếu có người huỷ', 'warn');
             }
             closeModal();
-            await Promise.all([loadEvents(), loadMe(), STATE.currentTab === 'mine' ? loadMyRegs() : Promise.resolve()]);
+            await Promise.all([loadEvents(), loadMe(), refreshNotifications(), STATE.currentTab === 'mine' ? loadMyRegs() : Promise.resolve()]);
         } catch (e) {
             toast(e.message || 'Đăng ký thất bại', 'error');
         }
@@ -940,7 +1036,7 @@
             await api('/student/registrations/' + regId, { method: 'DELETE' });
             toast('Đã huỷ đăng ký');
             closeModal();
-            await Promise.all([loadEvents(), loadMe(), loadMyRegs()]);
+            await Promise.all([loadEvents(), loadMe(), loadMyRegs(), refreshNotifications()]);
         } catch (e) {
             toast(e.message || 'Huỷ thất bại', 'error');
         }
@@ -953,6 +1049,7 @@
         try {
             const data = await api('/student/my-registrations');
             STATE.myRegs = data.items || [];
+            buildNotifications(STATE.events, STATE.myRegs);
             renderMyRegs();
         } catch (e) {
             $('#myList').innerHTML = `<div class="rounded-2xl border-2 border-dashed border-rose-200 bg-rose-50 p-6 text-center text-sm text-rose-700">${escapeHtml(e.message)}</div>`;
@@ -1135,6 +1232,25 @@
     // ----------------------------- TAB BUTTONS -----------------------------
     $$('[data-tab]').forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
 
+    // ----------------------------- NOTIFICATIONS -----------------------------
+    $('#btnNotifications')?.addEventListener('click', e => {
+        e.stopPropagation();
+        const panel = $('#notificationPanel');
+        panel.hidden = !panel.hidden;
+        if (!panel.hidden) markNotificationsSeen();
+    });
+    $('#btnMarkNotifications')?.addEventListener('click', e => {
+        e.stopPropagation();
+        markNotificationsSeen();
+    });
+    document.addEventListener('click', e => {
+        const panel = $('#notificationPanel');
+        const button = $('#btnNotifications');
+        if (panel && button && !panel.hidden && !panel.contains(e.target) && !button.contains(e.target)) {
+            panel.hidden = true;
+        }
+    });
+
     // ----------------------------- VIEW TOGGLE (Đề xuất / Tất cả) -----------------------------
     $$('[data-view]').forEach(b => b.addEventListener('click', () => {
         STATE.view = b.dataset.view;
@@ -1161,6 +1277,7 @@
     showTab('discover');
     loadMe();
     loadRailUpcoming();
+    refreshNotifications();
 })();
 </script>
 </body>

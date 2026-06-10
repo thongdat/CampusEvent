@@ -550,10 +550,8 @@
                 if (info.hasQuiz) slot.innerHTML = '<span class="font-bold text-emerald-600">' + info.quizCount + ' câu quiz</span>';
                 else slot.innerHTML = '<span class="text-slate-400">Chưa có quiz</span>';
             });
-            rotateOne(ev.id, 'in');
             renderCheckoutQr(ev.id);
         });
-        startRotationLoop();
 
         autoCreateFormsForEvents(list, 'in');
         autoCreateFormsForEvents(list, 'out');
@@ -628,8 +626,7 @@
                 if (liIdx >= 0) list[liIdx] = data;
                 formStateMap.set(formKey(ev.id, kind), 'ok');
                 updateFormBadge(ev.id, kind);
-                if (kind === 'in') rotateOne(ev.id, 'in');
-                else renderCheckoutQr(ev.id);
+                if (kind === 'out') renderCheckoutQr(ev.id);
             } catch (e) {
                 formStateMap.set(formKey(ev.id, kind), 'fallback');
                 updateFormBadge(ev.id, kind);
@@ -819,6 +816,7 @@
 
     // ----------- Dynamic QR rotation (per event) -----------
     const tokenState = new Map(); // eventId → { token, url, expiredAt, mode }
+    let activeProjectionKey = null;
     const ROTATION_TICK_MS = 1000;
 
     function findEvent(eventId) {
@@ -887,8 +885,13 @@
     function startRotationLoop() {
         if (startRotationLoop._timer) return;
         startRotationLoop._timer = setInterval(() => {
+            if (!activeProjectionKey) {
+                stopRotationLoop();
+                return;
+            }
             const now = Date.now();
             tokenState.forEach((state, key) => {
+                if (key !== activeProjectionKey) return;
                 if (state.mode === 'static-out') return; // check-out QR không xoay
                 const [eventId, kind] = key.split('|');
                 const remaining = Math.max(0, state.expiredAt - now);
@@ -910,10 +913,25 @@
         }, ROTATION_TICK_MS);
     }
 
+    function stopRotationLoop() {
+        if (startRotationLoop._timer) {
+            clearInterval(startRotationLoop._timer);
+            startRotationLoop._timer = null;
+        }
+    }
+
+    function resetProjectionCountdown(key) {
+        const bar = document.querySelector('[data-qr-bar="' + key + '"]');
+        const cd = document.querySelector('[data-qr-countdown="' + key + '"]');
+        if (bar) bar.style.width = '100%';
+        if (cd) cd.textContent = '⏱ 0:30';
+    }
+
     function openQrModal(data) {
         const eventId = data.eventId;
         const kind = data.kind || 'in';
-        const state = tokenState.get(formKey(eventId, kind));
+        const key = formKey(eventId, kind);
+        const state = tokenState.get(key);
         const ev = findEvent(eventId);
         const fallback = kind === 'out'
             ? (ev && ev.checkoutFormUrl ? ev.checkoutFormUrl : '#')
@@ -936,6 +954,17 @@
 
         $('#qrModal').dataset.eventId = String(eventId);
         $('#qrModal').dataset.kind = kind;
+
+        if (kind === 'in') {
+            activeProjectionKey = key;
+            $('#qrModalUrl').textContent = 'Đang tạo QR mới...';
+            $('#qrModalImg').innerHTML = '<div class="qr-skeleton" style="max-width:320px"></div>';
+            rotateOne(eventId, 'in', true).then(() => {
+                if (activeProjectionKey !== key) return;
+                refreshOpenModal(eventId, 'in');
+                startRotationLoop();
+            });
+        }
     }
 
     function refreshOpenModal(eventId, kind) {
@@ -949,6 +978,9 @@
     }
 
     function closeQrModal() {
+        if (activeProjectionKey) resetProjectionCountdown(activeProjectionKey);
+        activeProjectionKey = null;
+        stopRotationLoop();
         $('#qrModal').classList.add('hidden');
         $('#qrModal').classList.remove('flex');
     }

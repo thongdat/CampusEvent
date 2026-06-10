@@ -9,8 +9,9 @@
 --    5. Insert ~70 student với mã FPT (HE/HS/HM/HF/HD ...)
 --    6. Insert 32 event - mỗi event đều có ảnh FPT/campus chất lượng cao
 --    7. Insert 35 event_proposal đủ các trạng thái
---    8. Sinh ~500 registration / 350 ticket / 280 attendance / 140 feedback
---    9. Sinh ~700 email_log và ~900 activity_log
+--    8. Sinh ~500 registration / 350 ticket / 280 attendance / feedback
+--    9. Sinh QR attendance_session, quiz_question/submission/answer, event_feedback
+--   10. Sinh ~700 email_log và ~900 activity_log
 --
 --  Mọi mật khẩu seed đều là chuỗi placeholder. Sau khi import, gọi:
 --    GET http://localhost:8081/api/auth/init-passwords
@@ -37,18 +38,23 @@ GO
 -- ---------------------------------------------------------------------
 -- DROP theo đúng thứ tự khóa ngoại
 -- ---------------------------------------------------------------------
-IF OBJECT_ID('activity_log',  'U') IS NOT NULL DROP TABLE activity_log;
-IF OBJECT_ID('email_log',     'U') IS NOT NULL DROP TABLE email_log;
-IF OBJECT_ID('feedback',      'U') IS NOT NULL DROP TABLE feedback;
-IF OBJECT_ID('attendance',    'U') IS NOT NULL DROP TABLE attendance;
-IF OBJECT_ID('ticket',        'U') IS NOT NULL DROP TABLE ticket;
-IF OBJECT_ID('registration',  'U') IS NOT NULL DROP TABLE registration;
-IF OBJECT_ID('event_proposal','U') IS NOT NULL DROP TABLE event_proposal;
-IF OBJECT_ID('event',         'U') IS NOT NULL DROP TABLE event;
-IF OBJECT_ID('student',       'U') IS NOT NULL DROP TABLE student;
-IF OBJECT_ID('users',         'U') IS NOT NULL DROP TABLE users;
-IF OBJECT_ID('department',    'U') IS NOT NULL DROP TABLE department;
-IF OBJECT_ID('role',          'U') IS NOT NULL DROP TABLE role;
+IF OBJECT_ID('activity_log',       'U') IS NOT NULL DROP TABLE activity_log;
+IF OBJECT_ID('email_log',          'U') IS NOT NULL DROP TABLE email_log;
+IF OBJECT_ID('quiz_answer',        'U') IS NOT NULL DROP TABLE quiz_answer;
+IF OBJECT_ID('quiz_submission',    'U') IS NOT NULL DROP TABLE quiz_submission;
+IF OBJECT_ID('quiz_question',      'U') IS NOT NULL DROP TABLE quiz_question;
+IF OBJECT_ID('event_feedback',     'U') IS NOT NULL DROP TABLE event_feedback;
+IF OBJECT_ID('feedback',           'U') IS NOT NULL DROP TABLE feedback;
+IF OBJECT_ID('attendance_session', 'U') IS NOT NULL DROP TABLE attendance_session;
+IF OBJECT_ID('attendance',         'U') IS NOT NULL DROP TABLE attendance;
+IF OBJECT_ID('ticket',             'U') IS NOT NULL DROP TABLE ticket;
+IF OBJECT_ID('registration',       'U') IS NOT NULL DROP TABLE registration;
+IF OBJECT_ID('event_proposal',     'U') IS NOT NULL DROP TABLE event_proposal;
+IF OBJECT_ID('event',              'U') IS NOT NULL DROP TABLE event;
+IF OBJECT_ID('student',            'U') IS NOT NULL DROP TABLE student;
+IF OBJECT_ID('users',              'U') IS NOT NULL DROP TABLE users;
+IF OBJECT_ID('department',         'U') IS NOT NULL DROP TABLE department;
+IF OBJECT_ID('role',               'U') IS NOT NULL DROP TABLE role;
 GO
 
 -- ---------------------------------------------------------------------
@@ -84,6 +90,7 @@ CREATE TABLE users (
     major        NVARCHAR(100),
     semester     INT,
     total_points INT                  NOT NULL DEFAULT 0,
+    department_position VARCHAR(30)    NULL DEFAULT 'STAFF',
     CONSTRAINT UK_users_email UNIQUE (email),
     CONSTRAINT FK_users_role  FOREIGN KEY (role_id) REFERENCES role(id)
 );
@@ -98,6 +105,9 @@ CREATE TABLE student (
     student_code VARCHAR(50)          NOT NULL,
     major        NVARCHAR(100),
     year         INT,
+    no_show_count INT                 NOT NULL DEFAULT 0,
+    attendance_reputation FLOAT       NOT NULL DEFAULT 100,
+    gender       NVARCHAR(10),
     user_id      BIGINT               NOT NULL,
     CONSTRAINT UK_student_code UNIQUE (student_code),
     CONSTRAINT UK_student_user UNIQUE (user_id),
@@ -115,6 +125,17 @@ CREATE TABLE event (
     capacity      INT,
     image_url     NVARCHAR(500),
     image_urls    NVARCHAR(MAX),
+    google_form_url NVARCHAR(1000),
+    checkin_form_id NVARCHAR(120),
+    checkin_sheet_id NVARCHAR(120),
+    checkout_form_url NVARCHAR(1000),
+    checkout_form_id NVARCHAR(120),
+    checkout_sheet_id NVARCHAR(120),
+    last_sheet_sync_at DATETIME2,
+    auto_closed_at DATETIME2,
+    speakers      NVARCHAR(800),
+    organizer     NVARCHAR(200),
+    support_staff_needed INT,
     budget        DECIMAL(18,2)        NOT NULL DEFAULT 0,
     status        VARCHAR(50)          NOT NULL,
     created_at    DATETIME2            NOT NULL,
@@ -133,9 +154,13 @@ CREATE TABLE event_proposal (
     image_urls    NVARCHAR(MAX),
     budget        DECIMAL(18,2)        NOT NULL DEFAULT 0,
     proposed_date DATETIME2            NOT NULL,
+    proposed_end_date DATETIME2,
+    organizer     NVARCHAR(200),
+    support_staff_needed INT,
     status        VARCHAR(50)          NOT NULL,
     note          NVARCHAR(MAX),
     created_at    DATETIME2            NOT NULL,
+    quiz_payload  NVARCHAR(MAX),
     department_id BIGINT               NOT NULL,
     CONSTRAINT FK_proposal_dept FOREIGN KEY (department_id) REFERENCES department(id)
 );
@@ -147,6 +172,7 @@ CREATE TABLE registration (
     status            VARCHAR(50)          NOT NULL,
     note              NVARCHAR(MAX),
     priority_score    DECIMAL(5,2)         NULL,
+    invitation_sent_at DATETIME2           NULL,
     event_id          BIGINT               NOT NULL,
     student_id        BIGINT               NOT NULL,
     CONSTRAINT FK_reg_event   FOREIGN KEY (event_id)   REFERENCES event(id),
@@ -167,9 +193,29 @@ GO
 CREATE TABLE attendance (
     id              BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
     checkin_time    DATETIME2            NOT NULL,
+    mid_verify_time DATETIME2,
+    checkout_time   DATETIME2,
     status          VARCHAR(50)          NOT NULL,
+    participation_score FLOAT,
+    note            NVARCHAR(MAX),
     registration_id BIGINT               NOT NULL,
-    CONSTRAINT FK_attend_reg FOREIGN KEY (registration_id) REFERENCES registration(id)
+    event_id        BIGINT,
+    student_id      BIGINT,
+    CONSTRAINT FK_attend_reg     FOREIGN KEY (registration_id) REFERENCES registration(id),
+    CONSTRAINT FK_attend_event   FOREIGN KEY (event_id)        REFERENCES event(id),
+    CONSTRAINT FK_attend_student FOREIGN KEY (student_id)      REFERENCES student(id)
+);
+GO
+
+CREATE TABLE attendance_session (
+    id           BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    event_id     BIGINT               NOT NULL,
+    token        VARCHAR(120)         NOT NULL,
+    session_type VARCHAR(30)          NOT NULL,
+    created_at   DATETIME2            NOT NULL,
+    expired_at   DATETIME2            NOT NULL,
+    status       VARCHAR(30)          NOT NULL,
+    CONSTRAINT FK_att_session_event FOREIGN KEY (event_id) REFERENCES event(id)
 );
 GO
 
@@ -182,6 +228,61 @@ CREATE TABLE feedback (
     student_id BIGINT               NOT NULL,
     CONSTRAINT FK_fb_event   FOREIGN KEY (event_id)   REFERENCES event(id),
     CONSTRAINT FK_fb_student FOREIGN KEY (student_id) REFERENCES student(id)
+);
+GO
+
+CREATE TABLE event_feedback (
+    id                  BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    event_id            BIGINT               NOT NULL,
+    student_id          BIGINT               NOT NULL,
+    content_rating      INT                  NOT NULL,
+    speaker_rating      INT                  NOT NULL,
+    organization_rating INT                  NOT NULL,
+    overall_rating      INT                  NOT NULL,
+    comment             NVARCHAR(MAX),
+    submitted_at        DATETIME2            NOT NULL,
+    CONSTRAINT FK_event_feedback_event   FOREIGN KEY (event_id)   REFERENCES event(id),
+    CONSTRAINT FK_event_feedback_student FOREIGN KEY (student_id) REFERENCES student(id)
+);
+GO
+
+CREATE TABLE quiz_question (
+    id             BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    event_id       BIGINT               NOT NULL,
+    question_text  NVARCHAR(MAX)        NOT NULL,
+    question_type  VARCHAR(30)          NOT NULL,
+    option_a       NVARCHAR(500),
+    option_b       NVARCHAR(500),
+    option_c       NVARCHAR(500),
+    option_d       NVARCHAR(500),
+    correct_answer VARCHAR(20),
+    points         INT                  NOT NULL DEFAULT 1,
+    CONSTRAINT FK_quiz_question_event FOREIGN KEY (event_id) REFERENCES event(id)
+);
+GO
+
+CREATE TABLE quiz_submission (
+    id           BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    event_id     BIGINT               NOT NULL,
+    student_id   BIGINT               NOT NULL,
+    total_score  FLOAT                NOT NULL DEFAULT 0,
+    submitted_at DATETIME2            NOT NULL,
+    CONSTRAINT FK_quiz_submission_event   FOREIGN KEY (event_id)   REFERENCES event(id),
+    CONSTRAINT FK_quiz_submission_student FOREIGN KEY (student_id) REFERENCES student(id)
+);
+GO
+
+CREATE TABLE quiz_answer (
+    id              BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    submission_id   BIGINT               NOT NULL,
+    question_id     BIGINT               NOT NULL,
+    selected_answer VARCHAR(20),
+    answer_text     NVARCHAR(MAX),
+    is_correct      BIT,
+    score           FLOAT                NOT NULL DEFAULT 0,
+    submitted_at    DATETIME2            NOT NULL,
+    CONSTRAINT FK_quiz_answer_submission FOREIGN KEY (submission_id) REFERENCES quiz_submission(id),
+    CONSTRAINT FK_quiz_answer_question   FOREIGN KEY (question_id)   REFERENCES quiz_question(id)
 );
 GO
 
@@ -388,6 +489,21 @@ SELECT
 FROM ranked r;
 GO
 
+UPDATE users
+SET department_position =
+    CASE
+        WHEN role_id = (SELECT id FROM role WHERE name = 'MANAGER') AND id % 3 = 1 THEN 'HEAD'
+        WHEN role_id = (SELECT id FROM role WHERE name = 'MANAGER') THEN 'STAFF'
+        ELSE department_position
+    END;
+
+UPDATE student
+SET
+    gender = CASE WHEN id % 3 = 0 THEN N'Nữ' WHEN id % 3 = 1 THEN N'Nam' ELSE N'Khác' END,
+    no_show_count = id % 4,
+    attendance_reputation = 100 - ((id % 4) * 7.5);
+GO
+
 -- ---------------------------------------------------------------------
 -- EVENTS  (32 sự kiện - mỗi sự kiện kèm ảnh FPT/campus chất lượng cao)
 -- ---------------------------------------------------------------------
@@ -481,6 +597,29 @@ GO
 UPDATE event
 SET image_urls = image_url
 WHERE image_url IS NOT NULL;
+
+UPDATE e
+SET
+    organizer = COALESCE(organizer, N'FPT University - ' + d.name),
+    speakers = COALESCE(speakers,
+        CASE e.department_id % 5
+            WHEN 0 THEN N'Chuyên gia FPT Software; Mentor doanh nghiệp'
+            WHEN 1 THEN N'Giảng viên FPT University; Alumni khách mời'
+            WHEN 2 THEN N'Đại diện FPT Corporation; Trưởng bộ môn'
+            WHEN 3 THEN N'Chuyên gia đối tác; CLB sinh viên'
+            ELSE N'Hội đồng chuyên môn; Mentor cộng đồng'
+        END),
+    support_staff_needed = COALESCE(support_staff_needed, 3 + (e.id % 8)),
+    google_form_url = CASE WHEN e.id % 4 = 0 THEN N'https://forms.gle/demo-checkin-' + CAST(e.id AS NVARCHAR(20)) ELSE google_form_url END,
+    checkin_form_id = CASE WHEN e.id % 4 = 0 THEN N'checkin-form-' + CAST(e.id AS NVARCHAR(20)) ELSE checkin_form_id END,
+    checkin_sheet_id = CASE WHEN e.id % 4 = 0 THEN N'checkin-sheet-' + CAST(e.id AS NVARCHAR(20)) ELSE checkin_sheet_id END,
+    checkout_form_url = CASE WHEN e.id % 5 = 0 THEN N'https://forms.gle/demo-checkout-' + CAST(e.id AS NVARCHAR(20)) ELSE checkout_form_url END,
+    checkout_form_id = CASE WHEN e.id % 5 = 0 THEN N'checkout-form-' + CAST(e.id AS NVARCHAR(20)) ELSE checkout_form_id END,
+    checkout_sheet_id = CASE WHEN e.id % 5 = 0 THEN N'checkout-sheet-' + CAST(e.id AS NVARCHAR(20)) ELSE checkout_sheet_id END,
+    last_sheet_sync_at = CASE WHEN e.id % 4 = 0 THEN DATEADD(HOUR, -e.id, GETDATE()) ELSE last_sheet_sync_at END,
+    auto_closed_at = CASE WHEN e.end_time < GETDATE() THEN DATEADD(MINUTE, 15, e.end_time) ELSE auto_closed_at END
+FROM event e
+JOIN department d ON d.id = e.department_id;
 GO
 
 -- ---------------------------------------------------------------------
@@ -534,6 +673,14 @@ SET
 UPDATE event_proposal
 SET image_urls = image_url
 WHERE image_url IS NOT NULL;
+
+UPDATE event_proposal
+SET
+    proposed_end_date = COALESCE(proposed_end_date, DATEADD(HOUR, 3 + (id % 5), proposed_date)),
+    organizer = COALESCE(organizer, N'Đơn vị đề xuất #' + CAST(department_id AS NVARCHAR(10))),
+    support_staff_needed = COALESCE(support_staff_needed, 2 + (id % 6)),
+    quiz_payload = COALESCE(quiz_payload,
+        N'[{"question":"Bạn kỳ vọng điều gì ở sự kiện này?","type":"SHORT_ANSWER"},{"question":"Bạn đã sẵn sàng tham gia đầy đủ?","type":"MULTIPLE_CHOICE","options":["Có","Chưa chắc"]}]');
 GO
 
 -- ---------------------------------------------------------------------
@@ -610,19 +757,61 @@ GO
 -- ---------------------------------------------------------------------
 -- ATTENDANCE  (~70% REGISTERED check-in, có cả ABSENT)
 -- ---------------------------------------------------------------------
-INSERT INTO attendance (checkin_time, status, registration_id)
+INSERT INTO attendance (
+    checkin_time, mid_verify_time, checkout_time, status,
+    participation_score, note, registration_id, event_id, student_id
+)
 SELECT
     DATEADD(MINUTE, -10 + (ABS(CHECKSUM(NEWID())) % 20), e.start_time),
-    CASE WHEN (r.id % 11) = 0 THEN 'ABSENT' ELSE 'ATTENDED' END,
-    r.id
+    CASE WHEN (r.id % 11) = 0 THEN NULL ELSE DATEADD(MINUTE, 45 + (r.id % 30), e.start_time) END,
+    CASE WHEN (r.id % 11) = 0 THEN NULL ELSE DATEADD(MINUTE, -5 + (r.id % 20), e.end_time) END,
+    CASE
+        WHEN (r.id % 11) = 0 THEN 'ABSENT'
+        WHEN (r.id % 5) = 0 THEN 'CHECKED_IN'
+        WHEN (r.id % 7) = 0 THEN 'MID_VERIFIED'
+        ELSE 'CHECKED_OUT'
+    END,
+    CASE
+        WHEN (r.id % 11) = 0 THEN 0
+        WHEN (r.id % 5) = 0 THEN 55 + (r.id % 15)
+        WHEN (r.id % 7) = 0 THEN 70 + (r.id % 12)
+        ELSE 85 + (r.id % 15)
+    END,
+    CASE WHEN (r.id % 11) = 0 THEN N'Tự động đánh vắng do không check-in.' ELSE NULL END,
+    r.id,
+    r.event_id,
+    r.student_id
 FROM registration r
 JOIN event e ON e.id = r.event_id
 WHERE r.status = 'REGISTERED'
   AND (r.id % 10) < 7;
 GO
 
+INSERT INTO attendance_session (event_id, token, session_type, created_at, expired_at, status)
+SELECT
+    e.id,
+    'AEMS-IN-' + RIGHT('0000' + CAST(e.id AS VARCHAR(4)), 4),
+    'CHECK_IN',
+    DATEADD(MINUTE, -30, e.start_time),
+    DATEADD(MINUTE, 45, e.start_time),
+    CASE WHEN e.end_time < GETDATE() THEN 'EXPIRED' ELSE 'ACTIVE' END
+FROM event e
+WHERE e.status IN ('PUBLISHED', 'APPROVED');
+
+INSERT INTO attendance_session (event_id, token, session_type, created_at, expired_at, status)
+SELECT
+    e.id,
+    'AEMS-MID-' + RIGHT('0000' + CAST(e.id AS VARCHAR(4)), 4),
+    'MID_SESSION',
+    DATEADD(MINUTE, DATEDIFF(MINUTE, e.start_time, e.end_time) / 2 - 15, e.start_time),
+    DATEADD(MINUTE, DATEDIFF(MINUTE, e.start_time, e.end_time) / 2 + 30, e.start_time),
+    CASE WHEN e.end_time < GETDATE() THEN 'EXPIRED' ELSE 'ACTIVE' END
+FROM event e
+WHERE e.status IN ('PUBLISHED', 'APPROVED');
+GO
+
 -- ---------------------------------------------------------------------
--- FEEDBACK  (~50% attendance ATTENDED có feedback)
+-- FEEDBACK  (~50% attendance đã xác minh có feedback)
 -- ---------------------------------------------------------------------
 DECLARE @cmt1 NVARCHAR(MAX) = N'Nội dung rõ ràng, diễn giả nhiệt tình. Sẽ tiếp tục theo dõi các sự kiện sau.';
 DECLARE @cmt2 NVARCHAR(MAX) = N'Phần demo rất hay nhưng thời gian Q&A hơi ngắn, hy vọng lần sau có thêm.';
@@ -649,8 +838,105 @@ SELECT
     r.student_id
 FROM attendance a
 JOIN registration r ON r.id = a.registration_id
-WHERE a.status = 'ATTENDED'
+WHERE a.status IN ('MID_VERIFIED', 'CHECKED_OUT')
   AND (a.id % 2) = 0;
+GO
+
+-- ---------------------------------------------------------------------
+-- QUIZ + EVENT FEEDBACK MỚI
+-- ---------------------------------------------------------------------
+INSERT INTO quiz_question (event_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, points)
+SELECT e.id, N'Mục tiêu chính của sự kiện "' + e.title + N'" là gì?', 'MULTIPLE_CHOICE',
+       N'Cập nhật kiến thức và thực hành', N'Chỉ điểm danh', N'Bán sản phẩm', N'Thi cuối kỳ', 'A', 2
+FROM event e
+WHERE e.status IN ('PUBLISHED', 'APPROVED');
+
+INSERT INTO quiz_question (event_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, points)
+SELECT e.id, N'Bạn nên làm gì sau khi tham dự workshop/talkshow?', 'MULTIPLE_CHOICE',
+       N'Hoàn thành feedback và áp dụng nội dung đã học', N'Bỏ qua tài liệu', N'Chỉ lấy ticket', N'Không cần checkout', 'A', 2
+FROM event e
+WHERE e.status IN ('PUBLISHED', 'APPROVED');
+
+INSERT INTO quiz_question (event_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, points)
+SELECT e.id, N'Điều nào giúp ban tổ chức cải thiện sự kiện tiếp theo?', 'MULTIPLE_CHOICE',
+       N'Feedback cụ thể, lịch sự', N'Không phản hồi', N'Đăng ký rồi vắng mặt', N'Gửi spam', 'A', 1
+FROM event e
+WHERE e.status IN ('PUBLISHED', 'APPROVED');
+GO
+
+INSERT INTO quiz_submission (event_id, student_id, total_score, submitted_at)
+SELECT
+    a.event_id,
+    a.student_id,
+    CASE WHEN (a.id % 6) = 0 THEN 3 ELSE 5 END,
+    DATEADD(MINUTE, 10, COALESCE(a.checkout_time, a.mid_verify_time, a.checkin_time))
+FROM attendance a
+WHERE a.status IN ('MID_VERIFIED', 'CHECKED_OUT')
+  AND (a.id % 3) <> 0;
+GO
+
+INSERT INTO quiz_answer (submission_id, question_id, selected_answer, answer_text, is_correct, score, submitted_at)
+SELECT
+    qs.id,
+    qq.id,
+    CASE WHEN (qs.id + qq.id) % 6 = 0 THEN 'B' ELSE 'A' END,
+    NULL,
+    CASE WHEN (qs.id + qq.id) % 6 = 0 THEN 0 ELSE 1 END,
+    CASE WHEN (qs.id + qq.id) % 6 = 0 THEN 0 ELSE qq.points END,
+    DATEADD(MINUTE, qq.id % 5, qs.submitted_at)
+FROM quiz_submission qs
+JOIN quiz_question qq ON qq.event_id = qs.event_id;
+GO
+
+UPDATE qs
+SET total_score = agg.score
+FROM quiz_submission qs
+JOIN (
+    SELECT submission_id, SUM(score) AS score
+    FROM quiz_answer
+    GROUP BY submission_id
+) agg ON agg.submission_id = qs.id;
+GO
+
+INSERT INTO event_feedback (
+    event_id, student_id, content_rating, speaker_rating,
+    organization_rating, overall_rating, comment, submitted_at
+)
+SELECT
+    a.event_id,
+    a.student_id,
+    3 + (a.id % 3),
+    3 + ((a.id + 1) % 3),
+    3 + ((a.id + 2) % 3),
+    3 + ((a.id + 3) % 3),
+    CASE (a.id % 7)
+        WHEN 0 THEN @cmt1
+        WHEN 1 THEN @cmt2
+        WHEN 2 THEN @cmt3
+        WHEN 3 THEN @cmt4
+        WHEN 4 THEN @cmt5
+        WHEN 5 THEN @cmt6
+        ELSE @cmt7
+    END,
+    DATEADD(MINUTE, 15, COALESCE(a.checkout_time, a.mid_verify_time, a.checkin_time))
+FROM attendance a
+WHERE a.status IN ('MID_VERIFIED', 'CHECKED_OUT')
+  AND (a.id % 2) = 0;
+GO
+
+UPDATE a
+SET participation_score =
+    CASE
+        WHEN a.status = 'ABSENT' THEN 0
+        ELSE
+            50
+            + CASE WHEN a.mid_verify_time IS NOT NULL THEN 20 ELSE 0 END
+            + CASE WHEN qs.id IS NOT NULL THEN 20 ELSE 0 END
+            + CASE WHEN ef.id IS NOT NULL THEN 10 ELSE 0 END
+    END
+FROM attendance a
+LEFT JOIN quiz_submission qs ON qs.event_id = a.event_id AND qs.student_id = a.student_id
+LEFT JOIN event_feedback ef ON ef.event_id = a.event_id AND ef.student_id = a.student_id;
 GO
 
 -- ---------------------------------------------------------------------
@@ -726,7 +1012,7 @@ INSERT INTO activity_log (user_id, activity_type, description, points_earned, cr
     SELECT
     u.id, 'CHECK_IN',
     N'Check-in ' + e.title + N' (' + a.status + N')',
-    CASE WHEN a.status = 'ATTENDED' THEN 10 ELSE 0 END,
+    CASE WHEN a.status IN ('MID_VERIFIED', 'CHECKED_OUT') THEN 10 ELSE 0 END,
     a.checkin_time
 FROM attendance a
 JOIN registration r ON r.id = a.registration_id
@@ -744,6 +1030,28 @@ FROM feedback f
 JOIN student s ON s.id = f.student_id
 JOIN users   u ON u.id = s.user_id
 JOIN event   e ON e.id = f.event_id;
+
+INSERT INTO activity_log (user_id, activity_type, description, points_earned, created_at)
+SELECT
+    u.id, 'QUIZ_SUBMIT',
+    N'Nộp quiz sau sự kiện ' + e.title + N' - điểm ' + CAST(qs.total_score AS NVARCHAR(10)),
+    CAST(qs.total_score AS INT),
+    qs.submitted_at
+FROM quiz_submission qs
+JOIN student s ON s.id = qs.student_id
+JOIN users   u ON u.id = s.user_id
+JOIN event   e ON e.id = qs.event_id;
+
+INSERT INTO activity_log (user_id, activity_type, description, points_earned, created_at)
+SELECT
+    u.id, 'EVENT_FEEDBACK',
+    N'Gửi feedback chi tiết cho ' + e.title,
+    10,
+    ef.submitted_at
+FROM event_feedback ef
+JOIN student s ON s.id = ef.student_id
+JOIN users   u ON u.id = s.user_id
+JOIN event   e ON e.id = ef.event_id;
 
 DECLARE @adminUserId BIGINT = (SELECT TOP 1 id FROM users WHERE email = 'admin01@fpt.edu.vn');
 DECLARE @j INT = 1;
@@ -778,6 +1086,11 @@ PRINT N'  - registration:   ' + CAST((SELECT COUNT(*) FROM registration)   AS NV
 PRINT N'  - ticket:         ' + CAST((SELECT COUNT(*) FROM ticket)         AS NVARCHAR(10));
 PRINT N'  - attendance:     ' + CAST((SELECT COUNT(*) FROM attendance)     AS NVARCHAR(10));
 PRINT N'  - feedback:       ' + CAST((SELECT COUNT(*) FROM feedback)       AS NVARCHAR(10));
+PRINT N'  - attendance_session: ' + CAST((SELECT COUNT(*) FROM attendance_session) AS NVARCHAR(10));
+PRINT N'  - quiz_question:  ' + CAST((SELECT COUNT(*) FROM quiz_question)  AS NVARCHAR(10));
+PRINT N'  - quiz_submission:' + CAST((SELECT COUNT(*) FROM quiz_submission) AS NVARCHAR(10));
+PRINT N'  - quiz_answer:    ' + CAST((SELECT COUNT(*) FROM quiz_answer)    AS NVARCHAR(10));
+PRINT N'  - event_feedback: ' + CAST((SELECT COUNT(*) FROM event_feedback) AS NVARCHAR(10));
 PRINT N'  - email_log:      ' + CAST((SELECT COUNT(*) FROM email_log)      AS NVARCHAR(10));
 PRINT N'  - activity_log:   ' + CAST((SELECT COUNT(*) FROM activity_log)   AS NVARCHAR(10));
 PRINT N'';
