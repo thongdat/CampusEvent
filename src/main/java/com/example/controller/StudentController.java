@@ -659,6 +659,8 @@ public class StudentController {
         map.put("imageUrl", event.getImageUrl());
         map.put("status", event.getStatus());
         map.put("budget", event.getBudget());
+        map.put("speakers", event.getSpeakers());
+        map.put("organizer", event.getOrganizer());
         if (event.getDepartment() != null) {
             Map<String, Object> dept = new LinkedHashMap<>();
             dept.put("id", event.getDepartment().getId());

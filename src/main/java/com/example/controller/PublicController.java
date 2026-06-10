@@ -43,19 +43,18 @@ public class PublicController {
     public Map<String, Object> landing() {
         LocalDateTime now = LocalDateTime.now();
 
-        List<Event> active = eventRepository.findAll().stream()
-                .filter(this::isActiveOrUpcoming)
-                .sorted(Comparator.comparing(Event::getStartTime,
-                        Comparator.nullsLast(Comparator.naturalOrder())))
+        List<Event> eventsForLanding = eventRepository.findAll().stream()
+                .filter(this::isVisibleOnLanding)
+                .sorted(this::compareLandingEvents)
                 .collect(Collectors.toList());
 
-        List<Map<String, Object>> events = active.stream()
+        List<Map<String, Object>> events = eventsForLanding.stream()
                 .limit(6)
                 .map(this::toCard)
                 .collect(Collectors.toList());
 
         Map<String, Object> stats = new LinkedHashMap<>();
-        stats.put("totalEvents", active.size());
+        stats.put("totalEvents", eventsForLanding.size());
         stats.put("totalRegistrations", registrationRepository.count());
         stats.put("totalUsers", userRepository.count());
 
@@ -65,13 +64,26 @@ public class PublicController {
         return response;
     }
 
-    private boolean isActiveOrUpcoming(Event event) {
+    private boolean isVisibleOnLanding(Event event) {
         String status = event.getStatus();
-        if (status != null && "CANCELLED".equalsIgnoreCase(status)) {
-            return false;
+        return status == null || !"CANCELLED".equalsIgnoreCase(status);
+    }
+
+    private int compareLandingEvents(Event left, Event right) {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime leftTime = left.getStartTime();
+        LocalDateTime rightTime = right.getStartTime();
+        boolean leftUpcoming = leftTime != null && !leftTime.isBefore(now);
+        boolean rightUpcoming = rightTime != null && !rightTime.isBefore(now);
+        if (leftUpcoming != rightUpcoming) {
+            return leftUpcoming ? -1 : 1;
         }
-        LocalDateTime reference = event.getEndTime() != null ? event.getEndTime() : event.getStartTime();
-        return reference != null && !reference.isBefore(LocalDateTime.now());
+        if (leftTime == null && rightTime == null) {
+            return String.valueOf(left.getTitle()).compareToIgnoreCase(String.valueOf(right.getTitle()));
+        }
+        if (leftTime == null) return 1;
+        if (rightTime == null) return -1;
+        return leftUpcoming ? leftTime.compareTo(rightTime) : rightTime.compareTo(leftTime);
     }
 
     private Map<String, Object> toCard(Event event) {
