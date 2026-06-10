@@ -120,6 +120,11 @@
         return String(value || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     }
 
+    function matchesSearch(haystack, query) {
+        const text = normalize(haystack);
+        return normalize(query).split(/\s+/).filter(Boolean).every(token => text.includes(token));
+    }
+
     function facultyOfDepartment(name) {
         const key = normalize(name);
         if (['it department', 'information technology', 'cntt'].includes(key)) {
@@ -615,10 +620,10 @@
         const navSearch = document.getElementById('navSearch');
         if (navSearch) {
             navSearch.addEventListener('input', event => {
-                const query = normalize(event.target.value);
+                const query = event.target.value;
                 document.querySelectorAll('#navList .nav-link').forEach(link => {
-                    const keywords = normalize(link.dataset.keywords || '');
-                    link.style.display = !query || keywords.includes(query) ? '' : 'none';
+                    const keywords = link.dataset.keywords || '';
+                    link.style.display = !query || matchesSearch(keywords, query) ? '' : 'none';
                 });
                 document.querySelectorAll('#navList .nav-group').forEach(group => {
                     let next = group.nextElementSibling;
@@ -940,8 +945,7 @@
         }));
         let activeIndex = 0;
         const renderList = (query = '') => {
-            const normalized = normalize(query);
-            const filtered = items.filter(item => !normalized || item.keywords.includes(normalized));
+            const filtered = items.filter(item => !query || matchesSearch(item.keywords, query));
             if (activeIndex >= filtered.length) activeIndex = Math.max(0, filtered.length - 1);
             const groups = filtered.reduce((acc, item) => {
                 (acc[item.group] = acc[item.group] || []).push(item);
@@ -1109,9 +1113,14 @@
         const input = document.getElementById(id);
         if (!input) return;
         input.addEventListener('input', event => {
-            render(event.target.value, items);
+            const value = event.target.value;
+            render(value, items);
             const restored = document.getElementById(id);
-            if (restored) restored.value = event.target.value;
+            if (restored) {
+                restored.value = value;
+                restored.focus();
+                restored.setSelectionRange(value.length, value.length);
+            }
         });
     }
 
@@ -1231,7 +1240,7 @@
         const payload = await load('/activity-logs?page=0&size=120', { items: [] });
         const logs = payload.items || [];
         const render = (q = '') => {
-            const filtered = logs.filter(log => !q || normalize(`${log.activityType} ${log.description} ${log.userName} ${log.userEmail}`).includes(normalize(q)));
+            const filtered = logs.filter(log => !q || matchesSearch(`${log.activityType} ${log.description} ${log.userName} ${log.userEmail}`, q));
             content(`
                 <div class="metric-grid">
                     ${metric('Total logs', number(payload.totalItems || logs.length), 'Activity logs')}
@@ -1357,7 +1366,7 @@
             const facultyFilter = state.filters.userFaculty || 'all';
             const sortKey = state.filters.userSort || 'role';
             const filtered = users
-                .filter(user => !q || normalize(`${user.fullName} ${user.email} ${user.role} ${user.major}`).includes(normalize(q)))
+                .filter(user => !q || matchesSearch(`${user.fullName} ${user.email} ${user.role} ${user.major}`, q))
                 .filter(user => roleFilter === 'all' || String(user.role) === roleFilter)
                 .filter(user => facultyFilter === 'all' || userFaculty(user) === facultyFilter)
                 .sort((left, right) => {
@@ -1707,7 +1716,7 @@
             <div class="metric-grid">
                 ${metric('Workflow proposals', number(proposals.length), 'Chưa chuyển thành event')}
                 ${metric('Need review', number(needsReview.length), 'Pending hoặc cần chỉnh sửa')}
-                ${metric('Ready to publish', number(readyToPublish.length), 'Đã duyệt')}
+                ${metric('Ready to publish', number(readyToPublish.length), 'Đã duyệt, có thể đưa lên sự kiện chính')}
                 ${metric('Rejected', number(statusCounts.REJECTED), 'Không tiếp tục')}
             </div>
             ${table(['Proposal', 'Khoa', 'Ngày đề xuất', 'Status', 'Committee', 'Actions'], proposals.map(proposal => {
@@ -1718,10 +1727,10 @@
                     <td>${h(proposal.departmentName)}</td>
                     <td>${dateTime(proposal.proposedDate)}</td>
                     <td>${badge(proposal.status, tone(proposal.status))}</td>
-                    <td>${committee ? badge(committee.name, 'blue') : badge('Chưa phân', 'amber')}</td>
+                    <td>${committee ? badge(committee.name, 'blue') : badge(canPublish ? 'Không bắt buộc' : 'Chưa phân', canPublish ? 'gray' : 'amber')}</td>
                     <td><div class="row-actions">
                         <button class="icon-btn" data-proposal-detail="${proposal.id}" title="Xem chi tiết">${icon('eye')}</button>
-                        ${canPublish ? `<button class="icon-btn" data-proposal-publish="${proposal.id}" title="Công bố thành event">${icon('send')}</button>` : ''}
+                        ${canPublish ? `<button class="btn primary" data-proposal-publish="${proposal.id}" title="Đưa proposal đã duyệt lên danh sách sự kiện chính">${icon('send', 'h-3.5 w-3.5')}Đưa lên event</button>` : ''}
                         <div class="action-menu" data-menu="proposal-${proposal.id}">
                             <button class="icon-btn" type="button" data-menu-trigger="proposal-${proposal.id}" aria-label="Thêm thao tác" title="Thêm thao tác">${icon('more-horizontal')}</button>
                             <div class="action-menu-pop" data-menu-pop="proposal-${proposal.id}" role="menu">
@@ -1975,9 +1984,34 @@
 
     async function renderRegistrations() {
         state.page = 'registrations';
-        shell();
-        const registrations = await load('/registrations', []);
+        shell(`<button class="btn primary" id="addRegistration">${icon('user-plus')}Thêm người tham dự</button>`);
+        const [registrations, events] = await Promise.all([load('/registrations', []), load('/events', [])]);
         const statusCounts = summarizeStatuses(registrations);
+        const eventOptions = events
+            .slice()
+            .sort(compareEventsByTime)
+            .map(event => ({ value: event.id, label: `${event.title} - ${dateTime(event.startTime)}` }));
+
+        const addRegistration = () => openForm({
+            title: 'Thêm người tham dự sự kiện',
+            submitText: 'Thêm & gửi email',
+            fields: [
+                { name: 'eventId', label: 'Sự kiện', type: 'select', options: eventOptions, required: true, full: true },
+                { name: 'fullName', label: 'Họ và tên', required: true },
+                { name: 'email', label: 'Email nhận thông báo', type: 'email', required: true },
+                { name: 'studentCode', label: 'MSSV', required: true },
+                { name: 'major', label: 'Ngành/Khoa', required: true },
+                { name: 'semester', label: 'Kỳ/Năm học', type: 'number', defaultValue: 1 },
+                { name: 'status', label: 'Trạng thái', type: 'select', options: ['REGISTERED', 'WAITLIST'].map(value => ({ value, label: value })) },
+                { name: 'note', label: 'Ghi chú', type: 'textarea', full: true }
+            ],
+            values: { status: 'REGISTERED' },
+            onSubmit: async payload => {
+                const result = await api('/registrations', { method: 'POST', body: JSON.stringify(payload) });
+                toast(result.emailStatus === 'FAILED' ? 'Đã thêm người tham dự nhưng gửi email thất bại.' : 'Đã thêm người tham dự và gửi email.', result.emailStatus === 'FAILED' ? 'error' : 'success');
+                renderRegistrations();
+            }
+        });
 
         const updateStatus = registration => openForm({
             title: 'Registration Detail / Status',
@@ -1993,8 +2027,8 @@
             }
         });
 
-        const render = (q = '') => {
-            const filtered = registrations.filter(item => !q || normalize(`${item.eventTitle} ${item.studentName} ${item.studentEmail} ${item.studentCode} ${item.status}`).includes(normalize(q)));
+        const render = (q = '', keepSearchFocus = false) => {
+            const filtered = registrations.filter(item => !q || matchesSearch(`${item.eventTitle} ${item.studentName} ${item.studentEmail} ${item.studentCode} ${item.studentMajor} ${item.status} ${item.attendanceStatus}`, q));
             const pageSize = 50;
             const pages = Math.max(1, Math.ceil(filtered.length / pageSize));
             const page = Math.min(Math.max(Number(state.filters.registrationPage || 1), 1), pages);
@@ -2028,9 +2062,13 @@
             const search = document.getElementById('registrationSearch');
             if (search) {
                 search.value = q;
+                if (keepSearchFocus) {
+                    search.focus();
+                    search.setSelectionRange(q.length, q.length);
+                }
                 search.addEventListener('input', event => {
                     state.filters.registrationPage = 1;
-                    render(event.target.value);
+                    render(event.target.value, true);
                 });
             }
             document.querySelectorAll('[data-pagination="registrations"] [data-page-step]').forEach(button => {
@@ -2053,6 +2091,7 @@
                 ]));
             });
             document.querySelectorAll('[data-registration-status]').forEach(button => button.onclick = () => updateStatus(registrations.find(item => String(item.id) === button.dataset.registrationStatus)));
+            document.getElementById('addRegistration').onclick = addRegistration;
         };
         render();
     }
@@ -2065,7 +2104,7 @@
         const ratings = [5, 4, 3, 2, 1].map(star => ({ star, count: feedback.filter(item => Number(item.rating) === star).length }));
         const max = Math.max(...ratings.map(item => item.count), 1);
         const render = (q = '') => {
-            const filtered = feedback.filter(item => !q || normalize(`${item.eventTitle} ${item.studentName} ${item.comment}`).includes(normalize(q)));
+            const filtered = feedback.filter(item => !q || matchesSearch(`${item.eventTitle} ${item.studentName} ${item.studentEmail} ${item.comment}`, q));
             content(`
                 <div class="metric-grid">
                     ${metric('Feedback', number(feedback.length), 'Feedback List')}
@@ -2114,7 +2153,7 @@
 
     async function renderReports() {
         state.page = 'reports';
-        shell(`<button class="btn" id="exportReport">${icon('file-spreadsheet')}Export Excel</button><button class="btn" id="printReport">${icon('file-text')}Export PDF</button>`);
+        shell();
         const [reports, events, registrations, users] = await Promise.all([
             load('/reports', {}),
             load('/events', []),
@@ -2161,15 +2200,6 @@
                 <p class="panel-note">${h(reports.formula?.averageRating || '')}</p>
             </section>
         `);
-        document.getElementById('exportReport').onclick = () => exportCsv('admin-report.csv', [
-            ['Metric', 'Value'],
-            ['Registration rate', percent(reports.registrationRate)],
-            ['Attendance rate', percent(reports.attendanceRate)],
-            ['Average rating', reports.averageRating],
-            ['Events', events.length],
-            ['Registrations', registrations.length]
-        ]);
-        document.getElementById('printReport').onclick = () => window.print();
     }
 
     async function renderEmail() {

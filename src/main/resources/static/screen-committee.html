@@ -102,6 +102,19 @@
     </div>
 </section>
 
+<section class="mx-auto max-w-[1600px] px-4 pt-4 sm:px-6">
+    <div class="rounded-2xl border border-amber-200/60 bg-white shadow-sm">
+        <header class="flex items-center justify-between border-b border-amber-100 px-4 py-3">
+            <div>
+                <h2 class="text-sm font-extrabold text-slate-900">Hoạt động gần đây</h2>
+                <p class="text-xs text-slate-500">Theo dõi hội đồng đã xử lý proposal nào và làm gì</p>
+            </div>
+            <span id="activityCount" class="rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-700">—</span>
+        </header>
+        <div id="committeeActivity" class="grid gap-0 divide-y divide-amber-100/70 sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-4"></div>
+    </div>
+</section>
+
 <div class="mx-auto mt-5 grid max-w-[1600px] gap-4 px-4 sm:px-6 lg:grid-cols-[22rem_minmax(0,1fr)]">
     <!-- QUEUE -->
     <aside class="overflow-hidden rounded-2xl border border-amber-200/60 bg-white shadow-sm lg:max-h-[calc(100vh-11rem)] lg:overflow-y-auto">
@@ -246,6 +259,43 @@
         };
         const e = m[(status || '').toUpperCase()] || { cls: 'bg-slate-100 text-slate-600', label: status || '—' };
         return `<span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${e.cls}">${e.label}</span>`;
+    }
+    function activityText(item) {
+        const status = String(item.status || '').toUpperCase();
+        if (status === 'APPROVED') return ['✓ Đã phê duyệt', 'text-emerald-700 bg-emerald-50'];
+        if (status === 'REJECTED') return ['✕ Đã từ chối', 'text-rose-700 bg-rose-50'];
+        if (status === 'REVISION') return ['✎ Yêu cầu chỉnh sửa', 'text-sky-700 bg-sky-50'];
+        return ['⏳ Đang chờ xử lý', 'text-amber-700 bg-amber-50'];
+    }
+    function renderActivity(items) {
+        const box = $('#committeeActivity');
+        if (!box) return;
+        const recent = (items || [])
+            .slice()
+            .sort((a, b) => new Date(b.updatedAt || b.createdAt || b.proposedDate || 0) - new Date(a.updatedAt || a.createdAt || a.proposedDate || 0))
+            .slice(0, 4);
+        $('#activityCount').textContent = recent.length + ' mục';
+        box.innerHTML = recent.length ? recent.map(item => {
+            const [label, cls] = activityText(item);
+            const dept = item.department ? item.department.name : (item.departmentName || 'Khoa');
+            return `
+                <article class="p-4">
+                    <span class="inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold ${cls}">${label}</span>
+                    <p class="mt-2 line-clamp-2 text-sm font-extrabold text-slate-900">${escapeHtml(item.title || 'Không tiêu đề')}</p>
+                    <p class="mt-1 text-xs text-slate-500">${escapeHtml(dept)} · ${fmtDateShort(item.updatedAt || item.createdAt || item.proposedDate)}</p>
+                    <p class="mt-1 text-[11px] font-semibold text-slate-400">${escapeHtml(name)} phụ trách xử lý</p>
+                </article>`;
+        }).join('') : '<div class="p-5 text-sm text-slate-400">Chưa có hoạt động gần đây.</div>';
+    }
+    async function loadActivity() {
+        const box = $('#committeeActivity');
+        if (box) box.innerHTML = '<div class="skeleton m-4 h-20 rounded-xl"></div><div class="skeleton m-4 h-20 rounded-xl"></div>';
+        try {
+            const data = await api('/committee/proposals?status=PENDING,REVISION,APPROVED,REJECTED');
+            renderActivity(data.items || []);
+        } catch (e) {
+            if (box) box.innerHTML = `<div class="p-5 text-sm text-rose-600">${escapeHtml(e.message)}</div>`;
+        }
     }
 
     // ----------------------------- LOAD -----------------------------
@@ -497,7 +547,7 @@
             closeModal();
             const labels = { approve: 'Đã phê duyệt', reject: 'Đã từ chối', revise: 'Đã gửi yêu cầu chỉnh sửa' };
             toast('🎉 ' + (labels[action] || 'Thành công') + (data && data.event ? ' · Event #' + data.event.id : ''));
-            await Promise.all([loadOverview(), loadQueue()]);
+            await Promise.all([loadOverview(), loadActivity(), loadQueue()]);
             if (data && data.id) selectProposal(data.id);
         } catch (e) {
             toast(e.message || 'Thao tác thất bại', 'error');
@@ -547,6 +597,7 @@
 
     // ----------------------------- BOOT -----------------------------
     loadOverview();
+    loadActivity();
     loadQueue();
 })();
 </script>
