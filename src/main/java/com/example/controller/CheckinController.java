@@ -29,6 +29,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -137,6 +141,33 @@ public class CheckinController {
         out.put("expiredAt", session.getExpiredAt().toString());
         out.put("rotateSeconds", com.example.service.AttendanceSessionService.TOKEN_TTL_SECONDS);
         return out;
+    }
+
+    /**
+     * QR Google Form khong tro thang ra docs.google.com.
+     * Sinh vien quet QR se vao endpoint nay truoc; server chi redirect sang Google Form
+     * neu token 30 giay con hieu luc. Anh chup man hinh QR cu se het han va khong mo form.
+     */
+    @GetMapping(value = "/events/{eventId}/form-redirect", produces = "text/html;charset=UTF-8")
+    public void redirectToGoogleForm(@PathVariable Long eventId,
+                                     @RequestParam(required = false) String token,
+                                     HttpServletResponse response) throws IOException {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> responseError(HttpStatus.NOT_FOUND, "Khong tim thay su kien"));
+
+        if (token == null || token.isBlank()
+                || !sessionService.validateToken(eventId, token, AttendanceSessionService.CHECK_IN)) {
+            response.sendRedirect("/api/checkin.html?eventId=" + eventId);
+            return;
+        }
+
+        String formUrl = event.getGoogleFormUrl();
+        if (formUrl == null || formUrl.isBlank()) {
+            response.sendRedirect("/api/checkin.html?eventId=" + eventId + "&token=" + encode(token));
+            return;
+        }
+
+        response.sendRedirect(withQrParams(formUrl, event, token));
     }
 
     @GetMapping("/events/{eventId}/status")
@@ -304,6 +335,20 @@ public class CheckinController {
         if (v.startsWith("nữ") || v.startsWith("nu") || v.equals("f") || v.equals("female")) return "Nữ";
         if (v.startsWith("kh") || v.equals("o") || v.equals("other")) return "Khác";
         return null;
+    }
+
+    private String withQrParams(String formUrl, Event event, String token) {
+        String separator = formUrl.contains("?") ? "&" : "?";
+        String title = event.getTitle() == null ? "" : event.getTitle();
+        return formUrl
+                + separator + "usp=pp_url"
+                + "&fpt_event_id=" + event.getId()
+                + "&fpt_event=" + encode(title.length() > 80 ? title.substring(0, 80) : title)
+                + "&fpt_token=" + encode(token);
+    }
+
+    private String encode(String value) {
+        return URLEncoder.encode(value == null ? "" : value, StandardCharsets.UTF_8);
     }
 
     private void saveQuizSubmission(Event event, Student student, List<QuizQuestion> questions,

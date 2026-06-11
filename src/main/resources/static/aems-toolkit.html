@@ -155,11 +155,11 @@
         <div class="overflow-y-auto px-6 py-6">
             <div id="qrModalBody" class="text-center">
                 <div class="qr-wrap mx-auto" style="max-width:320px"><div id="qrModalImg"></div></div>
-                <p class="mt-4 break-all rounded-lg bg-slate-50 px-3 py-2 text-xs font-mono text-slate-600" id="qrModalUrl"></p>
-                <p class="mt-3 text-sm text-slate-600">Sinh viên quét QR bằng camera điện thoại để bắt đầu check-in.</p>
+                <p class="mt-4 rounded-lg border border-orange-100 bg-orange-50 px-3 py-2 text-xs font-bold text-orange-700" id="qrModalUrl"></p>
+                <p class="mt-3 text-sm text-slate-600">Sinh viên quét QR bằng camera điện thoại. Link thật được ẩn và mã chụp màn hình sẽ hết hạn sau 30 giây.</p>
             </div>
         </div>
-        <footer class="flex items-center justify-end gap-2 border-t border-slate-200 bg-slate-50 px-5 py-3">
+        <footer class="hidden items-center justify-end gap-2 border-t border-slate-200 bg-slate-50 px-5 py-3">
             <button id="qrModalCopy" class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50">Copy link</button>
             <button id="qrModalPrint" class="rounded-lg bg-gradient-to-br from-fpt-500 to-fpt-700 px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:brightness-110">In trang này</button>
         </footer>
@@ -825,20 +825,11 @@
 
     function buildCheckinUrl(eventId, token) {
         const ev = findEvent(eventId);
-        const eventTitle = ev ? (ev.title || '') : '';
-        // Nếu event có Google Form URL → trỏ thẳng tới Google Form, kèm prefill + rotating token
+        // Protected Google Form flow: QR points to our server first.
+        // The server validates the 30-second token before redirecting to Google Forms.
         if (ev && ev.googleFormUrl) {
-            try {
-                const u = new URL(ev.googleFormUrl);
-                // Prefill chuẩn Google Forms: usp=pp_url + entry.X=Y
-                if (!u.searchParams.has('usp')) u.searchParams.set('usp', 'pp_url');
-                u.searchParams.set('fpt_event_id', String(eventId));
-                u.searchParams.set('fpt_event', eventTitle.slice(0, 80));
-                u.searchParams.set('fpt_token', token);
-                return u.toString();
-            } catch (e) {
-                return ev.googleFormUrl;
-            }
+            return location.origin + '/api/checkin/events/' + encodeURIComponent(eventId)
+                + '/form-redirect?token=' + encodeURIComponent(token);
         }
         // Fallback: form nội bộ (chỉ dùng khi chưa tạo được Google Form)
         return location.origin + '/api/checkin.html?eventId=' + encodeURIComponent(eventId)
@@ -940,15 +931,17 @@
 
         const kindLabel = kind === 'out' ? 'Check-OUT &amp; Feedback' : 'Check-IN';
         const subText = kind === 'out'
-            ? 'Chiếu cuối buổi để sinh viên scan → mở Google Form feedback (xác nhận tham dự đủ buổi).'
-            : 'Chiếu trong suốt buổi — QR sẽ tự đổi mỗi 30 giây chống share screenshot.';
+            ? 'QR feedback cuối buổi.'
+            : 'QR tự đổi nội dung mỗi 30 giây. Ảnh chụp màn hình cũ sẽ hết hạn.';
 
         $('#qrModalTitle').innerHTML = 'QR ' + kindLabel + ' · ' + escapeHtml(data.eventTitle || 'Event');
         $('#qrModalSub').textContent = subText;
-        $('#qrModalUrl').textContent = url;
+        $('#qrModalUrl').textContent = kind === 'in'
+            ? 'Link đã được ẩn. QR chỉ mở form khi token còn hạn.'
+            : 'Link đã được ẩn trên màn chiếu.';
         $('#qrModalImg').innerHTML = '<img alt="QR" src="' + buildQrImageUrl(url, 600) + '">';
-        $('#qrModalCopy').onclick = () => navigator.clipboard.writeText(url).then(() => toast('Đã copy link.'));
-        $('#qrModalPrint').onclick = () => window.print();
+        $('#qrModalCopy').onclick = () => {};
+        $('#qrModalPrint').onclick = () => {};
         $('#qrModal').classList.remove('hidden');
         $('#qrModal').classList.add('flex');
 
@@ -957,7 +950,7 @@
 
         if (kind === 'in') {
             activeProjectionKey = key;
-            $('#qrModalUrl').textContent = 'Đang tạo QR mới...';
+            $('#qrModalUrl').textContent = 'Đang tạo QR bảo vệ mới...';
             $('#qrModalImg').innerHTML = '<div class="qr-skeleton" style="max-width:320px"></div>';
             rotateOne(eventId, 'in', true).then(() => {
                 if (activeProjectionKey !== key) return;
@@ -973,7 +966,9 @@
         if ($('#qrModal').dataset.kind !== kind) return;
         const state = tokenState.get(formKey(eventId, kind));
         if (!state) return;
-        $('#qrModalUrl').textContent = state.url;
+        $('#qrModalUrl').textContent = kind === 'in'
+            ? 'Link đã được ẩn. QR mới vừa được cấp, ảnh chụp cũ sẽ hết hạn.'
+            : 'Link đã được ẩn trên màn chiếu.';
         $('#qrModalImg').innerHTML = '<img alt="QR" src="' + buildQrImageUrl(state.url, 600) + '">';
     }
 
