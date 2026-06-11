@@ -57,8 +57,9 @@ public class SecurityConfig {
                     .userService(customOAuth2UserService)
                 )
                 .successHandler(oAuth2LoginSuccessHandler)
-                // Nếu login thất bại, redirect về login.html kèm lỗi
-                .failureUrl("/login.html?oauth=error")
+                // Nếu login thất bại, luôn quay về login page trong context path hiện tại.
+                .failureHandler((request, response, exception) ->
+                    response.sendRedirect(request.getContextPath() + "/login.html?oauth=error"))
             );
 
         return http.build();
