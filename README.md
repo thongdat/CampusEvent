@@ -71,7 +71,7 @@ CampusEvent/
 |               `-- admin-screen/
 `-- README.md
 ```
-
+ cho 1
 ## Yêu cầu
 
 - JDK 17 trở lên.
