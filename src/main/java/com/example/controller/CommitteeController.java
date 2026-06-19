@@ -161,6 +161,9 @@ public class CommitteeController {
         String organizer = payload == null ? proposal.getOrganizer()
                 : firstNonBlank(stringValue(payload, "organizer"), proposal.getOrganizer());
         event.setOrganizer(organizer);
+        String speakers = payload == null ? proposal.getSpeakers()
+                : firstNonBlank(stringValue(payload, "speakers"), proposal.getSpeakers());
+        event.setSpeakers(speakers);
         Integer supportStaff = payload != null
                 ? parseInt(payload.get("supportStaffNeeded"), proposal.getSupportStaffNeeded())
                 : proposal.getSupportStaffNeeded();
@@ -186,10 +189,10 @@ public class CommitteeController {
         proposal.setStatus("APPROVED");
         proposal.setNote(note != null && !note.isBlank() ? note : "Đã duyệt");
 
-        Map<String, Object> response = toDetail(proposal);
+        EventProposal approved = proposalRepository.save(proposal);
+        Map<String, Object> response = toDetail(approved);
         response.put("event", eventCard(saved));
         response.put("removedFromWorkflow", true);
-        proposalRepository.delete(proposal);
         return ResponseEntity.ok(response);
     }
 
@@ -256,6 +259,7 @@ public class CommitteeController {
         m.put("proposedDate", iso(p.getProposedDate()));
         m.put("proposedEndDate", iso(p.getProposedEndDate()));
         m.put("organizer", p.getOrganizer());
+        m.put("speakers", p.getSpeakers());
         m.put("supportStaffNeeded", p.getSupportStaffNeeded());
         m.put("createdAt", iso(p.getCreatedAt()));
         m.put("imageUrl", p.getImageUrl());
@@ -288,6 +292,7 @@ public class CommitteeController {
         map.put("location", e.getLocation());
         map.put("capacity", e.getCapacity());
         map.put("status", e.getStatus());
+        map.put("speakers", e.getSpeakers());
         return map;
     }
 

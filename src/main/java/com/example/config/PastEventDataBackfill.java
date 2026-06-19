@@ -16,9 +16,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -104,6 +104,9 @@ public class PastEventDataBackfill implements ApplicationRunner {
     private final EventFeedbackRepository eventFeedbackRepository;
     private final StudentRepository studentRepository;
 
+    @Value("${app.past-event-backfill.enabled:false}")
+    private boolean enabled;
+
     public PastEventDataBackfill(EventRepository eventRepository,
                                  RegistrationRepository registrationRepository,
                                  AttendanceRepository attendanceRepository,
@@ -119,8 +122,10 @@ public class PastEventDataBackfill implements ApplicationRunner {
     }
 
     @Override
-    @Transactional
     public void run(ApplicationArguments args) {
+        if (!enabled) {
+            return;
+        }
         LocalDateTime now = LocalDateTime.now();
         List<Event> events = eventRepository.findAll();
         List<Student> allStudents = studentRepository.findAll();

@@ -40,6 +40,19 @@ public class ProposalDataBackfill implements ApplicationRunner {
             "Hoàng Quốc Đạt — Trưởng ban tổ chức", "Vũ Khánh Linh — Trợ lý sự kiện"
     };
 
+    private static final String[][] SPEAKERS = {
+            {"ThS. Nguyen Van Hung - Senior Cloud Architect, AWS Vietnam",
+                    "TS. Tran Mai Anh - AI/ML Lead, FPT Software"},
+            {"Mr. Do Quang Khai - Backend Tech Lead, MoMo",
+                    "Ms. Le Thu Ha - Product Manager, FPT IS"},
+            {"TS. Pham Minh Tuan - Cybersecurity Lecturer",
+                    "Mr. Vu Hoang Nam - Security Consultant, VNPT Cyber"},
+            {"Ms. Nguyen Khanh Linh - UX Research Lead",
+                    "Mr. Tran Bao Long - Creative Director"},
+            {"Mr. Michael Tran - English Communication Coach",
+                    "Ms. Sarah Pham - Academic Writing Mentor"}
+    };
+
     private final EventProposalRepository proposalRepository;
 
     public ProposalDataBackfill(EventProposalRepository proposalRepository) {
@@ -79,6 +92,11 @@ public class ProposalDataBackfill implements ApplicationRunner {
             }
             if (EventCoverImage.isBlank(proposal.getOrganizer())) {
                 proposal.setOrganizer(ORGANIZERS[seed % ORGANIZERS.length]);
+                touched = true;
+            }
+            if (EventCoverImage.isBlank(proposal.getSpeakers())) {
+                String[] pair = SPEAKERS[seed % SPEAKERS.length];
+                proposal.setSpeakers(String.join("\n", pair));
                 touched = true;
             }
             if (proposal.getSupportStaffNeeded() == null) {

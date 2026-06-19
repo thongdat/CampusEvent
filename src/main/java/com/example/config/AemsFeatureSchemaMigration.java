@@ -44,6 +44,7 @@ public class AemsFeatureSchemaMigration implements ApplicationRunner {
         String proposalTable = resolveProposalTable();
         addColumnIfMissing(proposalTable, "quiz_payload", "NVARCHAR(MAX) NULL");
         addColumnIfMissing(proposalTable, "organizer", "NVARCHAR(200) NULL");
+        addColumnIfMissing(proposalTable, "speakers", "NVARCHAR(800) NULL");
         addColumnIfMissing(proposalTable, "support_staff_needed", "INT NULL");
         addColumnIfMissing(proposalTable, "proposed_end_date", "DATETIME2 NULL");
 

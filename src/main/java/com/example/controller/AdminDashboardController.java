@@ -1,7 +1,9 @@
 package com.example.controller;
 
 import com.example.config.AcademicStructure;
+import com.example.config.InvitationScheduler;
 import com.example.model.ActivityLog;
+import com.example.model.Attendance;
 import com.example.model.Department;
 import com.example.model.EmailLog;
 import com.example.model.Event;
@@ -69,9 +71,9 @@ import java.util.stream.Collectors;
 @RequestMapping(value = "/admin", produces = "application/json;charset=UTF-8")
 public class AdminDashboardController {
 
-    private static final List<String> ACTIVE_PROPOSAL_STATUSES = List.of("PENDING", "APPROVED", "REVISION", "REJECTED");
+    private static final List<String> ACTIVE_PROPOSAL_STATUSES = List.of("PENDING", "REVISION", "REJECTED");
     private static final List<String> ACTIONABLE_PROPOSAL_STATUSES = List.of("PENDING", "REVISION");
-    private static final List<String> EVENT_STATUSES = List.of("PENDING", "APPROVED", "PUBLISHED", "COMPLETED", "CANCELLED");
+    private static final List<String> EVENT_STATUSES = List.of("PUBLISHED", "COMPLETED", "CANCELLED");
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
@@ -87,6 +89,7 @@ public class AdminDashboardController {
     private final ActivityLogRepository activityLogRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+    private final InvitationScheduler invitationScheduler;
     private final QuizQuestionRepository quizQuestionRepository;
     private final GoogleFormsApiService googleFormsApiService;
     private final OAuth2TokenStore oauthTokenStore;
@@ -109,6 +112,7 @@ public class AdminDashboardController {
             ActivityLogRepository activityLogRepository,
             PasswordEncoder passwordEncoder,
             EmailService emailService,
+            InvitationScheduler invitationScheduler,
             QuizQuestionRepository quizQuestionRepository,
             GoogleFormsApiService googleFormsApiService,
             OAuth2TokenStore oauthTokenStore) {
@@ -126,6 +130,7 @@ public class AdminDashboardController {
         this.activityLogRepository = activityLogRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
+        this.invitationScheduler = invitationScheduler;
         this.quizQuestionRepository = quizQuestionRepository;
         this.googleFormsApiService = googleFormsApiService;
         this.oauthTokenStore = oauthTokenStore;
@@ -405,7 +410,6 @@ public class AdminDashboardController {
     }
 
     @PostMapping("/email-logs/send")
-    @Transactional
     public ResponseEntity<Map<String, Object>> sendEmailNotification(@RequestBody Map<String, Object> payload) {
         String toEmail = requiredString(payload, "toEmail");
         String subject = requiredString(payload, "subject");
@@ -457,9 +461,31 @@ public class AdminDashboardController {
 
     @GetMapping("/events")
     public List<Map<String, Object>> events() {
-        return eventRepository.findAll().stream()
+        LocalDateTime asOf = currentDateTime();
+        List<Event> events = eventRepository.findAll();
+        Map<Long, List<Registration>> registrationsByEvent = registrationRepository
+                .findByRegistrationDateLessThanEqual(asOf, Sort.unsorted()).stream()
+                .filter(registration -> registration.getEvent() != null)
+                .collect(Collectors.groupingBy(registration -> registration.getEvent().getId()));
+        Map<Long, List<Attendance>> attendanceByEvent = attendanceRepository.findAll().stream()
+                .filter(attendance -> attendance.getEvent() != null)
+                .filter(attendance -> attendance.getCheckinTime() != null
+                        && !attendance.getCheckinTime().isAfter(asOf))
+                .collect(Collectors.groupingBy(attendance -> attendance.getEvent().getId()));
+        Map<Long, List<Feedback>> feedbackByEvent = feedbackRepository.findAll().stream()
+                .filter(feedback -> feedback.getEvent() != null)
+                .filter(feedback -> feedback.getCreatedAt() != null
+                        && !feedback.getCreatedAt().isAfter(asOf))
+                .collect(Collectors.groupingBy(feedback -> feedback.getEvent().getId()));
+
+        return events.stream()
                 .sorted(this::compareEventsForAdmin)
-                .map(this::buildEvent)
+                .map(event -> buildEvent(
+                        event,
+                        registrationsByEvent.getOrDefault(event.getId(), List.of()),
+                        attendanceByEvent.getOrDefault(event.getId(), List.of()),
+                        feedbackByEvent.getOrDefault(event.getId(), List.of()),
+                        asOf))
                 .collect(Collectors.toList());
     }
 
@@ -719,6 +745,7 @@ public class AdminDashboardController {
         savedEvent.setCapacity(capacity);
         savedEvent.setEndTime(end);
         savedEvent.setOrganizer(textOrNull(stringValue(publishPayload, "organizer", textOrEmpty(proposal.getOrganizer()))));
+        savedEvent.setSpeakers(textOrNull(stringValue(publishPayload, "speakers", textOrEmpty(proposal.getSpeakers()))));
         savedEvent.setSupportStaffNeeded(intValue(publishPayload, "supportStaffNeeded",
                 firstNonNull(proposal.getSupportStaffNeeded(), 0)));
         savedEvent.setStatus("PUBLISHED");
@@ -771,6 +798,12 @@ public class AdminDashboardController {
 
         Map<String, Object> result = buildRegistration(saved);
         result.put("emailStatus", sendRegistrationEmail(saved));
+        LocalDateTime invitationTime = currentDateTime();
+        boolean invitationEmailQueued = invitationScheduler.isInvitationDue(saved, invitationTime);
+        if (invitationEmailQueued) {
+            invitationScheduler.sendInvitationIfDueAsync(saved.getId(), invitationTime);
+        }
+        result.put("invitationEmailQueued", invitationEmailQueued);
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 
@@ -847,8 +880,10 @@ public class AdminDashboardController {
         stats.put("upcomingEvents", upcomingEvents);
         stats.put("pendingProposals", pendingProposals);
         stats.put("totalRegistrations", registrationRepository.countByRegistrationDateLessThanEqual(asOf));
+        stats.put("waitlistRegistrations", registrationRepository.countByStatus("WAITLIST"));
         stats.put("totalTickets", ticketRepository.countBySentDateLessThanEqual(asOf));
         stats.put("attendanceCount", attendanceRepository.countByCheckinTimeLessThanEqual(asOf));
+        stats.put("totalFeedback", feedbackRepository.count());
         stats.put("averageRating", round(averageRating != null ? averageRating : 0));
         stats.put("sentEmails", sentEmails);
         stats.put("failedEmails", failedEmails);
@@ -1093,23 +1128,30 @@ public class AdminDashboardController {
 
     private Map<String, Object> buildEvent(Event event) {
         LocalDateTime asOf = currentDateTime();
-        boolean eventHasStarted = event.getStartTime() != null && !event.getStartTime().isAfter(asOf);
         List<Registration> registrations = registrationRepository.findByEventId(event.getId()).stream()
                 .filter(registration -> registration.getRegistrationDate() != null && !registration.getRegistrationDate().isAfter(asOf))
                 .collect(Collectors.toList());
+        List<Attendance> attendances = attendanceRepository.findByEventId(event.getId()).stream()
+                .filter(attendance -> attendance.getCheckinTime() != null && !attendance.getCheckinTime().isAfter(asOf))
+                .collect(Collectors.toList());
+        boolean eventHasStarted = event.getStartTime() != null && !event.getStartTime().isAfter(asOf);
         List<Feedback> feedbacks = eventHasStarted
                 ? feedbackRepository.findByEventId(event.getId()).stream()
                         .filter(feedback -> feedback.getCreatedAt() != null && !feedback.getCreatedAt().isAfter(asOf))
                         .collect(Collectors.toList())
                 : List.of();
-        long attended = registrations.stream()
-                .filter(registration -> attendanceRepository.findByRegistrationId(registration.getId())
-                        .map(attendance -> eventHasStarted
-                                && attendance.getCheckinTime() != null
-                                && !attendance.getCheckinTime().isAfter(asOf)
-                                && !"ABSENT".equalsIgnoreCase(attendance.getStatus()))
-                        .orElse(false))
-                .count();
+        return buildEvent(event, registrations, attendances, feedbacks, asOf);
+    }
+
+    private Map<String, Object> buildEvent(Event event,
+                                           List<Registration> registrations,
+                                           List<Attendance> attendances,
+                                           List<Feedback> feedbacks,
+                                           LocalDateTime asOf) {
+        boolean eventHasStarted = event.getStartTime() != null && !event.getStartTime().isAfter(asOf);
+        long attended = eventHasStarted ? attendances.stream()
+                .filter(attendance -> !"ABSENT".equalsIgnoreCase(attendance.getStatus()))
+                .count() : 0;
         long waitlist = registrations.stream()
                 .filter(registration -> "WAITLIST".equalsIgnoreCase(registration.getStatus()))
                 .count();
@@ -1197,6 +1239,7 @@ public class AdminDashboardController {
         item.put("proposedDate", proposal.getProposedDate());
         item.put("proposedEndDate", proposal.getProposedEndDate());
         item.put("organizer", textOrEmpty(proposal.getOrganizer()));
+        item.put("speakers", textOrEmpty(proposal.getSpeakers()));
         item.put("supportStaffNeeded", firstNonNull(proposal.getSupportStaffNeeded(), 0));
         item.put("status", textOrEmpty(proposal.getStatus()));
         item.put("note", textOrEmpty(proposal.getNote()));
@@ -1288,6 +1331,8 @@ public class AdminDashboardController {
             throw badRequest("Capacity phải lớn hơn 0.");
         }
         event.setStatus(normalizeStatus(requiredString(payload, "status"), EVENT_STATUSES, "Status event không hợp lệ."));
+        event.setSpeakers(textOrNull(stringValue(payload, "speakers", textOrEmpty(event.getSpeakers()))));
+        event.setOrganizer(textOrNull(stringValue(payload, "organizer", textOrEmpty(event.getOrganizer()))));
         event.setDepartment(resolveDepartment(longValue(payload, "departmentId", event.getDepartment() != null ? event.getDepartment().getId() : null)));
         if (creating) {
             event.setCreatedAt(currentDateTime());
@@ -1322,6 +1367,7 @@ public class AdminDashboardController {
             throw badRequest("Sức chứa phải lớn hơn 0.");
         }
         proposal.setOrganizer(textOrNull(stringValue(payload, "organizer", textOrEmpty(proposal.getOrganizer()))));
+        proposal.setSpeakers(textOrNull(stringValue(payload, "speakers", textOrEmpty(proposal.getSpeakers()))));
         Integer supportStaff = intValue(payload, "supportStaffNeeded", firstNonNull(proposal.getSupportStaffNeeded(), 0));
         if (supportStaff != null && supportStaff < 0) {
             throw badRequest("Số người hỗ trợ không hợp lệ.");
@@ -1493,10 +1539,7 @@ public class AdminDashboardController {
         if (event.getEndTime() != null && !event.getEndTime().isAfter(asOf)) {
             return "COMPLETED";
         }
-        if ("COMPLETED".equals(status)) {
-            return "PUBLISHED";
-        }
-        return status;
+        return "PUBLISHED";
     }
 
     private LocalDateTime currentDateTime() {

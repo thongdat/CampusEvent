@@ -1,6 +1,8 @@
 package com.example.controller;
 
 import com.example.model.AttendanceSession;
+import com.example.model.Event;
+import com.example.repository.EventRepository;
 import com.example.service.AttendanceService;
 import com.example.service.AttendanceSessionService;
 import com.example.service.DepartmentDashboardService;
@@ -10,6 +12,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -21,13 +24,16 @@ public class DepartmentAttendanceController {
     private final AttendanceSessionService sessionService;
     private final AttendanceService attendanceService;
     private final DepartmentDashboardService dashboardService;
+    private final EventRepository eventRepository;
 
     public DepartmentAttendanceController(AttendanceSessionService sessionService,
                                           AttendanceService attendanceService,
-                                          DepartmentDashboardService dashboardService) {
+                                          DepartmentDashboardService dashboardService,
+                                          EventRepository eventRepository) {
         this.sessionService = sessionService;
         this.attendanceService = attendanceService;
         this.dashboardService = dashboardService;
+        this.eventRepository = eventRepository;
     }
 
     @GetMapping("/events/{eventId}/qr")
@@ -65,7 +71,12 @@ public class DepartmentAttendanceController {
 
     @GetMapping("/events/{eventId}/dashboard")
     public String viewAttendanceDashboard(@PathVariable Long eventId, Model model) {
+        Event event = eventRepository.findById(eventId).orElse(null);
+        boolean eventEnded = event != null
+                && event.getEndTime() != null
+                && !event.getEndTime().isAfter(LocalDateTime.now());
         model.addAttribute("eventId", eventId);
+        model.addAttribute("eventEnded", eventEnded);
         model.addAttribute("stats", dashboardService.getParticipationSummary(eventId));
         return "event-participation-dashboard";
     }

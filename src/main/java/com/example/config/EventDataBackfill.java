@@ -55,6 +55,11 @@ public class EventDataBackfill implements ApplicationRunner {
                 event.setBudget(BigDecimal.ZERO);
                 touched = true;
             }
+            String status = event.getStatus() == null ? "" : event.getStatus().trim().toUpperCase();
+            if ("PENDING".equals(status) || "APPROVED".equals(status)) {
+                event.setStatus("PUBLISHED");
+                touched = true;
+            }
             if (touched) {
                 changed.add(event);
             }
