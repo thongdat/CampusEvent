@@ -2,8 +2,14 @@ package com.example.service;
 
 import com.example.model.Event;
 import com.example.model.EventFeedback;
+import com.example.model.QuizAnswer;
+import com.example.model.QuizQuestion;
+import com.example.model.QuizSubmission;
 import com.example.repository.EventFeedbackRepository;
 import com.example.repository.EventRepository;
+import com.example.repository.QuizAnswerRepository;
+import com.example.repository.QuizQuestionRepository;
+import com.example.repository.QuizSubmissionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,6 +26,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Phân tích sự kiện học thuật dựa trên phản hồi (rating + bình luận) của sinh viên.
@@ -67,13 +74,23 @@ public class FeedbackAiAnalysisService {
 
     private final EventFeedbackRepository feedbackRepository;
     private final EventRepository eventRepository;
+    private final QuizQuestionRepository quizQuestionRepository;
+    private final QuizSubmissionRepository quizSubmissionRepository;
+    private final QuizAnswerRepository quizAnswerRepository;
 
     @Value("${ai.gemini.api-key:${GEMINI_API_KEY:}}")
     private String geminiApiKey;
 
-    public FeedbackAiAnalysisService(EventFeedbackRepository feedbackRepository, EventRepository eventRepository) {
+    public FeedbackAiAnalysisService(EventFeedbackRepository feedbackRepository,
+                                     EventRepository eventRepository,
+                                     QuizQuestionRepository quizQuestionRepository,
+                                     QuizSubmissionRepository quizSubmissionRepository,
+                                     QuizAnswerRepository quizAnswerRepository) {
         this.feedbackRepository = feedbackRepository;
         this.eventRepository = eventRepository;
+        this.quizQuestionRepository = quizQuestionRepository;
+        this.quizSubmissionRepository = quizSubmissionRepository;
+        this.quizAnswerRepository = quizAnswerRepository;
     }
 
     public Map<String, Object> analyze(Long eventId) {
@@ -83,8 +100,15 @@ public class FeedbackAiAnalysisService {
         result.put("eventTitle", title);
 
         List<EventFeedback> feedbacks = feedbackRepository.findByEventId(eventId);
+        List<QuizQuestion> quizQuestions = quizQuestionRepository.findByEventId(eventId);
+        List<QuizSubmission> quizSubmissions = quizSubmissionRepository.findByEventId(eventId);
+        List<QuizAnswer> quizAnswers = quizAnswerRepository.findBySubmission_Event_Id(eventId);
+        Map<String, Object> quizAnalysis = buildQuizAnalysis(quizQuestions, quizSubmissions, quizAnswers);
+        result.put("quizAnalysis", quizAnalysis);
         result.put("feedbackCount", feedbacks.size());
-        if (feedbacks.isEmpty()) {
+        result.put("feedbackAvailable", !feedbacks.isEmpty());
+        result.put("quizAvailable", !quizSubmissions.isEmpty());
+        if (feedbacks.isEmpty() && quizSubmissions.isEmpty()) {
             result.put("available", false);
             result.put("source", "Phân tích nội bộ AEMS");
             result.put("summary", "Chưa có phản hồi nào để phân tích. Hãy khuyến khích sinh viên hoàn tất khảo sát check-out.");
@@ -185,13 +209,17 @@ public class FeedbackAiAnalysisService {
         result.put("themes", themes);
 
         // Khuyến nghị hành động
-        result.put("recommendations", buildRecommendations(avgContent, avgSpeaker, avgOrg, avgOverall, concerns, (double) neg / total));
+        List<String> recommendations = feedbacks.isEmpty()
+                ? new ArrayList<>()
+                : buildRecommendations(avgContent, avgSpeaker, avgOrg, avgOverall, concerns, (double) neg / total);
+        addQuizRecommendation(recommendations, quizAnalysis);
+        result.put("recommendations", recommendations);
         result.put("highlights", positiveComments);
         result.put("concernComments", concernComments);
 
         // Tóm tắt: ưu tiên Gemini nếu có key, fallback engine nội bộ
-        String localSummary = buildLocalSummary(title, total, avgOverall, pos, neg, strengths, concerns);
-        String summary = tryGeminiSummary(title, total, avgOverall, ratings, sentiment, themes, feedbacks);
+        String localSummary = buildLocalSummary(title, total, avgOverall, pos, neg, strengths, concerns, quizAnalysis);
+        String summary = tryGeminiSummary(title, total, avgOverall, ratings, sentiment, themes, feedbacks, quizAnalysis);
         if (summary != null && !summary.isBlank()) {
             result.put("summary", summary);
             result.put("source", "Google Gemini");
@@ -239,17 +267,23 @@ public class FeedbackAiAnalysisService {
     }
 
     private String buildLocalSummary(String title, int total, double overall, int pos, int neg,
-                                     List<String> strengths, List<String> concerns) {
+                                     List<String> strengths, List<String> concerns,
+                                     Map<String, Object> quizAnalysis) {
         StringBuilder sb = new StringBuilder();
-        sb.append("Sự kiện \"").append(title).append("\" nhận ").append(total)
-          .append(" phản hồi với điểm tổng thể trung bình ").append(String.format(Locale.US, "%.1f", overall)).append("/5. ");
+        sb.append("Sự kiện \"").append(title).append("\". ");
+        if (total > 0) {
+            sb.append("Có ").append(total).append(" phản hồi với điểm tổng thể trung bình ")
+              .append(String.format(Locale.US, "%.1f", overall)).append("/5. ");
+        }
         int posRate = percent(pos, total);
-        if (posRate >= 60) {
-            sb.append("Phần lớn sinh viên có cảm nhận tích cực (").append(posRate).append("%). ");
-        } else if (neg > pos) {
-            sb.append("Cảm nhận tiêu cực đang chiếm ưu thế, cần lưu ý. ");
-        } else {
-            sb.append("Cảm nhận của sinh viên ở mức trung lập. ");
+        if (total > 0) {
+            if (posRate >= 60) {
+                sb.append("Phần lớn sinh viên có cảm nhận tích cực (").append(posRate).append("%). ");
+            } else if (neg > pos) {
+                sb.append("Cảm nhận tiêu cực đang chiếm ưu thế, cần lưu ý. ");
+            } else {
+                sb.append("Cảm nhận của sinh viên ở mức trung lập. ");
+            }
         }
         if (!strengths.isEmpty()) {
             sb.append("Điểm mạnh nổi bật: ").append(String.join(", ", strengths)).append(". ");
@@ -257,13 +291,88 @@ public class FeedbackAiAnalysisService {
         if (!concerns.isEmpty()) {
             sb.append("Cần cải thiện: ").append(String.join(", ", concerns)).append(".");
         }
+        int submissions = ((Number) quizAnalysis.getOrDefault("submissionCount", 0)).intValue();
+        if (submissions > 0) {
+            sb.append(" Kết quả quiz có ").append(submissions).append(" lượt nộp, điểm trung bình ")
+              .append(quizAnalysis.get("averagePercent")).append("%.");
+        }
         return sb.toString().trim();
+    }
+
+    private Map<String, Object> buildQuizAnalysis(List<QuizQuestion> questions,
+                                                  List<QuizSubmission> submissions,
+                                                  List<QuizAnswer> answers) {
+        double maximumScore = questions.stream()
+                .mapToDouble(question -> question.getPoints() == null ? 1 : Math.max(1, question.getPoints()))
+                .sum();
+        double averageScore = submissions.stream()
+                .map(QuizSubmission::getTotalScore)
+                .filter(Objects::nonNull)
+                .mapToDouble(Double::doubleValue)
+                .average()
+                .orElse(0);
+        double averagePercent = maximumScore <= 0 ? 0 : averageScore * 100.0 / maximumScore;
+
+        List<Map<String, Object>> questionPerformance = new ArrayList<>();
+        for (QuizQuestion question : questions) {
+            List<QuizAnswer> questionAnswers = answers.stream()
+                    .filter(answer -> answer.getQuestion() != null
+                            && Objects.equals(answer.getQuestion().getId(), question.getId()))
+                    .collect(java.util.stream.Collectors.toList());
+            long graded = questionAnswers.stream().filter(answer -> answer.getIsCorrect() != null).count();
+            long correct = questionAnswers.stream().filter(answer -> Boolean.TRUE.equals(answer.getIsCorrect())).count();
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("questionId", question.getId());
+            row.put("question", question.getQuestionText());
+            row.put("attempts", questionAnswers.size());
+            row.put("gradedAttempts", graded);
+            row.put("correct", correct);
+            row.put("correctRate", graded == 0 ? 0 : Math.round(correct * 1000.0 / graded) / 10.0);
+            questionPerformance.add(row);
+        }
+
+        Map<String, Object> hardestQuestion = questionPerformance.stream()
+                .filter(row -> ((Number) row.get("gradedAttempts")).longValue() > 0)
+                .min((left, right) -> Double.compare(
+                        ((Number) left.get("correctRate")).doubleValue(),
+                        ((Number) right.get("correctRate")).doubleValue()))
+                .orElse(null);
+
+        Map<String, Object> quiz = new LinkedHashMap<>();
+        quiz.put("questionCount", questions.size());
+        quiz.put("submissionCount", submissions.size());
+        quiz.put("maximumScore", Math.round(maximumScore * 100.0) / 100.0);
+        quiz.put("averageScore", Math.round(averageScore * 100.0) / 100.0);
+        quiz.put("averagePercent", Math.round(averagePercent * 10.0) / 10.0);
+        quiz.put("questionPerformance", questionPerformance);
+        quiz.put("hardestQuestion", hardestQuestion);
+        return quiz;
+    }
+
+    private void addQuizRecommendation(List<String> recommendations, Map<String, Object> quizAnalysis) {
+        int submissions = ((Number) quizAnalysis.getOrDefault("submissionCount", 0)).intValue();
+        if (submissions == 0) {
+            return;
+        }
+        double averagePercent = ((Number) quizAnalysis.getOrDefault("averagePercent", 0)).doubleValue();
+        if (averagePercent < 60) {
+            recommendations.add("Điểm quiz trung bình dưới 60%: nên giải thích lại các nội dung cốt lõi và cung cấp tài liệu ôn tập sau sự kiện.");
+        } else if (averagePercent >= 85) {
+            recommendations.add("Kết quả quiz rất tốt: có thể tăng độ khó hoặc bổ sung câu hỏi vận dụng ở lần tổ chức tiếp theo.");
+        }
+        Object hardest = quizAnalysis.get("hardestQuestion");
+        if (hardest instanceof Map) {
+            Object question = ((Map<?, ?>) hardest).get("question");
+            Object rate = ((Map<?, ?>) hardest).get("correctRate");
+            recommendations.add("Cần xem lại câu hỏi khó nhất \"" + question + "\" (tỷ lệ đúng " + rate + "%).");
+        }
     }
 
     /** Gọi Google Gemini để sinh tóm tắt; trả về null nếu không cấu hình hoặc lỗi. */
     private String tryGeminiSummary(String title, int total, double overall,
                                     Map<String, Object> ratings, Map<String, Object> sentiment,
-                                    List<Map<String, Object>> themes, List<EventFeedback> feedbacks) {
+                                    List<Map<String, Object>> themes, List<EventFeedback> feedbacks,
+                                    Map<String, Object> quizAnalysis) {
         if (geminiApiKey == null || geminiApiKey.isBlank()) {
             return null;
         }
@@ -276,16 +385,21 @@ public class FeedbackAiAnalysisService {
                     if (++n >= 25) break;
                 }
             }
-            String prompt = "Bạn là trợ lý phân tích phản hồi sự kiện học thuật của trường đại học. "
-                    + "Hãy viết một đoạn tóm tắt ngắn (3-5 câu) bằng tiếng Việt, khách quan, nêu rõ mức độ hài lòng, "
-                    + "điểm mạnh và điểm cần cải thiện.\n\n"
+            String prompt = "Bạn là chuyên gia đánh giá chất lượng sự kiện học thuật tại trường đại học. "
+                    + "Hãy thực hiện độc lập 2 nhiệm vụ và chỉ kết luận từ dữ liệu được cung cấp:\n"
+                    + "1. PHÂN TÍCH BÌNH LUẬN: đánh giá cảm xúc, điểm mạnh, vấn đề lặp lại và nhu cầu của sinh viên.\n"
+                    + "2. PHÂN TÍCH QUIZ: đánh giá mức độ tiếp thu qua điểm trung bình, tỷ lệ đúng và các câu khó; "
+                    + "không đồng nhất điểm quiz với mức độ hài lòng.\n"
+                    + "Cuối cùng đưa ra 2-4 khuyến nghị cụ thể cho lần tổ chức sau. "
+                    + "Trả lời bằng tiếng Việt, khách quan, súc tích, chia thành ba mục: Bình luận, Quiz, Khuyến nghị.\n\n"
                     + "Sự kiện: " + title + "\n"
                     + "Số phản hồi: " + total + "\n"
                     + "Điểm trung bình (1-5): tổng thể " + overall + ", nội dung " + ratings.get("content")
                     + ", diễn giả " + ratings.get("speaker") + ", tổ chức " + ratings.get("organization") + "\n"
                     + "Cảm xúc: tích cực " + sentiment.get("positive") + ", trung lập " + sentiment.get("neutral")
                     + ", tiêu cực " + sentiment.get("negative") + "\n"
-                    + "Bình luận tiêu biểu:\n" + comments;
+                    + "Bình luận tiêu biểu:\n" + comments
+                    + "Dữ liệu quiz: " + quizAnalysis + "\n";
 
             String body = "{\"contents\":[{\"parts\":[{\"text\":\"" + escapeJson(prompt) + "\"}]}]}";
             HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();

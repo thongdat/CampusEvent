@@ -2,10 +2,12 @@
     const API_BASE = window.location.protocol === 'file:'
         ? 'http://localhost:8081/api/admin'
         : '/api/admin';
+    const CACHE_TTL_MS = 20_000;
+    const CACHE_PREFIX = 'aems-admin-api-cache:';
     let logoutInProgress = false;
 
     const navItems = [
-        { group: 'Tổng quan', id: 'overview', label: 'Dashboard', icon: 'layout-dashboard', href: 'overview.html', keywords: 'tong quan home dashboard' },
+        { group: 'Tổng quan', id: 'overview', label: 'Tổng quan', icon: 'layout-dashboard', href: 'overview.html', keywords: 'tong quan home dashboard' },
         { group: 'Tổng quan', id: 'reports', label: 'Báo cáo', icon: 'bar-chart-3', href: 'reports.html', keywords: 'reports analytics bao cao thong ke' },
         { group: 'Người dùng', id: 'users', label: 'Người dùng', icon: 'users', href: 'users.html', keywords: 'users nguoi dung tai khoan' },
         { group: 'Người dùng', id: 'roles', label: 'Phân quyền', icon: 'shield-check', href: 'roles.html', keywords: 'roles permissions phan quyen' },
@@ -19,7 +21,7 @@
     ];
 
     const pageMeta = {
-        overview: ['Tổng quan hệ thống', 'Số liệu nhanh, cảnh báo vận hành và các việc cần xử lý hôm nay.', 'Tổng quan'],
+        overview: ['Xin chào, Admin User! 👋', 'Đây là tổng quan hệ thống hôm nay.', 'Tổng quan'],
         reports: ['Báo cáo & Phân tích', 'Thống kê event, tỷ lệ tham dự, rating và xuất file báo cáo.', 'Báo cáo'],
         logs: ['Nhật ký hoạt động', 'Theo dõi mọi hành động và truy cập của người dùng.', 'Nhật ký'],
         users: ['Quản lý người dùng', 'Danh sách tài khoản, phân loại, khóa/mở khóa và đặt lại mật khẩu.', 'Người dùng'],
@@ -191,7 +193,45 @@
         return imageValues(selected.concat(imageLibrary.map(item => item.url)));
     }
 
+    function cacheKey(path) {
+        return `${CACHE_PREFIX}${path}`;
+    }
+
+    function clearApiCache() {
+        try {
+            Object.keys(sessionStorage)
+                .filter(key => key.startsWith(CACHE_PREFIX))
+                .forEach(key => sessionStorage.removeItem(key));
+        } catch (error) {
+            // Cache is an optimization only.
+        }
+    }
+
+    function getCached(path) {
+        try {
+            const raw = sessionStorage.getItem(cacheKey(path));
+            if (!raw) return null;
+            const entry = JSON.parse(raw);
+            if (!entry || Date.now() - Number(entry.time || 0) > CACHE_TTL_MS) {
+                sessionStorage.removeItem(cacheKey(path));
+                return null;
+            }
+            return entry.data;
+        } catch (error) {
+            return null;
+        }
+    }
+
+    function setCached(path, data) {
+        try {
+            sessionStorage.setItem(cacheKey(path), JSON.stringify({ time: Date.now(), data }));
+        } catch (error) {
+            // Storage may be full or disabled; the app should still work.
+        }
+    }
+
     async function api(path, options = {}) {
+        const method = String(options.method || 'GET').toUpperCase();
         const response = await fetch(`${API_BASE}${path}`, {
             headers: {
                 Accept: 'application/json',
@@ -217,13 +257,22 @@
             }
             throw new Error(message);
         }
+        if (method !== 'GET') {
+            clearApiCache();
+        }
         if (response.status === 204) return null;
         return response.json();
     }
 
     async function load(path, fallback) {
+        const cached = getCached(path);
+        if (cached !== null) {
+            return cached;
+        }
         try {
-            return await api(path);
+            const data = await api(path);
+            setCached(path, data);
+            return data;
         } catch (error) {
             console.warn(`Admin API fallback for ${path}:`, error);
             return fallback;
@@ -484,6 +533,7 @@
         const nav = renderNavList(navItems);
         const user = currentUser();
         const collapsedClass = localGet('sidebarCollapsed', false) ? ' collapsed' : '';
+        const today = new Date().toLocaleDateString('vi-VN');
 
         document.getElementById('app').innerHTML = `
             <div class="app-shell${collapsedClass}" id="appShell">
@@ -535,7 +585,10 @@
                         </div>
                         <div class="topbar-actions">
                             <button class="command-trigger" type="button" id="commandTrigger" title="Mở Command Palette (Ctrl+K)">
-                                ${icon('search', 'h-3.5 w-3.5')}<span>Tìm kiếm</span><kbd>Ctrl K</kbd>
+                                ${icon('search', 'h-4 w-4')}<span>Tìm kiếm...</span><kbd>Ctrl K</kbd>
+                            </button>
+                            <button class="date-chip" type="button" title="Ngày hiện tại">
+                                ${icon('calendar-days', 'h-4 w-4')}<span>${h(today)}</span>${icon('chevron-down', 'h-3.5 w-3.5')}
                             </button>
                             <div class="toolbar">${actions}</div>
                             ${accountMenu()}
@@ -648,6 +701,7 @@
     function metric(label, value, hint = '', tone = '', iconName = '') {
         const toneClass = tone ? ` tone-${tone}` : '';
         const iconBadge = iconName ? `<span class="metric-icon">${icon(iconName, 'h-4 w-4')}</span>` : '';
+        const spark = tone ? `<svg class="metric-spark" viewBox="0 0 92 28" aria-hidden="true"><path d="M2 21 C12 12 18 18 27 11 S43 3 53 11 S67 18 76 13 S86 14 90 18"></path></svg>` : '';
         return `
             <article class="metric${toneClass}">
                 <div class="metric-top">
@@ -656,6 +710,7 @@
                 </div>
                 <p class="metric-value">${h(value)}</p>
                 <p class="metric-hint">${h(hint)}</p>
+                ${spark}
             </article>`;
     }
 
@@ -687,19 +742,50 @@
     }
 
     function chart(monthly = []) {
-        const max = Math.max(...monthly.map(item => Number(item.events || 0)), 1);
+        if (!monthly.length) {
+            return emptyState({ icon: 'bar-chart-3', title: 'Chưa có dữ liệu biểu đồ' });
+        }
+        const width = 720;
+        const height = 260;
+        const padX = 44;
+        const padTop = 22;
+        const padBottom = 46;
+        const values = monthly.map(item => Number(item.events || 0));
+        const max = Math.max(...values, 5);
+        const stepX = monthly.length > 1 ? (width - padX * 2) / (monthly.length - 1) : 0;
+        const yOf = value => padTop + (height - padTop - padBottom) * (1 - (Number(value || 0) / max));
+        const points = monthly.map((item, index) => ({
+            x: padX + stepX * index,
+            y: yOf(item.events),
+            value: Number(item.events || 0),
+            label: item.label
+        }));
+        const line = points.map((point, index) => `${index ? 'L' : 'M'} ${point.x.toFixed(1)} ${point.y.toFixed(1)}`).join(' ');
+        const area = `${line} L ${points[points.length - 1].x.toFixed(1)} ${height - padBottom} L ${points[0].x.toFixed(1)} ${height - padBottom} Z`;
+        const grid = [0, .25, .5, .75, 1].map(ratio => {
+            const y = padTop + (height - padTop - padBottom) * ratio;
+            const label = Math.round(max * (1 - ratio));
+            return `<g><line x1="${padX}" y1="${y.toFixed(1)}" x2="${width - padX}" y2="${y.toFixed(1)}" class="chart-grid-line"></line><text x="14" y="${(y + 4).toFixed(1)}" class="chart-axis">${label}</text></g>`;
+        }).join('');
         return `
-            <div class="chart" style="grid-template-columns: repeat(${Math.max(monthly.length, 1)}, minmax(3.8rem, 1fr));">
-                ${monthly.map(item => {
-                    const height = Math.max(4, Math.round(Number(item.events || 0) / max * 100));
-                    const current = item.currentMonth ? ' current' : '';
-                    return `
-                        <div class="bar-column">
-                            <div class="bar-track"><div class="bar-value${current}" style="height:${height}%"></div></div>
-                            <p class="bar-label">${h(item.label)}</p>
-                            <p class="bar-sub">${number(item.events)} event</p>
-                        </div>`;
-                }).join('')}
+            <div class="line-chart">
+                <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Thống kê sự kiện theo tháng">
+                    <defs>
+                        <linearGradient id="eventAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#2563eb" stop-opacity=".26"></stop>
+                            <stop offset="100%" stop-color="#2563eb" stop-opacity=".02"></stop>
+                        </linearGradient>
+                    </defs>
+                    ${grid}
+                    <path d="${area}" class="chart-area"></path>
+                    <path d="${line}" class="chart-line"></path>
+                    ${points.map(point => `
+                        <g>
+                            <circle cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="4.5" class="chart-dot"></circle>
+                            <text x="${point.x.toFixed(1)}" y="${(point.y - 13).toFixed(1)}" class="chart-value">${number(point.value)}</text>
+                            <text x="${point.x.toFixed(1)}" y="${height - 16}" class="chart-label">${h(point.label)}</text>
+                        </g>`).join('')}
+                </svg>
             </div>`;
     }
 
@@ -1134,6 +1220,25 @@
             </div>`;
     }
 
+    function pageItems(key, items, pageSize = 20) {
+        const pages = Math.max(1, Math.ceil(items.length / pageSize));
+        const pageKey = `${key}Page`;
+        const page = Math.min(Math.max(Number(state.filters[pageKey] || 1), 1), pages);
+        const start = (page - 1) * pageSize;
+        const visible = items.slice(start, start + pageSize);
+        state.filters[pageKey] = page;
+        return { page, pages, visible, total: items.length };
+    }
+
+    function bindPagination(key, pager, render, args = []) {
+        document.querySelectorAll(`[data-pagination="${key}"] [data-page-step]`).forEach(button => {
+            button.onclick = () => {
+                state.filters[`${key}Page`] = Math.min(Math.max(pager.page + Number(button.dataset.pageStep), 1), pager.pages);
+                render(...args);
+            };
+        });
+    }
+
     function exportCsv(filename, rows) {
         const csv = rows.map(row => row.map(value => `"${String(value ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
         const blob = new Blob([`\ufeff${csv}`], { type: 'text/csv;charset=utf-8;' });
@@ -1148,12 +1253,10 @@
     async function renderOverview() {
         state.page = 'overview';
         shell(`<a class="btn primary" href="reports.html">${icon('bar-chart-3')}Mở báo cáo</a>`);
-        const [overview, events, proposals, registrations, feedback] = await Promise.all([
+        const [overview, events, proposals] = await Promise.all([
             load('/overview', {}),
             load('/events', []),
-            load('/proposals', []),
-            load('/registrations', []),
-            load('/feedback', [])
+            load('/proposals', [])
         ]);
         const stats = overview.stats || {};
         const reports = overview.reports || {};
@@ -1165,7 +1268,7 @@
                 ${metric('Tổng user', number(stats.totalUsers), `${number(stats.activeUsers)} active · ${number(stats.lockedUsers)} locked`, 'blue', 'users')}
                 ${metric('Events', number(stats.totalEvents), `${number(stats.todayEvents)} hôm nay · ${number(stats.upcomingEvents)} sắp tới`, 'orange', 'calendar-days')}
                 ${metric('Registrations', number(stats.totalRegistrations), `${number(stats.attendanceCount)} attendance`, 'teal', 'clipboard-check')}
-                ${metric('Feedback', `${Number(stats.averageRating || reports.averageRating || 0).toLocaleString('vi-VN', { maximumFractionDigits: 1 })}/5`, `${number(feedback.length)} phản hồi`, 'green', 'star')}
+                ${metric('Feedback', `${Number(stats.averageRating || reports.averageRating || 0).toLocaleString('vi-VN', { maximumFractionDigits: 1 })}/5`, `${number(stats.totalFeedback)} phản hồi`, 'green', 'star')}
             </div>
             <div class="split-grid">
                 <section class="panel">
@@ -1179,11 +1282,26 @@
                     ${chart(reports.monthly || [])}
                 </section>
                 <section class="panel">
-                    <h2 class="panel-title">Cần xử lý</h2>
-                    <div class="content" style="padding:.85rem 0 0">
-                        ${metric('Pending proposals', number(pending.length), 'Proposal chờ duyệt hoặc cần chỉnh sửa')}
-                        ${metric('Waitlist', number(registrations.filter(item => item.status === 'WAITLIST').length), 'Sinh viên đang trong hàng chờ')}
-                        ${metric('Email failed', number(stats.failedEmails), 'Lỗi gửi thông báo')}
+                    <div class="panel-header">
+                        <h2 class="panel-title">Cần xử lý</h2>
+                        <a class="btn" href="proposals.html">Xem tất cả</a>
+                    </div>
+                    <div class="action-list">
+                        <a class="action-card" href="proposals.html">
+                            <span class="action-icon tone-blue">${icon('file-text')}</span>
+                            <span><strong>Pending proposals</strong><b>${number(pending.length)}</b><small>Proposal chờ duyệt hoặc cần chỉnh sửa</small></span>
+                            ${icon('chevron-right')}
+                        </a>
+                        <a class="action-card" href="registrations.html">
+                            <span class="action-icon tone-orange">${icon('clock-3')}</span>
+                            <span><strong>Waitlist</strong><b>${number(stats.waitlistRegistrations)}</b><small>Sinh viên đang trong hàng chờ</small></span>
+                            ${icon('chevron-right')}
+                        </a>
+                        <a class="action-card" href="email.html">
+                            <span class="action-icon tone-rose">${icon('mail-warning')}</span>
+                            <span><strong>Email failed</strong><b>${number(stats.failedEmails)}</b><small>Lỗi gửi thông báo</small></span>
+                            ${icon('chevron-right')}
+                        </a>
                     </div>
                 </section>
             </div>
@@ -1195,7 +1313,7 @@
                     </div>
                     ${upcoming.length ? table(['Event', 'Khoa', 'Thời gian', 'Tỷ lệ lấp đầy'], upcoming.map(event => `
                         <tr>
-                            <td><span class="cell-title">${h(event.title)}</span><span class="cell-sub">${h(event.location || 'N/A')}</span></td>
+                            <td><span class="event-cell"><img class="event-thumb" src="${h(eventImageUrl(event))}" alt=""><span><span class="cell-title">${h(event.title)}</span><span class="cell-sub">${h(event.location || 'N/A')}</span></span></span></td>
                             <td>${h(event.departmentName)}</td>
                             <td>${dateTime(event.startTime)}</td>
                             <td><div class="progress"><span style="width:${Math.min(100, Number(event.fillRate || 0))}%"></span></div><span class="cell-sub">${percent(event.fillRate)}</span></td>
@@ -1241,6 +1359,7 @@
         const logs = payload.items || [];
         const render = (q = '') => {
             const filtered = logs.filter(log => !q || matchesSearch(`${log.activityType} ${log.description} ${log.userName} ${log.userEmail}`, q));
+            const pager = pageItems('logs', filtered, 25);
             content(`
                 <div class="metric-grid">
                     ${metric('Total logs', number(payload.totalItems || logs.length), 'Activity logs')}
@@ -1248,8 +1367,11 @@
                     ${metric('Users involved', number(new Set(logs.map(log => log.userEmail).filter(Boolean)).size), 'User có hoạt động')}
                     ${metric('Types', number(new Set(logs.map(log => log.activityType).filter(Boolean)).size), 'Loại hoạt động')}
                 </div>
-                <div class="toolbar">${searchBox('logSearch', 'Tìm activity, user, mô tả...')}<span class="metric-hint">${number(filtered.length)} log</span></div>
-                ${table(['Thời gian', 'Loại', 'User', 'Mô tả', 'Điểm'], filtered.map(log => `
+                <div class="toolbar">
+                    ${searchBox('logSearch', 'Tìm activity, user, mô tả...')}
+                    ${pagination('logs', pager.page, pager.pages, pager.total, pager.visible.length)}
+                </div>
+                ${table(['Thời gian', 'Loại', 'User', 'Mô tả', 'Điểm'], pager.visible.map(log => `
                     <tr>
                         <td>${dateTime(log.createdAt)}</td>
                         <td>${badge(log.activityType || 'N/A', 'blue')}</td>
@@ -1258,7 +1380,15 @@
                         <td>${number(log.pointsEarned)}</td>
                     </tr>`))}
             `);
-            bindFilters('logSearch', logs, render);
+            const search = document.getElementById('logSearch');
+            if (search) {
+                search.value = q;
+                search.addEventListener('input', event => {
+                    state.filters.logsPage = 1;
+                    render(event.target.value);
+                });
+            }
+            bindPagination('logs', pager, render, [q]);
             document.getElementById('exportLogs').onclick = () => exportCsv('activity-logs.csv', [
                 ['Time', 'Type', 'User', 'Email', 'Description', 'Points'],
                 ...logs.map(log => [log.createdAt, log.activityType, log.userName, log.userEmail, log.description, log.pointsEarned])
@@ -1384,6 +1514,7 @@
                     if (sortKey === 'created') return new Date(right.createdAt || 0) - new Date(left.createdAt || 0);
                     return String(left.fullName || '').localeCompare(String(right.fullName || ''), 'vi');
                 });
+            const pager = pageItems('users', filtered, 25);
             content(`
                 <div class="metric-grid">
                     ${metric('All Users', number(users.length), 'User List')}
@@ -1396,9 +1527,9 @@
                     ${selectBox('userRoleFilter', roleFilterOptions)}
                     ${selectBox('userFacultyFilter', facultyFilterOptions)}
                     ${selectBox('userSort', sortOptions)}
-                    <span class="metric-hint">${number(filtered.length)} user</span>
+                    ${pagination('users', pager.page, pager.pages, pager.total, pager.visible.length)}
                 </div>
-                ${table(['User', 'Role', 'Chức vụ', 'Khoa', 'Status', 'Điểm', 'Hành động'], filtered.map(user => `
+                ${table(['User', 'Role', 'Chức vụ', 'Khoa', 'Status', 'Điểm', 'Hành động'], pager.visible.map(user => `
                     <tr>
                         <td><span class="cell-title">${h(user.fullName)}</span><span class="cell-sub">${h(user.email)}</span></td>
                         <td>${badge(user.role || 'N/A', tone(user.role))}</td>
@@ -1429,19 +1560,26 @@
             if (roleSelect) roleSelect.value = roleFilter;
             if (facultySelect) facultySelect.value = facultyFilter;
             if (sortSelect) sortSelect.value = sortKey;
-            if (search) search.addEventListener('input', event => render(event.target.value));
+            if (search) search.addEventListener('input', event => {
+                state.filters.usersPage = 1;
+                render(event.target.value);
+            });
             if (roleSelect) roleSelect.addEventListener('change', event => {
                 state.filters.userRole = event.target.value;
+                state.filters.usersPage = 1;
                 render();
             });
             if (facultySelect) facultySelect.addEventListener('change', event => {
                 state.filters.userFaculty = event.target.value;
+                state.filters.usersPage = 1;
                 render();
             });
             if (sortSelect) sortSelect.addEventListener('change', event => {
                 state.filters.userSort = event.target.value;
+                state.filters.usersPage = 1;
                 render();
             });
+            bindPagination('users', pager, render);
             bindActionMenus();
             document.querySelectorAll('[data-detail]').forEach(button => button.onclick = () => detail(users.find(user => String(user.id) === button.dataset.detail)));
             document.querySelectorAll('[data-edit]').forEach(button => button.onclick = () => openUserForm(users.find(user => String(user.id) === button.dataset.edit)));
@@ -1648,55 +1786,10 @@
         state.page = 'proposals';
         shell();
         const proposals = await load('/proposals', []);
-        const committees = getCommittees();
-        const committeeMap = localGet('proposalCommittees', {});
         const statusCounts = summarizeStatuses(proposals);
-        const statusOptions = ['PENDING', 'APPROVED', 'REVISION', 'REJECTED'].map(value => ({ value, label: value }));
+        const statusOptions = ['PENDING', 'REVISION', 'REJECTED'].map(value => ({ value, label: value }));
         const needsReview = proposals.filter(item => ['PENDING', 'REVISION'].includes(String(item.status).toUpperCase()));
-        const readyToPublish = proposals.filter(item => String(item.status).toUpperCase() === 'APPROVED');
-
-        const publish = proposal => openForm({
-            title: 'Publish Proposal',
-            fields: [
-                { name: 'location', label: 'Địa điểm', required: true, defaultValue: 'FPT Campus' },
-                { name: 'startTime', label: 'Bắt đầu', type: 'datetime-local', required: true },
-                { name: 'endTime', label: 'Kết thúc', type: 'datetime-local', required: true },
-                { name: 'capacity', label: 'Capacity', type: 'number', defaultValue: 100 },
-                { name: 'budget', label: 'Ngân sách', type: 'number', defaultValue: 0 },
-                { name: 'imageUrls', label: 'Ảnh sự kiện', type: 'image-picker', full: true },
-                { name: 'note', label: 'Ghi chú publish', type: 'textarea', full: true }
-            ],
-            values: {
-                location: proposal.location || 'FPT Campus',
-                capacity: proposal.capacity || 100,
-                budget: proposal.budget || 0,
-                imageUrls: proposal.imageUrls || proposal.imageUrl || '',
-                startTime: dateTimeInput(proposal.proposedDate),
-                endTime: dateTimeInput(proposal.proposedDate, 2)
-            },
-            onSubmit: async payload => {
-                const result = await api(`/proposals/${proposal.id}/publish`, { method: 'POST', body: JSON.stringify(payload) });
-                if (result?.event?.id && committeeMap[proposal.id]) {
-                    const eventCommitteeMap = localGet('eventCommittees', {});
-                    eventCommitteeMap[result.event.id] = committeeMap[proposal.id];
-                    localSet('eventCommittees', eventCommitteeMap);
-                }
-                toast('Đã publish proposal thành event.');
-                renderProposals();
-            }
-        });
-
-        const assignCommittee = proposal => openForm({
-            title: 'Assign Committee',
-            fields: [{ name: 'committeeId', label: 'Committee', type: 'select', options: committees.map(item => ({ value: item.id, label: item.name })) }],
-            values: { committeeId: committeeMap[proposal.id] || '' },
-            onSubmit: async payload => {
-                committeeMap[proposal.id] = payload.committeeId;
-                localSet('proposalCommittees', committeeMap);
-                toast('Đã phân committee.');
-                renderProposals();
-            }
-        });
+        const pager = pageItems('proposals', proposals, 20);
 
         const updateStatus = proposal => openForm({
             title: 'Proposal Status Tracking',
@@ -1716,26 +1809,22 @@
             <div class="metric-grid">
                 ${metric('Workflow proposals', number(proposals.length), 'Chưa chuyển thành event')}
                 ${metric('Need review', number(needsReview.length), 'Pending hoặc cần chỉnh sửa')}
-                ${metric('Ready to publish', number(readyToPublish.length), 'Đã duyệt, có thể đưa lên sự kiện chính')}
+                ${metric('Auto publish', 'Bật', 'Duyệt xong tự lên sự kiện')}
                 ${metric('Rejected', number(statusCounts.REJECTED), 'Không tiếp tục')}
             </div>
-            ${table(['Proposal', 'Khoa', 'Ngày đề xuất', 'Status', 'Committee', 'Actions'], proposals.map(proposal => {
-                const committee = committees.find(item => String(item.id) === String(committeeMap[proposal.id]));
-                const canPublish = String(proposal.status).toUpperCase() === 'APPROVED';
+            <div class="toolbar">${pagination('proposals', pager.page, pager.pages, pager.total, pager.visible.length)}</div>
+            ${table(['Proposal', 'Khoa', 'Ngày đề xuất', 'Status', 'Actions'], pager.visible.map(proposal => {
                 return `<tr>
                     <td><span class="cell-title">${h(proposal.title)}</span><span class="cell-sub">${h(proposal.description || '')}</span></td>
                     <td>${h(proposal.departmentName)}</td>
                     <td>${dateTime(proposal.proposedDate)}</td>
                     <td>${badge(proposal.status, tone(proposal.status))}</td>
-                    <td>${committee ? badge(committee.name, 'blue') : badge(canPublish ? 'Không bắt buộc' : 'Chưa phân', canPublish ? 'gray' : 'amber')}</td>
                     <td><div class="row-actions">
                         <button class="icon-btn" data-proposal-detail="${proposal.id}" title="Xem chi tiết">${icon('eye')}</button>
-                        ${canPublish ? `<button class="btn primary" data-proposal-publish="${proposal.id}" title="Đưa proposal đã duyệt lên danh sách sự kiện chính">${icon('send', 'h-3.5 w-3.5')}Đưa lên event</button>` : ''}
                         <div class="action-menu" data-menu="proposal-${proposal.id}">
                             <button class="icon-btn" type="button" data-menu-trigger="proposal-${proposal.id}" aria-label="Thêm thao tác" title="Thêm thao tác">${icon('more-horizontal')}</button>
                             <div class="action-menu-pop" data-menu-pop="proposal-${proposal.id}" role="menu">
                                 <button class="action-item" type="button" data-proposal-status="${proposal.id}">${icon('list-checks', 'h-3.5 w-3.5')}<span>Đổi trạng thái</span></button>
-                                <button class="action-item" type="button" data-proposal-committee="${proposal.id}">${icon('users-round', 'h-3.5 w-3.5')}<span>Phân hội đồng</span></button>
                                 <div class="action-divider"></div>
                                 <button class="action-item danger" type="button" data-proposal-delete="${proposal.id}">${icon('trash-2', 'h-3.5 w-3.5')}<span>Xóa proposal</span></button>
                             </div>
@@ -1745,6 +1834,7 @@
             }))}
         `);
         bindActionMenus();
+        bindPagination('proposals', pager, renderProposals);
         document.querySelectorAll('[data-proposal-detail]').forEach(button => button.onclick = () => {
             const proposal = proposals.find(item => String(item.id) === button.dataset.proposalDetail);
             openDetail('Proposal Detail', `${detailGrid([
@@ -1752,13 +1842,13 @@
                 ['Department', proposal.departmentName],
                 ['Status', proposal.status],
                 ['Proposed date', dateTime(proposal.proposedDate)],
+                ['Organizer', proposal.organizer || 'N/A'],
+                ['Speakers', proposal.speakers || 'N/A'],
                 ['Created', dateTime(proposal.createdAt)],
                 ['Note', proposal.note || 'N/A']
             ])}<div class="panel" style="margin-top:1rem"><p class="panel-note">${h(proposal.description || '')}</p></div>`);
         });
         document.querySelectorAll('[data-proposal-status]').forEach(button => button.onclick = () => updateStatus(proposals.find(item => String(item.id) === button.dataset.proposalStatus)));
-        document.querySelectorAll('[data-proposal-committee]').forEach(button => button.onclick = () => assignCommittee(proposals.find(item => String(item.id) === button.dataset.proposalCommittee)));
-        document.querySelectorAll('[data-proposal-publish]').forEach(button => button.onclick = () => publish(proposals.find(item => String(item.id) === button.dataset.proposalPublish)));
         document.querySelectorAll('[data-proposal-delete]').forEach(button => button.onclick = () => confirmAction('Xóa proposal này?', async () => {
             await api(`/proposals/${button.dataset.proposalDelete}`, { method: 'DELETE' });
             toast('Đã xóa proposal.');
@@ -1796,6 +1886,8 @@
                 { name: 'endTime', label: 'Kết thúc', type: 'datetime-local', required: true },
                 { name: 'capacity', label: 'Capacity', type: 'number', defaultValue: 100 },
                 { name: 'budget', label: 'Ngân sách', type: 'number', defaultValue: 0 },
+                { name: 'organizer', label: 'Người phụ trách' },
+                { name: 'speakers', label: 'Diễn giả', type: 'textarea', full: true },
                 { name: 'imageUrls', label: 'Ảnh sự kiện', type: 'image-picker', full: true },
                 { name: 'description', label: 'Mô tả', type: 'textarea', full: true }
             ],
@@ -1851,6 +1943,8 @@
             capacity: Number(event.capacity || 100),
             budget: Number(event.budget || 0),
             imageUrl: event.imageUrl || '',
+            organizer: event.organizer || '',
+            speakers: event.speakers || '',
             description: event.description || '',
             ...overrides
         });
@@ -1901,6 +1995,7 @@
             toast(featured[event.id] ? 'Đã đưa vào Featured Events.' : 'Đã bỏ khỏi Featured Events.');
             renderEvents();
         };
+        const pager = pageItems('events', events, 20);
 
         content(`
             <div class="metric-grid">
@@ -1909,7 +2004,8 @@
                 ${metric('Committee', number(events.filter(item => committeeForEvent(item)).length), 'Event có người phụ trách')}
                 ${metric('Budget', money(events.reduce((sum, item) => sum + Number(item.budget || 0), 0)), 'Tổng ngân sách')}
             </div>
-            ${table(['Event', 'Khoa', 'Committee', 'Thời gian', 'Capacity', 'Ngân sách', 'Status', 'Actions'], events.map(event => `
+            <div class="toolbar">${pagination('events', pager.page, pager.pages, pager.total, pager.visible.length)}</div>
+            ${table(['Event', 'Khoa', 'Committee', 'Thời gian', 'Capacity', 'Ngân sách', 'Status', 'Actions'], pager.visible.map(event => `
                 <tr>
                     <td>
                         <div class="event-cell">
@@ -1942,6 +2038,7 @@
                 </tr>`))}
         `);
         bindActionMenus();
+        bindPagination('events', pager, renderEvents);
         document.getElementById('addEvent').onclick = () => openEventForm();
         document.getElementById('addBudget').onclick = () => events.length ? budgetForm() : toast('Chưa có event để thêm ngân sách.', 'warn');
         document.querySelectorAll('[data-event-detail]').forEach(button => button.onclick = () => {
@@ -1952,6 +2049,8 @@
                 ['Department', event.departmentName],
                 ['Committee', committeeForEvent(event)?.name || 'Chưa phân'],
                 ['Location', event.location],
+                ['Organizer', event.organizer || 'N/A'],
+                ['Speakers', event.speakers || 'N/A'],
                 ['Status', event.status],
                 ['Capacity', number(event.capacity)],
                 ['Budget', money(event.budget)],
@@ -2167,21 +2266,30 @@
         }, {});
         content(`
             <div class="metric-grid">
-                ${metric('Registration rate', percent(reports.registrationRate), `${number(reports.elapsedRegistrations)} / ${number(reports.elapsedCapacity)} capacity`)}
-                ${metric('Attendance rate', percent(reports.attendanceRate), `${number(reports.elapsedAttendance)} check-in`)}
-                ${metric('Average rating', `${Number(reports.averageRating || 0).toLocaleString('vi-VN', { maximumFractionDigits: 1 })}/5`, 'Event đã diễn ra')}
-                ${metric('Student participation', number(registrations.length), `${number(users.filter(user => user.role === 'STUDENT').length)} sinh viên`)}
+                ${metric('Registration rate', percent(reports.registrationRate), `${number(reports.elapsedRegistrations)} / ${number(reports.elapsedCapacity)} capacity`, 'blue', 'ticket-check')}
+                ${metric('Attendance rate', percent(reports.attendanceRate), `${number(reports.elapsedAttendance)} check-in`, 'teal', 'clipboard-check')}
+                ${metric('Average rating', `${Number(reports.averageRating || 0).toLocaleString('vi-VN', { maximumFractionDigits: 1 })}/5`, 'Event đã diễn ra', 'orange', 'star')}
+                ${metric('Student participation', number(registrations.length), `${number(users.filter(user => user.role === 'STUDENT').length)} sinh viên`, 'green', 'graduation-cap')}
             </div>
             <section class="panel">
-                <h2 class="panel-title">Event Statistics</h2>
+                <div class="panel-header">
+                    <div>
+                        <h2 class="panel-title">Thống kê sự kiện</h2>
+                        <p class="panel-note">Xu hướng event theo tháng và dữ liệu tham dự.</p>
+                    </div>
+                    <button class="btn" id="exportReports">${icon('download')}Xuất CSV</button>
+                </div>
                 ${chart(reports.monthly || [])}
             </section>
             <div class="split-grid">
                 <section class="panel">
-                    <h2 class="panel-title">Attendance Reports</h2>
+                    <div class="panel-header">
+                        <h2 class="panel-title">Attendance Reports</h2>
+                        <a class="btn" href="registrations.html">Chi tiết</a>
+                    </div>
                     ${table(['Event', 'Registered', 'Attendance', 'Fill'], events.slice(0, 10).map(event => `
                         <tr>
-                            <td>${h(event.title)}<span class="cell-sub">${h(event.departmentName)}</span></td>
+                            <td><span class="event-cell"><img class="event-thumb" src="${h(eventImageUrl(event))}" alt=""><span><span class="cell-title">${h(event.title)}</span><span class="cell-sub">${h(event.departmentName)}</span></span></span></td>
                             <td>${number(event.registrationCount)}</td>
                             <td>${number(event.attendanceCount)}</td>
                             <td><div class="progress"><span style="width:${Math.min(100, Number(event.fillRate || 0))}%"></span></div><span class="cell-sub">${percent(event.fillRate)}</span></td>
@@ -2200,6 +2308,15 @@
                 <p class="panel-note">${h(reports.formula?.averageRating || '')}</p>
             </section>
         `);
+        document.getElementById('exportReports')?.addEventListener('click', () => {
+            exportCsv('aems-reports.csv', [
+                ['Metric', 'Value'],
+                ['Registration rate', percent(reports.registrationRate)],
+                ['Attendance rate', percent(reports.attendanceRate)],
+                ['Average rating', `${Number(reports.averageRating || 0).toLocaleString('vi-VN', { maximumFractionDigits: 1 })}/5`],
+                ['Student participation', number(registrations.length)]
+            ]);
+        });
     }
 
     async function renderEmail() {
@@ -2207,6 +2324,7 @@
         shell(`<button class="btn primary" id="sendNotification">${icon('send')}Send Notification</button><button class="btn" id="addTemplate">${icon('file-plus')}Email Template</button>`);
         const payload = await load('/email-logs?page=0&size=80', { items: [] });
         const logs = payload.items || [];
+        const emailPager = pageItems('email', logs, 20);
         let templates = localGet('emailTemplates', [
             { id: 'welcome', name: 'Welcome Event', subject: 'Chào mừng bạn đến với sự kiện', content: 'Xin chào, vé QR của bạn đã sẵn sàng.' },
             { id: 'reminder', name: 'Event Reminder', subject: 'Nhắc lịch sự kiện', content: 'Sự kiện sẽ bắt đầu trong thời gian tới.' }
@@ -2275,7 +2393,8 @@
                         <h2 class="panel-title">Email History</h2>
                         <button class="btn" id="createAnnouncement">${icon('megaphone')}Announcement</button>
                     </div>
-                    ${table(['Email', 'Subject', 'Status', 'Sent At'], logs.map(log => `
+                    <div class="toolbar">${pagination('email', emailPager.page, emailPager.pages, emailPager.total, emailPager.visible.length)}</div>
+                    ${table(['Email', 'Subject', 'Status', 'Sent At'], emailPager.visible.map(log => `
                         <tr>
                             <td>${h(log.toEmail)}</td>
                             <td>${h(log.subject)}<span class="cell-sub">${h(log.eventTitle || '')}</span></td>
@@ -2305,6 +2424,7 @@
         document.getElementById('sendNotification').onclick = sendForm;
         document.getElementById('addTemplate').onclick = () => templateForm();
         document.getElementById('createAnnouncement').onclick = announcementForm;
+        bindPagination('email', emailPager, renderEmail);
         document.querySelectorAll('[data-template-edit]').forEach(button => button.onclick = () => templateForm(templates.find(item => item.id === button.dataset.templateEdit)));
     }
 

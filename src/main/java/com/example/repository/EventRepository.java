@@ -15,6 +15,7 @@ import java.util.Optional;
 public interface EventRepository extends JpaRepository<Event, Long> {
     List<Event> findByDepartmentId(Long departmentId);
     List<Event> findByStatus(String status);
+    Optional<Event> findFirstByTitleAndDepartmentIdOrderByIdAsc(String title, Long departmentId);
     Optional<Event> findFirstByTitleAndDepartmentIdAndStartTimeOrderByIdAsc(String title, Long departmentId, LocalDateTime startTime);
     long countByDepartmentId(Long departmentId);
     long countByStartTimeLessThan(LocalDateTime endTime);
@@ -29,4 +30,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
     /** Event sắp diễn ra trong khoảng [from, to) — dùng để gửi thư mời trước sự kiện. */
     List<Event> findByStartTimeGreaterThanEqualAndStartTimeLessThan(LocalDateTime from, LocalDateTime to);
+
+    /** Event sắp diễn ra trong khoảng [from, to] — bao gồm đúng mốc trước 7 ngày. */
+    List<Event> findByStartTimeGreaterThanEqualAndStartTimeLessThanEqual(LocalDateTime from, LocalDateTime to);
 }

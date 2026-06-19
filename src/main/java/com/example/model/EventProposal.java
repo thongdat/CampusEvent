@@ -42,6 +42,9 @@ public class EventProposal {
     @Column(columnDefinition = "NVARCHAR(200)")
     private String organizer;
 
+    @Column(name = "speakers", columnDefinition = "NVARCHAR(800)")
+    private String speakers;
+
     @Column(name = "support_staff_needed")
     private Integer supportStaffNeeded;
 
@@ -160,6 +163,14 @@ public class EventProposal {
 
     public void setOrganizer(String organizer) {
         this.organizer = organizer;
+    }
+
+    public String getSpeakers() {
+        return speakers;
+    }
+
+    public void setSpeakers(String speakers) {
+        this.speakers = speakers;
     }
 
     public Integer getSupportStaffNeeded() {

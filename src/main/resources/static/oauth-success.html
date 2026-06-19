@@ -3,52 +3,564 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đăng nhập thành công — Campus Events</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&display=swap" rel="stylesheet">
+    <title>Đăng nhập thành công - Campus Events</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        /* ===== RESET & BASE ===== */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { min-height: 100vh; }
         body {
-            min-height: 100vh; display: grid; place-items: center;
-            font-family: "Outfit", system-ui, sans-serif;
-            background: linear-gradient(135deg, #eef2ff 0%, #f0f4ff 40%, #faf5ff 100%);
+            display: grid;
+            place-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+            font-family: Inter, "Segoe UI", system-ui, sans-serif;
+            -webkit-font-smoothing: antialiased;
             color: #0f172a;
         }
+
+        /* ===== ANIMATED GRADIENT BACKGROUND ===== */
+        .scene {
+            position: fixed;
+            inset: 0;
+            z-index: -2;
+            background:
+                radial-gradient(ellipse 90% 80% at 20% 10%, rgba(99, 102, 241, 0.35), transparent 60%),
+                radial-gradient(ellipse 70% 70% at 80% 80%, rgba(244, 114, 38, 0.25), transparent 55%),
+                radial-gradient(ellipse 60% 60% at 50% 50%, rgba(6, 182, 212, 0.15), transparent 50%),
+                linear-gradient(135deg, #0f0c29 0%, #1a1a3e 30%, #1e293b 60%, #0f172a 100%);
+            animation: bgShift 14s ease-in-out infinite alternate;
+        }
+        @keyframes bgShift {
+            0%   { filter: hue-rotate(0deg) brightness(1); }
+            100% { filter: hue-rotate(18deg) brightness(1.06); }
+        }
+
+        /* ===== FLOATING PARTICLES ===== */
+        .particles {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            overflow: hidden;
+            pointer-events: none;
+        }
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.08);
+            animation: float linear infinite;
+        }
+        .particle:nth-child(1)  { width: 6px;  height: 6px;  left: 12%; animation-duration: 22s; animation-delay: 0s;    top: 100%; }
+        .particle:nth-child(2)  { width: 4px;  height: 4px;  left: 28%; animation-duration: 18s; animation-delay: 2s;    top: 100%; }
+        .particle:nth-child(3)  { width: 8px;  height: 8px;  left: 44%; animation-duration: 25s; animation-delay: 4s;    top: 100%; }
+        .particle:nth-child(4)  { width: 5px;  height: 5px;  left: 60%; animation-duration: 20s; animation-delay: 1s;    top: 100%; }
+        .particle:nth-child(5)  { width: 3px;  height: 3px;  left: 75%; animation-duration: 28s; animation-delay: 3s;    top: 100%; }
+        .particle:nth-child(6)  { width: 7px;  height: 7px;  left: 88%; animation-duration: 23s; animation-delay: 5s;    top: 100%; }
+        .particle:nth-child(7)  { width: 4px;  height: 4px;  left: 5%;  animation-duration: 19s; animation-delay: 7s;    top: 100%; }
+        .particle:nth-child(8)  { width: 6px;  height: 6px;  left: 36%; animation-duration: 26s; animation-delay: 0.5s;  top: 100%; }
+        .particle:nth-child(9)  { width: 5px;  height: 5px;  left: 52%; animation-duration: 21s; animation-delay: 6s;    top: 100%; }
+        .particle:nth-child(10) { width: 3px;  height: 3px;  left: 92%; animation-duration: 24s; animation-delay: 2.5s;  top: 100%; }
+        .particle:nth-child(11) { width: 8px;  height: 8px;  left: 18%; animation-duration: 30s; animation-delay: 8s;    top: 100%; background: rgba(249,115,22,0.12); }
+        .particle:nth-child(12) { width: 5px;  height: 5px;  left: 68%; animation-duration: 17s; animation-delay: 1.5s;  top: 100%; background: rgba(99,102,241,0.12); }
+        @keyframes float {
+            0%   { transform: translateY(0) rotate(0deg); opacity: 0; }
+            10%  { opacity: 1; }
+            90%  { opacity: 1; }
+            100% { transform: translateY(-110vh) rotate(720deg); opacity: 0; }
+        }
+
+        /* ===== LAYOUT SHELL ===== */
+        .page {
+            position: relative;
+            width: 100%;
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            padding: 1.5rem;
+        }
+        .shell {
+            width: min(72rem, 100%);
+            display: grid;
+            grid-template-columns: 1fr minmax(22rem, 30rem);
+            align-items: center;
+            gap: clamp(2rem, 5vw, 5rem);
+            animation: fadeUp 0.8s cubic-bezier(.16,1,.3,1) both;
+        }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ===== LEFT: COPY ===== */
+        .copy { color: #ffffff; }
+        .brand {
+            display: inline-flex;
+            align-items: center;
+            gap: .7rem;
+            margin-bottom: 1.5rem;
+            font-weight: 900;
+            font-size: 1.1rem;
+            letter-spacing: .015em;
+        }
+        .brand-mark {
+            display: inline-grid;
+            width: 3rem;
+            height: 3rem;
+            place-items: center;
+            border-radius: .85rem;
+            background: linear-gradient(135deg, #f97316, #ea580c);
+            color: #fff;
+            font-weight: 900;
+            font-size: 1.3rem;
+            box-shadow:
+                0 0 0 4px rgba(249, 115, 22, 0.2),
+                0 14px 30px -10px rgba(249, 115, 22, 0.5);
+            animation: pulse-glow 2.5s ease-in-out infinite;
+        }
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 0 4px rgba(249,115,22,0.2), 0 14px 30px -10px rgba(249,115,22,0.5); }
+            50%      { box-shadow: 0 0 0 8px rgba(249,115,22,0.1), 0 20px 40px -10px rgba(249,115,22,0.4); }
+        }
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: .5rem;
+            margin: 0 0 1rem;
+            padding: .35rem .9rem;
+            border-radius: 999px;
+            background: rgba(249, 115, 22, 0.15);
+            border: 1px solid rgba(249, 115, 22, 0.25);
+            color: #fdba74;
+            font-size: .72rem;
+            font-weight: 800;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            backdrop-filter: blur(6px);
+        }
+        .eyebrow::before {
+            content: "";
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: #f97316;
+            animation: blink 1.4s ease-in-out infinite;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50%      { opacity: 0.3; }
+        }
+        h1 {
+            margin: 0;
+            max-width: 36rem;
+            font-size: clamp(2.4rem, 4.5vw, 4.2rem);
+            line-height: 1.02;
+            font-weight: 900;
+            letter-spacing: -0.025em;
+            background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 60%, #f97316 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .lead {
+            max-width: 32rem;
+            margin: 1.25rem 0 0;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: .95rem;
+            font-weight: 500;
+            line-height: 1.7;
+        }
+        .features {
+            display: flex;
+            gap: .65rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+        .feature-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: .4rem;
+            padding: .35rem .75rem;
+            border-radius: .6rem;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.55);
+            font-size: .75rem;
+            font-weight: 600;
+            backdrop-filter: blur(4px);
+        }
+        .feature-tag svg { width: 14px; height: 14px; opacity: 0.7; }
+
+        /* ===== RIGHT: CARD ===== */
         .card {
-            text-align: center; padding: 3rem 2.5rem;
-            background: #fff; border-radius: 28px;
-            box-shadow: 0 24px 48px -20px rgba(15,23,42,0.1);
-            border: 1px solid rgba(15,23,42,0.08);
-            max-width: 440px; width: 100%;
+            overflow: hidden;
+            border-radius: 1.5rem;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow:
+                0 40px 80px -30px rgba(0, 0, 0, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(24px) saturate(1.6);
+            animation: cardSlide 0.9s cubic-bezier(.16,1,.3,1) 0.15s both;
         }
-        .check-icon {
-            width: 72px; height: 72px; margin: 0 auto 1.5rem;
-            background: linear-gradient(135deg, #16a34a, #15803d);
-            border-radius: 50%; display: grid; place-items: center;
-            box-shadow: 0 8px 24px rgba(22,163,74,0.3);
-            animation: pop 0.5s cubic-bezier(0.22,1,0.36,1);
+        @keyframes cardSlide {
+            from { opacity: 0; transform: translateY(40px) scale(0.96); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
         }
-        .check-icon svg { width: 36px; height: 36px; color: #fff; }
-        h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.5rem; }
-        p { color: #64748b; font-size: 1rem; margin-bottom: 0.25rem; }
-        .email-tag { display: inline-block; padding: 0.5rem 1rem; border-radius: 999px; background: #eff6ff; color: #2563eb; font-weight: 700; font-size: 0.9375rem; margin: 1rem 0; }
-        .role-tag { display: inline-block; padding: 0.4rem 0.85rem; border-radius: 999px; background: #f0fdf4; color: #16a34a; font-weight: 700; font-size: 0.8125rem; margin-bottom: 1.5rem; }
-        .redirect-msg { color: #94a3b8; font-size: 0.875rem; }
-        .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #cbd5e1; border-top-color: #2563eb; border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 0.5rem; }
+
+        /* Card Top */
+        .card-top {
+            display: grid;
+            place-items: center;
+            padding: 2.25rem 2rem 1.25rem;
+            text-align: center;
+        }
+
+        /* Success Check Ring Animation */
+        .check-ring {
+            position: relative;
+            width: 5.5rem;
+            height: 5.5rem;
+            display: grid;
+            place-items: center;
+        }
+        .check-ring::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background: conic-gradient(from 0deg, #16a34a, #22c55e, #16a34a);
+            animation: spin 3s linear infinite;
+            opacity: 0.25;
+            filter: blur(8px);
+        }
         @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes pop { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+        .check {
+            position: relative;
+            display: grid;
+            width: 4.2rem;
+            height: 4.2rem;
+            place-items: center;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #16a34a, #059669);
+            color: #fff;
+            box-shadow:
+                0 0 0 4px rgba(22, 163, 74, 0.2),
+                0 12px 28px -8px rgba(22, 163, 74, 0.5);
+            animation: pop 0.5s cubic-bezier(.2,1,.2,1) 0.3s both;
+        }
+        .check svg { width: 2rem; height: 2rem; }
+        @keyframes pop {
+            from { transform: scale(0.5); opacity: 0; }
+            to   { transform: scale(1); opacity: 1; }
+        }
+        /* Checkmark stroke animation */
+        .check svg path {
+            stroke-dasharray: 30;
+            stroke-dashoffset: 30;
+            animation: draw 0.5s ease-out 0.7s forwards;
+        }
+        @keyframes draw {
+            to { stroke-dashoffset: 0; }
+        }
+
+        .card h2 {
+            margin: 1.2rem 0 .3rem;
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: -0.01em;
+        }
+        .hello {
+            margin: 0;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: .88rem;
+            font-weight: 600;
+        }
+        .hello strong { color: rgba(255, 255, 255, 0.85); font-weight: 700; }
+
+        /* Profile Rows */
+        .profile {
+            display: grid;
+            gap: .6rem;
+            padding: .5rem 1.5rem 1rem;
+        }
+        .row {
+            display: grid;
+            grid-template-columns: 2.5rem minmax(0, 1fr);
+            align-items: center;
+            gap: .7rem;
+            min-height: 3.2rem;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 1rem;
+            background: rgba(255, 255, 255, 0.04);
+            padding: .5rem .7rem;
+            transition: background .2s, border-color .2s;
+        }
+        .row:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+        .row-icon {
+            display: grid;
+            width: 2.5rem;
+            height: 2.5rem;
+            place-items: center;
+            border-radius: .75rem;
+            color: #a5b4fc;
+        }
+        .row-icon.email-icon { background: rgba(99, 102, 241, 0.15); color: #818cf8; }
+        .row-icon.role-icon  { background: rgba(249, 115, 22, 0.15); color: #fb923c; }
+        .row small {
+            display: block;
+            color: rgba(255, 255, 255, 0.35);
+            font-size: .68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+        }
+        .row strong {
+            display: block;
+            overflow: hidden;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: .85rem;
+            font-weight: 700;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* Role Pill */
+        .role-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: .35rem;
+            padding: .2rem .6rem;
+            border-radius: 999px;
+            font-size: .78rem;
+            font-weight: 800;
+        }
+        .role-pill::before {
+            content: "";
+            width: 7px; height: 7px;
+            border-radius: 50%;
+        }
+        .role-STUDENT  { background: rgba(34,197,94,0.15);  color: #4ade80; }
+        .role-STUDENT::before  { background: #22c55e; }
+        .role-ADMIN    { background: rgba(239,68,68,0.15);  color: #f87171; }
+        .role-ADMIN::before    { background: #ef4444; }
+        .role-MANAGER  { background: rgba(59,130,246,0.15); color: #60a5fa; }
+        .role-MANAGER::before  { background: #3b82f6; }
+        .role-DEPARTMENT { background: rgba(139,92,246,0.15); color: #a78bfa; }
+        .role-DEPARTMENT::before { background: #8b5cf6; }
+        .role-COMMITTEE { background: rgba(245,158,11,0.15); color: #fbbf24; }
+        .role-COMMITTEE::before { background: #f59e0b; }
+
+        /* Progress */
+        .progress-wrap {
+            padding: .75rem 1.5rem 1.25rem;
+        }
+        .progress-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: .75rem;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: .78rem;
+            font-weight: 700;
+        }
+        .progress-head .timer {
+            display: inline-flex;
+            align-items: center;
+            gap: .3rem;
+            padding: .15rem .5rem;
+            border-radius: 999px;
+            background: rgba(249, 115, 22, 0.15);
+            color: #fb923c;
+            font-variant-numeric: tabular-nums;
+        }
+        .bar {
+            overflow: hidden;
+            height: .4rem;
+            margin-top: .6rem;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.06);
+        }
+        .bar span {
+            display: block;
+            width: 0%;
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, #f97316, #6366f1, #06b6d4);
+            background-size: 200% 100%;
+            animation: fill 2s ease-out forwards, shimmer 1.5s linear infinite;
+        }
+        @keyframes fill { to { width: 100%; } }
+        @keyframes shimmer {
+            0%   { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Actions */
+        .actions {
+            display: flex;
+            gap: .6rem;
+            padding: 1rem 1.5rem 1.5rem;
+        }
+        .btn {
+            display: inline-flex;
+            min-height: 2.8rem;
+            flex: 1;
+            align-items: center;
+            justify-content: center;
+            gap: .4rem;
+            border: none;
+            border-radius: .9rem;
+            font-family: inherit;
+            font-size: .85rem;
+            font-weight: 700;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all .2s cubic-bezier(.16,1,.3,1);
+        }
+        .btn-ghost {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.6);
+        }
+        .btn-ghost:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            transform: translateY(-1px);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #f97316, #ea580c);
+            color: #fff;
+            box-shadow: 0 8px 24px -6px rgba(249, 115, 22, 0.45);
+        }
+        .btn-primary:hover {
+            box-shadow: 0 12px 32px -6px rgba(249, 115, 22, 0.6);
+            transform: translateY(-2px);
+        }
+        .btn svg { width: 16px; height: 16px; }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 860px) {
+            body { overflow: auto; }
+            .page { padding: 1rem; }
+            .shell {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+                padding: 2rem 0;
+            }
+            .copy { text-align: center; }
+            .lead { margin-left: auto; margin-right: auto; }
+            .features { justify-content: center; }
+            .card { width: min(100%, 26rem); margin: 0 auto; }
+            h1 { font-size: clamp(1.8rem, 6vw, 2.6rem); }
+        }
+
+        @media (max-width: 480px) {
+            .page { padding: .75rem; }
+            .card { border-radius: 1.25rem; }
+            .card-top { padding: 1.75rem 1.25rem 1rem; }
+            .profile { padding: .5rem 1rem 1rem; }
+            .progress-wrap { padding: .5rem 1rem 1rem; }
+            .actions { padding: .75rem 1rem 1.25rem; }
+            .features { display: none; }
+        }
     </style>
 </head>
 <body>
-    <div class="card">
-        <div class="check-icon">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-        </div>
-        <h1>Đăng nhập thành công!</h1>
-        <p>Xin chào, <strong id="userName">...</strong></p>
-        <div class="email-tag" id="userEmail">...</div>
-        <div><span class="role-tag" id="userRole">...</span></div>
-        <p class="redirect-msg"><span class="spinner"></span>Đang chuyển hướng...</p>
+    <!-- Animated Background -->
+    <div class="scene" aria-hidden="true"></div>
+    <div class="particles" aria-hidden="true">
+        <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+        <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+        <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+        <div class="particle"></div><div class="particle"></div><div class="particle"></div>
     </div>
+
+    <main class="page">
+        <section class="shell" aria-label="Đăng nhập thành công">
+            <!-- Left: Branding & Copy -->
+            <div class="copy">
+                <div class="brand">
+                    <span class="brand-mark">A</span>
+                    <span>Campus Events</span>
+                </div>
+                <div class="eyebrow">AEMS Portal — Xác thực hoàn tất</div>
+                <h1>Chào mừng bạn quay lại.</h1>
+                <p class="lead">Tài khoản đã được xác thực thành công qua Google. Hệ thống đang chuyển hướng bạn tới không gian làm việc phù hợp với vai trò.</p>
+                <div class="features">
+                    <span class="feature-tag">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                        Bảo mật OAuth 2.0
+                    </span>
+                    <span class="feature-tag">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                        Chuyển hướng tự động
+                    </span>
+                    <span class="feature-tag">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        Phiên hoạt động
+                    </span>
+                </div>
+            </div>
+
+            <!-- Right: Success Card -->
+            <article class="card">
+                <div class="card-top">
+                    <div class="check-ring">
+                        <div class="check" aria-hidden="true">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.6" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <h2>Đăng nhập thành công!</h2>
+                    <p class="hello">Xin chào, <strong id="userName">...</strong></p>
+                </div>
+
+                <div class="profile">
+                    <div class="row">
+                        <span class="row-icon email-icon" aria-hidden="true">
+                            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 6h16v12H4z"/><path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m4 7 8 6 8-6"/></svg>
+                        </span>
+                        <span><small>Email</small><strong id="userEmail">...</strong></span>
+                    </div>
+                    <div class="row">
+                        <span class="row-icon role-icon" aria-hidden="true">
+                            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 3 4 7v6c0 5 3.5 7.5 8 8 4.5-.5 8-3 8-8V7l-8-4Z"/><path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m9 12 2 2 4-4"/></svg>
+                        </span>
+                        <span><small>Vai trò</small><strong><span class="role-pill" id="userRole">...</span></strong></span>
+                    </div>
+                </div>
+
+                <div class="progress-wrap">
+                    <div class="progress-head">
+                        <span id="redirectText">Đang chuẩn bị trang...</span>
+                        <span class="timer" id="countdown">
+                            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2"/><circle cx="12" cy="12" r="10" stroke-width="2"/></svg>
+                            2s
+                        </span>
+                    </div>
+                    <div class="bar" aria-hidden="true"><span></span></div>
+                </div>
+
+                <div class="actions">
+                    <a class="btn btn-ghost" href="login.html">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"/></svg>
+                        Đổi tài khoản
+                    </a>
+                    <a class="btn btn-primary" href="#" id="goNow">
+                        Vào ngay
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+                    </a>
+                </div>
+            </article>
+        </section>
+    </main>
 
     <script>
     (function() {
@@ -58,44 +570,6 @@
         var role = params.get('role') || 'STUDENT';
         var id = params.get('id') || '0';
 
-        // Hiển thị thông tin
-        document.getElementById('userName').textContent = name;
-        document.getElementById('userEmail').textContent = email;
-
-        var roleNames = {
-            'ADMIN': 'Quản trị viên',
-            'MANAGER': 'Manager',
-            'DEPARTMENT': 'Khoa / Bộ môn',
-            'COMMITTEE': 'Hội đồng',
-            'STUDENT': 'Sinh viên'
-        };
-        document.getElementById('userRole').textContent = roleNames[role] || role;
-
-        // Lưu vào sessionStorage (giống luồng login thường)
-        sessionStorage.setItem('user', JSON.stringify({
-            id: parseInt(id),
-            fullName: name,
-            email: email,
-            role: role
-        }));
-        localStorage.setItem('userName', name);
-        localStorage.setItem('userRole', role);
-
-        // Nếu trước khi đăng nhập có trang check-in chờ → quay về đó luôn
-        var pendingReturn = localStorage.getItem('postLoginReturn');
-        if (pendingReturn) {
-            try {
-                var safeUrl = new URL(pendingReturn, window.location.origin);
-                if (safeUrl.origin === window.location.origin) {
-                    localStorage.removeItem('postLoginReturn');
-                    setTimeout(function() { window.location.href = safeUrl.toString(); }, 900);
-                    return;
-                }
-            } catch (e) { /* ignore */ }
-            localStorage.removeItem('postLoginReturn');
-        }
-
-        // Chuyển hướng theo role sau 2 giây
         var routes = {
             'ADMIN': 'admin-screen/overview.html',
             'MANAGER': 'screen-department.html',
@@ -103,9 +577,64 @@
             'COMMITTEE': 'screen-committee.html',
             'STUDENT': 'screen-student.html'
         };
+        var roleNames = {
+            'ADMIN': 'Quản trị viên',
+            'MANAGER': 'Manager',
+            'DEPARTMENT': 'Khoa / Bộ môn',
+            'COMMITTEE': 'Hội đồng',
+            'STUDENT': 'Sinh viên'
+        };
+        var target = routes[role] || routes.STUDENT;
+
+        document.getElementById('userName').textContent = name;
+        document.getElementById('userEmail').textContent = email || 'Không có email';
+
+        // Set role pill with dynamic class
+        var rolePill = document.getElementById('userRole');
+        rolePill.textContent = roleNames[role] || role;
+        rolePill.className = 'role-pill role-' + role;
+
+        document.getElementById('goNow').href = target;
+        document.getElementById('redirectText').textContent = 'Đang chuyển tới ' + (roleNames[role] || role) + '...';
+
+        sessionStorage.setItem('user', JSON.stringify({
+            id: parseInt(id, 10),
+            fullName: name,
+            email: email,
+            role: role
+        }));
+        localStorage.setItem('userName', name);
+        localStorage.setItem('userRole', role);
+
+        var pendingReturn = localStorage.getItem('postLoginReturn');
+        if (pendingReturn) {
+            try {
+                var safeUrl = new URL(pendingReturn, window.location.origin);
+                if (safeUrl.origin === window.location.origin) {
+                    localStorage.removeItem('postLoginReturn');
+                    target = safeUrl.toString();
+                    document.getElementById('goNow').href = target;
+                    document.getElementById('redirectText').textContent = 'Đang quay lại trang trước...';
+                }
+            } catch (e) {
+                localStorage.removeItem('postLoginReturn');
+            }
+        }
+
+        var left = 2;
+        var countdown = document.getElementById('countdown');
+        var tick = setInterval(function() {
+            left -= 1;
+            countdown.innerHTML =
+                '<svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2"/><circle cx="12" cy="12" r="10" stroke-width="2"/></svg>' +
+                Math.max(left, 0) + 's';
+            if (left <= 0) {
+                clearInterval(tick);
+            }
+        }, 1000);
 
         setTimeout(function() {
-            window.location.href = routes[role] || 'screen-student.html';
+            window.location.href = target;
         }, 2000);
     })();
     </script>
