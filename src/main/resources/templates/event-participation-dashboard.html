@@ -19,9 +19,12 @@
                 <p class="aems-header__sub">Theo dõi check-in, mid-verify, checkout, quiz và rating từ một nơi duy nhất.</p>
             </div>
         </div>
-        <div class="aems-flex">
+        <div class="aems-flex" th:if="${!eventEnded}">
             <a class="aems-btn" th:href="@{'/department/attendance/events/' + ${eventId} + '/qr'}">QR check-in</a>
             <a class="aems-btn" th:href="@{'/department/quiz/events/' + ${eventId}}">Quản lý quiz</a>
+        </div>
+        <div class="aems-flex" th:if="${eventEnded}">
+            <a class="aems-btn aems-btn--primary" th:href="@{'/department/feedback/events/' + ${eventId}}">Feedback</a>
         </div>
     </header>
 

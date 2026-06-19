@@ -823,13 +823,29 @@
         return events.find(e => String(e.id) === String(eventId));
     }
 
-    function buildCheckinUrl(eventId, token) {
+    function buildGoogleFormUrl(formUrl, eventId, token, title) {
+        try {
+            const u = new URL(formUrl);
+            if (!u.searchParams.has('usp')) u.searchParams.set('usp', 'pp_url');
+            u.searchParams.set('fpt_event_id', String(eventId));
+            u.searchParams.set('fpt_event', String(title || '').slice(0, 80));
+            u.searchParams.set('fpt_token', token);
+            return u.toString();
+        } catch (e) {
+            return formUrl;
+        }
+    }
+
+    function buildCheckinUrl(eventId, token, publicBaseUrl) {
         const ev = findEvent(eventId);
         // Protected Google Form flow: QR points to our server first.
         // The server validates the 30-second token before redirecting to Google Forms.
         if (ev && ev.googleFormUrl) {
-            return location.origin + '/api/checkin/events/' + encodeURIComponent(eventId)
-                + '/form-redirect?token=' + encodeURIComponent(token);
+            if (publicBaseUrl) {
+                return publicBaseUrl + '/api/checkin/events/' + encodeURIComponent(eventId)
+                    + '/form-redirect?token=' + encodeURIComponent(token);
+            }
+            return buildGoogleFormUrl(ev.googleFormUrl, eventId, token, ev.title);
         }
         // Fallback: form nội bộ (chỉ dùng khi chưa tạo được Google Form)
         return location.origin + '/api/checkin.html?eventId=' + encodeURIComponent(eventId)
@@ -851,14 +867,14 @@
             .then(r => r.ok ? r.json() : null)
             .then(data => {
                 if (!data || !data.token) return;
-                const checkinUrl = buildCheckinUrl(eventId, data.token);
+                const checkinUrl = buildCheckinUrl(eventId, data.token, data.publicBaseUrl || '');
                 const ev = findEvent(eventId);
                 tokenState.set(formKey(eventId, 'in'), {
                     token: data.token,
                     url: checkinUrl,
                     expiredAt: Date.parse(data.expiredAt),
                     rotateSeconds: data.rotateSeconds || 30,
-                    mode: ev && ev.googleFormUrl ? 'google' : 'local'
+                    mode: ev && ev.googleFormUrl ? (data.publicBaseUrl ? 'google-protected' : 'google-direct') : 'local'
                 });
                 const host = document.querySelector('[data-qr-host="' + eventId + '|in"]');
                 if (host) {
@@ -937,7 +953,7 @@
         $('#qrModalTitle').innerHTML = 'QR ' + kindLabel + ' · ' + escapeHtml(data.eventTitle || 'Event');
         $('#qrModalSub').textContent = subText;
         $('#qrModalUrl').textContent = kind === 'in'
-            ? 'Link đã được ẩn. QR chỉ mở form khi token còn hạn.'
+            ? 'Link đã được ẩn. Đang tạo QR check-in...'
             : 'Link đã được ẩn trên màn chiếu.';
         $('#qrModalImg').innerHTML = '<img alt="QR" src="' + buildQrImageUrl(url, 600) + '">';
         $('#qrModalCopy').onclick = () => {};
@@ -967,7 +983,9 @@
         const state = tokenState.get(formKey(eventId, kind));
         if (!state) return;
         $('#qrModalUrl').textContent = kind === 'in'
-            ? 'Link đã được ẩn. QR mới vừa được cấp, ảnh chụp cũ sẽ hết hạn.'
+            ? (state.mode === 'google-protected'
+                ? 'Link đã được ẩn. QR mới vừa được cấp, ảnh chụp cũ sẽ hết hạn.'
+                : 'QR đang mở Google Form trực tiếp để điện thoại quét được.')
             : 'Link đã được ẩn trên màn chiếu.';
         $('#qrModalImg').innerHTML = '<img alt="QR" src="' + buildQrImageUrl(state.url, 600) + '">';
     }

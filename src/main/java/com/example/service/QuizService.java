@@ -102,4 +102,110 @@ public class QuizService {
             }
             QuizQuestion question = questionRepository.findById(questionId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid question"));
-            if (question.getEvent() == null || !question.
+            if (question.getEvent() == null || !question.getEvent().getId().equals(eventId)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Question does not belong to this event");
+            }
+
+            String selected = stringValue(item.get("selectedAnswer"));
+            String text = stringValue(item.get("answerText"));
+            QuizAnswer answer = new QuizAnswer();
+            answer.setSubmission(submission);
+            answer.setQuestion(question);
+            answer.setSelectedAnswer(selected);
+            answer.setAnswerText(text);
+            answer.setSubmittedAt(LocalDateTime.now());
+
+            if ("MULTIPLE_CHOICE".equalsIgnoreCase(question.getQuestionType())) {
+                boolean correct = selected != null
+                        && question.getCorrectAnswer() != null
+                        && selected.trim().equalsIgnoreCase(question.getCorrectAnswer().trim());
+                answer.setIsCorrect(correct);
+                answer.setScore(correct ? safePoints(question) : 0.0);
+            } else {
+                answer.setIsCorrect(null);
+                answer.setScore(0.0);
+            }
+            total += answer.getScore();
+            answerRepository.save(answer);
+        }
+
+        submission.setTotalScore(total);
+        return submissionRepository.save(submission);
+    }
+
+    public double quizPercentage(Long eventId, Long studentId) {
+        QuizSubmission submission = submissionRepository.findByEventIdAndStudentId(eventId, studentId).orElse(null);
+        if (submission == null) {
+            return 0.0;
+        }
+        double possible = answerRepository.findBySubmissionId(submission.getId()).stream()
+                .mapToDouble(answer -> safePoints(answer.getQuestion()))
+                .sum();
+        if (possible <= 0) {
+            return 100.0;
+        }
+        return Math.min(100.0, (submission.getTotalScore() == null ? 0.0 : submission.getTotalScore()) * 100.0 / possible);
+    }
+
+    public Map<String, Object> getQuizStats(Long eventId) {
+        List<QuizSubmission> submissions = submissionRepository.findByEventId(eventId);
+        double avg = submissions.stream().mapToDouble(s -> s.getTotalScore() == null ? 0.0 : s.getTotalScore()).average().orElse(0.0);
+        Map<String, Object> stats = new LinkedHashMap<>();
+        stats.put("questionCount", questionRepository.countByEventId(eventId));
+        stats.put("submissionCount", submissions.size());
+        stats.put("averageQuizScore", round(avg));
+        return stats;
+    }
+
+    private void applyQuestionPayload(QuizQuestion q, Map<String, Object> request) {
+        String text = stringValue(request.get("questionText"));
+        if (text == null || text.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Question text is required");
+        }
+        q.setQuestionText(text);
+        q.setQuestionType(firstNonBlank(stringValue(request.get("questionType")), "MULTIPLE_CHOICE").toUpperCase(Locale.ROOT));
+        q.setOptionA(stringValue(request.get("optionA")));
+        q.setOptionB(stringValue(request.get("optionB")));
+        q.setOptionC(stringValue(request.get("optionC")));
+        q.setOptionD(stringValue(request.get("optionD")));
+        q.setCorrectAnswer(stringValue(request.get("correctAnswer")));
+        Integer points = parseInt(request.get("points"));
+        q.setPoints(points == null || points <= 0 ? 1 : points);
+    }
+
+    private double safePoints(QuizQuestion q) {
+        return q == null || q.getPoints() == null ? 1.0 : q.getPoints();
+    }
+
+    private String firstNonBlank(String value, String fallback) {
+        return value == null || value.isBlank() ? fallback : value;
+    }
+
+    private String stringValue(Object value) {
+        if (value == null) return null;
+        String s = String.valueOf(value).trim();
+        return s.isEmpty() ? null : s;
+    }
+
+    private Long parseLong(Object value) {
+        if (value instanceof Number) return ((Number) value).longValue();
+        try {
+            return value == null ? null : Long.parseLong(String.valueOf(value).trim());
+        } catch (NumberFormatException ex) {
+            return null;
+        }
+    }
+
+    private Integer parseInt(Object value) {
+        if (value instanceof Number) return ((Number) value).intValue();
+        try {
+            return value == null ? null : Integer.parseInt(String.valueOf(value).trim());
+        } catch (NumberFormatException ex) {
+            return null;
+        }
+    }
+
+    private double round(double value) {
+        return Math.round(value * 100.0) / 100.0;
+    }
+}

@@ -18,6 +18,7 @@ import com.example.repository.RegistrationRepository;
 import com.example.repository.StudentRepository;
 import com.example.repository.UserRepository;
 import com.example.service.AttendanceSessionService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -61,6 +62,9 @@ public class CheckinController {
     private final RegistrationRepository registrationRepository;
     private final AttendanceRepository attendanceRepository;
     private final AttendanceSessionService sessionService;
+
+    @Value("${app.public-base-url:}")
+    private String publicBaseUrl;
 
     public CheckinController(EventRepository eventRepository,
                              QuizQuestionRepository quizQuestionRepository,
@@ -140,6 +144,7 @@ public class CheckinController {
         out.put("token", session.getToken());
         out.put("expiredAt", session.getExpiredAt().toString());
         out.put("rotateSeconds", com.example.service.AttendanceSessionService.TOKEN_TTL_SECONDS);
+        out.put("publicBaseUrl", normalizePublicBaseUrl(publicBaseUrl));
         return out;
     }
 
@@ -349,6 +354,17 @@ public class CheckinController {
 
     private String encode(String value) {
         return URLEncoder.encode(value == null ? "" : value, StandardCharsets.UTF_8);
+    }
+
+    private String normalizePublicBaseUrl(String value) {
+        if (value == null || value.isBlank()) {
+            return "";
+        }
+        String trimmed = value.trim();
+        while (trimmed.endsWith("/")) {
+            trimmed = trimmed.substring(0, trimmed.length() - 1);
+        }
+        return trimmed;
     }
 
     private void saveQuizSubmission(Event event, Student student, List<QuizQuestion> questions,
