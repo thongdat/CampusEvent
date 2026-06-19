@@ -45,7 +45,7 @@
     <!-- ===================== PHÂN TÍCH AI ===================== -->
     <section class="aems-card" style="margin-bottom: 1.5rem; border-top: 4px solid var(--aems-fpt);">
         <div class="aems-card__head">
-            <h2 class="aems-card__title">🤖 Phân tích AI từ phản hồi sinh viên</h2>
+            <h2 class="aems-card__title">🤖 Phân tích AI từ phản hồi &amp; kết quả quiz</h2>
             <span class="aems-badge aems-badge--fpt" th:text="${ai.source}">AI</span>
         </div>
         <div class="aems-card__body" style="display: grid; gap: 1.1rem;">
@@ -58,6 +58,19 @@
                 <div style="padding: 1rem 1.15rem; background: var(--aems-fpt-wash); border-radius: 14px; border-left: 4px solid var(--aems-fpt);">
                     <p style="margin: 0 0 .35rem; font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: var(--aems-fpt);">Tóm tắt</p>
                     <p style="margin: 0; line-height: 1.65; color: var(--aems-ink);" th:text="${ai.summary}"></p>
+                </div>
+
+                <div th:if="${ai.quizAvailable}" style="display:grid;gap:.75rem;padding:1rem 1.15rem;border:1px solid #bfdbfe;border-radius:14px;background:#eff6ff;">
+                    <p style="margin:0;font-size:.8rem;font-weight:800;color:#1d4ed8;">Kết quả tiếp thu qua quiz</p>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.75rem;">
+                        <div><span style="font-size:.72rem;color:#64748b;">Lượt nộp</span><strong style="display:block;font-size:1.15rem;" th:text="${ai.quizAnalysis.submissionCount}">0</strong></div>
+                        <div><span style="font-size:.72rem;color:#64748b;">Số câu hỏi</span><strong style="display:block;font-size:1.15rem;" th:text="${ai.quizAnalysis.questionCount}">0</strong></div>
+                        <div><span style="font-size:.72rem;color:#64748b;">Điểm trung bình</span><strong style="display:block;font-size:1.15rem;" th:text="${ai.quizAnalysis.averagePercent} + '%'">0%</strong></div>
+                    </div>
+                    <p th:if="${ai.quizAnalysis.hardestQuestion != null}" style="margin:0;font-size:.8rem;color:#334155;">
+                        Câu khó nhất: <strong th:text="${ai.quizAnalysis.hardestQuestion.question}">Question</strong>
+                        · đúng <strong th:text="${ai.quizAnalysis.hardestQuestion.correctRate} + '%'">0%</strong>
+                    </p>
                 </div>
 
                 <!-- Cảm xúc -->

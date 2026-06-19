@@ -11,6 +11,7 @@ import java.util.Optional;
 @Repository
 public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
     Optional<Attendance> findByRegistrationId(Long registrationId);
+    List<Attendance> findByRegistrationIdIn(List<Long> registrationIds);
     Optional<Attendance> findByEventIdAndStudentId(Long eventId, Long studentId);
     List<Attendance> findByEventId(Long eventId);
     long countByEventIdAndStatus(Long eventId, String status);

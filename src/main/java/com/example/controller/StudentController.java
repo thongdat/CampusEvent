@@ -1,6 +1,7 @@
 package com.example.controller;
 
 import com.example.config.AcademicStructure;
+import com.example.config.InvitationScheduler;
 import com.example.model.ActivityLog;
 import com.example.model.Attendance;
 import com.example.model.Event;
@@ -37,12 +38,15 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -74,6 +78,7 @@ public class StudentController {
     private final FeedbackRepository feedbackRepository;
     private final ActivityLogRepository activityLogRepository;
     private final PriorityRankingService priorityService;
+    private final InvitationScheduler invitationScheduler;
 
     public StudentController(
             UserRepository userRepository,
@@ -84,7 +89,8 @@ public class StudentController {
             AttendanceRepository attendanceRepository,
             FeedbackRepository feedbackRepository,
             ActivityLogRepository activityLogRepository,
-            PriorityRankingService priorityService) {
+            PriorityRankingService priorityService,
+            InvitationScheduler invitationScheduler) {
         this.userRepository = userRepository;
         this.studentRepository = studentRepository;
         this.eventRepository = eventRepository;
@@ -94,6 +100,7 @@ public class StudentController {
         this.feedbackRepository = feedbackRepository;
         this.activityLogRepository = activityLogRepository;
         this.priorityService = priorityService;
+        this.invitationScheduler = invitationScheduler;
     }
 
     // =================================================================
@@ -382,11 +389,17 @@ public class StudentController {
             activityLogRepository.save(log);
         }
 
+        boolean invitationEmailQueued = invitationScheduler.isInvitationDue(saved, now);
+        if (invitationEmailQueued) {
+            invitationScheduler.sendInvitationIfDueAsync(saved.getId(), now);
+        }
+
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("registrationId", saved.getId());
         response.put("status", saved.getStatus());
         response.put("priorityScore", score.doubleValue());
         response.put("ticketCode", ticket == null ? null : ticket.getCode());
+        response.put("invitationEmailQueued", invitationEmailQueued);
         response.put("priorityBreakdown", breakdown.toMap());
         return ResponseEntity.ok(response);
     }
@@ -452,6 +465,23 @@ public class StudentController {
                 .sorted(myRegsByEventStartDesc)
                 .collect(Collectors.toList());
 
+        List<Long> registrationIds = regs.stream()
+                .map(Registration::getId)
+                .collect(Collectors.toList());
+        Map<Long, Ticket> ticketsByRegistrationId = new HashMap<>();
+        Map<Long, Attendance> attendanceByRegistrationId = new HashMap<>();
+        if (!registrationIds.isEmpty()) {
+            ticketRepository.findByRegistrationIdIn(registrationIds).forEach(ticket ->
+                    ticketsByRegistrationId.put(ticket.getRegistration().getId(), ticket));
+            attendanceRepository.findByRegistrationIdIn(registrationIds).forEach(attendance ->
+                    attendanceByRegistrationId.put(attendance.getRegistration().getId(), attendance));
+        }
+        Set<Long> feedbackEventIds = feedbackRepository.findByStudentId(student.getId()).stream()
+                .map(Feedback::getEvent)
+                .filter(Objects::nonNull)
+                .map(Event::getId)
+                .collect(Collectors.toCollection(HashSet::new));
+
         List<Map<String, Object>> items = regs.stream().map(r -> {
             Map<String, Object> row = new LinkedHashMap<>();
             row.put("registrationId", r.getId());
@@ -476,14 +506,14 @@ public class StudentController {
                 row.put("event", ev);
             }
 
-            ticketRepository.findByRegistrationId(r.getId()).ifPresent(t -> {
+            Optional.ofNullable(ticketsByRegistrationId.get(r.getId())).ifPresent(t -> {
                 Map<String, Object> ticket = new LinkedHashMap<>();
                 ticket.put("code", t.getCode());
                 ticket.put("sentDate", iso(t.getSentDate()));
                 row.put("ticket", ticket);
             });
 
-            attendanceRepository.findByRegistrationId(r.getId()).ifPresent(a -> {
+            Optional.ofNullable(attendanceByRegistrationId.get(r.getId())).ifPresent(a -> {
                 Map<String, Object> att = new LinkedHashMap<>();
                 att.put("status", a.getStatus());
                 att.put("checkinTime", iso(a.getCheckinTime()));
@@ -491,9 +521,7 @@ public class StudentController {
             });
 
             // Đã feedback chưa?
-            boolean hasFeedback = e != null && feedbackRepository.findByStudentId(student.getId()).stream()
-                    .anyMatch(f -> f.getEvent() != null && Objects.equals(f.getEvent().getId(), e.getId()));
-            row.put("feedbackSubmitted", hasFeedback);
+            row.put("feedbackSubmitted", e != null && feedbackEventIds.contains(e.getId()));
 
             return row;
         }).collect(Collectors.toList());

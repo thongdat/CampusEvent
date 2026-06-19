@@ -622,6 +622,22 @@
         return `<span class="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${m[0]}">${m[1]}</span>`;
     }
 
+    function attendanceBadge(attStatus, isPast) {
+        const s = String(attStatus || '').toUpperCase();
+        const PRESENT = ['COMPLETED', 'ATTENDED', 'CHECKED_IN', 'MID_VERIFIED', 'CHECKED_OUT'];
+        const ABSENT  = ['ABSENT', 'INCOMPLETE'];
+        if (PRESENT.includes(s)) {
+            return `<span class="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700">✅ Có mặt</span>`;
+        }
+        if (ABSENT.includes(s)) {
+            return `<span class="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-rose-100 text-rose-700">✕ Vắng</span>`;
+        }
+        if (!isPast) {
+            return `<span class="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-sky-100 text-sky-700">⏳ Chưa diễn ra</span>`;
+        }
+        return '';
+    }
+
     function skeletonGrid(n = 6) {
         return Array.from({ length: n }, () =>
             `<div class="rounded-2xl border border-fpt-100 bg-white p-4">
@@ -1086,7 +1102,7 @@
                 <div class="flex flex-1 flex-col gap-2 p-4 sm:p-5">
                     <div class="flex flex-wrap items-center gap-2">
                         ${statusBadge(r.status)}
-                        ${att.status ? statusBadge(att.status) : ''}
+                        ${att.status ? attendanceBadge(att.status, isPast) : (!isPast ? attendanceBadge('', false) : '')}
                         ${r.ticket ? `<span class="inline-flex items-center gap-1 rounded-full bg-fpt-50 px-2.5 py-0.5 text-[10px] font-bold text-fpt-700">🎟 ${escapeHtml(r.ticket.code)}</span>` : ''}
                     </div>
                     <button data-event-detail="${e.id}" class="text-left text-base font-extrabold text-ink hover:text-fpt-700">${escapeHtml(e.title || '—')}</button>

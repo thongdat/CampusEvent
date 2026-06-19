@@ -158,7 +158,7 @@ public class GoogleFormsApiService {
                             if (o != null && !o.isBlank()) opts.add(o.trim());
                         }
                     }
-                    String title = "[Quiz " + qNo + "] " + q.text.trim();
+                    String title = "[Question " + qNo + "] " + q.text.trim();
                     if (opts.size() >= 2) {
                         requests.add(createChoiceItem(title, opts, idx++));
                     } else {
