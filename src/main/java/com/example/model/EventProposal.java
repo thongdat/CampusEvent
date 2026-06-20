@@ -31,7 +31,7 @@ public class EventProposal {
     private String imageUrls;
 
     @Column(precision = 18, scale = 2)
-    private BigDecimal budget;
+    private BigDecimal budget = BigDecimal.ZERO;
     
     @Column(nullable = false)
     private LocalDateTime proposedDate;

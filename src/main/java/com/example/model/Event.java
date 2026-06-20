@@ -71,7 +71,7 @@ public class Event {
     private Integer supportStaffNeeded;
 
     @Column(precision = 18, scale = 2)
-    private BigDecimal budget;
+    private BigDecimal budget = BigDecimal.ZERO;
     
     @Column(nullable = false, length = 50)
     private String status; // PENDING, APPROVED, PUBLISHED, REJECTED, COMPLETED

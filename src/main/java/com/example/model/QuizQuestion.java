@@ -20,16 +20,16 @@ public class QuizQuestion {
     @Column(nullable = false, length = 30)
     private String questionType; // MULTIPLE_CHOICE, SHORT_ANSWER
 
-    @Column(columnDefinition = "NVARCHAR(500)")
+    @Column(name = "option_a", columnDefinition = "NVARCHAR(500)")
     private String optionA;
 
-    @Column(columnDefinition = "NVARCHAR(500)")
+    @Column(name = "option_b", columnDefinition = "NVARCHAR(500)")
     private String optionB;
 
-    @Column(columnDefinition = "NVARCHAR(500)")
+    @Column(name = "option_c", columnDefinition = "NVARCHAR(500)")
     private String optionC;
 
-    @Column(columnDefinition = "NVARCHAR(500)")
+    @Column(name = "option_d", columnDefinition = "NVARCHAR(500)")
     private String optionD;
 
     @Column(length = 20)
