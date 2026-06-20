@@ -115,8 +115,11 @@ public class StudentController {
 
         long registeredCount = regs.stream().filter(r -> "REGISTERED".equalsIgnoreCase(r.getStatus())).count();
         long waitlistCount = regs.stream().filter(r -> "WAITLIST".equalsIgnoreCase(r.getStatus())).count();
-        long attendedCount = regs.stream().filter(r -> attendanceRepository.findByRegistrationId(r.getId())
-                .map(a -> "ATTENDED".equalsIgnoreCase(a.getStatus())).orElse(false)).count();
+        // Nạp attendance 1 lần theo registrationId (thay cho N+1 findByRegistrationId trong vòng lặp).
+        List<Long> regIds = regs.stream().map(Registration::getId).collect(Collectors.toList());
+        long attendedCount = regIds.isEmpty() ? 0 : attendanceRepository.findByRegistrationIdIn(regIds).stream()
+                .filter(a -> "ATTENDED".equalsIgnoreCase(a.getStatus()))
+                .count();
         long feedbackCount = feedbackRepository.countByStudentId(student.getId());
 
         Map<String, Object> body = new LinkedHashMap<>();
