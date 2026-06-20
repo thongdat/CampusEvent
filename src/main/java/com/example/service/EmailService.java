@@ -41,20 +41,10 @@ public class EmailService {
      */
     public void sendOtpEmail(String toEmail, String otpCode) {
         try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setTo(toEmail);
-            message.setSubject("Campus Events - Mã xác nhận đặt lại mật khẩu");
-            message.setText(
-                "Xin chào,\n\n" +
-                "Bạn đã yêu cầu đặt lại mật khẩu cho tài khoản Campus Events.\n\n" +
-                "Mã xác nhận (OTP) của bạn là: " + otpCode + "\n\n" +
-                "Mã này có hiệu lực trong 5 phút.\n" +
-                "Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này.\n\n" +
-                "Trân trọng,\n" +
-                "Campus Events Team"
-            );
-
-            mailSender.send(message);
+            sendOtpHtml(toEmail, otpCode,
+                "Mã xác nhận đặt lại mật khẩu",
+                "Bạn đã yêu cầu đặt lại mật khẩu cho tài khoản Campus Events.",
+                "Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này.");
             logger.info("Đã gửi OTP tới email: {}", toEmail);
         } catch (Exception e) {
             logger.error("Lỗi gửi email tới {}: {}", toEmail, e.getMessage());
@@ -68,25 +58,61 @@ public class EmailService {
      */
     public void sendRegistrationOtpEmail(String toEmail, String otpCode) {
         try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setTo(toEmail);
-            message.setSubject("Campus Events - Xác minh email đăng ký");
-            message.setText(
-                "Xin chào,\n\n" +
-                "Bạn đang đăng ký tài khoản mới trên hệ thống Campus Events.\n\n" +
-                "Mã xác minh (OTP) của bạn là: " + otpCode + "\n\n" +
-                "Mã này có hiệu lực trong 5 phút.\n" +
-                "Nếu bạn không thực hiện đăng ký, vui lòng bỏ qua email này.\n\n" +
-                "Trân trọng,\n" +
-                "Campus Events Team"
-            );
-
-            mailSender.send(message);
+            sendOtpHtml(toEmail, otpCode,
+                "Xác minh email đăng ký",
+                "Bạn đang đăng ký tài khoản mới trên hệ thống Campus Events.",
+                "Nếu bạn không thực hiện đăng ký, vui lòng bỏ qua email này.");
             logger.info("Đã gửi OTP đăng ký tới email: {}", toEmail);
         } catch (Exception e) {
             logger.error("Lỗi gửi email đăng ký tới {}: {}", toEmail, e.getMessage());
             logger.warn("=== FALLBACK: Registration OTP cho {} là {} ===", toEmail, otpCode);
         }
+    }
+
+    private void sendOtpHtml(String toEmail,
+                             String otpCode,
+                             String title,
+                             String description,
+                             String securityNote) throws Exception {
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
+        helper.setTo(toEmail);
+        helper.setSubject("Campus Events - " + title);
+        helper.setText(buildOtpHtml(otpCode, title, description, securityNote), true);
+        mailSender.send(message);
+    }
+
+    private String buildOtpHtml(String otpCode,
+                                String title,
+                                String description,
+                                String securityNote) {
+        return "<!doctype html><html lang=\"vi\"><body style=\"margin:0;padding:0;background:#f6f7fb;\">"
+            + "<div style=\"display:none;max-height:0;overflow:hidden;color:transparent;\">"
+            + "Mã xác nhận Campus Events của bạn có hiệu lực trong 5 phút.</div>"
+            + "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#f6f7fb;\">"
+            + "<tr><td align=\"center\" style=\"padding:32px 12px;\">"
+            + "<table role=\"presentation\" width=\"560\" cellpadding=\"0\" cellspacing=\"0\" "
+            + "style=\"width:100%;max-width:560px;background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;\">"
+            + "<tr><td style=\"height:6px;background:#f36f21;font-size:0;line-height:0;\">&nbsp;</td></tr>"
+            + "<tr><td style=\"padding:30px 36px 12px;font-family:Arial,'Segoe UI',sans-serif;\">"
+            + "<p style=\"margin:0 0 8px;color:#f36f21;font-size:13px;font-weight:700;text-transform:uppercase;\">Campus Events</p>"
+            + "<h1 style=\"margin:0;color:#111827;font-size:24px;line-height:1.35;\">" + esc(title) + "</h1>"
+            + "<p style=\"margin:16px 0 0;color:#4b5563;font-size:15px;line-height:1.65;\">" + esc(description) + "</p>"
+            + "</td></tr>"
+            + "<tr><td style=\"padding:18px 36px 20px;\">"
+            + "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" "
+            + "style=\"background:#fff7ed;border:2px solid #fdba74;border-radius:10px;\">"
+            + "<tr><td align=\"center\" style=\"padding:22px 12px 8px;font-family:Arial,'Segoe UI',sans-serif;color:#9a3412;font-size:12px;font-weight:700;text-transform:uppercase;\">Mã xác nhận của bạn</td></tr>"
+            + "<tr><td align=\"center\" style=\"padding:0 12px 22px;font-family:Consolas,'Courier New',monospace;color:#7c2d12;font-size:40px;line-height:1.2;font-weight:800;letter-spacing:10px;\">"
+            + esc(otpCode) + "</td></tr></table>"
+            + "</td></tr>"
+            + "<tr><td style=\"padding:0 36px 30px;font-family:Arial,'Segoe UI',sans-serif;\">"
+            + "<p style=\"margin:0 0 10px;color:#374151;font-size:14px;line-height:1.6;\"><strong>Mã có hiệu lực trong 5 phút.</strong> Không chia sẻ mã này với bất kỳ ai.</p>"
+            + "<p style=\"margin:0;color:#6b7280;font-size:13px;line-height:1.6;\">" + esc(securityNote) + "</p>"
+            + "</td></tr>"
+            + "<tr><td style=\"padding:18px 36px;background:#f9fafb;border-top:1px solid #e5e7eb;font-family:Arial,'Segoe UI',sans-serif;color:#9ca3af;font-size:12px;line-height:1.5;\">"
+            + "Email được gửi tự động bởi <strong style=\"color:#6b7280;\">Campus Events Team</strong>. Vui lòng không trả lời email này."
+            + "</td></tr></table></td></tr></table></body></html>";
     }
 
     /**

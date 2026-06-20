@@ -93,6 +93,7 @@ public class DepartmentAttendanceController {
         body.put("token", session.getToken());
         body.put("sessionType", session.getSessionType());
         body.put("expiredAt", session.getExpiredAt().toString());
+        body.put("rotateSeconds", AttendanceSessionService.TOKEN_TTL_SECONDS);
         body.put("scanUrl", scanUrl);
         body.put("qrSvgDataUri", qrSvgDataUri(scanUrl));
         return body;

@@ -39,6 +39,7 @@ public class EventFormSyncService {
 
     private static final Logger log = LoggerFactory.getLogger(EventFormSyncService.class);
     private static final Pattern RATING_PREFIX = Pattern.compile("^\\s*([1-5])");
+    private static final Pattern QUIZ_TITLE = Pattern.compile("^\\[(?:question|quiz)\\s+(\\d+)]", Pattern.CASE_INSENSITIVE);
 
     @Autowired private GoogleFormResponsesService responsesService;
     @Autowired private EventRepository eventRepository;
@@ -47,6 +48,9 @@ public class EventFormSyncService {
     @Autowired private RegistrationRepository registrationRepository;
     @Autowired private AttendanceRepository attendanceRepository;
     @Autowired private FeedbackRepository feedbackRepository;
+    @Autowired private QuizQuestionRepository quizQuestionRepository;
+    @Autowired private QuizSubmissionRepository quizSubmissionRepository;
+    @Autowired private QuizAnswerRepository quizAnswerRepository;
 
     /** Kết quả 1 lần sync. */
     public static class SyncResult {
@@ -57,6 +61,7 @@ public class EventFormSyncService {
         public int updated;
         public int absentMarked;
         public int feedbacksAdded;
+        public int quizSubmissionsAdded;
         public final List<String> warnings = new java.util.ArrayList<>();
 
         public Map<String, Object> toMap() {
@@ -68,6 +73,7 @@ public class EventFormSyncService {
             m.put("updated", updated);
             m.put("absentMarked", absentMarked);
             m.put("feedbacksAdded", feedbacksAdded);
+            m.put("quizSubmissionsAdded", quizSubmissionsAdded);
             m.put("warnings", warnings);
             return m;
         }
@@ -168,6 +174,7 @@ public class EventFormSyncService {
         SyncResult r = new SyncResult();
         List<GoogleFormResponsesService.FormResponse> responses = responsesService.listResponses(formId, accessToken, null);
         r.totalResponses = responses.size();
+        List<QuizQuestion> quizQuestions = quizQuestionRepository.findByEventIdOrderByIdAsc(eventId);
 
         // Pre-load để dedup feedback nhanh (tránh query trong vòng lặp)
         Set<Long> studentsWithFeedback = new HashSet<>();
@@ -227,13 +234,17 @@ public class EventFormSyncService {
                     r.feedbacksAdded++;
                 }
             }
+
+            if (persistQuizResponse(event, student, resp, quizQuestions, t)) {
+                r.quizSubmissionsAdded++;
+            }
         }
 
         event.setLastSheetSyncAt(LocalDateTime.now());
         eventRepository.save(event);
 
-        log.info("Sync CHECK-OUT event {}: total={} matched={} completed/updated={} fb={}",
-                event.getId(), r.totalResponses, r.matched, r.updated, r.feedbacksAdded);
+        log.info("Sync CHECK-OUT event {}: total={} matched={} completed/updated={} fb={} quiz={}",
+                event.getId(), r.totalResponses, r.matched, r.updated, r.feedbacksAdded, r.quizSubmissionsAdded);
         return r;
     }
 
@@ -313,6 +324,95 @@ public class EventFormSyncService {
             }
         }
         return sb.length() == 0 ? null : sb.toString();
+    }
+
+    private boolean persistQuizResponse(Event event,
+                                        Student student,
+                                        GoogleFormResponsesService.FormResponse response,
+                                        List<QuizQuestion> questions,
+                                        LocalDateTime submittedAt) {
+        if (questions.isEmpty() || quizSubmissionRepository
+                .findByEventIdAndStudentId(event.getId(), student.getId()).isPresent()) {
+            return false;
+        }
+
+        Map<Integer, String> answersByNumber = new LinkedHashMap<>();
+        for (Map.Entry<String, String> entry : response.answers.entrySet()) {
+            Matcher matcher = QUIZ_TITLE.matcher(entry.getKey() == null ? "" : entry.getKey().trim());
+            if (matcher.find() && entry.getValue() != null && !entry.getValue().isBlank()) {
+                answersByNumber.put(Integer.parseInt(matcher.group(1)), entry.getValue().trim());
+            }
+        }
+        if (answersByNumber.isEmpty()) {
+            return false;
+        }
+
+        QuizSubmission submission = new QuizSubmission();
+        submission.setEvent(event);
+        submission.setStudent(student);
+        submission.setSubmittedAt(submittedAt);
+        submission.setTotalScore(0.0);
+        submission = quizSubmissionRepository.save(submission);
+
+        double totalScore = 0;
+        int savedAnswers = 0;
+        for (int index = 0; index < questions.size(); index++) {
+            String rawAnswer = answersByNumber.get(index + 1);
+            if (rawAnswer == null) {
+                continue;
+            }
+            QuizQuestion question = questions.get(index);
+            QuizAnswer answer = new QuizAnswer();
+            answer.setSubmission(submission);
+            answer.setQuestion(question);
+            answer.setSubmittedAt(submittedAt);
+
+            if ("MULTIPLE_CHOICE".equalsIgnoreCase(question.getQuestionType())) {
+                String selectedCode = optionCode(question, rawAnswer);
+                answer.setSelectedAnswer(selectedCode == null ? truncate(rawAnswer, 20) : selectedCode);
+                boolean correct = isCorrectAnswer(question, selectedCode, rawAnswer);
+                answer.setIsCorrect(correct);
+                double score = correct ? (question.getPoints() == null ? 1 : Math.max(1, question.getPoints())) : 0;
+                answer.setScore(score);
+                totalScore += score;
+            } else {
+                answer.setAnswerText(rawAnswer);
+                answer.setIsCorrect(null);
+                answer.setScore(0.0);
+            }
+            quizAnswerRepository.save(answer);
+            savedAnswers++;
+        }
+
+        if (savedAnswers == 0) {
+            quizSubmissionRepository.delete(submission);
+            return false;
+        }
+        submission.setTotalScore(totalScore);
+        quizSubmissionRepository.save(submission);
+        return true;
+    }
+
+    private String optionCode(QuizQuestion question, String answer) {
+        String[] codes = {"A", "B", "C", "D"};
+        String[] options = {question.getOptionA(), question.getOptionB(), question.getOptionC(), question.getOptionD()};
+        for (int i = 0; i < options.length; i++) {
+            if (options[i] != null && options[i].trim().equalsIgnoreCase(answer.trim())) {
+                return codes[i];
+            }
+        }
+        String normalized = answer.trim().toUpperCase();
+        return normalized.matches("[A-D]") ? normalized : null;
+    }
+
+    private boolean isCorrectAnswer(QuizQuestion question, String selectedCode, String rawAnswer) {
+        String correct = question.getCorrectAnswer();
+        return correct != null && (correct.trim().equalsIgnoreCase(rawAnswer.trim())
+                || (selectedCode != null && correct.trim().equalsIgnoreCase(selectedCode)));
+    }
+
+    private String truncate(String value, int maxLength) {
+        return value.length() <= maxLength ? value : value.substring(0, maxLength);
     }
 
     private String safe(String s) {

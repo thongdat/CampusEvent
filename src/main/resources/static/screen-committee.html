@@ -23,134 +23,320 @@
         };
     </script>
     <style>
-        body { font-family: 'Inter', system-ui, sans-serif; }
-        /* Buộc HTML attribute [hidden] thắng các utility class display:flex/grid của Tailwind. */
-        [hidden] { display: none !important; }
-        .skeleton {
-            background: linear-gradient(90deg,#fef3c7 0%,#fde68a 40%,#fef3c7 80%);
-            background-size: 800px 100%;
-            animation: shimmer 1.4s linear infinite;
+        :root {
+            --navy: #12213a;
+            --ink: #172033;
+            --muted: #68758a;
+            --line: #e1e6ee;
+            --surface: #ffffff;
+            --canvas: #f6f8fb;
+            --orange: #f26922;
+            --blue: #2563d9;
+            --green: #0f9f6e;
+            --rose: #e33c52;
         }
-        .queue-item { transition: all .15s ease; }
-        .queue-item:hover { background: rgba(251,191,36,.08); }
-        .queue-item.selected { background: linear-gradient(135deg,#fef3c7,#fde68a); border-color: #d97706; box-shadow: 0 6px 18px -8px rgba(217,119,6,.4); }
-        .dialog-backdrop { background: rgba(15,23,42,.55); backdrop-filter: blur(6px); }
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 8px; }
+        * { letter-spacing: 0; }
+        body { margin: 0; min-height: 100vh; overflow-x: hidden; background: var(--canvas); color: var(--ink); font-family: 'Inter', system-ui, sans-serif; }
+        [hidden] { display: none !important; }
+        button, input, select, textarea { font: inherit; }
+        .committee-app { min-height: 100vh; display: grid; grid-template-columns: 226px minmax(0, 1fr); }
+        .sidebar { position: sticky; top: 0; z-index: 40; height: 100vh; display: flex; flex-direction: column; border-right: 1px solid var(--line); background: #fff; }
+        .sidebar-brand { height: 76px; display: flex; align-items: center; gap: 11px; border-bottom: 1px solid var(--line); padding: 0 18px; }
+        .brand-mark { display: grid; width: 34px; height: 34px; flex: 0 0 auto; place-items: center; border-radius: 8px; background: var(--orange); color: #fff; }
+        .brand-mark svg { width: 19px; height: 19px; }
+        .brand-copy small, .brand-copy strong { display: block; }
+        .brand-copy small { color: var(--muted); font-size: 9px; font-weight: 800; text-transform: uppercase; }
+        .brand-copy strong { margin-top: 2px; font-size: 14px; }
+        .sidebar-nav { flex: 1; overflow-y: auto; padding: 16px 12px; }
+        .nav-label { margin: 18px 8px 8px; color: #9aa5b6; font-size: 9px; font-weight: 800; text-transform: uppercase; }
+        .nav-button { width: 100%; min-height: 40px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 7px; background: transparent; padding: 9px 10px; color: #4b5a71; text-align: left; font-size: 12px; font-weight: 700; cursor: pointer; }
+        .nav-button:hover { background: #f3f6fa; color: var(--ink); }
+        .nav-button.active { background: #eef3ff; color: #244db7; }
+        .nav-button svg { width: 17px; height: 17px; flex: 0 0 auto; }
+        .nav-count { margin-left: auto; min-width: 24px; border-radius: 6px; padding: 3px 6px; background: #eef1f5; color: #64748b; text-align: center; font-size: 10px; }
+        .nav-count.pending { background: #fff0df; color: #b45309; }
+        .nav-count.revision { background: #e8f1ff; color: #1d4ed8; }
+        .nav-count.approved { background: #e6f8f1; color: #047857; }
+        .nav-count.rejected { background: #ffebee; color: #be123c; }
+        .proposal-select-wrap { margin: 0 8px 8px; }
+        .proposal-select-wrap label { display: block; margin-bottom: 6px; color: #536176; font-size: 10px; font-weight: 800; }
+        .proposal-select { width: 100%; min-height: 38px; border: 1px solid var(--line); border-radius: 7px; background: #fff; padding: 7px 9px; color: var(--ink); font-size: 11px; font-weight: 700; outline: none; }
+        .proposal-select:focus { border-color: #91a8e8; box-shadow: 0 0 0 3px #e9efff; }
+        .sidebar-help { margin: 12px; border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
+        .sidebar-help strong { display: block; font-size: 11px; }
+        .sidebar-help span { display: block; margin-top: 4px; color: var(--muted); font-size: 9px; line-height: 1.5; }
+
+        .main-shell { min-width: 0; }
+        .topbar { position: sticky; top: 0; z-index: 30; height: 76px; display: flex; align-items: center; justify-content: space-between; gap: 18px; border-bottom: 1px solid var(--line); background: rgba(255,255,255,.97); padding: 0 24px; }
+        .menu-button { display: none; width: 38px; height: 38px; place-items: center; border: 1px solid var(--line); border-radius: 7px; background: #fff; }
+        .top-search { position: relative; width: min(470px, 55vw); }
+        .top-search svg { position: absolute; top: 50%; left: 13px; width: 17px; height: 17px; transform: translateY(-50%); color: #8b97a9; }
+        .top-search input { width: 100%; height: 42px; border: 1px solid var(--line); border-radius: 7px; background: #fff; padding: 0 14px 0 40px; color: var(--ink); font-size: 12px; outline: none; }
+        .top-search input:focus { border-color: #91a8e8; box-shadow: 0 0 0 3px #e9efff; }
+        .account-summary { display: flex; align-items: center; gap: 10px; }
+        .account-avatar { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 50%; background: #fff0d7; color: #9a5300; font-size: 11px; font-weight: 800; }
+        .account-text strong, .account-text span { display: block; max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .account-text strong { font-size: 11px; }
+        .account-text span { margin-top: 2px; color: var(--muted); font-size: 9px; }
+        .account-menu > summary { list-style: none; cursor: pointer; }
+        .account-menu > summary::-webkit-details-marker { display: none; }
+
+        .page-content { width: min(1500px, 100%); margin: 0 auto; padding: 22px 24px 32px; }
+        .page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+        .page-heading h1 { font-size: 20px; font-weight: 800; }
+        .page-heading p { margin-top: 4px; color: var(--muted); font-size: 11px; }
+        .mobile-filter { display: none; width: 180px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; }
+        .stat-card { min-height: 94px; display: flex; align-items: center; gap: 12px; border: 1px solid var(--line); border-radius: 8px; background: #fff; padding: 15px; text-align: left; cursor: pointer; transition: border-color .16s, box-shadow .16s; }
+        .stat-card:hover { border-color: #b9c4d3; box-shadow: 0 10px 22px -20px rgba(17,32,54,.65); }
+        .stat-card.active { border-color: #95a9e4; box-shadow: 0 0 0 2px #edf1ff; }
+        .stat-icon { display: grid; width: 38px; height: 38px; flex: 0 0 auto; place-items: center; border-radius: 8px; color: #fff; }
+        .stat-icon svg { width: 19px; height: 19px; }
+        .stat-icon.pending { background: var(--orange); }
+        .stat-icon.revision { background: var(--blue); }
+        .stat-icon.approved { background: var(--green); }
+        .stat-icon.rejected { background: var(--rose); }
+        .stat-copy small { display: block; color: var(--muted); font-size: 9px; font-weight: 800; text-transform: uppercase; }
+        .stat-copy strong { display: block; margin-top: 3px; font-size: 24px; line-height: 1; }
+        .stat-copy span { display: block; margin-top: 4px; color: var(--muted); font-size: 9px; }
+
+        .workspace-grid { display: grid; grid-template-columns: minmax(330px, 42%) minmax(0, 58%); gap: 14px; margin-top: 14px; align-items: start; }
+        .panel { overflow: hidden; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+        .queue-panel, .detail-panel { height: calc(100vh - 222px); min-height: 560px; }
+        .queue-panel { display: flex; flex-direction: column; }
+        .panel-header { min-height: 61px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--line); padding: 12px 15px; }
+        .panel-header h2 { font-size: 13px; font-weight: 800; }
+        .panel-header p { margin-top: 3px; color: var(--muted); font-size: 9px; }
+        .queue-scroll { flex: 1; overflow-y: auto; }
+        .queue-item { position: relative; min-height: 94px; border-bottom: 1px solid #edf0f4; border-left: 3px solid transparent; padding: 14px 15px; cursor: pointer; transition: background .15s, border-color .15s; }
+        .queue-item:hover { background: #f8fafc; }
+        .queue-item.selected { border-left-color: var(--blue); background: #f1f5ff; }
+        .queue-footer { min-height: 48px; display: flex; align-items: center; justify-content: center; border-top: 1px solid var(--line); color: var(--muted); font-size: 10px; font-weight: 700; }
+        .detail-panel { overflow-y: auto; }
+        .detail-hero { background: #243b8f; color: #fff; padding: 24px; }
+        .detail-hero-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+        .detail-hero h1 { margin-top: 10px; font-size: 20px; line-height: 1.35; }
+        .detail-hero p { margin-top: 5px; color: rgba(255,255,255,.72); font-size: 11px; }
+        .detail-body { padding: 22px; }
+        .detail-meta { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 18px 24px; }
+        .meta-item dt { color: var(--muted); font-size: 9px; font-weight: 800; text-transform: uppercase; }
+        .meta-item dd { margin-top: 5px; color: var(--ink); font-size: 12px; font-weight: 700; line-height: 1.5; }
+        .detail-section { border-top: 1px solid var(--line); margin-top: 22px; padding-top: 20px; }
+        .detail-section h2 { color: #4e5b70; font-size: 9px; font-weight: 800; text-transform: uppercase; }
+        .detail-section p { margin-top: 9px; color: #526076; font-size: 11px; line-height: 1.75; }
+        .decision-note { margin-top: 18px; border-left: 4px solid; padding: 12px 14px; font-size: 11px; line-height: 1.6; }
+        .decision-note.revision { border-color: var(--blue); background: #eef5ff; color: #1e4f9c; }
+        .decision-note.rejected { border-color: var(--rose); background: #fff0f2; color: #a51c35; }
+        .decision-note.neutral { border-color: #9aa6b7; background: #f5f7fa; color: #536176; }
+        .action-bar { position: sticky; bottom: 0; display: flex; align-items: center; justify-content: flex-end; gap: 9px; border-top: 1px solid var(--line); background: rgba(255,255,255,.97); padding: 15px 22px; }
+        .action-btn { min-height: 42px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--line); border-radius: 7px; padding: 9px 16px; background: #fff; color: var(--ink); font-size: 11px; font-weight: 800; }
+        .action-btn:hover { background: #f7f9fc; }
+        .action-btn.revise { border-color: #b9c9f7; color: #244eb4; }
+        .action-btn.approve { border-color: #1f4fc7; background: #1f4fc7; color: #fff; }
+        .action-btn.reject { color: #bd2940; }
+        .empty-detail { height: 100%; min-height: 500px; display: grid; place-items: center; padding: 30px; text-align: center; color: var(--muted); }
+        .empty-detail strong { display: block; color: var(--ink); font-size: 13px; }
+        .empty-detail span { display: block; margin-top: 5px; font-size: 10px; }
+
+        .activity-panel { margin-top: 14px; }
+        .activity-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); }
+        .activity-grid > * { border-right: 1px solid var(--line); }
+        .activity-grid > *:last-child { border-right: 0; }
+        .skeleton { background: #edf1f5; animation: skeletonPulse 1.2s ease-in-out infinite alternate; }
+        @keyframes skeletonPulse { to { opacity: .55; } }
+        .dialog-backdrop { background: rgba(15,23,42,.58); }
+        .sidebar-backdrop { display: none; position: fixed; inset: 0; z-index: 35; background: rgba(15,23,42,.45); }
+        ::-webkit-scrollbar { width: 7px; height: 7px; }
+        ::-webkit-scrollbar-thumb { border-radius: 8px; background: #cbd3df; }
+
+        @media (max-width: 1050px) {
+            .committee-app { grid-template-columns: 1fr; }
+            .sidebar { position: fixed; left: 0; transform: translateX(-100%); transition: transform .2s ease; }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-backdrop.open { display: block; }
+            .menu-button { display: grid; }
+            .topbar { padding: 0 16px; }
+            .page-content { padding: 18px 16px 28px; }
+        }
+        @media (max-width: 820px) {
+            .stats-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+            .workspace-grid { grid-template-columns: 1fr; }
+            .queue-panel, .detail-panel { height: auto; min-height: 0; }
+            .queue-scroll { max-height: 520px; }
+            .detail-panel { min-height: 580px; }
+            .activity-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+            .activity-grid > * { border-bottom: 1px solid var(--line); }
+            .mobile-filter { display: block; }
+        }
+        @media (max-width: 560px) {
+            .account-text { display: none; }
+            .top-search { width: 100%; }
+            .page-heading { align-items: flex-start; flex-direction: column; }
+            .mobile-filter { width: 100%; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .stat-card { min-height: 78px; }
+            .detail-meta { grid-template-columns: 1fr; }
+            .activity-grid { grid-template-columns: 1fr; }
+            .action-bar { align-items: stretch; flex-direction: column; }
+            .action-btn { width: 100%; }
+        }
     </style>
 </head>
-<body class="min-h-screen bg-amber-50/40 font-sans text-slate-800 antialiased">
+<body>
+<div class="committee-app">
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <span class="brand-mark" aria-hidden="true">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 3 4 7v5c0 4.6 3.1 8.1 8 9 4.9-.9 8-4.4 8-9V7l-8-4Z"/><path stroke-width="2" stroke-linecap="round" d="M9 12h6M12 9v6"/></svg>
+            </span>
+            <span class="brand-copy"><small>Hội đồng</small><strong>Duyệt đề xuất</strong></span>
+        </div>
 
-<header class="sticky top-0 z-30 border-b border-amber-200/70 bg-white/95 backdrop-blur-md">
-    <div class="mx-auto flex h-16 max-w-[1600px] items-center justify-between gap-3 px-4 sm:px-6">
-        <div class="flex items-center gap-3">
-            <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-base font-bold text-white shadow-md shadow-amber-500/30">⚖</span>
-            <div class="leading-tight">
-                <p class="text-[11px] font-semibold uppercase tracking-widest text-amber-800">Hội đồng</p>
-                <p class="text-sm font-bold text-slate-900">Duyệt đề xuất</p>
+        <nav class="sidebar-nav" aria-label="Điều hướng hội đồng">
+            <button type="button" class="nav-button active" data-nav-filter="PENDING,REVISION,APPROVED,REJECTED">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 13h6V4H4v9Zm0 7h6v-3H4v3Zm10 0h6v-9h-6v9Zm0-13h6V4h-6v3Z"/></svg>
+                Tổng quan
+            </button>
+
+            <p class="nav-label">Quản lý đề xuất</p>
+            <div class="proposal-select-wrap">
+                <label for="proposalStatusSelect">Đề xuất của tôi</label>
+                <select id="proposalStatusSelect" class="proposal-select">
+                    <option value="PENDING,REVISION,APPROVED,REJECTED">Tất cả đề xuất</option>
+                    <option value="PENDING">Chờ duyệt</option>
+                    <option value="REVISION">Yêu cầu sửa</option>
+                    <option value="APPROVED">Đã duyệt</option>
+                    <option value="REJECTED">Đã từ chối</option>
+                </select>
             </div>
-        </div>
+            <button type="button" class="nav-button" data-nav-filter="PENDING">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke-width="2"/><path stroke-width="2" stroke-linecap="round" d="M12 7v5l3 2"/></svg>
+                Chờ duyệt <span class="nav-count pending" data-nav-pending>0</span>
+            </button>
+            <button type="button" class="nav-button" data-nav-filter="REVISION">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m4 20 4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10L4 20Z"/><path stroke-width="2" d="m13.5 7.5 3 3"/></svg>
+                Yêu cầu sửa <span class="nav-count revision" data-nav-revision>0</span>
+            </button>
+            <button type="button" class="nav-button" data-nav-filter="APPROVED">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 3 4 7v5c0 4.6 3.1 8.1 8 9 4.9-.9 8-4.4 8-9V7l-8-4Z"/><path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m9 12 2 2 4-4"/></svg>
+                Đã duyệt <span class="nav-count approved" data-nav-approved>0</span>
+            </button>
+            <button type="button" class="nav-button" data-nav-filter="REJECTED">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 3 4 7v5c0 4.6 3.1 8.1 8 9 4.9-.9 8-4.4 8-9V7l-8-4Z"/><path stroke-width="2" stroke-linecap="round" d="m9.5 9.5 5 5m0-5-5 5"/></svg>
+                Đã từ chối <span class="nav-count rejected" data-nav-rejected>0</span>
+            </button>
+            <button type="button" class="nav-button" id="activityNavButton">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" stroke-linecap="round" d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path stroke-width="2" stroke-linecap="round" d="M3 3v5h5M12 7v5l3 2"/></svg>
+                Hoạt động gần đây
+            </button>
+        </nav>
 
-        <div class="hidden flex-1 max-w-md md:block">
-            <label class="relative block">
-                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-                </span>
-                <input id="searchInput" type="search" placeholder="Tìm đề xuất, khoa..."
-                    class="w-full rounded-xl border border-amber-200 bg-amber-50/50 py-2.5 pl-10 pr-3 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-300">
-            </label>
-        </div>
-
-        <div class="flex items-center gap-2">
-            <details class="relative">
-                <summary class="flex cursor-pointer list-none items-center gap-2 rounded-lg border border-amber-200 bg-white px-2.5 py-2 text-sm font-semibold text-slate-700 shadow-sm">
-                    <span id="accountInitials" class="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-100 text-xs font-bold text-amber-800">C</span>
-                    <span id="accountName" class="hidden max-w-32 truncate sm:inline">Committee</span>
-                </summary>
-                <div class="absolute right-0 z-40 mt-2 w-60 rounded-xl border border-slate-200 bg-white p-2 text-sm shadow-2xl animate-pop">
-                    <div class="rounded-lg bg-slate-50 px-3 py-3">
-                        <p id="accountNameLg" class="truncate font-semibold text-slate-900">Committee</p>
-                        <p id="accountEmail" class="truncate text-xs text-slate-500">—</p>
-                    </div>
-                    <a href="forgot-password.html" class="mt-1 block rounded-lg px-3 py-2 font-semibold text-slate-700 hover:bg-amber-50">Đổi mật khẩu</a>
-                    <button type="button" id="btnLogout" class="block w-full rounded-lg px-3 py-2 text-left font-semibold text-rose-600 hover:bg-rose-50">Đăng xuất</button>
-                </div>
-            </details>
-        </div>
-    </div>
-</header>
-
-<!-- Stats Strip -->
-<section class="mx-auto max-w-[1600px] px-4 pt-6 sm:px-6">
-    <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div data-stat-card="PENDING" class="cursor-pointer rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 to-amber-100 p-4 transition hover:shadow-lg">
-            <p class="text-xs font-semibold uppercase tracking-widest text-amber-800">Chờ duyệt</p>
-            <p data-stat-pending class="mt-1 text-3xl font-bold text-amber-900">—</p>
-        </div>
-        <div data-stat-card="REVISION" class="cursor-pointer rounded-2xl border border-sky-200 bg-gradient-to-br from-sky-50 to-sky-100 p-4 transition hover:shadow-lg">
-            <p class="text-xs font-semibold uppercase tracking-widest text-sky-800">Đang chỉnh sửa</p>
-            <p data-stat-revision class="mt-1 text-3xl font-bold text-sky-900">—</p>
-        </div>
-        <div data-stat-card="APPROVED" class="cursor-pointer rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-emerald-100 p-4 transition hover:shadow-lg">
-            <p class="text-xs font-semibold uppercase tracking-widest text-emerald-800">Đã duyệt</p>
-            <p data-stat-approved class="mt-1 text-3xl font-bold text-emerald-900">—</p>
-        </div>
-        <div data-stat-card="REJECTED" class="cursor-pointer rounded-2xl border border-rose-200 bg-gradient-to-br from-rose-50 to-rose-100 p-4 transition hover:shadow-lg">
-            <p class="text-xs font-semibold uppercase tracking-widest text-rose-800">Đã từ chối</p>
-            <p data-stat-rejected class="mt-1 text-3xl font-bold text-rose-900">—</p>
-        </div>
-    </div>
-</section>
-
-<section class="mx-auto max-w-[1600px] px-4 pt-4 sm:px-6">
-    <div class="rounded-2xl border border-amber-200/60 bg-white shadow-sm">
-        <header class="flex items-center justify-between border-b border-amber-100 px-4 py-3">
-            <div>
-                <h2 class="text-sm font-extrabold text-slate-900">Hoạt động gần đây</h2>
-                <p class="text-xs text-slate-500">Theo dõi hội đồng đã xử lý proposal nào và làm gì</p>
-            </div>
-            <span id="activityCount" class="rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-700">—</span>
-        </header>
-        <div id="committeeActivity" class="grid gap-0 divide-y divide-amber-100/70 sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-4"></div>
-    </div>
-</section>
-
-<div class="mx-auto mt-5 grid max-w-[1600px] gap-4 px-4 sm:px-6 lg:grid-cols-[22rem_minmax(0,1fr)]">
-    <!-- QUEUE -->
-    <aside class="overflow-hidden rounded-2xl border border-amber-200/60 bg-white shadow-sm lg:max-h-[calc(100vh-11rem)] lg:overflow-y-auto">
-        <header class="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-amber-200/60 bg-white/95 px-4 py-3 backdrop-blur">
-            <div class="flex gap-1">
-                <button data-filter="PENDING,REVISION" class="filter-chip rounded-full bg-amber-500 px-3 py-1.5 text-xs font-bold text-white">Cần xử lý</button>
-                <button data-filter="APPROVED" class="filter-chip rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:border-emerald-300">Đã duyệt</button>
-                <button data-filter="REJECTED" class="filter-chip rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:border-rose-300">Từ chối</button>
-            </div>
-            <span id="queueCount" class="text-xs font-semibold text-slate-500">—</span>
-        </header>
-        <ul id="queue" class="divide-y divide-amber-100/80"></ul>
-        <div id="queueEmpty" hidden class="px-6 py-12 text-center">
-            <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-2xl">✓</div>
-            <p class="mt-2 text-sm font-semibold text-slate-700">Không có gì cần xử lý</p>
-            <p class="text-xs text-slate-500">Chuyển sang tab khác để xem lịch sử.</p>
+        <div class="sidebar-help">
+            <strong>Cần hỗ trợ?</strong>
+            <span>Liên hệ quản trị viên nếu proposal thiếu dữ liệu hoặc không thể xử lý.</span>
         </div>
     </aside>
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 
-    <!-- DETAIL -->
-    <main class="overflow-hidden rounded-2xl border border-amber-200/60 bg-gradient-to-b from-white to-amber-50/30 shadow-sm lg:max-h-[calc(100vh-11rem)] lg:overflow-y-auto">
-        <div id="detail" class="px-4 py-6 sm:px-8">
-            <div class="flex h-[60vh] flex-col items-center justify-center text-center text-slate-400">
-                <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-100 text-3xl">📋</div>
-                <p class="mt-3 text-sm font-semibold">Chọn một đề xuất từ hàng đợi để xem chi tiết</p>
+    <div class="main-shell">
+        <header class="topbar">
+            <div class="flex min-w-0 flex-1 items-center gap-3">
+                <button type="button" class="menu-button" id="menuButton" aria-label="Mở menu">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16"/></svg>
+                </button>
+                <label class="top-search">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" stroke-width="2"/><path stroke-width="2" stroke-linecap="round" d="m20 20-4-4"/></svg>
+                    <input id="searchInput" type="search" placeholder="Tìm đề xuất, khoa, chương trình..." autocomplete="off">
+                </label>
             </div>
+
+            <details class="account-menu relative">
+                <summary class="account-summary">
+                    <span id="accountInitials" class="account-avatar">CU</span>
+                    <span class="account-text"><strong id="accountName">Committee User</strong><span>Hội đồng duyệt</span></span>
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" stroke-linecap="round" d="m8 10 4 4 4-4"/></svg>
+                </summary>
+                <div class="absolute right-0 z-40 mt-2 w-60 rounded-lg border border-slate-200 bg-white p-2 text-sm shadow-xl">
+                    <div class="border-b border-slate-100 px-3 py-3">
+                        <p id="accountNameLg" class="truncate font-semibold text-slate-900">Committee User</p>
+                        <p id="accountEmail" class="truncate text-xs text-slate-500">—</p>
+                    </div>
+                    <a href="forgot-password.html" class="mt-1 block rounded-md px-3 py-2 font-semibold text-slate-700 hover:bg-slate-50">Đổi mật khẩu</a>
+                    <button type="button" id="btnLogout" class="block w-full rounded-md px-3 py-2 text-left font-semibold text-rose-600 hover:bg-rose-50">Đăng xuất</button>
+                </div>
+            </details>
+        </header>
+
+        <div class="page-content">
+            <div class="page-heading">
+                <div><h1>Tổng quan xét duyệt</h1><p>Theo dõi và xử lý đề xuất sự kiện của các khoa.</p></div>
+                <select id="mobileStatusSelect" class="proposal-select mobile-filter" aria-label="Lọc trạng thái proposal">
+                    <option value="PENDING,REVISION,APPROVED,REJECTED">Tất cả đề xuất</option>
+                    <option value="PENDING">Chờ duyệt</option>
+                    <option value="REVISION">Yêu cầu sửa</option>
+                    <option value="APPROVED">Đã duyệt</option>
+                    <option value="REJECTED">Đã từ chối</option>
+                </select>
+            </div>
+
+            <section class="stats-grid" aria-label="Thống kê đề xuất">
+                <button type="button" class="stat-card" data-stat-card="PENDING">
+                    <span class="stat-icon pending"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" stroke-linecap="round" d="M8 3h8M8 21h8M9 3v4l3 3 3-3V3M9 21v-4l3-3 3 3v4"/></svg></span>
+                    <span class="stat-copy"><small>Chờ duyệt</small><strong data-stat-pending>—</strong><span>Đề xuất</span></span>
+                </button>
+                <button type="button" class="stat-card" data-stat-card="REVISION">
+                    <span class="stat-icon revision"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m4 20 4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10L4 20Z"/></svg></span>
+                    <span class="stat-copy"><small>Yêu cầu sửa</small><strong data-stat-revision>—</strong><span>Đề xuất</span></span>
+                </button>
+                <button type="button" class="stat-card" data-stat-card="APPROVED">
+                    <span class="stat-icon approved"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke-width="2"/><path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m8.5 12 2.3 2.3 4.8-5"/></svg></span>
+                    <span class="stat-copy"><small>Đã duyệt</small><strong data-stat-approved>—</strong><span>Đề xuất</span></span>
+                </button>
+                <button type="button" class="stat-card" data-stat-card="REJECTED">
+                    <span class="stat-icon rejected"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" stroke-linecap="round" d="m8 8 8 8m0-8-8 8"/></svg></span>
+                    <span class="stat-copy"><small>Đã từ chối</small><strong data-stat-rejected>—</strong><span>Đề xuất</span></span>
+                </button>
+            </section>
+
+            <section class="workspace-grid">
+                <aside class="panel queue-panel">
+                    <header class="panel-header">
+                        <div><h2>Đề xuất của tôi</h2><p id="activeFilterLabel">Tất cả trạng thái</p></div>
+                        <strong id="queueCount" class="text-xs text-slate-500">—</strong>
+                    </header>
+                    <div class="queue-scroll">
+                        <ul id="queue"></ul>
+                        <div id="queueEmpty" hidden class="px-6 py-16 text-center">
+                            <p class="text-sm font-bold text-slate-700">Không có đề xuất phù hợp</p>
+                            <p class="mt-1 text-xs text-slate-500">Chọn trạng thái khác hoặc xoá từ khoá tìm kiếm.</p>
+                        </div>
+                    </div>
+                    <footer class="queue-footer" id="queueFooter">Danh sách đề xuất</footer>
+                </aside>
+
+                <main class="panel detail-panel">
+                    <div id="detail" class="h-full">
+                        <div class="empty-detail"><div><strong>Chọn một đề xuất để xem chi tiết</strong><span>Thông tin và thao tác xét duyệt sẽ xuất hiện tại đây.</span></div></div>
+                    </div>
+                </main>
+            </section>
+
+            <section class="panel activity-panel" id="activitySection">
+                <header class="panel-header">
+                    <div><h2>Hoạt động gần đây</h2><p>Các proposal vừa được hội đồng xử lý.</p></div>
+                    <span id="activityCount" class="text-xs font-bold text-slate-500">—</span>
+                </header>
+                <div id="committeeActivity" class="activity-grid"></div>
+            </section>
         </div>
-    </main>
+    </div>
 </div>
 
-<!-- TOAST + MODAL -->
-<div id="toast" class="pointer-events-none fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white opacity-0 shadow-2xl transition-opacity"></div>
+<div id="toast" class="pointer-events-none fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-slate-900 px-4 py-3 text-sm font-semibold text-white opacity-0 shadow-xl transition-opacity"></div>
 
-<div id="modal" hidden class="fixed inset-0 z-40 flex items-end justify-center overflow-y-auto p-0 sm:items-center sm:p-4">
+<div id="modal" hidden class="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto p-0 sm:items-center sm:p-4">
     <div class="dialog-backdrop absolute inset-0" data-modal-close></div>
-    <div class="relative w-full max-w-md animate-pop overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:rounded-3xl">
+    <div class="relative w-full max-w-md animate-pop overflow-hidden rounded-t-lg bg-white shadow-2xl sm:rounded-lg">
         <div id="modalBody"></div>
     </div>
 </div>
@@ -160,8 +346,9 @@
     'use strict';
 
     const API_BASE = '/api';
+    const ALL_STATUSES = 'PENDING,REVISION,APPROVED,REJECTED';
     const STATE = {
-        filter: 'PENDING,REVISION',
+        filter: ALL_STATUSES,
         query: '',
         items: [],
         selectedId: null
@@ -190,14 +377,27 @@
             headers['Content-Type'] = 'application/json';
             opts.body = JSON.stringify(opts.body);
         }
-        const res = await fetch(API_BASE + path, Object.assign({}, opts, { headers }));
+        let res;
+        try {
+            res = await fetch(API_BASE + path, Object.assign({}, opts, { headers }));
+        } catch (cause) {
+            const error = new Error('Không thể kết nối máy chủ. Ứng dụng API có thể đang dừng hoặc khởi động lại; vui lòng chạy server cổng 8081 rồi thử lại.');
+            error.cause = cause;
+            error.networkError = true;
+            throw error;
+        }
         if (res.status === 401) {
             window.location.href = '/api/login.html';
             throw Object.assign(new Error('HTTP 401'), { status: 401 });
         }
         if (!res.ok) {
             const text = await res.text().catch(() => '');
-            const err = new Error(text || ('HTTP ' + res.status));
+            let message = text || ('HTTP ' + res.status);
+            try {
+                const payload = JSON.parse(text);
+                message = payload.message || payload.error || message;
+            } catch (ignored) {}
+            const err = new Error(message);
             err.status = res.status;
             throw err;
         }
@@ -250,22 +450,32 @@
         if (v == null) return '—';
         return Number(v).toLocaleString('vi-VN') + 'đ';
     }
+    function filterLabel(value) {
+        return ({
+            [ALL_STATUSES]: 'Tất cả trạng thái',
+            'PENDING,REVISION': 'Cần xử lý',
+            PENDING: 'Chờ duyệt',
+            REVISION: 'Yêu cầu sửa',
+            APPROVED: 'Đã duyệt',
+            REJECTED: 'Đã từ chối'
+        })[value] || 'Đề xuất';
+    }
     function statusBadge(status) {
         const m = {
-            'PENDING':  { cls: 'bg-amber-100 text-amber-800',     label: '⏳ Chờ duyệt' },
-            'REVISION': { cls: 'bg-sky-100 text-sky-800',         label: '✎ Yêu cầu sửa' },
-            'APPROVED': { cls: 'bg-emerald-100 text-emerald-800', label: '✓ Đã duyệt' },
-            'REJECTED': { cls: 'bg-rose-100 text-rose-700',       label: '✕ Đã từ chối' }
+            'PENDING':  { cls: 'bg-amber-100 text-amber-800',     label: 'Chờ duyệt' },
+            'REVISION': { cls: 'bg-sky-100 text-sky-800',         label: 'Yêu cầu sửa' },
+            'APPROVED': { cls: 'bg-emerald-100 text-emerald-800', label: 'Đã duyệt' },
+            'REJECTED': { cls: 'bg-rose-100 text-rose-700',       label: 'Đã từ chối' }
         };
         const e = m[(status || '').toUpperCase()] || { cls: 'bg-slate-100 text-slate-600', label: status || '—' };
         return `<span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${e.cls}">${e.label}</span>`;
     }
     function activityText(item) {
         const status = String(item.status || '').toUpperCase();
-        if (status === 'APPROVED') return ['✓ Đã phê duyệt', 'text-emerald-700 bg-emerald-50'];
-        if (status === 'REJECTED') return ['✕ Đã từ chối', 'text-rose-700 bg-rose-50'];
-        if (status === 'REVISION') return ['✎ Yêu cầu chỉnh sửa', 'text-sky-700 bg-sky-50'];
-        return ['⏳ Đang chờ xử lý', 'text-amber-700 bg-amber-50'];
+        if (status === 'APPROVED') return ['Đã phê duyệt', 'text-emerald-700 bg-emerald-50'];
+        if (status === 'REJECTED') return ['Đã từ chối', 'text-rose-700 bg-rose-50'];
+        if (status === 'REVISION') return ['Yêu cầu chỉnh sửa', 'text-sky-700 bg-sky-50'];
+        return ['Đang chờ xử lý', 'text-amber-700 bg-amber-50'];
     }
     function renderActivity(items) {
         const box = $('#committeeActivity');
@@ -283,13 +493,13 @@
                     <span class="inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold ${cls}">${label}</span>
                     <p class="mt-2 line-clamp-2 text-sm font-extrabold text-slate-900">${escapeHtml(item.title || 'Không tiêu đề')}</p>
                     <p class="mt-1 text-xs text-slate-500">${escapeHtml(dept)} · ${fmtDateShort(item.updatedAt || item.createdAt || item.proposedDate)}</p>
-                    <p class="mt-1 text-[11px] font-semibold text-slate-400">${escapeHtml(name)} phụ trách xử lý</p>
+                    <p class="mt-1 text-[11px] font-semibold text-slate-400">Cập nhật ${fmtDate(item.updatedAt || item.createdAt || item.proposedDate)}</p>
                 </article>`;
         }).join('') : '<div class="p-5 text-sm text-slate-400">Chưa có hoạt động gần đây.</div>';
     }
     async function loadActivity() {
         const box = $('#committeeActivity');
-        if (box) box.innerHTML = '<div class="skeleton m-4 h-20 rounded-xl"></div><div class="skeleton m-4 h-20 rounded-xl"></div>';
+        if (box) box.innerHTML = '<div class="skeleton m-4 h-20 rounded-lg"></div><div class="skeleton m-4 h-20 rounded-lg"></div>';
         try {
             const data = await api('/committee/proposals?status=PENDING,REVISION,APPROVED,REJECTED');
             renderActivity(data.items || []);
@@ -306,13 +516,17 @@
             $('[data-stat-revision]').textContent = data.counts.REVISION || 0;
             $('[data-stat-approved]').textContent = data.counts.APPROVED || 0;
             $('[data-stat-rejected]').textContent = data.counts.REJECTED || 0;
+            $('[data-nav-pending]').textContent = data.counts.PENDING || 0;
+            $('[data-nav-revision]').textContent = data.counts.REVISION || 0;
+            $('[data-nav-approved]').textContent = data.counts.APPROVED || 0;
+            $('[data-nav-rejected]').textContent = data.counts.REJECTED || 0;
         } catch (e) {
             console.error('overview', e);
         }
     }
 
     async function loadQueue() {
-        $('#queue').innerHTML = '<li class="skeleton mx-4 my-3 h-20 rounded-xl"></li><li class="skeleton mx-4 my-3 h-20 rounded-xl"></li>';
+        $('#queue').innerHTML = '<li class="skeleton mx-4 my-3 h-20 rounded-lg"></li><li class="skeleton mx-4 my-3 h-20 rounded-lg"></li>';
         $('#queueEmpty').hidden = true;
         const qs = new URLSearchParams();
         qs.set('status', STATE.filter);
@@ -321,6 +535,8 @@
             const data = await api('/committee/proposals?' + qs.toString());
             STATE.items = data.items || [];
             $('#queueCount').textContent = data.total + ' đề xuất';
+            $('#queueFooter').textContent = data.total ? `Hiển thị ${data.total} đề xuất` : 'Không có đề xuất';
+            $('#activeFilterLabel').textContent = filterLabel(STATE.filter);
             renderQueue();
             // Auto select first if none
             if (!STATE.selectedId && STATE.items.length) {
@@ -328,10 +544,19 @@
             } else if (STATE.selectedId) {
                 const exists = STATE.items.some(i => i.id === STATE.selectedId);
                 if (!exists && STATE.items.length) selectProposal(STATE.items[0].id);
+                else if (!exists) clearDetail();
             }
+            if (!STATE.items.length) clearDetail();
         } catch (e) {
             $('#queue').innerHTML = `<li class="px-4 py-6 text-center text-sm text-rose-600">${escapeHtml(e.message)}</li>`;
+            $('#queueFooter').textContent = 'Không tải được dữ liệu';
+            $('#detail').innerHTML = `<div class="empty-detail"><div><strong>Không tải được đề xuất</strong><span>${escapeHtml(e.message)}</span></div></div>`;
         }
+    }
+
+    function clearDetail() {
+        STATE.selectedId = null;
+        $('#detail').innerHTML = '<div class="empty-detail"><div><strong>Không có đề xuất để hiển thị</strong><span>Chọn trạng thái khác hoặc xoá từ khoá tìm kiếm.</span></div></div>';
     }
 
     function renderQueue() {
@@ -346,29 +571,38 @@
             const isSelected = p.id === STATE.selectedId;
             const dept = p.department ? p.department.name : '—';
             return `
-            <li class="queue-item cursor-pointer border-l-4 px-4 py-4 ${isSelected ? 'selected border-amber-500' : 'border-transparent'}" data-select="${p.id}">
+            <li class="queue-item ${isSelected ? 'selected' : ''}" data-select="${p.id}" tabindex="0" role="button" aria-pressed="${isSelected}">
                 <div class="flex items-start justify-between gap-2">
                     <div class="min-w-0 flex-1">
                         <p class="truncate text-sm font-bold text-slate-900">${escapeHtml(p.title || 'Không tiêu đề')}</p>
-                        <p class="mt-0.5 truncate text-xs text-slate-500">📂 ${escapeHtml(dept)} · 📅 ${fmtDateShort(p.proposedDate)}</p>
+                        <p class="mt-1 truncate text-[11px] text-slate-500">${escapeHtml(dept)} · ${fmtDateShort(p.proposedDate)}</p>
                     </div>
                     ${statusBadge(p.status)}
                 </div>
-                <p class="mt-1.5 text-[11px] text-slate-400">Tạo ${fmtDateShort(p.createdAt)}</p>
+                <p class="mt-2 text-[10px] text-slate-400">Tạo ngày ${fmtDateShort(p.createdAt)}</p>
             </li>`;
         }).join('');
         ul.querySelectorAll('[data-select]').forEach(el => {
-            el.addEventListener('click', () => selectProposal(Number(el.dataset.select)));
+            el.addEventListener('click', () => selectProposal(Number(el.dataset.select), true));
+            el.addEventListener('keydown', event => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    selectProposal(Number(el.dataset.select), true);
+                }
+            });
         });
     }
 
-    async function selectProposal(id) {
+    async function selectProposal(id, focusDetail = false) {
         STATE.selectedId = id;
         renderQueue();
-        $('#detail').innerHTML = '<div class="space-y-3 p-4"><div class="skeleton h-8 w-1/2 rounded"></div><div class="skeleton h-5 w-1/3 rounded"></div><div class="skeleton h-44 w-full rounded-2xl"></div></div>';
+        $('#detail').innerHTML = '<div class="space-y-3 p-4"><div class="skeleton h-8 w-1/2 rounded"></div><div class="skeleton h-5 w-1/3 rounded"></div><div class="skeleton h-44 w-full rounded-lg"></div></div>';
         try {
             const p = await api('/committee/proposals/' + id);
             renderDetail(p);
+            if (focusDetail && window.innerWidth <= 820) {
+                $('.detail-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
         } catch (e) {
             $('#detail').innerHTML = `<p class="px-4 py-6 text-sm text-rose-600">${escapeHtml(e.message)}</p>`;
         }
@@ -378,79 +612,69 @@
         const status = (p.status || '').toUpperCase();
         const actionable = status === 'PENDING' || status === 'REVISION';
         const dept = p.department ? p.department.name : '—';
-
-        const actions = actionable ? `
-            <div class="sticky bottom-0 mt-8 flex flex-col gap-3 rounded-2xl border border-amber-200 bg-white/95 p-4 shadow-xl backdrop-blur sm:flex-row sm:items-center sm:justify-between">
-                <p class="text-xs text-slate-500">Hành động sẽ ghi log vào hệ thống. Approve sẽ tự tạo Event công khai.</p>
-                <div class="flex flex-wrap gap-2">
-                    <button data-action="revise" class="rounded-xl border border-sky-200 bg-white px-4 py-2.5 text-sm font-semibold text-sky-700 transition hover:bg-sky-50">✎ Yêu cầu sửa</button>
-                    <button data-action="reject" class="rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-rose-500/25 transition hover:bg-rose-700">✕ Từ chối</button>
-                    <button data-action="approve" class="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30 transition hover:brightness-110">✓ Phê duyệt</button>
-                </div>
-            </div>` : `
-            <div class="mt-8 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                Đề xuất này đã được xử lý (${statusBadge(p.status)}). Không thể thay đổi thêm.
-            </div>`;
+        const noteTone = status === 'REJECTED' ? 'rejected' : status === 'REVISION' ? 'revision' : 'neutral';
+        const noteTitle = status === 'REJECTED' ? 'Lý do từ chối' : status === 'REVISION' ? 'Nội dung yêu cầu sửa' : 'Ghi chú gần nhất';
 
         $('#detail').innerHTML = `
-        <article>
-            ${p.imageUrl ? `<div class="overflow-hidden rounded-2xl border border-amber-100 bg-slate-100"><img src="${escapeHtml(p.imageUrl)}" alt="" class="h-52 w-full object-cover"></div>` : ''}
-
-            <header class="mt-${p.imageUrl ? '5' : '0'} flex flex-wrap items-start justify-between gap-3">
-                <div>
-                    <p class="text-xs font-bold uppercase tracking-widest text-amber-700">Đề xuất #${p.id}</p>
-                    <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">${escapeHtml(p.title || '—')}</h1>
-                    <p class="mt-1 text-sm text-slate-500">Khoa: <strong class="text-slate-700">${escapeHtml(dept)}</strong></p>
+        <article class="min-h-full">
+            <header class="detail-hero">
+                <div class="detail-hero-top">
+                    <div>${statusBadge(p.status)}<h1>${escapeHtml(p.title || '—')}</h1><p>Khoa: ${escapeHtml(dept)}</p></div>
+                    <span class="text-xs font-bold text-white/70">#${p.id}</span>
                 </div>
-                ${statusBadge(p.status)}
             </header>
 
-            <dl class="mt-6 grid gap-4 rounded-2xl border border-amber-200/70 bg-white p-5 shadow-sm sm:grid-cols-2">
-                <div>
-                    <dt class="text-[11px] font-semibold uppercase tracking-widest text-slate-500">📅 Ngày đề xuất tổ chức</dt>
-                    <dd class="mt-1 font-semibold text-slate-900">${fmtDate(p.proposedDate)}</dd>
+            <div class="detail-body">
+              <dl class="detail-meta">
+                <div class="meta-item">
+                    <dt>Ngày đề xuất tổ chức</dt>
+                    <dd>${fmtDate(p.proposedDate)}</dd>
                 </div>
-                <div>
-                    <dt class="text-[11px] font-semibold uppercase tracking-widest text-slate-500">👥 Capacity</dt>
-                    <dd class="mt-1 font-semibold text-slate-900">${p.capacity ?? '—'} chỗ</dd>
+                <div class="meta-item">
+                    <dt>Capacity</dt>
+                    <dd>${p.capacity ?? '—'} chỗ</dd>
                 </div>
-                <div>
-                    <dt class="text-[11px] font-semibold uppercase tracking-widest text-slate-500">📍 Địa điểm</dt>
-                    <dd class="mt-1 font-semibold text-slate-900">${escapeHtml(p.location || '—')}</dd>
+                <div class="meta-item">
+                    <dt>Địa điểm</dt>
+                    <dd>${escapeHtml(p.location || '—')}</dd>
                 </div>
-                <div>
-                    <dt class="text-[11px] font-semibold uppercase tracking-widest text-slate-500">💰 Ngân sách dự kiến</dt>
-                    <dd class="mt-1 font-semibold text-slate-900">${fmtMoney(p.budget)}</dd>
+                <div class="meta-item">
+                    <dt>Ngân sách dự kiến</dt>
+                    <dd>${fmtMoney(p.budget)}</dd>
                 </div>
-                <div>
-                    <dt class="text-[11px] font-semibold uppercase tracking-widest text-slate-500">🕒 Khung giờ dự kiến</dt>
-                    <dd class="mt-1 font-semibold text-slate-900">${fmtTime(p.proposedDate)} – ${p.proposedEndDate ? fmtTime(p.proposedEndDate) : '—'}</dd>
+                <div class="meta-item">
+                    <dt>Khung giờ dự kiến</dt>
+                    <dd>${fmtTime(p.proposedDate)} - ${p.proposedEndDate ? fmtTime(p.proposedEndDate) : '—'}</dd>
                 </div>
-                <div>
-                    <dt class="text-[11px] font-semibold uppercase tracking-widest text-slate-500">🧑‍💼 Người phụ trách</dt>
-                    <dd class="mt-1 font-semibold text-slate-900">${escapeHtml(p.organizer || '—')}</dd>
+                <div class="meta-item">
+                    <dt>Người phụ trách</dt>
+                    <dd>${escapeHtml(p.organizer || '—')}</dd>
                 </div>
-                <div>
-                    <dt class="text-[11px] font-semibold uppercase tracking-widest text-slate-500">🎤 Diễn giả</dt>
-                    <dd class="mt-1 whitespace-pre-line font-semibold text-slate-900">${escapeHtml(p.speakers || '—')}</dd>
+                <div class="meta-item">
+                    <dt>Diễn giả</dt>
+                    <dd class="whitespace-pre-line">${escapeHtml(p.speakers || '—')}</dd>
                 </div>
-                <div>
-                    <dt class="text-[11px] font-semibold uppercase tracking-widest text-slate-500">🤝 Số người hỗ trợ cần</dt>
-                    <dd class="mt-1 font-semibold text-slate-900">${(p.supportStaffNeeded != null && p.supportStaffNeeded > 0) ? p.supportStaffNeeded + ' người' : '—'}</dd>
+                <div class="meta-item">
+                    <dt>Số người hỗ trợ cần</dt>
+                    <dd>${(p.supportStaffNeeded != null && p.supportStaffNeeded > 0) ? p.supportStaffNeeded + ' người' : '—'}</dd>
                 </div>
-            </dl>
+              </dl>
 
-            <section class="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <h2 class="text-xs font-bold uppercase tracking-widest text-slate-500">Nội dung đề xuất</h2>
-                <p class="mt-3 whitespace-pre-line text-sm leading-relaxed text-slate-700">${escapeHtml(p.description || 'Không có mô tả.')}</p>
-            </section>
+              <section class="detail-section">
+                <h2>Mô tả chương trình</h2>
+                <p class="whitespace-pre-line">${escapeHtml(p.description || 'Không có mô tả.')}</p>
+              </section>
 
-            ${p.note ? `<section class="mt-4 rounded-2xl border border-amber-200 bg-amber-50/70 p-4 text-sm text-amber-900">
-                <p class="text-[11px] font-bold uppercase tracking-widest text-amber-700">Ghi chú gần nhất</p>
-                <p class="mt-1 whitespace-pre-line">${escapeHtml(p.note)}</p>
-            </section>` : ''}
+              ${p.note ? `<section class="decision-note ${noteTone}"><strong>${noteTitle}</strong><p class="mt-1 whitespace-pre-line">${escapeHtml(p.note)}</p></section>` : ''}
+            </div>
 
-            ${actions}
+            ${actionable ? `
+              <div class="action-bar">
+                <button type="button" data-action="reject" class="action-btn reject">Từ chối</button>
+                <button type="button" data-action="revise" class="action-btn revise">Yêu cầu chỉnh sửa</button>
+                <button type="button" data-action="approve" class="action-btn approve">Duyệt đề xuất</button>
+              </div>` : `
+              <div class="action-bar"><span class="mr-auto text-xs font-semibold text-slate-500">Đề xuất đã được xử lý và không thể thay đổi thêm.</span>${statusBadge(p.status)}</div>`}
         </article>`;
 
         $$('#detail [data-action]').forEach(btn => btn.addEventListener('click', () => onAction(p, btn.dataset.action)));
@@ -462,7 +686,7 @@
             const endDefault = p.proposedEndDate ? p.proposedEndDate.substring(0, 16) : '';
             openModal(`
             <form id="actionForm" class="p-6">
-                <h3 class="text-lg font-bold text-emerald-700">✓ Phê duyệt đề xuất</h3>
+                <h3 class="text-lg font-bold text-emerald-700">Phê duyệt đề xuất</h3>
                 <p class="mt-1 text-sm text-slate-500">Tạo event công khai từ "${escapeHtml(p.title)}".</p>
                 <div class="mt-4 space-y-3">
                     <div>
@@ -471,7 +695,7 @@
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-700">Kết thúc</label>
-                        <input type="datetime-local" name="endTime" value="${escapeHtml(endDefault)}" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-200">
+                        <input type="datetime-local" name="endTime" value="${escapeHtml(endDefault)}" required class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-200">
                     </div>
                     <div class="grid grid-cols-2 gap-3">
                         <div>
@@ -505,28 +729,39 @@
                     </div>
                 </div>
                 <div class="mt-5 flex justify-end gap-2">
-                    <button type="button" class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700" data-modal-close>Huỷ</button>
-                    <button type="submit" class="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2 text-sm font-semibold text-white shadow">Phê duyệt</button>
+                    <button type="button" class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700" data-modal-close>Huỷ</button>
+                    <button type="submit" class="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white">Phê duyệt</button>
                 </div>
             </form>`);
-            $('#actionForm').addEventListener('submit', e => {
+            $('#actionForm').addEventListener('submit', async e => {
                 e.preventDefault();
+                const submitButton = e.submitter || e.target.querySelector('[type="submit"]');
+                if (submitButton.disabled) return;
                 const fd = new FormData(e.target);
-                submit('approve', p.id, {
-                    startTime: fd.get('startTime'),
-                    endTime: fd.get('endTime'),
+                const startTime = fd.get('startTime');
+                const endTime = fd.get('endTime');
+                if (new Date(endTime) <= new Date(startTime)) {
+                    toast('Thời gian kết thúc phải sau thời gian bắt đầu.', 'error');
+                    return;
+                }
+                submitButton.disabled = true;
+                submitButton.dataset.idleText = 'Phê duyệt';
+                submitButton.textContent = 'Đang phê duyệt...';
+                await submit('approve', p.id, {
+                    startTime,
+                    endTime,
                     capacity: Number(fd.get('capacity') || 100),
                     location: fd.get('location'),
                     organizer: fd.get('organizer'),
                     speakers: fd.get('speakers'),
                     supportStaffNeeded: Number(fd.get('supportStaffNeeded') || 0),
                     note: fd.get('note')
-                });
+                }, submitButton);
             });
         } else if (action === 'reject') {
-            promptReason('✕ Từ chối đề xuất', 'reason', 'Nêu rõ lý do từ chối (sinh viên/khoa sẽ nhìn thấy)', value => submit('reject', p.id, { reason: value }), '#dc2626');
+            promptReason('Từ chối đề xuất', 'reason', 'Nêu rõ lý do từ chối (khoa sẽ nhìn thấy)', (value, button) => submit('reject', p.id, { reason: value }, button), '#dc2626');
         } else if (action === 'revise') {
-            promptReason('✎ Yêu cầu chỉnh sửa', 'request', 'Mô tả nội dung cần khoa điều chỉnh', value => submit('revise', p.id, { request: value }), '#0284c7');
+            promptReason('Yêu cầu chỉnh sửa', 'request', 'Mô tả nội dung cần khoa điều chỉnh', (value, button) => submit('revise', p.id, { request: value }, button), '#2563d9');
         }
     }
 
@@ -535,58 +770,68 @@
         <form id="reasonForm" class="p-6">
             <h3 class="text-lg font-bold" style="color:${color}">${title}</h3>
             <textarea name="${fieldName}" rows="5" required minlength="6" placeholder="${placeholder}"
-                class="mt-4 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-200"></textarea>
+                class="mt-4 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"></textarea>
             <div class="mt-4 flex justify-end gap-2">
-                <button type="button" class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700" data-modal-close>Huỷ</button>
-                <button type="submit" class="rounded-xl px-4 py-2 text-sm font-semibold text-white shadow" style="background:${color}">Xác nhận</button>
+                <button type="button" class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700" data-modal-close>Huỷ</button>
+                <button type="submit" class="rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:${color}">Xác nhận</button>
             </div>
         </form>`);
-        $('#reasonForm').addEventListener('submit', e => {
+        $('#reasonForm').addEventListener('submit', async e => {
             e.preventDefault();
+            const submitButton = e.submitter || e.target.querySelector('[type="submit"]');
+            if (submitButton.disabled) return;
             const v = new FormData(e.target).get(fieldName);
             if (!v || String(v).trim().length < 6) {
                 toast('Cần nhập ít nhất 6 ký tự', 'warn');
                 return;
             }
-            onSubmit(String(v).trim());
+            submitButton.disabled = true;
+            submitButton.dataset.idleText = 'Xác nhận';
+            submitButton.textContent = 'Đang xử lý...';
+            await onSubmit(String(v).trim(), submitButton);
         });
     }
 
-    async function submit(action, id, body) {
+    async function submit(action, id, body, submitButton) {
         try {
             const data = await api('/committee/proposals/' + id + '/' + action, { method: 'POST', body });
             closeModal();
             const labels = { approve: 'Đã phê duyệt', reject: 'Đã từ chối', revise: 'Đã gửi yêu cầu chỉnh sửa' };
-            toast('🎉 ' + (labels[action] || 'Thành công') + (data && data.event ? ' · Event #' + data.event.id : ''));
+            toast((labels[action] || 'Thành công') + (data && data.event ? ' · Event #' + data.event.id : ''));
             await Promise.all([loadOverview(), loadActivity(), loadQueue()]);
-            if (data && data.id) selectProposal(data.id);
+            if (data && data.id && STATE.items.some(item => item.id === data.id)) await selectProposal(data.id);
         } catch (e) {
             toast(e.message || 'Thao tác thất bại', 'error');
+            if (submitButton && document.body.contains(submitButton)) {
+                submitButton.disabled = false;
+                submitButton.textContent = submitButton.dataset.idleText || 'Thử lại';
+            }
         }
     }
 
-    // ----------------------------- EVENTS -----------------------------
-    $$('.filter-chip').forEach(btn => btn.addEventListener('click', () => {
-        STATE.filter = btn.dataset.filter;
-        $$('.filter-chip').forEach(b => {
-            b.classList.remove('bg-amber-500', 'text-white');
-            b.classList.add('border', 'border-slate-200', 'bg-white', 'text-slate-600');
-        });
-        btn.classList.add('bg-amber-500', 'text-white');
-        btn.classList.remove('border', 'border-slate-200', 'bg-white', 'text-slate-600');
+    // ----------------------------- FILTERS / NAVIGATION -----------------------------
+    function syncFilterControls() {
+        $('#proposalStatusSelect').value = STATE.filter;
+        $('#mobileStatusSelect').value = STATE.filter;
+        $$('[data-nav-filter]').forEach(button => button.classList.toggle('active', button.dataset.navFilter === STATE.filter));
+        $$('[data-stat-card]').forEach(card => card.classList.toggle('active', card.dataset.statCard === STATE.filter));
+        $('#activeFilterLabel').textContent = filterLabel(STATE.filter);
+    }
+
+    function applyFilter(value) {
+        STATE.filter = value || ALL_STATUSES;
         STATE.selectedId = null;
+        syncFilterControls();
+        closeSidebar();
         loadQueue();
-    }));
+    }
+
+    $$('[data-nav-filter]').forEach(button => button.addEventListener('click', () => applyFilter(button.dataset.navFilter)));
+    $('#proposalStatusSelect').addEventListener('change', event => applyFilter(event.target.value));
+    $('#mobileStatusSelect').addEventListener('change', event => applyFilter(event.target.value));
 
     $$('[data-stat-card]').forEach(card => card.addEventListener('click', () => {
-        const status = card.dataset.statCard;
-        const chip = $$('.filter-chip').find(c => c.dataset.filter === status);
-        if (chip) chip.click();
-        else {
-            STATE.filter = status;
-            STATE.selectedId = null;
-            loadQueue();
-        }
+        applyFilter(card.dataset.statCard);
     }));
 
     let searchTimer = null;
@@ -594,8 +839,26 @@
         clearTimeout(searchTimer);
         searchTimer = setTimeout(() => {
             STATE.query = e.target.value.trim();
+            STATE.selectedId = null;
             loadQueue();
         }, 300);
+    });
+
+    const sidebar = $('#sidebar');
+    const sidebarBackdrop = $('#sidebarBackdrop');
+    function openSidebar() {
+        sidebar.classList.add('open');
+        sidebarBackdrop.classList.add('open');
+    }
+    function closeSidebar() {
+        sidebar.classList.remove('open');
+        sidebarBackdrop.classList.remove('open');
+    }
+    $('#menuButton').addEventListener('click', openSidebar);
+    sidebarBackdrop.addEventListener('click', closeSidebar);
+    $('#activityNavButton').addEventListener('click', () => {
+        closeSidebar();
+        $('#activitySection').scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
 
     $('#btnLogout').addEventListener('click', () => {
@@ -607,6 +870,7 @@
     });
 
     // ----------------------------- BOOT -----------------------------
+    syncFilterControls();
     loadOverview();
     loadActivity();
     loadQueue();
