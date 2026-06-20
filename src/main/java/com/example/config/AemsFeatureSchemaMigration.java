@@ -2,12 +2,14 @@ package com.example.config;
 
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.annotation.Order;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
 @Order(-1000)
+@ConditionalOnProperty(name = "app.schema-migration.enabled", havingValue = "true", matchIfMissing = true)
 public class AemsFeatureSchemaMigration implements ApplicationRunner {
 
     private final JdbcTemplate jdbcTemplate;
