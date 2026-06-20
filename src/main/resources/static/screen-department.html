@@ -639,6 +639,11 @@
                                             <p class="mt-0.5 line-clamp-1 text-xs text-slate-500">${h(p.description || '—').substring(0, 90)}</p>
                                             ${p.organizer ? `<p class="mt-1 text-[11px] font-semibold text-fpt-700">🧑‍💼 ${h(p.organizer)}${(p.supportStaffNeeded > 0) ? ` · 🤝 ${p.supportStaffNeeded} hỗ trợ` : ''}</p>` : ''}
                                             ${p.speakers ? `<p class="mt-1 line-clamp-1 text-[11px] font-semibold text-emerald-700">🎤 ${h(p.speakers)}</p>` : ''}
+                                            ${p.note && ['REVISION', 'REJECTED'].includes(String(p.status || '').toUpperCase()) ? `
+                                                <div class="mt-2 border-l-4 ${String(p.status || '').toUpperCase() === 'REJECTED' ? 'border-rose-400 bg-rose-50 text-rose-800' : 'border-amber-400 bg-amber-50 text-amber-900'} px-3 py-2">
+                                                    <p class="text-[10px] font-extrabold uppercase tracking-wider">${String(p.status || '').toUpperCase() === 'REJECTED' ? 'Lý do từ chối' : 'Nội dung yêu cầu sửa'}</p>
+                                                    <p class="mt-0.5 whitespace-pre-line text-xs leading-5">${h(p.note)}</p>
+                                                </div>` : ''}
                                         </td>
                                         <td class="px-5 py-3.5 text-slate-700">${h(p.departmentName || '—')}</td>
                                         <td class="px-5 py-3.5 text-slate-700">
@@ -647,9 +652,10 @@
                                         </td>
                                         <td class="px-5 py-3.5">${statusBadge(p.status)}</td>
                                         <td class="px-5 py-3.5 text-right">
-                                            <button type="button" data-edit="${p.id}" class="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-800" title="Xem/sửa">
-                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536M9 11l6.586-6.586a2 2 0 112.828 2.828L11.828 13.828a2 2 0 01-.707.464l-4.121 1.06a.5.5 0 01-.621-.621l1.06-4.121a2 2 0 01.464-.707z"/></svg>
-                                            </button>
+                                            ${['PENDING', 'REVISION'].includes(String(p.status || '').toUpperCase()) ? `
+                                                <button type="button" data-edit="${p.id}" class="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-800" title="${String(p.status || '').toUpperCase() === 'REVISION' ? 'Chỉnh sửa theo yêu cầu' : 'Chỉnh sửa proposal'}">
+                                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536M9 11l6.586-6.586a2 2 0 112.828 2.828L11.828 13.828a2 2 0 01-.707.464l-4.121 1.06a.5.5 0 01-.621-.621l1.06-4.121a2 2 0 01.464-.707z"/></svg>
+                                                </button>` : `<span class="text-[11px] font-semibold text-slate-400">Đã đóng</span>`}
                                         </td>
                                     </tr>`).join('') : `
                                     <tr><td colspan="5" class="px-5 py-16 text-center">
@@ -884,6 +890,13 @@
     function openProposalDialog(id) {
         const isEdit = !!id;
         const proposal = isEdit ? store.proposals.find(p => String(p.id) === String(id)) : null;
+        const proposalStatus = String((proposal && proposal.status) || '').toUpperCase();
+        if (isEdit && !['PENDING', 'REVISION'].includes(proposalStatus)) {
+            toast(proposalStatus === 'REJECTED'
+                ? 'Proposal đã bị từ chối và không thể gửi lại.'
+                : 'Proposal này đã được xử lý và không thể chỉnh sửa.');
+            return;
+        }
         $('#proposalDialogTitle').textContent = isEdit ? 'Cập nhật proposal' : 'Tạo đề xuất sự kiện';
         $('#proposalId').value = isEdit && proposal ? proposal.id : '';
         $('#proposalTitle').value = (proposal && proposal.title) || '';

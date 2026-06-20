@@ -691,6 +691,9 @@ public class AdminDashboardController {
     public Map<String, Object> updateProposal(@PathVariable Long id, @RequestBody Map<String, Object> payload) {
         EventProposal proposal = eventProposalRepository.findById(id).orElseThrow(() -> notFound("Không tìm thấy proposal."));
         String status = textOrEmpty(proposal.getStatus()).toUpperCase(Locale.ROOT);
+        if ("REJECTED".equals(status)) {
+            throw badRequest("Proposal đã bị từ chối và đã đóng, không thể chỉnh sửa hoặc gửi lại.");
+        }
         if (!"PENDING".equals(status) && !"REVISION".equals(status)) {
             throw badRequest("Chỉ proposal đang PENDING hoặc REVISION mới được chỉnh sửa.");
         }
@@ -703,7 +706,12 @@ public class AdminDashboardController {
     @Transactional
     public Map<String, Object> updateProposalStatus(@PathVariable Long id, @RequestBody Map<String, Object> payload) {
         EventProposal proposal = eventProposalRepository.findById(id).orElseThrow(() -> notFound("Không tìm thấy proposal."));
-        proposal.setStatus(normalizeStatus(requiredString(payload, "status"), ACTIVE_PROPOSAL_STATUSES, "Status proposal không hợp lệ."));
+        String currentStatus = textOrEmpty(proposal.getStatus()).toUpperCase(Locale.ROOT);
+        String nextStatus = normalizeStatus(requiredString(payload, "status"), ACTIVE_PROPOSAL_STATUSES, "Status proposal không hợp lệ.");
+        if ("REJECTED".equals(currentStatus) && !"REJECTED".equals(nextStatus)) {
+            throw badRequest("Proposal đã bị từ chối và đã đóng, không thể gửi lại hoặc đổi trạng thái.");
+        }
+        proposal.setStatus(nextStatus);
         proposal.setNote(textOrNull(stringValue(payload, "note", textOrEmpty(proposal.getNote()))));
         return buildProposal(eventProposalRepository.save(proposal));
     }
@@ -801,7 +809,7 @@ public class AdminDashboardController {
         LocalDateTime invitationTime = currentDateTime();
         boolean invitationEmailQueued = invitationScheduler.isInvitationDue(saved, invitationTime);
         if (invitationEmailQueued) {
-            invitationScheduler.sendInvitationIfDueAsync(saved.getId(), invitationTime);
+            invitationScheduler.queueInvitationAfterCommit(saved.getId(), invitationTime);
         }
         result.put("invitationEmailQueued", invitationEmailQueued);
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
@@ -1486,7 +1494,7 @@ public class AdminDashboardController {
 
     /** Đọc quiz của event → DTO để truyền cho Google Forms API (thêm vào form check-in). */
     private List<GoogleFormsApiService.QuizItem> loadQuizItems(Long eventId) {
-        List<QuizQuestion> questions = quizQuestionRepository.findByEventId(eventId);
+        List<QuizQuestion> questions = quizQuestionRepository.findByEventIdOrderByIdAsc(eventId);
         List<GoogleFormsApiService.QuizItem> items = new ArrayList<>();
         for (QuizQuestion q : questions) {
             if (q.getQuestionText() == null || q.getQuestionText().isBlank()) continue;

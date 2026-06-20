@@ -9,9 +9,12 @@ import com.example.repository.RegistrationRepository;
 import com.example.service.EmailService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Async;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.core.task.TaskExecutor;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -25,13 +28,16 @@ public class InvitationScheduler {
     private final EventRepository eventRepository;
     private final RegistrationRepository registrationRepository;
     private final EmailService emailService;
+    private final TaskExecutor taskExecutor;
 
     public InvitationScheduler(EventRepository eventRepository,
                                RegistrationRepository registrationRepository,
-                               EmailService emailService) {
+                               EmailService emailService,
+                               @Qualifier("applicationTaskExecutor") TaskExecutor taskExecutor) {
         this.eventRepository = eventRepository;
         this.registrationRepository = registrationRepository;
         this.emailService = emailService;
+        this.taskExecutor = taskExecutor;
     }
 
     @Scheduled(fixedDelay = 600_000, initialDelay = 60_000)
@@ -88,11 +94,24 @@ public class InvitationScheduler {
                 && resolveEmail(reg) != null;
     }
 
-    @Async
-    public void sendInvitationIfDueAsync(Long registrationId, LocalDateTime now) {
+    public void queueInvitationAfterCommit(Long registrationId, LocalDateTime now) {
         if (registrationId == null) {
             return;
         }
+        Runnable sendTask = () -> sendInvitationIfDueAsync(registrationId, now);
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    taskExecutor.execute(sendTask);
+                }
+            });
+        } else {
+            taskExecutor.execute(sendTask);
+        }
+    }
+
+    private void sendInvitationIfDueAsync(Long registrationId, LocalDateTime now) {
         registrationRepository.findById(registrationId)
                 .ifPresent(registration -> sendInvitationIfDue(registration, now));
     }

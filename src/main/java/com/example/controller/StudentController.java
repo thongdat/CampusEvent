@@ -328,6 +328,7 @@ public class StudentController {
             response.put("status", current.getStatus());
             response.put("priorityScore", current.getPriorityScore() == null ? null : current.getPriorityScore().doubleValue());
             response.put("registrationId", current.getId());
+            addRegistrationGuidance(response, current, student, false);
             return ResponseEntity.ok(response);
         }
 
@@ -391,7 +392,7 @@ public class StudentController {
 
         boolean invitationEmailQueued = invitationScheduler.isInvitationDue(saved, now);
         if (invitationEmailQueued) {
-            invitationScheduler.sendInvitationIfDueAsync(saved.getId(), now);
+            invitationScheduler.queueInvitationAfterCommit(saved.getId(), now);
         }
 
         Map<String, Object> response = new LinkedHashMap<>();
@@ -401,7 +402,40 @@ public class StudentController {
         response.put("ticketCode", ticket == null ? null : ticket.getCode());
         response.put("invitationEmailQueued", invitationEmailQueued);
         response.put("priorityBreakdown", breakdown.toMap());
+        addRegistrationGuidance(response, saved, student, invitationEmailQueued);
         return ResponseEntity.ok(response);
+    }
+
+    private void addRegistrationGuidance(Map<String, Object> response,
+                                         Registration registration,
+                                         Student student,
+                                         boolean emailQueued) {
+        String email = student.getUser() == null ? "" : String.valueOf(student.getUser().getEmail());
+        response.put("notificationEmail", email);
+
+        if ("WAITLIST".equalsIgnoreCase(registration.getStatus())) {
+            response.put("emailStatus", "WAITLIST");
+            response.put("emailMessage", "Bạn đang ở danh sách chờ. Hệ thống sẽ gửi thư mời khi bạn được xác nhận suất tham dự.");
+            response.put("nextSteps", List.of(
+                    "Theo dõi trạng thái trong mục Đăng ký của tôi.",
+                    "Bạn sẽ tự động được nâng suất khi có người hủy và điểm ưu tiên phù hợp."));
+            return;
+        }
+
+        if (registration.getInvitationSentAt() != null) {
+            response.put("emailStatus", "SENT");
+            response.put("emailMessage", "Thư mời đã được gửi tới email đăng ký của bạn.");
+        } else if (emailQueued) {
+            response.put("emailStatus", "QUEUED");
+            response.put("emailMessage", "Thư mời đang được gửi tới email đăng ký của bạn.");
+        } else {
+            response.put("emailStatus", "SCHEDULED");
+            response.put("emailMessage", "Thư mời sẽ được gửi tới email đăng ký khoảng 7 ngày trước sự kiện.");
+        }
+        response.put("nextSteps", List.of(
+                "Mở mục Đăng ký của tôi để xem trạng thái và mã vé.",
+                "Kiểm tra cả hộp thư Spam/Quảng cáo nếu chưa thấy email.",
+                "Đến sớm và chuẩn bị quét QR check-in tại sự kiện."));
     }
 
     @DeleteMapping("/registrations/{id}")
