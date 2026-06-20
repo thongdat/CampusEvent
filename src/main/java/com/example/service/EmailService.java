@@ -7,6 +7,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import javax.mail.internet.MimeMessage;
@@ -27,6 +28,7 @@ public class EmailService {
     @Autowired
     private JavaMailSender mailSender;
 
+    @Async
     public void sendPlainEmail(String toEmail, String subject, String content) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(toEmail);
@@ -39,6 +41,7 @@ public class EmailService {
     /**
      * Gửi mã OTP qua email để đặt lại mật khẩu
      */
+    @Async
     public void sendOtpEmail(String toEmail, String otpCode) {
         try {
             sendOtpHtml(toEmail, otpCode,
@@ -56,6 +59,7 @@ public class EmailService {
     /**
      * Gửi mã OTP xác minh email khi đăng ký tài khoản mới
      */
+    @Async
     public void sendRegistrationOtpEmail(String toEmail, String otpCode) {
         try {
             sendOtpHtml(toEmail, otpCode,
