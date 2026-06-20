@@ -15,4 +15,4 @@ COPY --from=build /workspace/target/eventmanagementt-1.0.0.jar app.jar
 
 USER appuser
 EXPOSE 10000
-ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75.0", "-jar", "/app/app.jar"]
+ENTRYPOINT ["java", "-XX:+UseSerialGC", "-XX:InitialRAMPercentage=20.0", "-XX:MaxRAMPercentage=60.0", "-jar", "/app/app.jar"]
