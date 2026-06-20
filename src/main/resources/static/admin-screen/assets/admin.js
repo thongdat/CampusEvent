@@ -232,14 +232,29 @@
 
     async function api(path, options = {}) {
         const method = String(options.method || 'GET').toUpperCase();
-        const response = await fetch(`${API_BASE}${path}`, {
-            headers: {
-                Accept: 'application/json',
-                'Content-Type': 'application/json',
-                ...(options.headers || {})
-            },
-            ...options
-        });
+        // Timeout để request không treo vô hạn khi máy chủ/DB đang "ngủ dậy" (cold start).
+        const timeoutMs = options.timeoutMs || 60000;
+        const controller = new AbortController();
+        const timer = window.setTimeout(() => controller.abort(), timeoutMs);
+        let response;
+        try {
+            response = await fetch(`${API_BASE}${path}`, {
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                    ...(options.headers || {})
+                },
+                signal: controller.signal,
+                ...options
+            });
+        } catch (err) {
+            if (err && err.name === 'AbortError') {
+                throw new Error('Máy chủ đang khởi động (cold start). Vui lòng thử lại sau vài giây.');
+            }
+            throw err;
+        } finally {
+            window.clearTimeout(timer);
+        }
         if (response.status === 401) {
             window.location.href = '/api/login.html';
             throw new Error('Bạn cần đăng nhập để tiếp tục.');
