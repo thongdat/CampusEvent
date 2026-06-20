@@ -1,8 +1,10 @@
 package com.example.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -11,9 +13,21 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import javax.mail.internet.MimeMessage;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 @Service
 public class EmailService {
@@ -28,14 +42,33 @@ public class EmailService {
     @Autowired
     private JavaMailSender mailSender;
 
+    /** Brevo (Sendinblue) HTTP API – dùng khi host chặn SMTP (vd Render free tier). */
+    @Value("${brevo.api.key:}")
+    private String brevoApiKey;
+
+    @Value("${brevo.sender.email:}")
+    private String brevoSenderEmail;
+
+    @Value("${brevo.sender.name:Campus Events}")
+    private String brevoSenderName;
+
+    private final HttpClient httpClient = HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(15))
+            .build();
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    private boolean brevoEnabled() {
+        return brevoApiKey != null && !brevoApiKey.isBlank();
+    }
+
     @Async
     public void sendPlainEmail(String toEmail, String subject, String content) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(toEmail);
-        message.setSubject(subject);
-        message.setText(content == null ? "" : content);
-        mailSender.send(message);
-        logger.info("Da gui email thong bao toi: {}", toEmail);
+        try {
+            dispatchEmail(toEmail, subject, null, content == null ? "" : content);
+            logger.info("Da gui email thong bao toi: {}", toEmail);
+        } catch (Exception e) {
+            logger.error("Lỗi gửi email thông báo tới {}: {}", toEmail, e.getMessage());
+        }
     }
 
     /**
@@ -78,12 +111,90 @@ public class EmailService {
                              String title,
                              String description,
                              String securityNote) throws Exception {
-        MimeMessage message = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
-        helper.setTo(toEmail);
-        helper.setSubject("Campus Events - " + title);
-        helper.setText(buildOtpHtml(otpCode, title, description, securityNote), true);
-        mailSender.send(message);
+        String html = buildOtpHtml(otpCode, title, description, securityNote);
+        dispatchEmail(toEmail, "Campus Events - " + title, html, null);
+    }
+
+    /**
+     * Gửi 1 email: ưu tiên Brevo HTTP API (cổng 443, không bị Render free chặn);
+     * nếu chưa cấu hình Brevo thì dùng SMTP (JavaMailSender) như trước.
+     */
+    private void dispatchEmail(String toEmail, String subject, String html, String text) throws Exception {
+        if (brevoEnabled()) {
+            sendViaBrevo(toEmail, subject, html, text, null, null);
+            return;
+        }
+        if (html != null) {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
+            helper.setTo(toEmail);
+            helper.setSubject(subject);
+            helper.setText(html, true);
+            mailSender.send(message);
+        } else {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setTo(toEmail);
+            message.setSubject(subject);
+            message.setText(text == null ? "" : text);
+            mailSender.send(message);
+        }
+    }
+
+    /** Gọi Brevo transactional email API. Ném lỗi nếu HTTP status không phải 2xx. */
+    private void sendViaBrevo(String toEmail,
+                              String subject,
+                              String html,
+                              String text,
+                              byte[] attachment,
+                              String attachmentName) throws Exception {
+        Map<String, Object> sender = new LinkedHashMap<>();
+        if (brevoSenderEmail != null && !brevoSenderEmail.isBlank()) {
+            sender.put("email", brevoSenderEmail.trim());
+        }
+        sender.put("name", brevoSenderName);
+
+        Map<String, Object> recipient = new LinkedHashMap<>();
+        recipient.put("email", toEmail);
+
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("sender", sender);
+        payload.put("to", List.of(recipient));
+        payload.put("subject", subject);
+        if (html != null) {
+            payload.put("htmlContent", html);
+        }
+        if (text != null) {
+            payload.put("textContent", text);
+        }
+        if (attachment != null && attachmentName != null) {
+            Map<String, Object> att = new LinkedHashMap<>();
+            att.put("content", Base64.getEncoder().encodeToString(attachment));
+            att.put("name", attachmentName);
+            List<Map<String, Object>> attachments = new ArrayList<>();
+            attachments.add(att);
+            payload.put("attachment", attachments);
+        }
+
+        String body = objectMapper.writeValueAsString(payload);
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create("https://api.brevo.com/v3/smtp/email"))
+                .timeout(Duration.ofSeconds(20))
+                .header("api-key", brevoApiKey)
+                .header("Content-Type", "application/json")
+                .header("Accept", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
+                .build();
+
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() < 200 || response.statusCode() >= 300) {
+            throw new RuntimeException("Brevo API trả về HTTP " + response.statusCode() + ": " + response.body());
+        }
+    }
+
+    private byte[] readClasspathBytes(String path) throws Exception {
+        try (InputStream in = new ClassPathResource(path).getInputStream()) {
+            return in.readAllBytes();
+        }
     }
 
     private String buildOtpHtml(String otpCode,
@@ -131,16 +242,23 @@ public class EmailService {
                                     String location,
                                     LocalDateTime startTime,
                                     LocalDateTime endTime) throws Exception {
-        MimeMessage message = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-        helper.setTo(toEmail);
-        helper.setSubject("Thư mời tham dự: " + eventTitle);
-
+        String subject = "Thư mời tham dự: " + eventTitle;
         String html = buildInvitationHtml(studentName, eventTitle, location, startTime, endTime);
-        helper.setText(html, true);
-        helper.addInline("invitationBanner", new ClassPathResource(INVITATION_BANNER));
 
-        mailSender.send(message);
+        if (brevoEnabled()) {
+            // Brevo API không hỗ trợ ảnh inline qua CID -> bỏ thẻ img CID và gửi banner kèm file.
+            String brevoHtml = html.replaceAll("<img[^>]*cid:invitationBanner[^>]*>", "");
+            sendViaBrevo(toEmail, subject, brevoHtml, null,
+                    readClasspathBytes(INVITATION_BANNER), "invitation-banner.png");
+        } else {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setTo(toEmail);
+            helper.setSubject(subject);
+            helper.setText(html, true);
+            helper.addInline("invitationBanner", new ClassPathResource(INVITATION_BANNER));
+            mailSender.send(message);
+        }
         logger.info("Đã gửi thư mời sự kiện '{}' tới {}", eventTitle, toEmail);
     }
 
