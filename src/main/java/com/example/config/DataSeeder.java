@@ -25,8 +25,10 @@ import com.example.repository.StudentRepository;
 import com.example.repository.TicketRepository;
 import com.example.repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
@@ -35,12 +37,25 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-// Seed data is now maintained in src/main/resources/schema_backup.sql.
-// Keep this class as a reference/fallback, but do not auto-run it on Spring Boot startup.
-//@Configuration
+// Disabled by default. The Render profile enables this idempotent demo seed
+// after PostgreSQL schema initialization.
+@Configuration
+@ConditionalOnProperty(name = "app.seed.enabled", havingValue = "true")
 public class DataSeeder {
 
     private static final String BULK_PREFIX = "[AEMS]";
+
+    @Value("${app.seed.admin-password:}")
+    private String adminPassword;
+
+    @Value("${app.seed.department-password:}")
+    private String departmentPassword;
+
+    @Value("${app.seed.committee-password:}")
+    private String committeePassword;
+
+    @Value("${app.seed.student-password:}")
+    private String studentPassword;
 
     @Bean
     public CommandLineRunner seedDatabase(
@@ -59,6 +74,11 @@ public class DataSeeder {
             PasswordEncoder passwordEncoder) {
 
         return args -> {
+            requireSeedPassword("DEMO_ADMIN_PASSWORD", adminPassword);
+            requireSeedPassword("DEMO_DEPARTMENT_PASSWORD", departmentPassword);
+            requireSeedPassword("DEMO_COMMITTEE_PASSWORD", committeePassword);
+            requireSeedPassword("DEMO_STUDENT_PASSWORD", studentPassword);
+
             Map<String, Role> roles = ensureRoles(roleRepository);
             List<Department> departments = ensureDepartments(departmentRepository);
             List<User> admins = ensureAdminUsers(userRepository, passwordEncoder, roles.get("ADMIN"));
@@ -147,8 +167,8 @@ public class DataSeeder {
 
     private List<User> ensureAdminUsers(UserRepository userRepository, PasswordEncoder passwordEncoder, Role adminRole) {
         List<User> admins = new ArrayList<>();
-        admins.add(ensureUser(userRepository, passwordEncoder, "Admin Primary", "aems.admin01@uni.edu.vn", "admin123", "0901000001", true, adminRole, "Hệ thống", 0, 980));
-        admins.add(ensureUser(userRepository, passwordEncoder, "Admin Operations", "aems.admin02@uni.edu.vn", "admin123", "0901000002", true, adminRole, "Hệ thống", 0, 760));
+        admins.add(ensureUser(userRepository, passwordEncoder, "Admin Primary", "aems.admin01@uni.edu.vn", adminPassword, "0901000001", true, adminRole, "Hệ thống", 0, 980));
+        admins.add(ensureUser(userRepository, passwordEncoder, "Admin Operations", "aems.admin02@uni.edu.vn", adminPassword, "0901000002", true, adminRole, "Hệ thống", 0, 760));
         admins.add(ensureUser(userRepository, passwordEncoder, "Locked Admin", "locked@example.com", "locked123", "0991111111", false, adminRole, "Hệ thống", 0, 120));
         return admins;
     }
@@ -158,7 +178,7 @@ public class DataSeeder {
             Department department = departments.get(i);
             String email = String.format("dept%02d@uni.edu.vn", i + 1);
             String name = "Điều phối " + department.getName();
-            ensureUser(userRepository, passwordEncoder, name, email, "dept123", String.format("0912%06d", i + 1), true, departmentRole, department.getName(), 0, 420 + i * 11);
+            ensureUser(userRepository, passwordEncoder, name, email, departmentPassword, String.format("0912%06d", i + 1), true, departmentRole, department.getName(), 0, 420 + i * 11);
         }
     }
 
@@ -169,7 +189,7 @@ public class DataSeeder {
         };
         for (int i = 0; i < names.length; i++) {
             ensureUser(userRepository, passwordEncoder, names[i], String.format("committee%02d@uni.edu.vn", i + 1),
-                    "com123", String.format("0923%06d", i + 1), true, committeeRole, "Hội đồng duyệt", 0, 360 + i * 17);
+                    committeePassword, String.format("0923%06d", i + 1), true, committeeRole, "Hội đồng duyệt", 0, 360 + i * 17);
         }
     }
 
@@ -189,7 +209,7 @@ public class DataSeeder {
                     passwordEncoder,
                     fullName,
                     String.format("student%03d@uni.edu.vn", i),
-                    "stu123",
+                    studentPassword,
                     String.format("0934%06d", i),
                     i % 23 != 0,
                     studentRole,
@@ -242,6 +262,12 @@ public class DataSeeder {
             user.setTotalPoints(totalPoints);
             return userRepository.save(user);
         });
+    }
+
+    private void requireSeedPassword(String environmentName, String value) {
+        if (value == null || value.trim().length() < 8) {
+            throw new IllegalStateException(environmentName + " must contain at least 8 characters when APP_SEED_ENABLED=true");
+        }
     }
 
     private List<EventProposal> createProposals(EventProposalRepository repository, List<Department> departments) {
