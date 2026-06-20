@@ -60,6 +60,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -462,7 +463,7 @@ public class AdminDashboardController {
     @GetMapping("/events")
     public List<Map<String, Object>> events() {
         LocalDateTime asOf = currentDateTime();
-        List<Event> events = eventRepository.findAll();
+        List<Event> events = eventRepository.findAllWithDepartment();
         Map<Long, List<Registration>> registrationsByEvent = registrationRepository
                 .findByRegistrationDateLessThanEqual(asOf, Sort.unsorted()).stream()
                 .filter(registration -> registration.getEvent() != null)
@@ -672,8 +673,10 @@ public class AdminDashboardController {
 
     @GetMapping("/proposals")
     public List<Map<String, Object>> proposals() {
+        // Nạp danh sách committee 1 lần (thay cho query lặp lại trong từng proposal).
+        List<User> committees = userRepository.findByRole_NameAndStatus("COMMITTEE", true);
         return eventProposalRepository.findByStatusIn(ACTIVE_PROPOSAL_STATUSES, Sort.by(Sort.Direction.DESC, "createdAt")).stream()
-                .map(this::buildProposal)
+                .map(p -> buildProposal(p, committees))
                 .collect(Collectors.toList());
     }
 
@@ -777,8 +780,20 @@ public class AdminDashboardController {
 
     @GetMapping("/registrations")
     public List<Map<String, Object>> registrations() {
-        return registrationRepository.findByRegistrationDateLessThanEqual(currentDateTime(), Sort.by(Sort.Direction.DESC, "registrationDate")).stream()
-                .map(this::buildRegistration)
+        List<Registration> regs = registrationRepository.findByRegistrationDateLessThanEqual(
+                currentDateTime(), Sort.by(Sort.Direction.DESC, "registrationDate"));
+        // Nạp attendance 1 lần theo danh sách registrationId (thay cho N+1 findByRegistrationId).
+        Map<Long, Attendance> attendanceByReg = new HashMap<>();
+        List<Long> regIds = regs.stream().map(Registration::getId).collect(Collectors.toList());
+        if (!regIds.isEmpty()) {
+            for (Attendance a : attendanceRepository.findByRegistrationIdIn(regIds)) {
+                if (a.getRegistration() != null && a.getRegistration().getId() != null) {
+                    attendanceByReg.put(a.getRegistration().getId(), a);
+                }
+            }
+        }
+        return regs.stream()
+                .map(r -> buildRegistration(r, attendanceByReg.get(r.getId())))
                 .collect(Collectors.toList());
     }
 
@@ -933,9 +948,16 @@ public class AdminDashboardController {
     }
 
     private List<Map<String, Object>> buildRoles(List<Role> roles) {
+        // Đếm user theo roleId 1 lần (thay cho countByRole_Id lặp mỗi role).
+        Map<Long, Long> usersByRole = new HashMap<>();
+        for (User u : userRepository.findAll()) {
+            if (u.getRole() != null && u.getRole().getId() != null) {
+                usersByRole.merge(u.getRole().getId(), 1L, Long::sum);
+            }
+        }
         return roles.stream()
                 .sorted(Comparator.comparing(Role::getName, Comparator.nullsLast(String::compareToIgnoreCase)))
-                .map(role -> buildRole(role, userRepository.countByRole_Id(role.getId())))
+                .map(role -> buildRole(role, usersByRole.getOrDefault(role.getId(), 0L)))
                 .collect(Collectors.toList());
     }
 
@@ -949,17 +971,32 @@ public class AdminDashboardController {
     }
 
     private List<Map<String, Object>> buildDepartments(List<Department> departments) {
+        // Nạp 1 lần: toàn bộ user (cho việc tìm manager) + đếm student theo major.
+        List<User> allUsers = userRepository.findAll();
+        Map<String, Long> studentCountByMajor = new HashMap<>();
+        for (Student s : studentRepository.findAll()) {
+            String major = textOrEmpty(s.getMajor());
+            if (!major.isEmpty()) {
+                studentCountByMajor.merge(major, 1L, Long::sum);
+            }
+        }
         return departments.stream()
                 .sorted(Comparator.comparing(Department::getName, Comparator.nullsLast(String::compareToIgnoreCase)))
-                .map(this::buildDepartment)
+                .map(d -> buildDepartment(d, allUsers, studentCountByMajor))
                 .collect(Collectors.toList());
     }
 
     private Map<String, Object> buildDepartment(Department department) {
+        return buildDepartment(department, userRepository.findAll(), null);
+    }
+
+    private Map<String, Object> buildDepartment(Department department,
+                                                List<User> allUsers,
+                                                Map<String, Long> studentCountByMajor) {
         long eventCount = eventRepository.countByDepartmentId(department.getId());
         long proposalCount = eventProposalRepository.countByDepartmentIdAndStatusIn(department.getId(), ACTIVE_PROPOSAL_STATUSES);
-        long studentCount = countStudentsForDepartment(department);
-        User manager = managerForDepartment(department);
+        long studentCount = countStudentsForDepartment(department, studentCountByMajor);
+        User manager = managerForDepartment(department, allUsers);
 
         Map<String, Object> item = new LinkedHashMap<>();
         item.put("id", department.getId());
@@ -986,9 +1023,13 @@ public class AdminDashboardController {
     }
 
     private User managerForDepartment(Department department) {
+        return managerForDepartment(department, userRepository.findAll());
+    }
+
+    private User managerForDepartment(Department department, List<User> allUsers) {
         String departmentName = textOrEmpty(department.getName());
         String facultyName = AcademicStructure.facultyOf(departmentName);
-        return userRepository.findAll().stream()
+        return allUsers.stream()
                 .filter(user -> Boolean.TRUE.equals(user.getStatus()))
                 .filter(user -> user.getRole() != null)
                 .filter(user -> {
@@ -1008,22 +1049,34 @@ public class AdminDashboardController {
     }
 
     private long countStudentsForDepartment(Department department) {
+        return countStudentsForDepartment(department, null);
+    }
+
+    /** countByMajor có thể lấy từ map đã nạp sẵn; nếu map null thì query trực tiếp. */
+    private long countStudentsForDepartment(Department department, Map<String, Long> studentCountByMajor) {
         String name = textOrEmpty(department.getName());
         if (AcademicStructure.isFaculty(name)) {
             return AcademicStructure.departmentsForFaculty(name).stream()
-                    .mapToLong(studentRepository::countByMajor)
+                    .mapToLong(major -> countByMajor(major, studentCountByMajor))
                     .sum();
         }
-        long count = studentRepository.countByMajor(name);
+        long count = countByMajor(name, studentCountByMajor);
         if (count > 0) {
             return count;
         }
         String description = textOrEmpty(department.getDescription());
         String prefix = "Bộ phận ";
         if (description.startsWith(prefix)) {
-            return studentRepository.countByMajor(description.substring(prefix.length()).trim());
+            return countByMajor(description.substring(prefix.length()).trim(), studentCountByMajor);
         }
         return 0;
+    }
+
+    private long countByMajor(String major, Map<String, Long> studentCountByMajor) {
+        if (studentCountByMajor != null) {
+            return studentCountByMajor.getOrDefault(major, 0L);
+        }
+        return studentRepository.countByMajor(major);
     }
 
     private Map<String, Object> buildReports() {
@@ -1235,6 +1288,10 @@ public class AdminDashboardController {
     }
 
     private Map<String, Object> buildProposal(EventProposal proposal) {
+        return buildProposal(proposal, userRepository.findByRole_NameAndStatus("COMMITTEE", true));
+    }
+
+    private Map<String, Object> buildProposal(EventProposal proposal, List<User> committees) {
         Map<String, Object> item = new LinkedHashMap<>();
         item.put("id", proposal.getId());
         item.put("title", textOrEmpty(proposal.getTitle()));
@@ -1255,7 +1312,7 @@ public class AdminDashboardController {
         item.put("departmentId", proposal.getDepartment() != null ? proposal.getDepartment().getId() : null);
         item.put("departmentName", proposal.getDepartment() != null ? textOrEmpty(proposal.getDepartment().getName()) : "");
         item.put("facultyName", proposal.getDepartment() != null ? AcademicStructure.facultyOf(proposal.getDepartment().getName()) : "Khác");
-        item.put("committeeName", committeeNameForProposal(proposal));
+        item.put("committeeName", committeeNameForProposal(proposal, committees));
         item.put("committeeStatus", "ASSIGNED");
         List<Map<String, Object>> quizQuestions = parseQuizPayload(proposal.getQuizPayload());
         item.put("quizQuestions", quizQuestions);
@@ -1263,9 +1320,8 @@ public class AdminDashboardController {
         return item;
     }
 
-    private String committeeNameForProposal(EventProposal proposal) {
-        List<User> committees = userRepository.findByRole_NameAndStatus("COMMITTEE", true);
-        if (committees.isEmpty()) {
+    private String committeeNameForProposal(EventProposal proposal, List<User> committees) {
+        if (committees == null || committees.isEmpty()) {
             return "Hội đồng duyệt chung";
         }
         long seed = proposal.getId() != null ? proposal.getId() : 0;
@@ -1274,11 +1330,16 @@ public class AdminDashboardController {
     }
 
     private Map<String, Object> buildRegistration(Registration registration) {
+        return buildRegistration(registration,
+                attendanceRepository.findByRegistrationId(registration.getId()).orElse(null));
+    }
+
+    private Map<String, Object> buildRegistration(Registration registration, Attendance attendanceRecord) {
         Student student = registration.getStudent();
         User user = student != null ? student.getUser() : null;
         Event event = registration.getEvent();
         LocalDateTime asOf = currentDateTime();
-        Map<String, Object> attendance = attendanceRepository.findByRegistrationId(registration.getId())
+        Map<String, Object> attendance = java.util.Optional.ofNullable(attendanceRecord)
                 .filter(record -> record.getCheckinTime() != null && !record.getCheckinTime().isAfter(asOf))
                 .map(record -> {
                     Map<String, Object> item = new LinkedHashMap<>();
