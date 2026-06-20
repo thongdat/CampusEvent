@@ -485,24 +485,28 @@ public class AdminDashboardController {
                 .findByRegistrationDateLessThanEqual(asOf, Sort.unsorted()).stream()
                 .filter(registration -> registration.getEvent() != null)
                 .collect(Collectors.groupingBy(registration -> registration.getEvent().getId()));
-        Map<Long, List<Attendance>> attendanceByEvent = attendanceRepository.findAll().stream()
-                .filter(attendance -> attendance.getEvent() != null)
-                .filter(attendance -> attendance.getCheckinTime() != null
-                        && !attendance.getCheckinTime().isAfter(asOf))
-                .collect(Collectors.groupingBy(attendance -> attendance.getEvent().getId()));
-        Map<Long, List<Feedback>> feedbackByEvent = feedbackRepository.findAll().stream()
-                .filter(feedback -> feedback.getEvent() != null)
-                .filter(feedback -> feedback.getCreatedAt() != null
-                        && !feedback.getCreatedAt().isAfter(asOf))
-                .collect(Collectors.groupingBy(feedback -> feedback.getEvent().getId()));
+        // Query GROUP BY (mỗi event 1 dòng) thay cho findAll() quét toàn bảng attendance/feedback.
+        Map<Long, Long> attendedByEvent = new HashMap<>();
+        for (Object[] row : attendanceRepository.countAttendedGroupedByEvent(asOf)) {
+            if (row[0] != null) attendedByEvent.put(((Number) row[0]).longValue(), ((Number) row[1]).longValue());
+        }
+        Map<Long, long[]> feedbackByEvent = new HashMap<>();
+        Map<Long, Double> feedbackAvgByEvent = new HashMap<>();
+        for (Object[] row : feedbackRepository.aggregateGroupedByEvent(asOf)) {
+            if (row[0] == null) continue;
+            long eid = ((Number) row[0]).longValue();
+            feedbackByEvent.put(eid, new long[]{ ((Number) row[1]).longValue() });
+            feedbackAvgByEvent.put(eid, row[2] == null ? 0.0 : ((Number) row[2]).doubleValue());
+        }
 
         return events.stream()
                 .sorted(this::compareEventsForAdmin)
                 .map(event -> buildEvent(
                         event,
                         registrationsByEvent.getOrDefault(event.getId(), List.of()),
-                        attendanceByEvent.getOrDefault(event.getId(), List.of()),
-                        feedbackByEvent.getOrDefault(event.getId(), List.of()),
+                        attendedByEvent.getOrDefault(event.getId(), 0L),
+                        feedbackByEvent.containsKey(event.getId()) ? feedbackByEvent.get(event.getId())[0] : 0L,
+                        feedbackAvgByEvent.getOrDefault(event.getId(), 0.0),
                         asOf))
                 .collect(Collectors.toList());
     }
@@ -1226,10 +1230,26 @@ public class AdminDashboardController {
                                            List<Attendance> attendances,
                                            List<Feedback> feedbacks,
                                            LocalDateTime asOf) {
-        boolean eventHasStarted = event.getStartTime() != null && !event.getStartTime().isAfter(asOf);
-        long attended = eventHasStarted ? attendances.stream()
+        long attendedCount = attendances.stream()
                 .filter(attendance -> !"ABSENT".equalsIgnoreCase(attendance.getStatus()))
-                .count() : 0;
+                .count();
+        double averageRating = feedbacks.stream()
+                .map(Feedback::getRating)
+                .filter(Objects::nonNull)
+                .mapToInt(Integer::intValue)
+                .average()
+                .orElse(0);
+        return buildEvent(event, registrations, attendedCount, feedbacks.size(), averageRating, asOf);
+    }
+
+    private Map<String, Object> buildEvent(Event event,
+                                           List<Registration> registrations,
+                                           long attendedCount,
+                                           long feedbackCount,
+                                           double feedbackAvg,
+                                           LocalDateTime asOf) {
+        boolean eventHasStarted = event.getStartTime() != null && !event.getStartTime().isAfter(asOf);
+        long attended = eventHasStarted ? attendedCount : 0;
         long waitlist = registrations.stream()
                 .filter(registration -> "WAITLIST".equalsIgnoreCase(registration.getStatus()))
                 .count();
@@ -1238,12 +1258,7 @@ public class AdminDashboardController {
         long registeredCount = registrations.stream()
                 .filter(registration -> "REGISTERED".equalsIgnoreCase(registration.getStatus()))
                 .count();
-        double averageRating = feedbacks.stream()
-                .map(Feedback::getRating)
-                .filter(Objects::nonNull)
-                .mapToInt(Integer::intValue)
-                .average()
-                .orElse(0);
+        double averageRating = feedbackAvg;
 
         Map<String, Object> item = new LinkedHashMap<>();
         item.put("id", event.getId());
@@ -1264,7 +1279,7 @@ public class AdminDashboardController {
         item.put("registrationCount", registeredCount);
         item.put("waitlistCount", waitlist);
         item.put("attendanceCount", attended);
-        item.put("feedbackCount", feedbacks.size());
+        item.put("feedbackCount", feedbackCount);
         item.put("averageRating", round(averageRating));
         item.put("fillRate", event.getCapacity() != null && event.getCapacity() > 0
                 ? round(registrations.size() * 100.0 / event.getCapacity())
