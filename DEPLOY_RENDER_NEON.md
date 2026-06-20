@@ -95,3 +95,28 @@ Mật khẩu là giá trị tương ứng đã nhập ở Render Environment.
 ## 6. Ghi chú gói miễn phí
 
 Render free web service có thể ngủ khi không có truy cập. Lần mở đầu tiên sau thời gian ngủ sẽ chậm hơn. Neon có thể tạm dừng compute khi không hoạt động và tự bật lại khi ứng dụng kết nối.
+
+## 7. Sao chép dữ liệu thật từ SQL Server local sang Neon
+
+Sau khi Render đã chạy một lần và tạo đủ schema Neon, tắt dữ liệu seed giả bằng cách đổi `APP_SEED_ENABLED=false` trong Render Environment.
+
+Trên máy local, đặt thông tin Neon chỉ trong phiên PowerShell hiện tại:
+
+```powershell
+$env:TARGET_DB_URL="jdbc:postgresql://<NEON_HOST>/neondb?sslmode=require"
+$env:TARGET_DB_USERNAME="neondb_owner"
+$env:TARGET_DB_PASSWORD="<NEON_PASSWORD>"
+```
+
+SQL Server Windows Authentication trên `localhost:1433` là mặc định. Nếu dùng SQL login, đặt thêm `SOURCE_DB_URL`, `SOURCE_DB_USERNAME`, `SOURCE_DB_PASSWORD`.
+
+Chạy công cụ migration:
+
+```powershell
+.\apache-maven-3.9.9\bin\mvn.cmd --batch-mode --no-transfer-progress `
+  -DskipTests exec:java `
+  -Dexec.mainClass=com.example.tools.SqlServerToPostgresMigration `
+  -Dexec.classpathScope=runtime
+```
+
+Công cụ sẽ xóa dữ liệu seed hiện có trên Neon, sao chép các bảng theo thứ tự khóa ngoại, giữ nguyên ID và cập nhật lại PostgreSQL sequences. Không ghi mật khẩu vào source hoặc log.
