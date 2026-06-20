@@ -171,7 +171,8 @@ public class StudentController {
         Student student = email != null ? resolveStudentOptional(email).orElse(null) : null;
         LocalDateTime now = LocalDateTime.now();
 
-        List<Event> events = eventRepository.findAll().stream()
+        // fetch-join để department được nạp sẵn -> tránh N+1 lazy-load department mỗi event.
+        List<Event> events = eventRepository.findAllWithDepartment().stream()
                 .filter(e -> e.getStatus() != null)
                 .filter(e -> UPCOMING_STATUSES.contains(e.getStatus().toUpperCase(Locale.ROOT))
                         || "COMPLETED".equalsIgnoreCase(e.getStatus()))
@@ -215,8 +216,27 @@ public class StudentController {
                     .collect(Collectors.toList());
         }
 
+        // Nạp đăng ký 1 lần rồi gom theo event (thay cho N+1 findByEventId trong mỗi card).
+        Map<Long, List<Registration>> regsByEvent = new HashMap<>();
+        for (Registration r : registrationRepository.findAll()) {
+            if (r.getEvent() != null && r.getEvent().getId() != null) {
+                regsByEvent.computeIfAbsent(r.getEvent().getId(), k -> new ArrayList<>()).add(r);
+            }
+        }
+        // Đăng ký của riêng sinh viên hiện tại (1 query) để biết myStatus trên từng card.
+        Map<Long, Registration> myRegByEvent = new HashMap<>();
+        if (student != null) {
+            for (Registration r : registrationRepository.findByStudentId(student.getId())) {
+                if (r.getEvent() != null && r.getEvent().getId() != null) {
+                    myRegByEvent.put(r.getEvent().getId(), r);
+                }
+            }
+        }
+
         List<Map<String, Object>> items = events.stream()
-                .map(e -> buildEventCard(e, student, now))
+                .map(e -> buildEventCard(e, student, now,
+                        regsByEvent.getOrDefault(e.getId(), List.of()),
+                        myRegByEvent.get(e.getId())))
                 .collect(Collectors.toList());
 
         Comparator<Map<String, Object>> byStartIso = Comparator.comparing(m -> {
@@ -710,6 +730,15 @@ public class StudentController {
     }
 
     private Map<String, Object> buildEventCard(Event event, Student student, LocalDateTime now) {
+        List<Registration> regs = registrationRepository.findByEventId(event.getId());
+        Registration myReg = student == null ? null
+                : registrationRepository.findByEventIdAndStudentId(event.getId(), student.getId()).orElse(null);
+        return buildEventCard(event, student, now, regs, myReg);
+    }
+
+    /** Bản dựng card KHÔNG tự query DB — dữ liệu đăng ký được truyền vào sẵn (tránh N+1 ở danh sách). */
+    private Map<String, Object> buildEventCard(Event event, Student student, LocalDateTime now,
+                                               List<Registration> regs, Registration myReg) {
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("id", event.getId());
         map.put("title", event.getTitle());
@@ -731,8 +760,7 @@ public class StudentController {
             map.put("department", dept);
         }
 
-        // Đếm slot
-        List<Registration> regs = registrationRepository.findByEventId(event.getId());
+        // Đếm slot (dùng danh sách đăng ký đã nạp sẵn).
         long registered = regs.stream().filter(r -> "REGISTERED".equalsIgnoreCase(r.getStatus())).count();
         long waitlist = regs.stream().filter(r -> "WAITLIST".equalsIgnoreCase(r.getStatus())).count();
         map.put("registeredCount", registered);
@@ -753,11 +781,11 @@ public class StudentController {
             map.put("priorityPoints", bd.pointsScore);
             map.put("priorityTime", bd.timeScore);
 
-            registrationRepository.findByEventIdAndStudentId(event.getId(), student.getId()).ifPresent(r -> {
-                map.put("myRegistrationId", r.getId());
-                map.put("myStatus", r.getStatus());
-                map.put("myPriorityScore", r.getPriorityScore() == null ? null : r.getPriorityScore().doubleValue());
-            });
+            if (myReg != null) {
+                map.put("myRegistrationId", myReg.getId());
+                map.put("myStatus", myReg.getStatus());
+                map.put("myPriorityScore", myReg.getPriorityScore() == null ? null : myReg.getPriorityScore().doubleValue());
+            }
         } else {
             map.put("priorityPreview", 0);
         }
