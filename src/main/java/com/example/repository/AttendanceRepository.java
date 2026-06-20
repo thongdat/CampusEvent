@@ -2,6 +2,8 @@ package com.example.repository;
 
 import com.example.model.Attendance;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -18,4 +20,11 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
     long countByStatus(String status);
     long countByCheckinTimeLessThanEqual(LocalDateTime checkinTime);
     long countByStatusAndRegistration_Event_StartTimeLessThan(String status, LocalDateTime endTime);
+
+    /** Đếm số người ĐÃ điểm danh (status != ABSENT, checkin <= asOf) theo từng event — 1 query gộp. */
+    @Query("select a.event.id, count(a) from Attendance a "
+            + "where a.checkinTime is not null and a.checkinTime <= :asOf "
+            + "and upper(coalesce(a.status, '')) <> 'ABSENT' "
+            + "group by a.event.id")
+    List<Object[]> countAttendedGroupedByEvent(@Param("asOf") LocalDateTime asOf);
 }
