@@ -99,7 +99,8 @@ public class AuthController {
      * Gửi mã OTP tới email
      */
     @PostMapping("/forgot-password")
-    public ResponseEntity<Map<String, Object>> forgotPassword(@RequestBody Map<String, String> request) {
+    public ResponseEntity<Map<String, Object>> forgotPassword(@RequestBody Map<String, String> request,
+                                                              HttpServletRequest httpRequest) {
         String email = request.get("email");
         if (email == null || email.trim().isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of(
@@ -107,7 +108,10 @@ public class AuthController {
                 "message", "Vui lòng nhập email."
             ));
         }
-        Map<String, Object> result = authService.forgotPassword(email.trim());
+        if (doesNotMatchSignedInEmail(httpRequest, email)) {
+            return emailMismatchResponse();
+        }
+        Map<String, Object> result = authService.forgotPassword(canonicalEmail(httpRequest, email));
         return ResponseEntity.ok(result);
     }
 
@@ -116,7 +120,8 @@ public class AuthController {
      * Xác minh mã OTP
      */
     @PostMapping("/verify-otp")
-    public ResponseEntity<Map<String, Object>> verifyOtp(@RequestBody Map<String, String> request) {
+    public ResponseEntity<Map<String, Object>> verifyOtp(@RequestBody Map<String, String> request,
+                                                         HttpServletRequest httpRequest) {
         String email = request.get("email");
         String otp = request.get("otp");
         if (email == null || otp == null) {
@@ -125,7 +130,10 @@ public class AuthController {
                 "message", "Vui lòng nhập email và mã OTP."
             ));
         }
-        Map<String, Object> result = authService.verifyOtp(email.trim(), otp.trim());
+        if (doesNotMatchSignedInEmail(httpRequest, email)) {
+            return emailMismatchResponse();
+        }
+        Map<String, Object> result = authService.verifyOtp(canonicalEmail(httpRequest, email), otp.trim());
         return ResponseEntity.ok(result);
     }
 
@@ -134,7 +142,8 @@ public class AuthController {
      * Đặt lại mật khẩu mới
      */
     @PostMapping("/reset-password")
-    public ResponseEntity<Map<String, Object>> resetPassword(@RequestBody Map<String, String> request) {
+    public ResponseEntity<Map<String, Object>> resetPassword(@RequestBody Map<String, String> request,
+                                                             HttpServletRequest httpRequest) {
         String email = request.get("email");
         String otp = request.get("otp");
         String newPassword = request.get("newPassword");
@@ -144,14 +153,38 @@ public class AuthController {
                 "message", "Vui lòng nhập đầy đủ thông tin."
             ));
         }
+        if (doesNotMatchSignedInEmail(httpRequest, email)) {
+            return emailMismatchResponse();
+        }
         if (newPassword.length() < 8) {
             return ResponseEntity.badRequest().body(Map.of(
                 "success", false,
                 "message", "Mật khẩu mới phải có ít nhất 8 ký tự."
             ));
         }
-        Map<String, Object> result = authService.resetPassword(email.trim(), otp.trim(), newPassword);
+        Map<String, Object> result = authService.resetPassword(canonicalEmail(httpRequest, email), otp.trim(), newPassword);
         return ResponseEntity.ok(result);
+    }
+
+    private boolean doesNotMatchSignedInEmail(HttpServletRequest request, String submittedEmail) {
+        String signedInEmail = SessionAuth.email(request);
+        return signedInEmail != null
+                && !signedInEmail.isBlank()
+                && !signedInEmail.trim().equalsIgnoreCase(submittedEmail == null ? "" : submittedEmail.trim());
+    }
+
+    private ResponseEntity<Map<String, Object>> emailMismatchResponse() {
+        return ResponseEntity.badRequest().body(Map.of(
+            "success", false,
+            "message", "Email không khớp với tài khoản đang đăng nhập."
+        ));
+    }
+
+    private String canonicalEmail(HttpServletRequest request, String submittedEmail) {
+        String signedInEmail = SessionAuth.email(request);
+        return signedInEmail != null && !signedInEmail.isBlank()
+                ? signedInEmail.trim()
+                : submittedEmail.trim();
     }
 
 }

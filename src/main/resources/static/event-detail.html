@@ -280,18 +280,29 @@
     async function registerEvent() {
         try {
             const r = await api('/student/events/' + id + '/register', { method: 'POST', body: {} });
-            const score = r.priorityScore == null ? '—' : Number(r.priorityScore).toFixed(1);
-            if (r.status === 'REGISTERED') {
-                toast('🎉 Đăng ký thành công · Ưu tiên ' + score);
-            } else if (r.status === 'WAITLIST') {
-                toast('Vào hàng chờ ưu tiên · điểm ' + score, 'warn');
-            } else {
-                toast('Đã đăng ký trước đó (' + r.status + ')', 'warn');
-            }
+            showRegistrationConfirmation(r);
             load();
         } catch (e) {
             toast(e.message, 'error');
         }
+    }
+
+    function showRegistrationConfirmation(result) {
+        const registered = result.status === 'REGISTERED';
+        const email = result.notificationEmail || userEmail || '';
+        const steps = Array.isArray(result.nextSteps) ? result.nextSteps : [];
+        const overlay = document.createElement('div');
+        overlay.className = 'fixed inset-0 z-50 grid place-items-center bg-slate-950/50 p-4 backdrop-blur-sm';
+        overlay.innerHTML = `<div class="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
+            <div class="flex items-start gap-4"><span class="grid h-12 w-12 shrink-0 place-items-center rounded-full ${registered ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'} text-2xl font-bold">${registered ? '✓' : '⌛'}</span><div><h3 class="text-xl font-bold text-slate-900">${registered ? 'Đăng ký thành công' : 'Đã vào danh sách chờ'}</h3><p class="mt-1 text-sm text-slate-600">${registered ? 'Suất tham dự của bạn đã được xác nhận.' : 'Hệ thống sẽ tự động cập nhật khi có suất trống.'}</p></div></div>
+            ${result.ticketCode ? `<div class="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 p-3"><span class="text-xs font-bold uppercase text-emerald-700">Mã vé</span><p class="mt-1 font-mono text-lg font-bold">${escapeHtml(result.ticketCode)}</p></div>` : ''}
+            <div class="mt-3 rounded-xl border border-sky-200 bg-sky-50 p-4"><p class="font-semibold text-slate-900">✉ Thông tin email</p><p class="mt-1 text-sm leading-6 text-slate-600">${escapeHtml(result.emailMessage || '')}</p>${email ? `<p class="mt-1 break-all text-xs font-bold text-sky-700">${escapeHtml(email)}</p>` : ''}</div>
+            <div class="mt-4"><p class="text-sm font-semibold text-slate-900">Bước tiếp theo</p><ol class="mt-2 space-y-2 text-sm text-slate-600">${steps.map((step, i) => `<li><strong class="text-sky-700">${i + 1}.</strong> ${escapeHtml(step)}</li>`).join('')}</ol></div>
+            <div class="mt-6 flex justify-end gap-2"><button data-close class="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold">Đóng</button><a href="screen-student.html" class="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white">Cổng sinh viên</a></div>
+        </div>`;
+        document.body.appendChild(overlay);
+        overlay.querySelector('[data-close]').addEventListener('click', () => overlay.remove());
+        overlay.addEventListener('click', event => { if (event.target === overlay) overlay.remove(); });
     }
 
     async function cancel(rid) {

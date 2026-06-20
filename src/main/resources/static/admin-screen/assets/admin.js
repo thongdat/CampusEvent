@@ -587,9 +587,9 @@
                             <button class="command-trigger" type="button" id="commandTrigger" title="Mở Command Palette (Ctrl+K)">
                                 ${icon('search', 'h-4 w-4')}<span>Tìm kiếm...</span><kbd>Ctrl K</kbd>
                             </button>
-                            <button class="date-chip" type="button" title="Ngày hiện tại">
-                                ${icon('calendar-days', 'h-4 w-4')}<span>${h(today)}</span>${icon('chevron-down', 'h-3.5 w-3.5')}
-                            </button>
+                            <div class="date-chip" title="Ngày hiện tại">
+                                ${icon('calendar-days', 'h-4 w-4')}<span>${h(today)}</span>
+                            </div>
                             <div class="toolbar">${actions}</div>
                             ${accountMenu()}
                         </div>
@@ -1335,7 +1335,7 @@
             ${moduleChecklist([
                 { title: 'User / Role / Department', status: 'CRUD', copy: 'Tạo, sửa, khóa, reset mật khẩu, gán role và quản lý khoa.' },
                 { title: 'Proposal / Event / Registration', status: 'Workflow', tone: 'orange', copy: 'Theo dõi duyệt proposal, publish event, capacity, waitlist và attendance.' },
-                { title: 'Feedback / Reports / Email', status: 'Analytics', tone: 'blue', copy: 'Phân tích rating, export báo cáo, template email và lịch sử gửi.' }
+                { title: 'Feedback / Reports / Email', status: 'Analytics', tone: 'blue', copy: 'Phân tích rating, export báo cáo và theo dõi lịch sử gửi email.' }
             ])}
         `);
     }
@@ -2321,35 +2321,10 @@
 
     async function renderEmail() {
         state.page = 'email';
-        shell(`<button class="btn primary" id="sendNotification">${icon('send')}Send Notification</button><button class="btn" id="addTemplate">${icon('file-plus')}Email Template</button>`);
+        shell(`<button class="btn primary" id="sendNotification">${icon('send')}Gửi email</button>`);
         const payload = await load('/email-logs?page=0&size=80', { items: [] });
         const logs = payload.items || [];
         const emailPager = pageItems('email', logs, 20);
-        let templates = localGet('emailTemplates', [
-            { id: 'welcome', name: 'Welcome Event', subject: 'Chào mừng bạn đến với sự kiện', content: 'Xin chào, vé QR của bạn đã sẵn sàng.' },
-            { id: 'reminder', name: 'Event Reminder', subject: 'Nhắc lịch sự kiện', content: 'Sự kiện sẽ bắt đầu trong thời gian tới.' }
-        ]);
-        let announcements = localGet('announcements', []);
-
-        const saveTemplates = () => localSet('emailTemplates', templates);
-        const saveAnnouncements = () => localSet('announcements', announcements);
-
-        const templateForm = (template = {}) => openForm({
-            title: template.id ? 'Email Templates' : 'Create Email Template',
-            fields: [
-                { name: 'name', label: 'Tên template', required: true },
-                { name: 'subject', label: 'Subject', required: true },
-                { name: 'content', label: 'Nội dung', type: 'textarea', full: true, required: true }
-            ],
-            values: template,
-            onSubmit: async payload => {
-                if (template.id) Object.assign(template, payload);
-                else templates.push({ id: `tpl-${Date.now()}`, ...payload });
-                saveTemplates();
-                toast('Đã lưu template.');
-                renderEmail();
-            }
-        });
 
         const sendForm = () => openForm({
             title: 'Send Notifications',
@@ -2365,34 +2340,14 @@
             }
         });
 
-        const announcementForm = () => openForm({
-            title: 'Announcement Management',
-            fields: [
-                { name: 'title', label: 'Tiêu đề', required: true },
-                { name: 'audience', label: 'Đối tượng', type: 'select', options: ['All', 'Students', 'Departments', 'Committees'].map(value => ({ value, label: value })) },
-                { name: 'content', label: 'Nội dung', type: 'textarea', full: true, required: true }
-            ],
-            onSubmit: async payload => {
-                announcements.unshift({ id: Date.now(), createdAt: new Date().toISOString(), ...payload });
-                saveAnnouncements();
-                toast('Đã tạo announcement.');
-                renderEmail();
-            }
-        });
-
         content(`
-            <div class="metric-grid">
+            <div class="metric-grid metric-grid-three">
                 ${metric('Email History', number(payload.totalItems || logs.length), 'Lịch sử email')}
                 ${metric('Sent', number(logs.filter(log => log.status === 'SENT').length), 'Gửi thành công')}
                 ${metric('Failed', number(logs.filter(log => log.status === 'FAILED').length), 'Gửi lỗi')}
-                ${metric('Templates', number(templates.length), 'Template email')}
             </div>
-            <div class="split-grid">
-                <section class="panel">
-                    <div class="panel-header">
-                        <h2 class="panel-title">Email History</h2>
-                        <button class="btn" id="createAnnouncement">${icon('megaphone')}Announcement</button>
-                    </div>
+            <section class="panel">
+                    <div class="panel-header"><h2 class="panel-title">Email History</h2></div>
                     <div class="toolbar">${pagination('email', emailPager.page, emailPager.pages, emailPager.total, emailPager.visible.length)}</div>
                     ${table(['Email', 'Subject', 'Status', 'Sent At'], emailPager.visible.map(log => `
                         <tr>
@@ -2401,31 +2356,10 @@
                             <td>${badge(log.status, tone(log.status))}</td>
                             <td>${dateTime(log.sentAt)}</td>
                         </tr>`))}
-                </section>
-                <section class="panel">
-                    <h2 class="panel-title">Email Templates</h2>
-                    <div style="display:grid;gap:.55rem;margin-top:.85rem">
-                        ${templates.map(template => `
-                            <div class="mini-card">
-                                <strong>${h(template.name)}</strong>
-                                <span>${h(template.subject)}</span>
-                                <div class="inline-actions" style="margin-top:.55rem;justify-content:flex-start">
-                                    <button class="btn" data-template-edit="${template.id}">${icon('pencil')}Edit</button>
-                                </div>
-                            </div>`).join('')}
-                    </div>
-                    <h2 class="panel-title" style="margin-top:1rem">Announcements</h2>
-                    <div style="display:grid;gap:.55rem;margin-top:.85rem">
-                        ${announcements.slice(0, 4).map(item => `<div class="mini-card"><strong>${h(item.title)}</strong><span>${h(item.audience)} · ${dateTime(item.createdAt)}</span></div>`).join('') || '<div class="empty">Chưa có announcement.</div>'}
-                    </div>
-                </section>
-            </div>
+            </section>
         `);
         document.getElementById('sendNotification').onclick = sendForm;
-        document.getElementById('addTemplate').onclick = () => templateForm();
-        document.getElementById('createAnnouncement').onclick = announcementForm;
         bindPagination('email', emailPager, renderEmail);
-        document.querySelectorAll('[data-template-edit]').forEach(button => button.onclick = () => templateForm(templates.find(item => item.id === button.dataset.templateEdit)));
     }
 
 

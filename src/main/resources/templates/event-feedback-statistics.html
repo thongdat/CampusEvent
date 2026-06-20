@@ -72,6 +72,10 @@
                         · đúng <strong th:text="${ai.quizAnalysis.hardestQuestion.correctRate} + '%'">0%</strong>
                     </p>
                 </div>
+                <div th:unless="${ai.quizAvailable}" style="padding:1rem 1.15rem;border:1px dashed #93c5fd;border-radius:14px;background:#eff6ff;color:#475569;font-size:.85rem;">
+                    <strong style="color:#1d4ed8;">Chưa có kết quả quiz để phân tích.</strong>
+                    Hãy đồng bộ Google Checkout Form hoặc yêu cầu sinh viên nộp quiz trong hệ thống.
+                </div>
 
                 <!-- Cảm xúc -->
                 <div>
