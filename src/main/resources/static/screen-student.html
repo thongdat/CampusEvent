@@ -880,32 +880,45 @@
         const pagination = $('#eventPagination');
         const seeAllWrap = $('#seeAllWrap');
         let list = STATE.events;
-        // "Đề xuất cho bạn": chỉ hiện sự kiện phù hợp ngành/khoa (ưu tiên cao).
-        // Nếu chưa có sự kiện phù hợp thì hiển thị toàn bộ để không bị trống.
+        // "Đề xuất cho bạn": CHỈ hiện sự kiện ĐÚNG NGÀNH (priorityMajor cao nhất).
+        // Các sự kiện còn lại xem ở tab "Tất cả sự kiện".
         if (STATE.view === 'recommended') {
-            const relevant = list.filter(e => (e.priorityMajor || 0) >= 60);
-            list = relevant.length ? relevant : list;
+            list = list.filter(e => (e.priorityMajor || 0) >= 100);
         }
         $('#resultCount').textContent = list.length + ' sự kiện';
         seeAllWrap.hidden = STATE.view === 'all';
         if (!list.length) {
             grid.innerHTML = '';
             pagination.hidden = true;
+            if (STATE.view === 'recommended') {
+                empty.innerHTML = `
+                    <div class="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-white text-3xl shadow-sm">🎯</div>
+                    <p class="mt-4 text-base font-extrabold text-ink">Chưa có sự kiện đúng ngành của bạn</p>
+                    <p class="mt-1 text-sm text-ink-muted">Xem thêm ở tab <strong>Tất cả sự kiện</strong> để khám phá các sự kiện khác.</p>
+                    <button type="button" data-go-all class="mt-4 rounded-xl bg-gradient-to-r from-fpt-500 to-fpt-700 px-5 py-2.5 text-sm font-extrabold text-white shadow-glow transition hover:brightness-110">Xem tất cả sự kiện</button>`;
+                empty.querySelector('[data-go-all]')?.addEventListener('click', showAllEvents);
+            } else {
+                empty.innerHTML = `
+                    <div class="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-white text-3xl shadow-sm">🌅</div>
+                    <p class="mt-4 text-base font-extrabold text-ink">Chưa có sự kiện phù hợp ở đây</p>
+                    <p class="mt-1 text-sm text-ink-muted">Đổi sang "Tất cả khoa" hoặc xoá từ khoá tìm kiếm để xem thêm.</p>`;
+            }
             empty.hidden = false;
             return;
         }
         empty.hidden = true;
+        // Phân trang 8 sự kiện/trang cho cả hai tab.
         const pageSize = 8;
-        const totalPages = STATE.view === 'all' ? Math.max(1, Math.ceil(list.length / pageSize)) : 1;
+        const totalPages = Math.max(1, Math.ceil(list.length / pageSize));
         STATE.eventsPage = Math.min(Math.max(1, STATE.eventsPage), totalPages);
         const pageStart = (STATE.eventsPage - 1) * pageSize;
-        const visibleEvents = STATE.view === 'all' ? list.slice(pageStart, pageStart + pageSize) : list;
+        const visibleEvents = list.slice(pageStart, pageStart + pageSize);
 
         grid.innerHTML = visibleEvents.map(eventCard).join('');
         grid.querySelectorAll('[data-event-detail]').forEach(el => el.addEventListener('click', () => showEventDetail(Number(el.dataset.eventDetail))));
         grid.querySelectorAll('[data-event-register]').forEach(el => el.addEventListener('click', e => { e.stopPropagation(); register(Number(el.dataset.eventRegister)); }));
 
-        pagination.hidden = STATE.view !== 'all' || totalPages <= 1;
+        pagination.hidden = totalPages <= 1;
         if (!pagination.hidden) {
             const pageButtons = Array.from({ length: totalPages }, (_, index) => index + 1)
                 .map(page => `<button type="button" data-event-page="${page}" aria-label="Trang ${page}" aria-current="${page === STATE.eventsPage ? 'page' : 'false'}" class="grid h-9 min-w-9 place-items-center rounded-lg border px-2 text-sm font-extrabold transition ${page === STATE.eventsPage ? 'border-fpt-600 bg-fpt-600 text-white' : 'border-fpt-100 bg-white text-ink hover:bg-fpt-50'}">${page}</button>`)
