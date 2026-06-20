@@ -160,8 +160,25 @@ public class AdminDashboardController {
         return response;
     }
 
+    /** Cache /overview vì nó chạy rất nhiều count nối tiếp; trên Neon lạnh có thể mất hàng chục giây.
+     *  TTL ngắn để số liệu vẫn đủ tươi cho dashboard, nhưng lần tải lại trong TTL là tức thì. */
+    private static final long OVERVIEW_TTL_MS = 30_000;
+    private volatile Map<String, Object> cachedOverview;
+    private volatile long overviewCachedAt;
+
     @GetMapping("/overview")
     public Map<String, Object> overview() {
+        Map<String, Object> cached = cachedOverview;
+        if (cached != null && System.currentTimeMillis() - overviewCachedAt < OVERVIEW_TTL_MS) {
+            return cached;
+        }
+        Map<String, Object> fresh = computeOverview();
+        cachedOverview = fresh;
+        overviewCachedAt = System.currentTimeMillis();
+        return fresh;
+    }
+
+    private Map<String, Object> computeOverview() {
         Pageable latestEmailPage = PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "sentAt"));
         Pageable latestActivityPage = PageRequest.of(0, 24, Sort.by(Sort.Direction.DESC, "createdAt"));
         LocalDateTime asOf = currentDateTime();
