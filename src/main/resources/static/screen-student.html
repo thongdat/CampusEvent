@@ -346,6 +346,7 @@
             </div>
 
             <div id="eventGrid" class="grid-fluid-cards"></div>
+            <nav id="eventPagination" hidden class="flex flex-wrap items-center justify-between gap-3 border-t border-fpt-100 pt-4" aria-label="Phân trang tất cả sự kiện"></nav>
 
             <div id="emptyDiscover" hidden class="rounded-3xl border-2 border-dashed border-fpt-200 bg-fpt-50/40 p-14 text-center">
                 <div class="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-white text-3xl shadow-sm">🌅</div>
@@ -368,6 +369,7 @@
                 <p class="mt-1 text-sm text-ink-muted">Vé QR, trạng thái tham dự và phản hồi cho các sự kiện bạn đã đăng ký.</p>
             </div>
             <div id="myList" class="space-y-3"></div>
+            <nav id="myPagination" hidden class="flex flex-wrap items-center justify-between gap-3 border-t border-fpt-100 pt-4" aria-label="Phân trang đăng ký"></nav>
             <div id="emptyMine" hidden class="rounded-3xl border-2 border-dashed border-fpt-200 bg-fpt-50/40 p-14 text-center">
                 <div class="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-white text-3xl shadow-sm">🎟️</div>
                 <p class="mt-4 text-base font-extrabold text-ink">Chưa có đăng ký nào</p>
@@ -495,7 +497,9 @@
         notifications: [],
         filters: { q: '', scope: 'upcoming', faculty: 'all' },
         currentTab: 'discover',
-        view: 'recommended'
+        view: 'recommended',
+        eventsPage: 1,
+        myRegsPage: 1
     };
 
     // ----------------------------- SESSION -----------------------------
@@ -827,6 +831,7 @@
     // "Xem tất cả sự kiện": chuyển sang view "Tất cả" + scope "Sắp tới"
     function showAllEvents() {
         STATE.view = 'all';
+        STATE.eventsPage = 1;
         $$('[data-view]').forEach(x => x.classList.toggle('active', x.dataset.view === 'all'));
         if (STATE.currentTab !== 'discover') {
             showTab('discover');
@@ -839,6 +844,7 @@
     // ----------------------------- LOAD EVENTS -----------------------------
     async function loadEvents() {
         $('#eventGrid').innerHTML = skeletonGrid(6);
+        $('#eventPagination').hidden = true;
         $('#emptyDiscover').hidden = true;
         try {
             const qs = new URLSearchParams();
@@ -862,6 +868,7 @@
 
             renderEvents();
         } catch (e) {
+            $('#eventPagination').hidden = true;
             $('#eventGrid').innerHTML = `<div class="col-span-full rounded-2xl border-2 border-dashed border-rose-200 bg-rose-50 p-8 text-center text-sm text-rose-700">${escapeHtml(e.message)}</div>`;
         }
     }
@@ -869,6 +876,8 @@
     function renderEvents() {
         const grid = $('#eventGrid');
         const empty = $('#emptyDiscover');
+        const pagination = $('#eventPagination');
+        const seeAllWrap = $('#seeAllWrap');
         let list = STATE.events;
         // "Đề xuất cho bạn": chỉ hiện sự kiện phù hợp ngành/khoa (ưu tiên cao).
         // Nếu chưa có sự kiện phù hợp thì hiển thị toàn bộ để không bị trống.
@@ -877,15 +886,44 @@
             list = relevant.length ? relevant : list;
         }
         $('#resultCount').textContent = list.length + ' sự kiện';
+        seeAllWrap.hidden = STATE.view === 'all';
         if (!list.length) {
             grid.innerHTML = '';
+            pagination.hidden = true;
             empty.hidden = false;
             return;
         }
         empty.hidden = true;
-        grid.innerHTML = list.map(eventCard).join('');
+        const pageSize = 8;
+        const totalPages = STATE.view === 'all' ? Math.max(1, Math.ceil(list.length / pageSize)) : 1;
+        STATE.eventsPage = Math.min(Math.max(1, STATE.eventsPage), totalPages);
+        const pageStart = (STATE.eventsPage - 1) * pageSize;
+        const visibleEvents = STATE.view === 'all' ? list.slice(pageStart, pageStart + pageSize) : list;
+
+        grid.innerHTML = visibleEvents.map(eventCard).join('');
         grid.querySelectorAll('[data-event-detail]').forEach(el => el.addEventListener('click', () => showEventDetail(Number(el.dataset.eventDetail))));
         grid.querySelectorAll('[data-event-register]').forEach(el => el.addEventListener('click', e => { e.stopPropagation(); register(Number(el.dataset.eventRegister)); }));
+
+        pagination.hidden = STATE.view !== 'all' || totalPages <= 1;
+        if (!pagination.hidden) {
+            const pageButtons = Array.from({ length: totalPages }, (_, index) => index + 1)
+                .map(page => `<button type="button" data-event-page="${page}" aria-label="Trang ${page}" aria-current="${page === STATE.eventsPage ? 'page' : 'false'}" class="grid h-9 min-w-9 place-items-center rounded-lg border px-2 text-sm font-extrabold transition ${page === STATE.eventsPage ? 'border-fpt-600 bg-fpt-600 text-white' : 'border-fpt-100 bg-white text-ink hover:bg-fpt-50'}">${page}</button>`)
+                .join('');
+            pagination.innerHTML = `
+                <p class="text-xs font-semibold text-ink-muted">Hiển thị ${pageStart + 1}-${Math.min(pageStart + pageSize, list.length)} trong ${list.length} sự kiện</p>
+                <div class="flex items-center gap-1.5">
+                    <button type="button" data-event-page="${STATE.eventsPage - 1}" ${STATE.eventsPage === 1 ? 'disabled' : ''} class="rounded-lg border border-fpt-100 bg-white px-3 py-2 text-xs font-bold text-ink transition hover:bg-fpt-50 disabled:cursor-not-allowed disabled:opacity-40">Trước</button>
+                    ${pageButtons}
+                    <button type="button" data-event-page="${STATE.eventsPage + 1}" ${STATE.eventsPage === totalPages ? 'disabled' : ''} class="rounded-lg border border-fpt-100 bg-white px-3 py-2 text-xs font-bold text-ink transition hover:bg-fpt-50 disabled:cursor-not-allowed disabled:opacity-40">Sau</button>
+                </div>`;
+            pagination.querySelectorAll('[data-event-page]:not([disabled])').forEach(button => button.addEventListener('click', () => {
+                STATE.eventsPage = Number(button.dataset.eventPage);
+                renderEvents();
+                grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }));
+        } else {
+            pagination.innerHTML = '';
+        }
     }
 
     function eventCard(e) {
@@ -1023,6 +1061,39 @@
     }
 
     // ----------------------------- REGISTER / CANCEL -----------------------------
+    function showRegistrationConfirmation(result) {
+        const registered = result.status === 'REGISTERED';
+        const email = result.notificationEmail || userEmail || '';
+        const steps = Array.isArray(result.nextSteps) ? result.nextSteps : [];
+        const statusClasses = registered ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700';
+        const title = registered ? 'Đăng ký thành công' : 'Bạn đã vào danh sách chờ';
+        const icon = registered ? '✓' : '⌛';
+        const ticket = result.ticketCode
+            ? `<div class="rounded-xl border border-emerald-200 bg-white px-4 py-3"><p class="text-[11px] font-bold uppercase tracking-wider text-emerald-700">Mã vé của bạn</p><p class="mt-1 font-mono text-lg font-extrabold text-ink">${escapeHtml(result.ticketCode)}</p></div>`
+            : '';
+        openModal(`
+        <div class="p-6 sm:p-7">
+            <div class="flex items-start gap-4">
+                <span class="grid h-12 w-12 shrink-0 place-items-center rounded-full ${statusClasses} text-2xl font-extrabold">${icon}</span>
+                <div><h3 class="text-xl font-extrabold text-ink">${title}</h3><p class="mt-1 text-sm text-ink-muted">Trạng thái: <strong>${registered ? 'Đã xác nhận suất tham dự' : 'Đang chờ xác nhận suất'}</strong></p></div>
+            </div>
+            <div class="mt-5 space-y-3">
+                ${ticket}
+                <div class="rounded-xl border border-fpt-200 bg-fpt-50/60 px-4 py-3">
+                    <p class="text-sm font-bold text-ink">✉ Thông tin email</p>
+                    <p class="mt-1 text-sm leading-6 text-ink-muted">${escapeHtml(result.emailMessage || '')}</p>
+                    ${email ? `<p class="mt-1 break-all text-xs font-bold text-fpt-700">${escapeHtml(email)}</p>` : ''}
+                </div>
+                <div><p class="text-sm font-bold text-ink">Bạn cần làm gì tiếp theo?</p><ol class="mt-2 space-y-2 text-sm text-ink-muted">${steps.map((step, i) => `<li class="flex gap-2"><span class="font-extrabold text-fpt-600">${i + 1}.</span><span>${escapeHtml(step)}</span></li>`).join('')}</ol></div>
+            </div>
+            <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                <button class="rounded-xl border border-fpt-100 bg-white px-4 py-2.5 text-sm font-bold text-ink" data-modal-close>Đóng</button>
+                <button id="btnViewMyRegistration" class="rounded-xl bg-gradient-to-r from-fpt-500 to-fpt-700 px-5 py-2.5 text-sm font-extrabold text-white shadow-glow">Xem đăng ký của tôi</button>
+            </div>
+        </div>`);
+        $('#btnViewMyRegistration').addEventListener('click', () => { closeModal(); showTab('mine'); });
+    }
+
     async function register(eventId) {
         if (!userEmail) {
             toast('Vui lòng đăng nhập để đăng ký', 'warn');
@@ -1033,12 +1104,9 @@
             const result = await api('/student/events/' + eventId + '/register', { method: 'POST', body: {} });
             if (result.alreadyRegistered) {
                 toast('Bạn đã đăng ký trước đó (' + (result.status || '') + ')', 'warn');
-            } else if (result.status === 'REGISTERED') {
-                toast('🎉 Đăng ký thành công' + (result.ticketCode ? ' · Vé ' + result.ticketCode : ''));
-            } else if (result.status === 'WAITLIST') {
-                toast('Bạn vào hàng chờ — sẽ tự lên slot nếu có người huỷ', 'warn');
             }
             closeModal();
+            showRegistrationConfirmation(result);
             await Promise.all([loadEvents(), loadMe(), refreshNotifications(), STATE.currentTab === 'mine' ? loadMyRegs() : Promise.resolve()]);
         } catch (e) {
             toast(e.message || 'Đăng ký thất bại', 'error');
@@ -1061,6 +1129,7 @@
     // ----------------------------- MY REGISTRATIONS -----------------------------
     async function loadMyRegs() {
         $('#myList').innerHTML = skeletonGrid(2);
+        $('#myPagination').hidden = true;
         $('#emptyMine').hidden = true;
         try {
             const data = await api('/student/my-registrations');
@@ -1068,19 +1137,28 @@
             buildNotifications(STATE.events, STATE.myRegs);
             renderMyRegs();
         } catch (e) {
+            $('#myPagination').hidden = true;
             $('#myList').innerHTML = `<div class="rounded-2xl border-2 border-dashed border-rose-200 bg-rose-50 p-6 text-center text-sm text-rose-700">${escapeHtml(e.message)}</div>`;
         }
     }
 
     function renderMyRegs() {
         const list = $('#myList');
+        const pagination = $('#myPagination');
         if (!STATE.myRegs.length) {
             list.innerHTML = '';
+            pagination.hidden = true;
             $('#emptyMine').hidden = false;
             return;
         }
         $('#emptyMine').hidden = true;
-        list.innerHTML = STATE.myRegs.map(r => {
+        const pageSize = 10;
+        const totalPages = Math.max(1, Math.ceil(STATE.myRegs.length / pageSize));
+        STATE.myRegsPage = Math.min(Math.max(1, STATE.myRegsPage), totalPages);
+        const pageStart = (STATE.myRegsPage - 1) * pageSize;
+        const visibleRegistrations = STATE.myRegs.slice(pageStart, pageStart + pageSize);
+
+        list.innerHTML = visibleRegistrations.map(r => {
             const e = r.event || {};
             const att = r.attendance || {};
             const regId = r.registrationId || r.id;
@@ -1121,6 +1199,27 @@
         list.querySelectorAll('[data-event-detail]').forEach(el => el.addEventListener('click', () => showEventDetail(Number(el.dataset.eventDetail))));
         list.querySelectorAll('[data-fb-event]').forEach(el => el.addEventListener('click', () => openFeedbackModal(Number(el.dataset.fbEvent))));
         list.querySelectorAll('[data-cancel-reg]').forEach(el => el.addEventListener('click', () => cancelRegistration(Number(el.dataset.cancelReg))));
+
+        pagination.hidden = totalPages <= 1;
+        if (totalPages > 1) {
+            const pageButtons = Array.from({ length: totalPages }, (_, index) => index + 1)
+                .map(page => `<button type="button" data-my-page="${page}" aria-label="Trang ${page}" aria-current="${page === STATE.myRegsPage ? 'page' : 'false'}" class="grid h-9 min-w-9 place-items-center rounded-lg border px-2 text-sm font-extrabold transition ${page === STATE.myRegsPage ? 'border-fpt-600 bg-fpt-600 text-white' : 'border-fpt-100 bg-white text-ink hover:bg-fpt-50'}">${page}</button>`)
+                .join('');
+            pagination.innerHTML = `
+                <p class="text-xs font-semibold text-ink-muted">Hiển thị ${pageStart + 1}-${Math.min(pageStart + pageSize, STATE.myRegs.length)} trong ${STATE.myRegs.length} sự kiện</p>
+                <div class="flex items-center gap-1.5">
+                    <button type="button" data-my-page="${STATE.myRegsPage - 1}" ${STATE.myRegsPage === 1 ? 'disabled' : ''} class="rounded-lg border border-fpt-100 bg-white px-3 py-2 text-xs font-bold text-ink transition hover:bg-fpt-50 disabled:cursor-not-allowed disabled:opacity-40">Trước</button>
+                    ${pageButtons}
+                    <button type="button" data-my-page="${STATE.myRegsPage + 1}" ${STATE.myRegsPage === totalPages ? 'disabled' : ''} class="rounded-lg border border-fpt-100 bg-white px-3 py-2 text-xs font-bold text-ink transition hover:bg-fpt-50 disabled:cursor-not-allowed disabled:opacity-40">Sau</button>
+                </div>`;
+            pagination.querySelectorAll('[data-my-page]:not([disabled])').forEach(button => button.addEventListener('click', () => {
+                STATE.myRegsPage = Number(button.dataset.myPage);
+                renderMyRegs();
+                list.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }));
+        } else {
+            pagination.innerHTML = '';
+        }
     }
 
     function openFeedbackModal(eventId) {
@@ -1232,17 +1331,19 @@
     $$('[data-chip="scope"]').forEach(b => b.addEventListener('click', () => {
         $$('[data-chip="scope"]').forEach(x => x.classList.toggle('active', x === b));
         STATE.filters.scope = b.dataset.value;
+        STATE.eventsPage = 1;
         loadEvents();
     }));
     $('#filterFaculty').addEventListener('change', e => {
         STATE.filters.faculty = e.target.value;
+        STATE.eventsPage = 1;
         loadEvents();
     });
     let searchTimer;
     $('#globalSearch').addEventListener('input', e => {
         clearTimeout(searchTimer);
         const v = e.target.value.trim();
-        searchTimer = setTimeout(() => { STATE.filters.q = v; loadEvents(); }, 250);
+        searchTimer = setTimeout(() => { STATE.filters.q = v; STATE.eventsPage = 1; loadEvents(); }, 250);
     });
 
     // ----------------------------- TAB BUTTONS -----------------------------
@@ -1270,6 +1371,7 @@
     // ----------------------------- VIEW TOGGLE (Đề xuất / Tất cả) -----------------------------
     $$('[data-view]').forEach(b => b.addEventListener('click', () => {
         STATE.view = b.dataset.view;
+        STATE.eventsPage = 1;
         $$('[data-view]').forEach(x => x.classList.toggle('active', x === b));
         // Render lại từ dữ liệu đã có, không cần gọi API
         renderEvents();

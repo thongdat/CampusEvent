@@ -71,7 +71,7 @@
                                 <circle class="track" cx="50" cy="50" r="42"/>
                                 <circle class="bar" id="countdownBar" cx="50" cy="50" r="42" stroke-dasharray="263.89" stroke-dashoffset="0"/>
                             </svg>
-                            <div class="countdown__label"><div><span id="countdownText">180</span><small>giây còn lại</small></div></div>
+                            <div class="countdown__label"><div><span id="countdownText">30</span><small>giây còn lại</small></div></div>
                         </div>
                         <div style="flex: 1; min-width: 0;">
                             <p style="margin: 0; font-size: .7rem; letter-spacing: .12em; font-weight: 800; text-transform: uppercase; color: var(--aems-fpt-deep);">Mã token hiện tại</p>
@@ -103,7 +103,7 @@
                 </ol>
                 <div style="padding: .85rem 1rem; background: var(--aems-fpt-wash); border-radius: 12px; border-left: 4px solid var(--aems-fpt);">
                     <p style="margin: 0; font-size: .85rem; color: var(--aems-ink);">
-                        💡 <strong>QR giữ nguyên vị trí.</strong> Chỉ nội dung bên trong đổi mỗi 3 phút —
+                        💡 <strong>QR giữ nguyên vị trí.</strong> Nội dung bên trong đổi mỗi 30 giây —
                         nhờ vậy bạn có thể chiếu lên màn hình lớn cả buổi mà không cần thao tác gì thêm.
                     </p>
                 </div>
@@ -114,7 +114,7 @@
 <script th:inline="javascript">
 (function () {
     const eventId = [[${eventId}]];
-    const TOTAL_SECONDS = 180; // 3 phút = 180 giây
+    let totalSeconds = 30;
     const CIRC = 2 * Math.PI * 42; // chu vi vòng tròn r=42
 
     let currentToken = null;
@@ -171,6 +171,7 @@
         const isNew = data.token !== currentToken;
         currentToken = data.token;
         expiresAt = new Date(data.expiredAt);
+        totalSeconds = Number(data.rotateSeconds || 30);
         scanUrlFull = location.origin + data.scanUrl;
 
         tokenText.textContent = data.token.substring(0, 32) + '…';
@@ -199,7 +200,7 @@
         const remainMs = expiresAt.getTime() - now;
         const remainSec = Math.max(0, Math.ceil(remainMs / 1000));
         cdText.textContent = remainSec;
-        const ratio = Math.min(1, Math.max(0, remainSec / TOTAL_SECONDS));
+        const ratio = Math.min(1, Math.max(0, remainSec / totalSeconds));
         bar.setAttribute('stroke-dashoffset', String(CIRC * (1 - ratio)));
 
         if (remainSec <= 0) {
