@@ -54,7 +54,7 @@ GOOGLE_REDIRECT_URI
 APP_PUBLIC_BASE_URL
 ```
 
-Nếu chưa cấu hình Gmail/Google OAuth, có thể để trống các biến tùy chọn. Đăng nhập bằng tài khoản demo vẫn hoạt động.
+Nếu chưa cấu hình Gmail/Google OAuth, có thể bỏ qua các biến tùy chọn. Ứng dụng dùng placeholder an toàn để tự ẩn nút Google; đăng nhập bằng tài khoản demo vẫn hoạt động.
 
 ## 4. Cập nhật URL công khai
 
