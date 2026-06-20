@@ -28,8 +28,7 @@ CREATE TABLE IF NOT EXISTS users (
     department_position VARCHAR(30) DEFAULT 'STAFF'
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS ux_users_phone
-    ON users(phone) WHERE phone IS NOT NULL AND phone <> '';
+DROP INDEX IF EXISTS ux_users_phone;
 
 CREATE TABLE IF NOT EXISTS student (
     id BIGSERIAL PRIMARY KEY,
