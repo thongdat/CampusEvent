@@ -74,7 +74,9 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
                     tokenStore.put(email,
                             accessToken.getTokenValue(),
                             accessToken.getExpiresAt(),
-                            refreshToken != null ? refreshToken.getTokenValue() : null);
+                            refreshToken != null ? refreshToken.getTokenValue() : null,
+                            oauth.getAuthorizedClientRegistrationId(),
+                            oauth.getName());
                     logger.info("Đã lưu Google access token cho {}, expires={}", email, accessToken.getExpiresAt());
                 }
             }

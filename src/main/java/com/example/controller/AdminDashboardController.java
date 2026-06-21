@@ -27,7 +27,8 @@ import com.example.repository.TicketRepository;
 import com.example.repository.UserRepository;
 import com.example.model.QuizQuestion;
 import com.example.repository.QuizQuestionRepository;
-import com.example.security.OAuth2TokenStore;
+import com.example.security.GoogleOAuthAccessTokenService;
+import com.example.security.SessionAuth;
 import com.example.service.EmailService;
 import com.example.service.EventFormSyncService;
 import com.example.service.GoogleFormsApiService;
@@ -52,6 +53,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import javax.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -66,6 +68,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @RestController
@@ -93,7 +96,8 @@ public class AdminDashboardController {
     private final InvitationScheduler invitationScheduler;
     private final QuizQuestionRepository quizQuestionRepository;
     private final GoogleFormsApiService googleFormsApiService;
-    private final OAuth2TokenStore oauthTokenStore;
+    private final GoogleOAuthAccessTokenService googleOAuthAccessTokenService;
+    private final Map<String, Object> googleFormCreationLocks = new ConcurrentHashMap<>();
     @org.springframework.beans.factory.annotation.Autowired
     private EventFormSyncService eventFormSyncService;
     private static final ObjectMapper QUIZ_MAPPER = new ObjectMapper();
@@ -116,7 +120,7 @@ public class AdminDashboardController {
             InvitationScheduler invitationScheduler,
             QuizQuestionRepository quizQuestionRepository,
             GoogleFormsApiService googleFormsApiService,
-            OAuth2TokenStore oauthTokenStore) {
+            GoogleOAuthAccessTokenService googleOAuthAccessTokenService) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.departmentRepository = departmentRepository;
@@ -134,7 +138,7 @@ public class AdminDashboardController {
         this.invitationScheduler = invitationScheduler;
         this.quizQuestionRepository = quizQuestionRepository;
         this.googleFormsApiService = googleFormsApiService;
-        this.oauthTokenStore = oauthTokenStore;
+        this.googleOAuthAccessTokenService = googleOAuthAccessTokenService;
     }
 
     @GetMapping("/dashboard")
@@ -549,38 +553,42 @@ public class AdminDashboardController {
     }
 
     @PostMapping("/events/{id}/google-form/auto-create")
-    @Transactional
-    public Map<String, Object> autoCreateCheckinForm(@PathVariable Long id, @RequestBody(required = false) Map<String, Object> payload) {
-        return autoCreateGoogleFormInternal(id, payload, false);
+    public ResponseEntity<Map<String, Object>> autoCreateCheckinForm(
+            @PathVariable Long id,
+            HttpServletRequest request) {
+        try {
+            return ResponseEntity.ok(autoCreateGoogleFormInternal(id, false, request));
+        } catch (ResponseStatusException ex) {
+            return googleFormError(ex);
+        }
     }
 
     @PostMapping("/events/{id}/google-form/auto-create-checkout")
-    @Transactional
-    public Map<String, Object> autoCreateCheckoutForm(@PathVariable Long id, @RequestBody(required = false) Map<String, Object> payload) {
-        return autoCreateGoogleFormInternal(id, payload, true);
+    public ResponseEntity<Map<String, Object>> autoCreateCheckoutForm(
+            @PathVariable Long id,
+            HttpServletRequest request) {
+        try {
+            return ResponseEntity.ok(autoCreateGoogleFormInternal(id, true, request));
+        } catch (ResponseStatusException ex) {
+            return googleFormError(ex);
+        }
     }
 
     /**
      * Đồng bộ câu trả lời từ Google Form về DB.
-     *  body: { email: <gmail user đăng nhập>, kind: 'in'|'out' }
+     *  body: { kind: 'in'|'out' }. Google identity is always read from the trusted server session.
      */
     @PostMapping("/events/{id}/google-form/sync")
-    public Map<String, Object> syncGoogleFormResponses(@PathVariable Long id,
-                                                       @RequestBody(required = false) Map<String, Object> payload) {
-        String email = payload == null ? null : (payload.get("email") == null ? null : String.valueOf(payload.get("email")).trim());
+    public ResponseEntity<Map<String, Object>> syncGoogleFormResponses(
+            @PathVariable Long id,
+            @RequestBody(required = false) Map<String, Object> payload,
+            HttpServletRequest request) {
         String kind  = payload == null ? "in"  : (payload.get("kind")  == null ? "in"  : String.valueOf(payload.get("kind")).trim().toLowerCase());
-        if (email == null || email.isBlank()) {
-            throw badRequest("Cần email user đang đăng nhập (Gmail) để sync.");
-        }
-        OAuth2TokenStore.TokenInfo token = oauthTokenStore.get(email);
-        if (token == null || !token.isValid()) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
-                    "Token Gmail đã hết hạn. Vui lòng đăng xuất → đăng nhập lại bằng " + email + ".");
-        }
         try {
+            String accessToken = resolveGoogleAccessToken(request);
             EventFormSyncService.SyncResult r = "out".equals(kind)
-                    ? eventFormSyncService.syncCheckout(id, token.accessToken)
-                    : eventFormSyncService.syncCheckin(id, token.accessToken);
+                    ? eventFormSyncService.syncCheckout(id, accessToken)
+                    : eventFormSyncService.syncCheckin(id, accessToken);
             Map<String, Object> res = r.toMap();
             boolean out = "out".equals(kind);
             res.put("kind", out ? "CHECK-OUT" : "CHECK-IN");
@@ -591,46 +599,76 @@ public class AdminDashboardController {
                 res.put("message", String.format("Check-in: %d phản hồi · %d hợp lệ (email khớp) · %d mới · %d cập nhật · %d đánh vắng.",
                         r.totalResponses, r.matched, r.created, r.updated, r.absentMarked));
             }
-            return res;
+            return ResponseEntity.ok(res);
         } catch (GoogleFormsApiService.GoogleApiException ex) {
-            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, ex.getMessage());
+            return googleFormError(new ResponseStatusException(HttpStatus.BAD_GATEWAY, ex.getMessage()));
+        } catch (ResponseStatusException ex) {
+            return googleFormError(ex);
         }
     }
 
-    private Map<String, Object> autoCreateGoogleFormInternal(Long id, Map<String, Object> payload, boolean isCheckout) {
-        Event event = eventRepository.findById(id).orElseThrow(() -> notFound("Không tìm thấy event."));
-        String email = payload == null ? null : (payload.get("email") == null ? null : String.valueOf(payload.get("email")).trim());
-        if (email == null || email.isBlank()) {
-            throw badRequest("Cần email user đang đăng nhập (Gmail) để gọi Google Forms API.");
+    private Map<String, Object> autoCreateGoogleFormInternal(
+            Long id, boolean isCheckout, HttpServletRequest request) {
+        String lockKey = id + (isCheckout ? "|out" : "|in");
+        Object lock = googleFormCreationLocks.computeIfAbsent(lockKey, ignored -> new Object());
+        synchronized (lock) {
+            Event event = eventRepository.findById(id)
+                    .orElseThrow(() -> notFound("Không tìm thấy event."));
+            String currentUrl = isCheckout ? event.getCheckoutFormUrl() : event.getGoogleFormUrl();
+            if (currentUrl != null && !currentUrl.isBlank()) {
+                Map<String, Object> existing = buildEvent(event);
+                existing.put("createdFormUrl", currentUrl);
+                existing.put("kind", isCheckout ? "CHECKOUT" : "CHECKIN");
+                existing.put("reusedExistingForm", true);
+                existing.put("message", "Form đã tồn tại, hệ thống không tạo bản trùng.");
+                return existing;
+            }
+
+            String accessToken = resolveGoogleAccessToken(request);
+            try {
+                GoogleFormsApiService.CreatedForm created = isCheckout
+                        ? googleFormsApiService.createCheckoutForm(event, accessToken, loadQuizItems(event.getId()))
+                        : googleFormsApiService.createCheckinForm(event, accessToken);
+                if (isCheckout) {
+                    event.setCheckoutFormUrl(created.responderUri);
+                    event.setCheckoutFormId(created.formId);
+                    event.setCheckoutSheetId(created.sheetId);
+                } else {
+                    event.setGoogleFormUrl(created.responderUri);
+                    event.setCheckinFormId(created.formId);
+                    event.setCheckinSheetId(created.sheetId);
+                }
+                Event saved = eventRepository.save(event);
+                Map<String, Object> result = buildEvent(saved);
+                result.put("createdFormUrl", created.responderUri);
+                result.put("kind", isCheckout ? "CHECKOUT" : "CHECKIN");
+                result.put("message", "Đã tạo " + (isCheckout ? "Google Form CHECK-OUT" : "Google Form CHECK-IN") + " thành công.");
+                return result;
+            } catch (GoogleFormsApiService.GoogleApiException ex) {
+                throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, ex.getMessage());
+            }
         }
-        OAuth2TokenStore.TokenInfo token = oauthTokenStore.get(email);
-        if (token == null || !token.isValid()) {
+    }
+
+    private String resolveGoogleAccessToken(HttpServletRequest request) {
+        String email = SessionAuth.email(request);
+        if (email == null || email.isBlank()) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
-                    "Không tìm thấy access token Gmail còn hiệu lực cho " + email + ". "
-                            + "Vui lòng đăng xuất → đăng nhập lại bằng Gmail và cấp quyền Forms/Drive.");
+                    "Phiên đăng nhập không hợp lệ. Hãy đăng nhập lại bằng Google.");
         }
         try {
-            GoogleFormsApiService.CreatedForm created = isCheckout
-                    ? googleFormsApiService.createCheckoutForm(event, token.accessToken, loadQuizItems(event.getId()))
-                    : googleFormsApiService.createCheckinForm(event, token.accessToken);
-            if (isCheckout) {
-                event.setCheckoutFormUrl(created.responderUri);
-                event.setCheckoutFormId(created.formId);
-                event.setCheckoutSheetId(created.sheetId);
-            } else {
-                event.setGoogleFormUrl(created.responderUri);
-                event.setCheckinFormId(created.formId);
-                event.setCheckinSheetId(created.sheetId);
-            }
-            Event saved = eventRepository.save(event);
-            Map<String, Object> result = buildEvent(saved);
-            result.put("createdFormUrl", created.responderUri);
-            result.put("kind", isCheckout ? "CHECKOUT" : "CHECKIN");
-            result.put("message", "Đã tạo " + (isCheckout ? "Google Form CHECK-OUT" : "Google Form CHECK-IN") + " thành công.");
-            return result;
-        } catch (GoogleFormsApiService.GoogleApiException ex) {
-            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, ex.getMessage());
+            return googleOAuthAccessTokenService.getValidAccessToken(email);
+        } catch (GoogleOAuthAccessTokenService.TokenUnavailableException ex) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, ex.getMessage());
         }
+    }
+
+    private ResponseEntity<Map<String, Object>> googleFormError(ResponseStatusException ex) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("success", false);
+        body.put("error", "GOOGLE_FORM_ERROR");
+        body.put("message", ex.getReason() == null ? "Không xử lý được Google Form." : ex.getReason());
+        return ResponseEntity.status(ex.getStatus()).body(body);
     }
 
     @PutMapping("/events/{id}/speakers")
