@@ -172,16 +172,14 @@ cấu hình OAuth (endpoint `/api/auth/oauth-status` trả về `googleEnabled=f
    .\apache-maven-3.9.9\bin\mvn.cmd spring-boot:run
    ```
 
-Mặc định OAuth chỉ xin các quyền đăng nhập cơ bản `openid,profile,email`. Cách này giúp người khác clone repo về đăng nhập Google mà không gặp màn **Google chưa xác minh ứng dụng này** do các quyền nhạy cảm.
-
-Nếu cần dùng tính năng tự tạo/đồng bộ Google Forms, bật thêm scope Forms/Drive trước khi chạy:
+OAuth mặc định xin đủ quyền đăng nhập, tạo Google Forms, đọc phản hồi và chia sẻ form vì đây là chức năng cốt lõi của AEMS:
 
 ```powershell
 $env:GOOGLE_OAUTH_SCOPES = "openid,profile,email,https://www.googleapis.com/auth/forms.body,https://www.googleapis.com/auth/forms.responses.readonly,https://www.googleapis.com/auth/drive.file"
 .\apache-maven-3.9.9\bin\mvn.cmd spring-boot:run
 ```
 
-Khi bật các scope Forms/Drive, project Google Cloud có thể cần thêm test users hoặc xác minh ứng dụng. Nếu chỉ demo đăng nhập thì không cần bật biến `GOOGLE_OAUTH_SCOPES`.
+Có thể override `GOOGLE_OAUTH_SCOPES` bằng biến môi trường. Project Google Cloud có thể cần thêm test users hoặc xác minh ứng dụng vì Forms/Drive là các scope nhạy cảm.
 
 Hoặc sửa trực tiếp `application.properties` (lưu ý không commit secret).
 

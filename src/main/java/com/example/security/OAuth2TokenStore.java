@@ -21,11 +21,20 @@ public class OAuth2TokenStore {
         public final String accessToken;
         public final Instant expiresAt;
         public final String refreshToken;
+        public final String registrationId;
+        public final String principalName;
 
         public TokenInfo(String accessToken, Instant expiresAt, String refreshToken) {
+            this(accessToken, expiresAt, refreshToken, null, null);
+        }
+
+        public TokenInfo(String accessToken, Instant expiresAt, String refreshToken,
+                         String registrationId, String principalName) {
             this.accessToken = accessToken;
             this.expiresAt = expiresAt;
             this.refreshToken = refreshToken;
+            this.registrationId = registrationId;
+            this.principalName = principalName;
         }
 
         public boolean isValid() {
@@ -37,8 +46,17 @@ public class OAuth2TokenStore {
     private final Map<String, TokenInfo> tokens = new ConcurrentHashMap<>();
 
     public void put(String email, String accessToken, Instant expiresAt, String refreshToken) {
+        TokenInfo current = get(email);
+        put(email, accessToken, expiresAt, refreshToken,
+                current == null ? null : current.registrationId,
+                current == null ? null : current.principalName);
+    }
+
+    public void put(String email, String accessToken, Instant expiresAt, String refreshToken,
+                    String registrationId, String principalName) {
         if (email == null || accessToken == null) return;
-        tokens.put(email.toLowerCase(Locale.ROOT), new TokenInfo(accessToken, expiresAt, refreshToken));
+        tokens.put(email.toLowerCase(Locale.ROOT),
+                new TokenInfo(accessToken, expiresAt, refreshToken, registrationId, principalName));
     }
 
     public TokenInfo get(String email) {

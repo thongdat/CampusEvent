@@ -36,6 +36,10 @@ public class GoogleFormsApiService {
 
     private static final String FORMS_API = "https://forms.googleapis.com/v1/forms";
     private static final String DRIVE_API = "https://www.googleapis.com/drive/v3/files";
+    private static final int MAX_WRITE_ATTEMPTS = 5;
+
+    /** Google write requests are serialized to avoid project/user burst quotas. */
+    private final Object formCreationGate = new Object();
 
     private final HttpClient http = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(15))
@@ -94,6 +98,14 @@ public class GoogleFormsApiService {
 
     private CreatedForm createForm(Event event, String accessToken, String kind, boolean isCheckout, List<QuizItem> quiz)
             throws GoogleApiException {
+        synchronized (formCreationGate) {
+            return createFormSerial(event, accessToken, kind, isCheckout, quiz);
+        }
+    }
+
+    private CreatedForm createFormSerial(Event event, String accessToken, String kind,
+                                         boolean isCheckout, List<QuizItem> quiz)
+            throws GoogleApiException {
         if (accessToken == null || accessToken.isBlank()) {
             throw new GoogleApiException("Thiếu access token. Vui lòng đăng xuất rồi đăng nhập lại bằng Gmail "
                     + "để cấp quyền tạo Google Form.");
@@ -112,7 +124,8 @@ public class GoogleFormsApiService {
         }
         log.info("Đã tạo Google Form {} id={}, responderUri={}", kind, formId, responderUri);
 
-        // Bước 2: batchUpdate — đặt description, bật thu email, thêm ảnh + câu hỏi
+        // Bước 2: batchUpdate — đặt description, bật thu email, thêm câu hỏi cốt lõi.
+        // Ảnh được thêm ở request riêng vì một URL ảnh lỗi sẽ làm Google rollback cả batch.
         List<Map<String, Object>> requests = new ArrayList<>();
 
         String desc = isCheckout ? buildCheckoutDescription(event) : buildDescription(event);
@@ -131,13 +144,6 @@ public class GoogleFormsApiService {
         ));
 
         int idx = 0;
-
-        // Ảnh banner event (chỉ cho check-in để không loãng form check-out)
-        if (!isCheckout && event.getImageUrl() != null && !event.getImageUrl().isBlank()
-                && event.getImageUrl().startsWith("http")) {
-            requests.add(createImageItem(event.getImageUrl(),
-                    "Ảnh sự kiện: " + safeText(event.getTitle(), "FPT Event"), idx++));
-        }
 
         if (!isCheckout) {
             // === CHECK-IN form — tối giản: Họ tên + MSSV (email Google tự thu thập & xác thực) ===
@@ -187,6 +193,19 @@ public class GoogleFormsApiService {
         Map<String, Object> batchBody = Map.of("requests", requests);
         postJson(FORMS_API + "/" + formId + ":batchUpdate", batchBody, accessToken, "add questions");
         log.info("Đã thêm câu hỏi cho form {} ({})", formId, kind);
+
+        // Banner là phần trang trí, không được phép làm thất bại toàn bộ form.
+        if (!isCheckout && event.getImageUrl() != null && !event.getImageUrl().isBlank()
+                && event.getImageUrl().startsWith("http")) {
+            try {
+                Map<String, Object> imageBody = Map.of("requests", List.of(
+                        createImageItem(event.getImageUrl(),
+                                "Ảnh sự kiện: " + safeText(event.getTitle(), "FPT Event"), 0)));
+                postJson(FORMS_API + "/" + formId + ":batchUpdate", imageBody, accessToken, "add banner");
+            } catch (GoogleApiException ex) {
+                log.warn("Bỏ qua banner lỗi của form {}: {}", formId, ex.getMessage());
+            }
+        }
 
         // Bước 3: share public (anyone with link → reader) qua Drive API
         try {
@@ -397,30 +416,69 @@ public class GoogleFormsApiService {
             throws GoogleApiException {
         try {
             String json = MAPPER.writeValueAsString(body);
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .header("Authorization", "Bearer " + accessToken)
-                    .header("Content-Type", "application/json; charset=UTF-8")
-                    .timeout(Duration.ofSeconds(20))
-                    .POST(HttpRequest.BodyPublishers.ofString(json))
-                    .build();
-            HttpResponse<String> resp = http.send(request, HttpResponse.BodyHandlers.ofString());
-            int status = resp.statusCode();
-            String responseBody = resp.body();
+            for (int attempt = 1; attempt <= MAX_WRITE_ATTEMPTS; attempt++) {
+                try {
+                    HttpRequest request = HttpRequest.newBuilder()
+                            .uri(URI.create(url))
+                            .header("Authorization", "Bearer " + accessToken)
+                            .header("Content-Type", "application/json; charset=UTF-8")
+                            .timeout(Duration.ofSeconds(25))
+                            .POST(HttpRequest.BodyPublishers.ofString(json))
+                            .build();
+                    HttpResponse<String> resp = http.send(request, HttpResponse.BodyHandlers.ofString());
+                    int status = resp.statusCode();
+                    String responseBody = resp.body();
 
-            if (status >= 200 && status < 300) {
-                if (responseBody == null || responseBody.isBlank()) return Map.of();
-                return MAPPER.readValue(responseBody, new TypeReference<Map<String, Object>>() {});
+                    if (status >= 200 && status < 300) {
+                        if (responseBody == null || responseBody.isBlank()) return Map.of();
+                        return MAPPER.readValue(responseBody, new TypeReference<Map<String, Object>>() {});
+                    }
+                    if (isRetryable(status) && attempt < MAX_WRITE_ATTEMPTS) {
+                        waitBeforeRetry(op, attempt, retryAfterMillis(resp));
+                        continue;
+                    }
+                    throw new GoogleApiException("Google API lỗi (" + op + "): "
+                            + humanizeError(status, responseBody));
+                } catch (java.io.IOException ex) {
+                    if (attempt >= MAX_WRITE_ATTEMPTS) {
+                        throw new GoogleApiException("Không gọi được Google API (" + op + "): " + ex.getMessage(), ex);
+                    }
+                    waitBeforeRetry(op, attempt, 0);
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                    throw new GoogleApiException("Tác vụ Google API đã bị gián đoạn.", ex);
+                }
             }
-
-            String human = humanizeError(status, responseBody);
-            throw new GoogleApiException("Google API lỗi (" + op + "): " + human);
-
+            throw new GoogleApiException("Google API không phản hồi sau nhiều lần thử (" + op + ").");
         } catch (GoogleApiException ex) {
             throw ex;
         } catch (Exception ex) {
             throw new GoogleApiException("Không gọi được Google API: " + ex.getMessage(), ex);
         }
+    }
+
+    static boolean isRetryable(int status) {
+        return status == 429 || status == 500 || status == 502 || status == 503 || status == 504;
+    }
+
+    private long retryAfterMillis(HttpResponse<?> response) {
+        return response.headers().firstValue("Retry-After")
+                .map(value -> {
+                    try {
+                        return Math.min(15_000L, Long.parseLong(value.trim()) * 1_000L);
+                    } catch (NumberFormatException ignored) {
+                        return 0L;
+                    }
+                })
+                .orElse(0L);
+    }
+
+    private void waitBeforeRetry(String op, int attempt, long retryAfterMillis)
+            throws InterruptedException {
+        long exponential = Math.min(8_000L, 500L * (1L << Math.min(attempt - 1, 4)));
+        long delay = Math.max(exponential, retryAfterMillis);
+        log.warn("Google API tạm lỗi khi {}. Thử lại lần {} sau {} ms", op, attempt + 1, delay);
+        Thread.sleep(delay);
     }
 
     private String humanizeError(int status, String body) {
@@ -435,10 +493,15 @@ public class GoogleFormsApiService {
             if (lower.contains("drive.googleapis.com")) {
                 return "Google Drive API chưa được bật. Vào https://console.cloud.google.com/apis/library/drive.googleapis.com → bấm ENABLE.";
             }
-            if (lower.contains("insufficientpermissions") || lower.contains("insufficient_scope")) {
+            if (lower.contains("insufficientpermissions") || lower.contains("insufficient_scope")
+                    || lower.contains("access_token_scope_insufficient")
+                    || lower.contains("insufficient authentication scopes")) {
                 return "Thiếu quyền OAuth. Đăng xuất → đăng nhập lại bằng Gmail và TICK đầy đủ các quyền Google yêu cầu.";
             }
             return "Bị từ chối (403). Chi tiết: " + body;
+        }
+        if (status == 429) {
+            return "Google đang giới hạn tốc độ tạo form. Hệ thống đã tự thử lại nhiều lần; vui lòng đợi một phút rồi thử lại.";
         }
         if (status == 404) {
             return "Endpoint Google không tồn tại (có thể project chưa enable API).";
