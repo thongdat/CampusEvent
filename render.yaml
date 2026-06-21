@@ -34,5 +34,7 @@ services:
         sync: false
       - key: GOOGLE_REDIRECT_URI
         sync: false
+      - key: GOOGLE_OAUTH_SCOPES
+        value: "openid,profile,email,https://www.googleapis.com/auth/forms.body,https://www.googleapis.com/auth/forms.responses.readonly,https://www.googleapis.com/auth/drive.file"
       - key: APP_PUBLIC_BASE_URL
         sync: false
