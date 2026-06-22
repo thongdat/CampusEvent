@@ -137,3 +137,18 @@ public class ApprovedProposalCleanup implements ApplicationRunner {
         return null;
     }
 }
+
+    /*
+     * Ghi chú:
+     * - Class ApprovedProposalCleanup dùng để xử lý các đề xuất sự kiện đã được duyệt
+     *   khi ứng dụng Spring Boot khởi chạy.
+     * - Class này tìm các EventProposal có trạng thái APPROVED, sau đó kiểm tra xem
+     *   sự kiện tương ứng đã tồn tại hay chưa.
+     * - Nếu sự kiện chưa tồn tại, hệ thống sẽ tự tạo Event mới từ thông tin của proposal
+     *   như tiêu đề, mô tả, địa điểm, thời gian, số lượng, ngân sách, ban tổ chức và diễn giả.
+     * - Nếu proposal có quizPayload, class sẽ đọc dữ liệu quiz dạng JSON và chuyển thành
+     *   các QuizQuestion tương ứng cho sự kiện.
+     * - Các hàm phụ như parsePoints(), quizNullable(), firstNonBlank() giúp xử lý dữ liệu
+     *   an toàn, tránh lỗi khi dữ liệu bị null, rỗng hoặc sai định dạng.
+     */
+
