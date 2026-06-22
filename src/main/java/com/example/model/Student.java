@@ -25,8 +25,9 @@ public class Student {
     @Column(nullable = false)
     private Double attendanceReputation = 100.0;
 
-    @Column(name = "gender", columnDefinition = "NVARCHAR(10)")
-    private String gender;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "gender", length = 10)
+    private Gender gender;
     
     @OneToOne
     @JoinColumn(name = "userId", nullable = false, unique = true)
@@ -97,11 +98,11 @@ public class Student {
         this.attendanceReputation = attendanceReputation;
     }
 
-    public String getGender() {
+    public Gender getGender() {
         return gender;
     }
 
-    public void setGender(String gender) {
+    public void setGender(Gender gender) {
         this.gender = gender;
     }
 }
