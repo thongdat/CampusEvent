@@ -251,7 +251,7 @@ public class EventFormSyncService {
     // ====================== Helpers ======================
 
     private Registration ensureRegistration(Event event, Student student, String via) {
-        return registrationRepository.findByEventIdAndStudentId(event.getId(), student.getId())
+        return registrationRepository.findPreferredByEventIdAndStudentId(event.getId(), student.getId())
                 .orElseGet(() -> registrationRepository.save(new Registration(
                         LocalDateTime.now(), "REGISTERED",
                         "Tự tạo từ Google Form (" + via + ")", event, student)));

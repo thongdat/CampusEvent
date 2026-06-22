@@ -242,7 +242,7 @@ public class CheckinController {
 
         // Auto-register nếu chưa
         final Student fixedStudent = student;
-        Registration registration = registrationRepository.findByEventIdAndStudentId(eventId, fixedStudent.getId())
+        Registration registration = registrationRepository.findPreferredByEventIdAndStudentId(eventId, fixedStudent.getId())
                 .orElseGet(() -> {
                     Registration r = new Registration(now, "REGISTERED", "Walk-in via QR check-in", event, fixedStudent);
                     return registrationRepository.save(r);
