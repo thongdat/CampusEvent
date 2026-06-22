@@ -111,7 +111,8 @@ public class StudentController {
     public ResponseEntity<Map<String, Object>> me(@RequestHeader(value = "X-User-Email", required = false) String email) {
         Student student = resolveStudent(email);
         User user = student.getUser();
-        List<Registration> regs = registrationRepository.findByStudentId(student.getId());
+        List<Registration> regs = deduplicateRegistrations(
+                registrationRepository.findByStudentId(student.getId()));
 
         long registeredCount = regs.stream().filter(r -> "REGISTERED".equalsIgnoreCase(r.getStatus())).count();
         long waitlistCount = regs.stream().filter(r -> "WAITLIST".equalsIgnoreCase(r.getStatus())).count();
@@ -221,7 +222,7 @@ public class StudentController {
 
         // Nạp đăng ký 1 lần rồi gom theo event (thay cho N+1 findByEventId trong mỗi card).
         Map<Long, List<Registration>> regsByEvent = new HashMap<>();
-        for (Registration r : registrationRepository.findAll()) {
+        for (Registration r : deduplicateRegistrations(registrationRepository.findAll())) {
             if (r.getEvent() != null && r.getEvent().getId() != null) {
                 regsByEvent.computeIfAbsent(r.getEvent().getId(), k -> new ArrayList<>()).add(r);
             }
@@ -231,7 +232,7 @@ public class StudentController {
         if (student != null) {
             for (Registration r : registrationRepository.findByStudentId(student.getId())) {
                 if (r.getEvent() != null && r.getEvent().getId() != null) {
-                    myRegByEvent.put(r.getEvent().getId(), r);
+                    myRegByEvent.merge(r.getEvent().getId(), r, this::preferredRegistration);
                 }
             }
         }
@@ -333,7 +334,7 @@ public class StudentController {
             @PathVariable Long id,
             @RequestHeader(value = "X-User-Email", required = false) String email) {
         Student student = resolveStudent(email);
-        Event event = eventRepository.findById(id)
+        Event event = eventRepository.findByIdForRegistration(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy sự kiện"));
 
         if (event.getStatus() == null || !UPCOMING_STATUSES.contains(event.getStatus().toUpperCase(Locale.ROOT))) {
@@ -343,7 +344,11 @@ public class StudentController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Sự kiện đã diễn ra");
         }
 
-        Optional<Registration> existing = registrationRepository.findByEventIdAndStudentId(event.getId(), student.getId());
+        List<Registration> existingRegistrations = registrationRepository
+                .findAllByEventIdAndStudentIdOrderByIdAsc(event.getId(), student.getId());
+        Optional<Registration> existing = existingRegistrations.stream()
+                .filter(item -> !"CANCELLED".equalsIgnoreCase(item.getStatus()))
+                .findFirst();
         if (existing.isPresent() && !"CANCELLED".equalsIgnoreCase(existing.get().getStatus())) {
             Registration current = existing.get();
             Map<String, Object> response = new LinkedHashMap<>();
@@ -359,14 +364,18 @@ public class StudentController {
         PriorityRankingService.Breakdown breakdown = priorityService.computeBreakdown(student, event, now);
         BigDecimal score = BigDecimal.valueOf(breakdown.total);
 
-        Registration registration = existing.orElseGet(() -> new Registration(now, "REGISTERED", null, event, student));
+        Registration registration = existingRegistrations.stream()
+                .filter(item -> "CANCELLED".equalsIgnoreCase(item.getStatus()))
+                .findFirst()
+                .orElseGet(() -> new Registration(now, "REGISTERED", null, event, student));
         registration.setRegistrationDate(now);
         registration.setPriorityScore(score);
         registration.setStatus("REGISTERED");
         registration.setNote(null);
 
         // Cơ chế xếp hạng: nếu vượt capacity, người có điểm ưu tiên thấp nhất bị đẩy WAITLIST.
-        List<Registration> active = registrationRepository.findByEventId(event.getId()).stream()
+        List<Registration> active = deduplicateRegistrations(
+                registrationRepository.findByEventId(event.getId())).stream()
                 .filter(r -> "REGISTERED".equalsIgnoreCase(r.getStatus()))
                 .filter(r -> !Objects.equals(r.getId(), registration.getId()))
                 .collect(Collectors.toList());
@@ -477,21 +486,28 @@ public class StudentController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Sự kiện đã diễn ra, không thể huỷ");
         }
 
-        registration.setStatus("CANCELLED");
-        registration.setNote("Sinh viên tự huỷ");
-        registrationRepository.save(registration);
-        ticketRepository.findByRegistrationId(registration.getId()).ifPresent(ticketRepository::delete);
+        List<Registration> sameEventRegistrations = registrationRepository
+                .findAllByEventIdAndStudentIdOrderByIdAsc(
+                        registration.getEvent().getId(), student.getId());
+        for (Registration item : sameEventRegistrations) {
+            item.setStatus("CANCELLED");
+            item.setNote("Sinh viên tự huỷ");
+            ticketRepository.findByRegistrationId(item.getId()).ifPresent(ticketRepository::delete);
+        }
+        registrationRepository.saveAll(sameEventRegistrations);
 
         // Promote người có priority cao nhất trong WAITLIST
         Event event = registration.getEvent();
         if (event != null && event.getCapacity() != null) {
-            long activeCount = registrationRepository.findByEventId(event.getId()).stream()
+            List<Registration> eventRegistrations = deduplicateRegistrations(
+                    registrationRepository.findByEventId(event.getId()));
+            long activeCount = eventRegistrations.stream()
                     .filter(r -> "REGISTERED".equalsIgnoreCase(r.getStatus())).count();
             if (activeCount < event.getCapacity()) {
                 Comparator<Registration> byScoreAsc2 = Comparator.comparing(
                         r -> r.getPriorityScore() == null ? BigDecimal.ZERO : r.getPriorityScore());
                 Comparator<Registration> byDateAsc = Comparator.comparing(Registration::getRegistrationDate);
-                Registration promoted = registrationRepository.findByEventId(event.getId()).stream()
+                Registration promoted = eventRegistrations.stream()
                         .filter(r -> "WAITLIST".equalsIgnoreCase(r.getStatus()))
                         .max(byScoreAsc2.thenComparing(byDateAsc.reversed()))
                         .orElse(null);
@@ -507,6 +523,7 @@ public class StudentController {
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("registrationId", registration.getId());
         response.put("status", "CANCELLED");
+        response.put("cancelledDuplicates", Math.max(0, sameEventRegistrations.size() - 1));
         return ResponseEntity.ok(response);
     }
 
@@ -518,7 +535,8 @@ public class StudentController {
                 .<Registration, LocalDateTime>comparing(r -> (r.getEvent() == null || r.getEvent().getStartTime() == null)
                         ? LocalDateTime.MIN : r.getEvent().getStartTime())
                 .reversed();
-        List<Registration> regs = registrationRepository.findByStudentId(student.getId()).stream()
+        List<Registration> regs = deduplicateRegistrations(
+                registrationRepository.findByStudentId(student.getId())).stream()
                 .sorted(myRegsByEventStartDesc)
                 .collect(Collectors.toList());
 
@@ -604,7 +622,7 @@ public class StudentController {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy sự kiện"));
 
         // Phải đã đăng ký + đã check-in attended mới được feedback
-        Registration reg = registrationRepository.findByEventIdAndStudentId(event.getId(), student.getId())
+        Registration reg = canonicalRegistration(event.getId(), student.getId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bạn chưa đăng ký sự kiện này"));
         Optional<Attendance> att = attendanceRepository.findByRegistrationId(reg.getId());
         if (att.isEmpty() || !"ATTENDED".equalsIgnoreCase(att.get().getStatus())) {
@@ -724,7 +742,7 @@ public class StudentController {
 
     private List<Event> upcomingForStudent(Student student) {
         LocalDateTime now = LocalDateTime.now();
-        return registrationRepository.findByStudentId(student.getId()).stream()
+        return deduplicateRegistrations(registrationRepository.findByStudentId(student.getId())).stream()
                 .filter(r -> "REGISTERED".equalsIgnoreCase(r.getStatus()))
                 .map(Registration::getEvent)
                 .filter(Objects::nonNull)
@@ -733,9 +751,9 @@ public class StudentController {
     }
 
     private Map<String, Object> buildEventCard(Event event, Student student, LocalDateTime now) {
-        List<Registration> regs = registrationRepository.findByEventId(event.getId());
+        List<Registration> regs = deduplicateRegistrations(registrationRepository.findByEventId(event.getId()));
         Registration myReg = student == null ? null
-                : registrationRepository.findByEventIdAndStudentId(event.getId(), student.getId()).orElse(null);
+                : canonicalRegistration(event.getId(), student.getId()).orElse(null);
         return buildEventCard(event, student, now, regs, myReg);
     }
 
@@ -804,6 +822,43 @@ public class StudentController {
         String code = "AEMS-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase(Locale.ROOT);
         Ticket ticket = new Ticket(code, LocalDateTime.now(), registration);
         return ticketRepository.save(ticket);
+    }
+
+    /**
+     * Historical double-click races may have left more than one row for the same event/student.
+     * Keep one canonical row in student-facing responses: active beats waitlist, waitlist beats cancelled.
+     */
+    private List<Registration> deduplicateRegistrations(List<Registration> registrations) {
+        Map<String, Registration> canonical = new LinkedHashMap<>();
+        for (Registration item : registrations) {
+            Long eventId = item.getEvent() == null ? null : item.getEvent().getId();
+            Long studentId = item.getStudent() == null ? null : item.getStudent().getId();
+            String key = eventId != null && studentId != null
+                    ? eventId + "|" + studentId
+                    : "registration|" + item.getId();
+            canonical.merge(key, item, this::preferredRegistration);
+        }
+        return new ArrayList<>(canonical.values());
+    }
+
+    private Optional<Registration> canonicalRegistration(Long eventId, Long studentId) {
+        return registrationRepository.findAllByEventIdAndStudentIdOrderByIdAsc(eventId, studentId).stream()
+                .reduce(this::preferredRegistration);
+    }
+
+    private Registration preferredRegistration(Registration left, Registration right) {
+        int leftRank = registrationStatusRank(left.getStatus());
+        int rightRank = registrationStatusRank(right.getStatus());
+        if (leftRank != rightRank) return leftRank > rightRank ? left : right;
+        if (left.getId() == null) return right;
+        if (right.getId() == null) return left;
+        return left.getId() <= right.getId() ? left : right;
+    }
+
+    private int registrationStatusRank(String status) {
+        if ("REGISTERED".equalsIgnoreCase(status)) return 3;
+        if ("WAITLIST".equalsIgnoreCase(status)) return 2;
+        return 1;
     }
 
     private boolean contains(String haystack, String needle) {

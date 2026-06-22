@@ -15,7 +15,29 @@ public interface RegistrationRepository extends JpaRepository<Registration, Long
     List<Registration> findByEventId(Long eventId);
     List<Registration> findByStudentId(Long studentId);
     List<Registration> findByRegistrationDateLessThanEqual(LocalDateTime registrationDate, Sort sort);
-    Optional<Registration> findByEventIdAndStudentId(Long eventId, Long studentId);
+    List<Registration> findAllByEventIdAndStudentIdOrderByIdAsc(Long eventId, Long studentId);
+
+    default Optional<Registration> findPreferredByEventIdAndStudentId(Long eventId, Long studentId) {
+        return preferred(findAllByEventIdAndStudentIdOrderByIdAsc(eventId, studentId));
+    }
+
+    static Optional<Registration> preferred(List<Registration> registrations) {
+        return registrations.stream()
+                .sorted((left, right) -> {
+                    int statusCompare = Integer.compare(statusRank(right.getStatus()), statusRank(left.getStatus()));
+                    if (statusCompare != 0) return statusCompare;
+                    if (left.getId() == null) return 1;
+                    if (right.getId() == null) return -1;
+                    return Long.compare(left.getId(), right.getId());
+                })
+                .findFirst();
+    }
+
+    static int statusRank(String status) {
+        if ("REGISTERED".equalsIgnoreCase(status)) return 3;
+        if ("WAITLIST".equalsIgnoreCase(status)) return 2;
+        return 1;
+    }
     List<Registration> findByStatus(String status);
     long countByStudentId(Long studentId);
     long countByStatus(String status);

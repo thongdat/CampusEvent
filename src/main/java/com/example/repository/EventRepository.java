@@ -3,6 +3,7 @@ package com.example.repository;
 import com.example.model.Event;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -10,9 +11,15 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import javax.persistence.LockModeType;
 
 @Repository
 public interface EventRepository extends JpaRepository<Event, Long> {
+    /** Serializes registrations for one event so concurrent double-clicks cannot create duplicates. */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select e from Event e where e.id = :id")
+    Optional<Event> findByIdForRegistration(@Param("id") Long id);
+
     List<Event> findByDepartmentId(Long departmentId);
     List<Event> findByStatus(String status);
     Optional<Event> findFirstByTitleAndDepartmentIdOrderByIdAsc(String title, Long departmentId);

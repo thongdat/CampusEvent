@@ -863,7 +863,7 @@ public class AdminDashboardController {
                 .orElseThrow(() -> badRequest("Sự kiện không tồn tại."));
         Student student = upsertStudentFromRegistrationPayload(payload);
 
-        registrationRepository.findByEventIdAndStudentId(event.getId(), student.getId())
+        registrationRepository.findPreferredByEventIdAndStudentId(event.getId(), student.getId())
                 .ifPresent(existing -> {
                     throw badRequest("Sinh viên này đã có trong danh sách sự kiện.");
                 });
