@@ -11,6 +11,28 @@ GO
 -- =====================================================================
 --  CampusEvent / AEMS - FULL DATABASE SEED  (FPT-themed, rich data)
 --  Chạy 1 lần duy nhất trong SQL Server Management Studio.
+<<<<<<< HEAD
+=======
+--  Script này:
+--    1. Tạo database event_management_db (nếu chưa có)
+--    2. Drop + tạo lại toàn bộ bảng theo đúng schema JPA
+--    3. Insert 5 role, 15 chuyên ngành (đúng theo AcademicStructure)
+--    4. Insert ~95 user (3 admin, 15 điều phối khoa, 8 hội đồng, 70 sinh viên)
+--    5. Insert ~70 student với mã FPT (HE/HS/HM/HF/HD ...)
+--    6. Insert 32 event - mỗi event đều có ảnh FPT/campus chất lượng cao
+--    7. Insert 35 event_proposal đủ các trạng thái
+--    8. Sinh ~500 registration / 350 ticket / 280 attendance / feedback
+--    9. Sinh QR attendance_session, quiz_question/submission/answer, event_feedback
+--   10. Sinh ~700 email_log và ~900 activity_log
+--
+--  Mọi mật khẩu seed đều là chuỗi placeholder. Sau khi import, gọi:
+--    GET http://localhost:8081/api/auth/init-passwords
+--  để hash lại bằng BCrypt. Khi đó các tài khoản đăng nhập được với mật khẩu:
+--    admin01@fpt.edu.vn / admin123
+--    dept01@fpt.edu.vn  / dept123 (MANAGER)
+--    com01@fpt.edu.vn   / com123
+--    sv001@fpt.edu.vn   / stu123
+>>>>>>> a4dfe83916a51c29358f20bfa25155def4251119
 -- =====================================================================
 
 IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = 'event_management_db')
@@ -29,18 +51,23 @@ GO
 -- ---------------------------------------------------------------------
 -- DROP theo đúng thứ tự khóa ngoại
 -- ---------------------------------------------------------------------
-IF OBJECT_ID('activity_log',  'U') IS NOT NULL DROP TABLE activity_log;
-IF OBJECT_ID('email_log',     'U') IS NOT NULL DROP TABLE email_log;
-IF OBJECT_ID('feedback',      'U') IS NOT NULL DROP TABLE feedback;
-IF OBJECT_ID('attendance',    'U') IS NOT NULL DROP TABLE attendance;
-IF OBJECT_ID('ticket',        'U') IS NOT NULL DROP TABLE ticket;
-IF OBJECT_ID('registration',  'U') IS NOT NULL DROP TABLE registration;
-IF OBJECT_ID('event_proposal','U') IS NOT NULL DROP TABLE event_proposal;
-IF OBJECT_ID('event',         'U') IS NOT NULL DROP TABLE event;
-IF OBJECT_ID('student',       'U') IS NOT NULL DROP TABLE student;
-IF OBJECT_ID('users',         'U') IS NOT NULL DROP TABLE users;
-IF OBJECT_ID('department',    'U') IS NOT NULL DROP TABLE department;
-IF OBJECT_ID('role',          'U') IS NOT NULL DROP TABLE role;
+IF OBJECT_ID('activity_log',       'U') IS NOT NULL DROP TABLE activity_log;
+IF OBJECT_ID('email_log',          'U') IS NOT NULL DROP TABLE email_log;
+IF OBJECT_ID('quiz_answer',        'U') IS NOT NULL DROP TABLE quiz_answer;
+IF OBJECT_ID('quiz_submission',    'U') IS NOT NULL DROP TABLE quiz_submission;
+IF OBJECT_ID('quiz_question',      'U') IS NOT NULL DROP TABLE quiz_question;
+IF OBJECT_ID('event_feedback',     'U') IS NOT NULL DROP TABLE event_feedback;
+IF OBJECT_ID('feedback',           'U') IS NOT NULL DROP TABLE feedback;
+IF OBJECT_ID('attendance_session', 'U') IS NOT NULL DROP TABLE attendance_session;
+IF OBJECT_ID('attendance',         'U') IS NOT NULL DROP TABLE attendance;
+IF OBJECT_ID('ticket',             'U') IS NOT NULL DROP TABLE ticket;
+IF OBJECT_ID('registration',       'U') IS NOT NULL DROP TABLE registration;
+IF OBJECT_ID('event_proposal',     'U') IS NOT NULL DROP TABLE event_proposal;
+IF OBJECT_ID('event',              'U') IS NOT NULL DROP TABLE event;
+IF OBJECT_ID('student',            'U') IS NOT NULL DROP TABLE student;
+IF OBJECT_ID('users',              'U') IS NOT NULL DROP TABLE users;
+IF OBJECT_ID('department',         'U') IS NOT NULL DROP TABLE department;
+IF OBJECT_ID('role',               'U') IS NOT NULL DROP TABLE role;
 GO
 
 -- ---------------------------------------------------------------------
@@ -75,20 +102,28 @@ CREATE TABLE users (
     otp_expiry   DATETIME2,
     major        NVARCHAR(100),
     semester     INT,
+<<<<<<< HEAD
 total_points INT                  NOT NULL DEFAULT 0,
+=======
+    total_points INT                  NOT NULL DEFAULT 0,
+    department_position VARCHAR(30)    NULL DEFAULT 'STAFF',
+>>>>>>> a4dfe83916a51c29358f20bfa25155def4251119
     CONSTRAINT UK_users_email UNIQUE (email),
     CONSTRAINT FK_users_role  FOREIGN KEY (role_id) REFERENCES role(id)
 );
 GO
 
 CREATE UNIQUE INDEX UX_users_phone ON users(phone)
-    WHERE phone IS NOT NULL AND phone <> '';
+WHERE phone IS NOT NULL AND phone <> '';
 GO
 CREATE TABLE student (
     id           BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
     student_code VARCHAR(50)          NOT NULL,
     major        NVARCHAR(100),
     year         INT,
+    no_show_count INT                 NOT NULL DEFAULT 0,
+    attendance_reputation FLOAT       NOT NULL DEFAULT 100,
+    gender       NVARCHAR(10),
     user_id      BIGINT               NOT NULL,
     CONSTRAINT UK_student_code UNIQUE (student_code),
     CONSTRAINT UK_student_user UNIQUE (user_id),
@@ -106,6 +141,17 @@ CREATE TABLE event (
     capacity      INT,
     image_url     NVARCHAR(500),
     image_urls    NVARCHAR(MAX),
+    google_form_url NVARCHAR(1000),
+    checkin_form_id NVARCHAR(120),
+    checkin_sheet_id NVARCHAR(120),
+    checkout_form_url NVARCHAR(1000),
+    checkout_form_id NVARCHAR(120),
+    checkout_sheet_id NVARCHAR(120),
+    last_sheet_sync_at DATETIME2,
+    auto_closed_at DATETIME2,
+    speakers      NVARCHAR(800),
+    organizer     NVARCHAR(200),
+    support_staff_needed INT,
     budget        DECIMAL(18,2)        NOT NULL DEFAULT 0,
     status        VARCHAR(50)          NOT NULL,
     created_at    DATETIME2            NOT NULL,
@@ -124,9 +170,13 @@ CREATE TABLE event_proposal (
     image_urls    NVARCHAR(MAX),
     budget        DECIMAL(18,2)        NOT NULL DEFAULT 0,
     proposed_date DATETIME2            NOT NULL,
+    proposed_end_date DATETIME2,
+    organizer     NVARCHAR(200),
+    support_staff_needed INT,
     status        VARCHAR(50)          NOT NULL,
     note          NVARCHAR(MAX),
     created_at    DATETIME2            NOT NULL,
+    quiz_payload  NVARCHAR(MAX),
     department_id BIGINT               NOT NULL,
     CONSTRAINT FK_proposal_dept FOREIGN KEY (department_id) REFERENCES department(id)
 );
@@ -138,6 +188,7 @@ CREATE TABLE registration (
     status            VARCHAR(50)          NOT NULL,
     note              NVARCHAR(MAX),
     priority_score    DECIMAL(5,2)         NULL,
+    invitation_sent_at DATETIME2           NULL,
     event_id          BIGINT               NOT NULL,
     student_id        BIGINT               NOT NULL,
     CONSTRAINT FK_reg_event   FOREIGN KEY (event_id)   REFERENCES event(id),
@@ -158,9 +209,33 @@ GO
 CREATE TABLE attendance (
     id              BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
     checkin_time    DATETIME2            NOT NULL,
+<<<<<<< HEAD
 status          VARCHAR(50)          NOT NULL,
+=======
+    mid_verify_time DATETIME2,
+    checkout_time   DATETIME2,
+    status          VARCHAR(50)          NOT NULL,
+    participation_score FLOAT,
+    note            NVARCHAR(MAX),
+>>>>>>> a4dfe83916a51c29358f20bfa25155def4251119
     registration_id BIGINT               NOT NULL,
-    CONSTRAINT FK_attend_reg FOREIGN KEY (registration_id) REFERENCES registration(id)
+    event_id        BIGINT,
+    student_id      BIGINT,
+    CONSTRAINT FK_attend_reg     FOREIGN KEY (registration_id) REFERENCES registration(id),
+    CONSTRAINT FK_attend_event   FOREIGN KEY (event_id)        REFERENCES event(id),
+    CONSTRAINT FK_attend_student FOREIGN KEY (student_id)      REFERENCES student(id)
+);
+GO
+
+CREATE TABLE attendance_session (
+    id           BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    event_id     BIGINT               NOT NULL,
+    token        VARCHAR(120)         NOT NULL,
+    session_type VARCHAR(30)          NOT NULL,
+    created_at   DATETIME2            NOT NULL,
+    expired_at   DATETIME2            NOT NULL,
+    status       VARCHAR(30)          NOT NULL,
+    CONSTRAINT FK_att_session_event FOREIGN KEY (event_id) REFERENCES event(id)
 );
 GO
 
@@ -173,6 +248,61 @@ CREATE TABLE feedback (
     student_id BIGINT               NOT NULL,
     CONSTRAINT FK_fb_event   FOREIGN KEY (event_id)   REFERENCES event(id),
     CONSTRAINT FK_fb_student FOREIGN KEY (student_id) REFERENCES student(id)
+);
+GO
+
+CREATE TABLE event_feedback (
+    id                  BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    event_id            BIGINT               NOT NULL,
+    student_id          BIGINT               NOT NULL,
+    content_rating      INT                  NOT NULL,
+    speaker_rating      INT                  NOT NULL,
+    organization_rating INT                  NOT NULL,
+    overall_rating      INT                  NOT NULL,
+    comment             NVARCHAR(MAX),
+    submitted_at        DATETIME2            NOT NULL,
+    CONSTRAINT FK_event_feedback_event   FOREIGN KEY (event_id)   REFERENCES event(id),
+    CONSTRAINT FK_event_feedback_student FOREIGN KEY (student_id) REFERENCES student(id)
+);
+GO
+
+CREATE TABLE quiz_question (
+    id             BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    event_id       BIGINT               NOT NULL,
+    question_text  NVARCHAR(MAX)        NOT NULL,
+    question_type  VARCHAR(30)          NOT NULL,
+    option_a       NVARCHAR(500),
+    option_b       NVARCHAR(500),
+    option_c       NVARCHAR(500),
+    option_d       NVARCHAR(500),
+    correct_answer VARCHAR(20),
+    points         INT                  NOT NULL DEFAULT 1,
+    CONSTRAINT FK_quiz_question_event FOREIGN KEY (event_id) REFERENCES event(id)
+);
+GO
+
+CREATE TABLE quiz_submission (
+    id           BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    event_id     BIGINT               NOT NULL,
+    student_id   BIGINT               NOT NULL,
+    total_score  FLOAT                NOT NULL DEFAULT 0,
+    submitted_at DATETIME2            NOT NULL,
+    CONSTRAINT FK_quiz_submission_event   FOREIGN KEY (event_id)   REFERENCES event(id),
+    CONSTRAINT FK_quiz_submission_student FOREIGN KEY (student_id) REFERENCES student(id)
+);
+GO
+
+CREATE TABLE quiz_answer (
+    id              BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    submission_id   BIGINT               NOT NULL,
+    question_id     BIGINT               NOT NULL,
+    selected_answer VARCHAR(20),
+    answer_text     NVARCHAR(MAX),
+    is_correct      BIT,
+    score           FLOAT                NOT NULL DEFAULT 0,
+    submitted_at    DATETIME2            NOT NULL,
+    CONSTRAINT FK_quiz_answer_submission FOREIGN KEY (submission_id) REFERENCES quiz_submission(id),
+    CONSTRAINT FK_quiz_answer_question   FOREIGN KEY (question_id)   REFERENCES quiz_question(id)
 );
 GO
 
@@ -359,6 +489,21 @@ WHEN N'Truyền thông đa phương tiện' THEN 'HD'
 FROM ranked r;
 GO
 
+UPDATE users
+SET department_position =
+    CASE
+        WHEN role_id = (SELECT id FROM role WHERE name = 'MANAGER') AND id % 3 = 1 THEN 'HEAD'
+        WHEN role_id = (SELECT id FROM role WHERE name = 'MANAGER') THEN 'STAFF'
+        ELSE department_position
+    END;
+
+UPDATE student
+SET
+    gender = CASE WHEN id % 3 = 0 THEN N'Nữ' WHEN id % 3 = 1 THEN N'Nam' ELSE N'Khác' END,
+    no_show_count = id % 4,
+    attendance_reputation = 100 - ((id % 4) * 7.5);
+GO
+
 -- ---------------------------------------------------------------------
 -- DATA SEEDING: 32 EVENTS (Hoàn chỉnh đoạn bị cắt)
 -- ---------------------------------------------------------------------
@@ -377,9 +522,397 @@ INSERT INTO event (title, description, location, start_time, end_time, capacity,
 (N'Data Analytics Power BI', N'Chuỗi 5 buổi tối học Dashboards.', N'Phòng 201 - Tòa Alpha', DATEADD(DAY, -10, GETDATE()), DATEADD(DAY, -6, GETDATE()), 70, @img, 13000000, 'COMPLETED', DATEADD(DAY,-25,GETDATE()), 5),
 (N'Data Storytelling Talk', N'Nghệ thuật kể chuyện bằng dữ liệu.', N'Innovation Hub - Đà Nẵng', DATEADD(DAY, 50, GETDATE()), DATEADD(DAY, 50, GETDATE()), 100, @img, 6000000, 'APPROVED', DATEADD(DAY,-4,GETDATE()), 5);
 
+<<<<<<< HEAD
 -- Điền nhanh 21 sự kiện còn lại cho đủ 32 sự kiện đa dạng khoa
 DECLARE @ev_j INT = 1;
 WHILE @ev_j <= 21
+=======
+UPDATE event
+SET image_urls = image_url
+WHERE image_url IS NOT NULL;
+
+UPDATE e
+SET
+    organizer = COALESCE(organizer, N'FPT University - ' + d.name),
+    speakers = COALESCE(speakers,
+        CASE e.department_id % 5
+            WHEN 0 THEN N'Chuyên gia FPT Software; Mentor doanh nghiệp'
+            WHEN 1 THEN N'Giảng viên FPT University; Alumni khách mời'
+            WHEN 2 THEN N'Đại diện FPT Corporation; Trưởng bộ môn'
+            WHEN 3 THEN N'Chuyên gia đối tác; CLB sinh viên'
+            ELSE N'Hội đồng chuyên môn; Mentor cộng đồng'
+        END),
+    support_staff_needed = COALESCE(support_staff_needed, 3 + (e.id % 8)),
+    google_form_url = CASE WHEN e.id % 4 = 0 THEN N'https://forms.gle/demo-checkin-' + CAST(e.id AS NVARCHAR(20)) ELSE google_form_url END,
+    checkin_form_id = CASE WHEN e.id % 4 = 0 THEN N'checkin-form-' + CAST(e.id AS NVARCHAR(20)) ELSE checkin_form_id END,
+    checkin_sheet_id = CASE WHEN e.id % 4 = 0 THEN N'checkin-sheet-' + CAST(e.id AS NVARCHAR(20)) ELSE checkin_sheet_id END,
+    checkout_form_url = CASE WHEN e.id % 5 = 0 THEN N'https://forms.gle/demo-checkout-' + CAST(e.id AS NVARCHAR(20)) ELSE checkout_form_url END,
+    checkout_form_id = CASE WHEN e.id % 5 = 0 THEN N'checkout-form-' + CAST(e.id AS NVARCHAR(20)) ELSE checkout_form_id END,
+    checkout_sheet_id = CASE WHEN e.id % 5 = 0 THEN N'checkout-sheet-' + CAST(e.id AS NVARCHAR(20)) ELSE checkout_sheet_id END,
+    last_sheet_sync_at = CASE WHEN e.id % 4 = 0 THEN DATEADD(HOUR, -e.id, GETDATE()) ELSE last_sheet_sync_at END,
+    auto_closed_at = CASE WHEN e.end_time < GETDATE() THEN DATEADD(MINUTE, 15, e.end_time) ELSE auto_closed_at END
+FROM event e
+JOIN department d ON d.id = e.department_id;
+GO
+
+-- ---------------------------------------------------------------------
+-- EVENT PROPOSALS  (35 - đủ trạng thái PENDING/APPROVED/REVISION_REQUIRED/REJECTED)
+-- ---------------------------------------------------------------------
+INSERT INTO event_proposal (title, description, proposed_date, status, note, created_at, department_id) VALUES
+(N'Đề xuất: Database Performance Clinic',          N'Buổi clinic tối ưu truy vấn SQL Server, đối tượng SE/CS năm 3-4.',                                         '2026-09-10 09:00:00', 'PENDING',           N'Đang chờ hội đồng duyệt.',                       DATEADD(DAY,-30,GETDATE()), 1),
+(N'Đề xuất: Workshop Microservices với Spring Cloud', N'Tối ưu architecture cho hệ thống lớn, 60 chỗ.',                                                       '2026-09-18 13:00:00', 'PENDING',           N'Đang chờ hội đồng duyệt.',                       DATEADD(DAY,-26,GETDATE()), 1),
+(N'Đề xuất: Code Review Best Practices',           N'Talkshow chia sẻ kinh nghiệm review code hiệu quả.',                                                       '2026-09-25 14:00:00', 'APPROVED',          N'Duyệt - cần lên kế hoạch truyền thông.',         DATEADD(DAY,-24,GETDATE()), 2),
+(N'Đề xuất: Pair Programming Day',                  N'Sinh viên pair programming trong môi trường mô phỏng startup.',                                          '2026-10-02 09:00:00', 'REVISION_REQUIRED', N'Bổ sung ngân sách trà nước + kế hoạch chia nhóm.', DATEADD(DAY,-20,GETDATE()), 2),
+(N'Đề xuất: CTF Mid-Year 2026',                     N'Cuộc thi CTF giữa năm, mở cho sinh viên IA năm 1-4.',                                                    '2026-10-12 08:00:00', 'APPROVED',          N'Duyệt - phối hợp với CLB Security.',             DATEADD(DAY,-18,GETDATE()), 3),
+(N'Đề xuất: Pentest Workshop với Kali Linux',       N'Hướng dẫn pentest từ recon đến exploitation.',                                                            '2026-10-20 13:00:00', 'PENDING',           N'Đang chờ hội đồng duyệt.',                       DATEADD(DAY,-16,GETDATE()), 3),
+(N'Đề xuất: LLM Fine-tuning Hands-on',              N'Hands-on fine-tune mô hình ngôn ngữ với LoRA.',                                                            '2026-10-25 09:00:00', 'APPROVED',          N'Duyệt - cần thuê GPU server.',                   DATEADD(DAY,-15,GETDATE()), 4),
+(N'Đề xuất: Reinforcement Learning Bootcamp',       N'5 buổi tối, từ Q-learning đến PPO.',                                                                       '2026-11-02 18:00:00', 'REVISION_REQUIRED', N'Cần làm rõ tài liệu và slide từng buổi.',        DATEADD(DAY,-13,GETDATE()), 4),
+(N'Đề xuất: Data Engineering Day',                  N'Chia sẻ pipeline ETL của FPT Telecom, có demo Airflow.',                                                   '2026-11-08 13:00:00', 'PENDING',           N'Đang chờ hội đồng duyệt.',                       DATEADD(DAY,-12,GETDATE()), 5),
+(N'Đề xuất: Tableau Champion Contest',              N'Cuộc thi dashboard Tableau, 3 vòng.',                                                                       '2026-11-15 09:00:00', 'REJECTED',          N'Trùng lịch với FPT Hackathon, dời sang Q1/2027.', DATEADD(DAY,-10,GETDATE()), 5),
+(N'Đề xuất: Talkshow ESG cho doanh nghiệp Việt',     N'Diễn giả FPT Corporation chia sẻ thực hành ESG.',                                                          '2026-11-20 14:00:00', 'APPROVED',          N'Duyệt - mời thêm doanh nghiệp đối tác.',         DATEADD(DAY,-9,GETDATE()),  6),
+(N'Đề xuất: Workshop Excel cho Kinh tế',            N'Học Excel nâng cao: PowerQuery, Pivot, macro VBA.',                                                        '2026-11-28 18:00:00', 'APPROVED',          N'Duyệt - sắp xếp 2 lớp song song.',               DATEADD(DAY,-8,GETDATE()),  6),
+(N'Đề xuất: TikTok Marketing Bootcamp',             N'Học làm content viral trên TikTok, có giải thưởng.',                                                       '2026-12-02 13:00:00', 'PENDING',           N'Đang chờ hội đồng duyệt.',                       DATEADD(DAY,-7,GETDATE()),  7),
+(N'Đề xuất: Workshop Personal Branding cho sinh viên', N'Cách build personal brand trên LinkedIn cho fresher.',                                                  '2026-12-08 18:00:00', 'REVISION_REQUIRED', N'Bổ sung diễn giả ngoài FPT.',                    DATEADD(DAY,-6,GETDATE()),  7),
+(N'Đề xuất: Business Simulation Day',               N'Mô phỏng vận hành startup trong 8 giờ.',                                                                    '2026-12-15 08:00:00', 'APPROVED',          N'Duyệt - chuẩn bị 10 case study.',                DATEADD(DAY,-5,GETDATE()),  8),
+(N'Đề xuất: Talkshow CEO FPT Retail',                N'Giao lưu với CEO về hành trình kinh doanh.',                                                               '2026-12-22 14:00:00', 'PENDING',           N'Đang chờ hội đồng duyệt.',                       DATEADD(DAY,-4,GETDATE()),  8),
+(N'Đề xuất: Investment Game 2026',                  N'Sinh viên giao dịch ảo trong 1 tuần, có giải thưởng.',                                                     '2027-01-10 09:00:00', 'PENDING',           N'Đang chờ hội đồng duyệt.',                       DATEADD(DAY,-3,GETDATE()),  9),
+(N'Đề xuất: Crypto & DeFi Talk',                    N'Talkshow tổng quan DeFi, hợp tác với MoMo.',                                                               '2027-01-18 14:00:00', 'REJECTED',          N'Chủ đề cần phê duyệt từ ban học vụ.',            DATEADD(DAY,-2,GETDATE()),  9),
+(N'Đề xuất: Figma Mastery Bootcamp',                 N'4 buổi học Figma từ cơ bản đến nâng cao.',                                                                 '2027-01-25 18:00:00', 'APPROVED',          N'Duyệt - sắp xếp phòng có 40 máy.',               DATEADD(DAY,-2,GETDATE()),  10),
+(N'Đề xuất: 3D Modeling với Blender',               N'Workshop modeling 3D cho game/animation.',                                                                  '2027-02-02 13:00:00', 'PENDING',           N'Đang chờ hội đồng duyệt.',                       DATEADD(DAY,-1,GETDATE()),  10),
+(N'Đề xuất: Adobe Illustrator Battle',              N'Cuộc thi vẽ illustrator trong 3 giờ.',                                                                      '2027-02-10 14:00:00', 'APPROVED',          N'Duyệt - chuẩn bị máy có Adobe license.',         DATEADD(DAY,-1,GETDATE()),  11),
+(N'Đề xuất: Workshop In ấn cho Designer',           N'Hiểu quy trình in từ file đến thành phẩm.',                                                                '2027-02-18 09:00:00', 'REVISION_REQUIRED', N'Cần thêm chi phí thuê xưởng in.',                DATEADD(DAY,-1,GETDATE()),  11),
+(N'Đề xuất: Content Creator Day',                    N'Networking + workshop cho content creator FPT.',                                                            '2027-02-25 14:00:00', 'PENDING',           N'Đang chờ hội đồng duyệt.',                       DATEADD(DAY,-1,GETDATE()),  12),
+(N'Đề xuất: Workshop Live Streaming',                N'Hướng dẫn setup livestream cho event.',                                                                     '2027-03-05 13:00:00', 'APPROVED',          N'Duyệt - mượn thiết bị từ studio.',               DATEADD(DAY,-1,GETDATE()),  12),
+(N'Đề xuất: FPT English Got Talent',                 N'Cuộc thi tài năng tiếng Anh: hát, kịch, hùng biện.',                                                       '2027-03-15 18:00:00', 'PENDING',           N'Đang chờ hội đồng duyệt.',                       DATEADD(DAY,-1,GETDATE()),  13),
+(N'Đề xuất: TOEIC Bootcamp Cấp tốc',                 N'Cấp tốc 4 tuần luyện TOEIC từ 500 đến 700+.',                                                              '2027-03-22 18:00:00', 'APPROVED',          N'Duyệt - mở 3 lớp.',                              DATEADD(DAY,-1,GETDATE()),  13),
+(N'Đề xuất: Japan Career Fair 2026',                 N'Hội chợ việc làm Nhật Bản với 20 công ty Nhật.',                                                            '2027-04-02 09:00:00', 'PENDING',           N'Đang chờ hội đồng duyệt.',                       DATEADD(DAY,-1,GETDATE()),  14),
+(N'Đề xuất: Workshop văn hóa doanh nghiệp Nhật',     N'Buổi chia sẻ về 報連相 (Houren-sou).',                                                                  '2027-04-10 14:00:00', 'APPROVED',          N'Duyệt - mời thêm diễn giả từ Nhật.',             DATEADD(DAY,-1,GETDATE()),  14),
+(N'Đề xuất: Workshop Wine Tasting',                  N'Học cảm vị rượu vang và pairing với món ăn.',                                                               '2027-04-18 18:00:00', 'REVISION_REQUIRED', N'Cần xét lại độ tuổi tham gia.',                  DATEADD(DAY,-1,GETDATE()),  15),
+(N'Đề xuất: Career Trip - JW Marriott HN',           N'Tham quan và kiến tập tại khách sạn 5 sao.',                                                                '2027-04-26 08:00:00', 'APPROVED',          N'Duyệt - giới hạn 40 sinh viên.',                 DATEADD(DAY,-1,GETDATE()),  15),
+(N'Đề xuất: Spring Festival FPT 2027',               N'Lễ hội xuân toàn FPT, có gian hàng và biểu diễn.',                                                          '2027-02-01 16:00:00', 'PENDING',           N'Đang chờ hội đồng duyệt.',                       DATEADD(DAY,-1,GETDATE()),  6),
+(N'Đề xuất: Open Day FPT cho học sinh THPT',         N'Mời học sinh THPT đến tham quan FPT.',                                                                      '2027-03-30 08:00:00', 'APPROVED',          N'Duyệt - kết hợp với phòng tuyển sinh.',          DATEADD(DAY,-1,GETDATE()),  1),
+(N'Đề xuất: Workshop Cloud Native với Kubernetes',   N'Hands-on triển khai microservices trên K8s.',                                                               '2027-05-08 09:00:00', 'PENDING',           N'Đang chờ hội đồng duyệt.',                       DATEADD(DAY,-1,GETDATE()),  1),
+(N'Đề xuất: Workshop Privacy & GDPR',                N'Tổng quan về luật bảo vệ dữ liệu cá nhân.',                                                                 '2027-05-15 14:00:00', 'REJECTED',          N'Chủ đề trùng với khóa học bắt buộc.',            DATEADD(DAY,-1,GETDATE()),  3),
+(N'Đề xuất: Workshop Personal Finance cho sinh viên', N'Quản lý tài chính cá nhân khi mới đi làm.',                                                              '2027-05-22 18:00:00', 'APPROVED',          N'Duyệt - mời chuyên gia từ MB Bank.',             DATEADD(DAY,-1,GETDATE()),  9);
+GO
+
+UPDATE event_proposal
+SET
+    location = COALESCE(location, N'FPT Campus'),
+    capacity = COALESCE(capacity, 100),
+    budget = COALESCE(budget, 5000000 + (id % 8) * 1500000),
+    image_url = COALESCE(image_url, N'https://images.unsplash.com/photo-1540575467063-027a26d3b38c?auto=format&fit=crop&w=1200&q=80');
+
+UPDATE event_proposal
+SET image_urls = image_url
+WHERE image_url IS NOT NULL;
+
+UPDATE event_proposal
+SET
+    proposed_end_date = COALESCE(proposed_end_date, DATEADD(HOUR, 3 + (id % 5), proposed_date)),
+    organizer = COALESCE(organizer, N'Đơn vị đề xuất #' + CAST(department_id AS NVARCHAR(10))),
+    support_staff_needed = COALESCE(support_staff_needed, 2 + (id % 6)),
+    quiz_payload = COALESCE(quiz_payload,
+        N'[{"question":"Bạn kỳ vọng điều gì ở sự kiện này?","type":"SHORT_ANSWER"},{"question":"Bạn đã sẵn sàng tham gia đầy đủ?","type":"MULTIPLE_CHOICE","options":["Có","Chưa chắc"]}]');
+GO
+
+-- ---------------------------------------------------------------------
+-- REGISTRATIONS  (~500 dòng, sinh tự động từ cross-product event x student)
+-- ---------------------------------------------------------------------
+DECLARE @stuRoleId2 BIGINT = (SELECT id FROM role WHERE name = 'STUDENT');
+
+INSERT INTO registration (registration_date, status, note, event_id, student_id)
+    SELECT
+    DATEADD(HOUR, -1 * ((ABS(CHECKSUM(NEWID())) % 240) + 24), e.start_time),
+    CASE
+        WHEN ((CAST(e.id AS INT) * 7 + CAST(s.id AS INT)) % 23) = 0 THEN 'WAITLIST'
+        WHEN ((CAST(e.id AS INT) * 5 + CAST(s.id AS INT)) % 41) = 0 THEN 'CANCELLED'
+        ELSE 'REGISTERED'
+    END,
+    CASE
+        WHEN ((CAST(e.id AS INT) * 7 + CAST(s.id AS INT)) % 23) = 0 THEN N'Chờ mở thêm slot'
+        WHEN ((CAST(e.id AS INT) * 5 + CAST(s.id AS INT)) % 41) = 0 THEN N'Hủy do trùng lịch học'
+        ELSE NULL
+    END,
+    e.id,
+    s.id
+FROM event e
+CROSS JOIN student s
+WHERE ((CAST(e.id AS INT) * 13 + CAST(s.id AS INT) * 7) % 4) = 0;
+GO
+
+-- ---------------------------------------------------------------------
+-- BACKFILL priority_score cho seed (xấp xỉ theo M + S + P + T = 100%)
+-- Bản SQL đơn giản: M dùng so khớp tên khoa/major, S dùng semester của user.
+-- ---------------------------------------------------------------------
+UPDATE r
+SET priority_score = CAST(
+    0.40 * CASE
+        WHEN u.major IS NULL OR u.major = N'' THEN 30
+        WHEN u.major = d.name THEN 100
+        ELSE 60
+    END
+    + 0.30 * CASE
+        WHEN u.semester IS NULL OR u.semester < 1 THEN 10
+        ELSE (CASE WHEN u.semester > 9 THEN 9 ELSE u.semester END * 100.0 / 9.0)
+    END
+    + 0.20 * CASE
+        WHEN u.total_points IS NULL OR u.total_points <= 0 THEN 0
+        WHEN u.total_points <= 100 THEN u.total_points
+        ELSE 100
+    END
+    + 0.10 * 70.0
+    AS DECIMAL(5,2))
+FROM registration r
+JOIN student   s ON s.id = r.student_id
+JOIN users     u ON u.id = s.user_id
+JOIN event     e ON e.id = r.event_id
+JOIN department d ON d.id = e.department_id;
+GO
+
+-- ---------------------------------------------------------------------
+-- TICKETS  (1 ticket / REGISTERED registration)
+-- ---------------------------------------------------------------------
+;WITH eligible AS (
+    SELECT r.id, r.registration_date,
+           ROW_NUMBER() OVER (ORDER BY r.id) AS rn
+    FROM registration r
+    WHERE r.status = 'REGISTERED'
+)
+INSERT INTO ticket (code, sent_date, registration_id)
+SELECT
+    'AEMS-TICKET-' + RIGHT('00000' + CAST(e.rn AS VARCHAR(5)), 5),
+    DATEADD(HOUR, 1, e.registration_date),
+    e.id
+FROM eligible e;
+GO
+
+-- ---------------------------------------------------------------------
+-- ATTENDANCE  (~70% REGISTERED check-in, có cả ABSENT)
+-- ---------------------------------------------------------------------
+INSERT INTO attendance (
+    checkin_time, mid_verify_time, checkout_time, status,
+    participation_score, note, registration_id, event_id, student_id
+)
+SELECT
+    DATEADD(MINUTE, -10 + (ABS(CHECKSUM(NEWID())) % 20), e.start_time),
+    CASE WHEN (r.id % 11) = 0 THEN NULL ELSE DATEADD(MINUTE, 45 + (r.id % 30), e.start_time) END,
+    CASE WHEN (r.id % 11) = 0 THEN NULL ELSE DATEADD(MINUTE, -5 + (r.id % 20), e.end_time) END,
+    CASE
+        WHEN (r.id % 11) = 0 THEN 'ABSENT'
+        WHEN (r.id % 5) = 0 THEN 'CHECKED_IN'
+        WHEN (r.id % 7) = 0 THEN 'MID_VERIFIED'
+        ELSE 'CHECKED_OUT'
+    END,
+    CASE
+        WHEN (r.id % 11) = 0 THEN 0
+        WHEN (r.id % 5) = 0 THEN 55 + (r.id % 15)
+        WHEN (r.id % 7) = 0 THEN 70 + (r.id % 12)
+        ELSE 85 + (r.id % 15)
+    END,
+    CASE WHEN (r.id % 11) = 0 THEN N'Tự động đánh vắng do không check-in.' ELSE NULL END,
+    r.id,
+    r.event_id,
+    r.student_id
+FROM registration r
+JOIN event e ON e.id = r.event_id
+WHERE r.status = 'REGISTERED'
+  AND (r.id % 10) < 7;
+GO
+
+INSERT INTO attendance_session (event_id, token, session_type, created_at, expired_at, status)
+SELECT
+    e.id,
+    'AEMS-IN-' + RIGHT('0000' + CAST(e.id AS VARCHAR(4)), 4),
+    'CHECK_IN',
+    DATEADD(MINUTE, -30, e.start_time),
+    DATEADD(MINUTE, 45, e.start_time),
+    CASE WHEN e.end_time < GETDATE() THEN 'EXPIRED' ELSE 'ACTIVE' END
+FROM event e
+WHERE e.status IN ('PUBLISHED', 'APPROVED');
+
+INSERT INTO attendance_session (event_id, token, session_type, created_at, expired_at, status)
+SELECT
+    e.id,
+    'AEMS-MID-' + RIGHT('0000' + CAST(e.id AS VARCHAR(4)), 4),
+    'MID_SESSION',
+    DATEADD(MINUTE, DATEDIFF(MINUTE, e.start_time, e.end_time) / 2 - 15, e.start_time),
+    DATEADD(MINUTE, DATEDIFF(MINUTE, e.start_time, e.end_time) / 2 + 30, e.start_time),
+    CASE WHEN e.end_time < GETDATE() THEN 'EXPIRED' ELSE 'ACTIVE' END
+FROM event e
+WHERE e.status IN ('PUBLISHED', 'APPROVED');
+GO
+
+-- ---------------------------------------------------------------------
+-- FEEDBACK  (~50% attendance đã xác minh có feedback)
+-- ---------------------------------------------------------------------
+DECLARE @cmt1 NVARCHAR(MAX) = N'Nội dung rõ ràng, diễn giả nhiệt tình. Sẽ tiếp tục theo dõi các sự kiện sau.';
+DECLARE @cmt2 NVARCHAR(MAX) = N'Phần demo rất hay nhưng thời gian Q&A hơi ngắn, hy vọng lần sau có thêm.';
+DECLARE @cmt3 NVARCHAR(MAX) = N'Quy trình check-in nhanh gọn, email gửi ticket tự động rất tiện.';
+DECLARE @cmt4 NVARCHAR(MAX) = N'Sự kiện hữu ích cho định hướng nghề nghiệp, cảm ơn FPT.';
+DECLARE @cmt5 NVARCHAR(MAX) = N'Không gian thoải mái, hậu cần chu đáo. Tài liệu nên gửi trước qua email.';
+DECLARE @cmt6 NVARCHAR(MAX) = N'Hy vọng có thêm các workshop hands-on dài 2-3 ngày kiểu này.';
+DECLARE @cmt7 NVARCHAR(MAX) = N'Mentor 1-1 rất tận tâm, nội dung đúng nhu cầu sinh viên năm 3.';
+
+INSERT INTO feedback (rating, comment, created_at, event_id, student_id)
+SELECT
+    3 + (a.id % 3),
+    CASE (a.id % 7)
+        WHEN 0 THEN @cmt1
+        WHEN 1 THEN @cmt2
+        WHEN 2 THEN @cmt3
+        WHEN 3 THEN @cmt4
+        WHEN 4 THEN @cmt5
+        WHEN 5 THEN @cmt6
+        ELSE @cmt7
+    END,
+    DATEADD(HOUR, 6, a.checkin_time),
+    r.event_id,
+    r.student_id
+FROM attendance a
+JOIN registration r ON r.id = a.registration_id
+WHERE a.status IN ('MID_VERIFIED', 'CHECKED_OUT')
+  AND (a.id % 2) = 0;
+GO
+
+-- ---------------------------------------------------------------------
+-- QUIZ + EVENT FEEDBACK MỚI
+-- ---------------------------------------------------------------------
+INSERT INTO quiz_question (event_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, points)
+SELECT e.id, N'Mục tiêu chính của sự kiện "' + e.title + N'" là gì?', 'MULTIPLE_CHOICE',
+       N'Cập nhật kiến thức và thực hành', N'Chỉ điểm danh', N'Bán sản phẩm', N'Thi cuối kỳ', 'A', 2
+FROM event e
+WHERE e.status IN ('PUBLISHED', 'APPROVED');
+
+INSERT INTO quiz_question (event_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, points)
+SELECT e.id, N'Bạn nên làm gì sau khi tham dự workshop/talkshow?', 'MULTIPLE_CHOICE',
+       N'Hoàn thành feedback và áp dụng nội dung đã học', N'Bỏ qua tài liệu', N'Chỉ lấy ticket', N'Không cần checkout', 'A', 2
+FROM event e
+WHERE e.status IN ('PUBLISHED', 'APPROVED');
+
+INSERT INTO quiz_question (event_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, points)
+SELECT e.id, N'Điều nào giúp ban tổ chức cải thiện sự kiện tiếp theo?', 'MULTIPLE_CHOICE',
+       N'Feedback cụ thể, lịch sự', N'Không phản hồi', N'Đăng ký rồi vắng mặt', N'Gửi spam', 'A', 1
+FROM event e
+WHERE e.status IN ('PUBLISHED', 'APPROVED');
+GO
+
+INSERT INTO quiz_submission (event_id, student_id, total_score, submitted_at)
+SELECT
+    a.event_id,
+    a.student_id,
+    CASE WHEN (a.id % 6) = 0 THEN 3 ELSE 5 END,
+    DATEADD(MINUTE, 10, COALESCE(a.checkout_time, a.mid_verify_time, a.checkin_time))
+FROM attendance a
+WHERE a.status IN ('MID_VERIFIED', 'CHECKED_OUT')
+  AND (a.id % 3) <> 0;
+GO
+
+INSERT INTO quiz_answer (submission_id, question_id, selected_answer, answer_text, is_correct, score, submitted_at)
+SELECT
+    qs.id,
+    qq.id,
+    CASE WHEN (qs.id + qq.id) % 6 = 0 THEN 'B' ELSE 'A' END,
+    NULL,
+    CASE WHEN (qs.id + qq.id) % 6 = 0 THEN 0 ELSE 1 END,
+    CASE WHEN (qs.id + qq.id) % 6 = 0 THEN 0 ELSE qq.points END,
+    DATEADD(MINUTE, qq.id % 5, qs.submitted_at)
+FROM quiz_submission qs
+JOIN quiz_question qq ON qq.event_id = qs.event_id;
+GO
+
+UPDATE qs
+SET total_score = agg.score
+FROM quiz_submission qs
+JOIN (
+    SELECT submission_id, SUM(score) AS score
+    FROM quiz_answer
+    GROUP BY submission_id
+) agg ON agg.submission_id = qs.id;
+GO
+
+INSERT INTO event_feedback (
+    event_id, student_id, content_rating, speaker_rating,
+    organization_rating, overall_rating, comment, submitted_at
+)
+SELECT
+    a.event_id,
+    a.student_id,
+    3 + (a.id % 3),
+    3 + ((a.id + 1) % 3),
+    3 + ((a.id + 2) % 3),
+    3 + ((a.id + 3) % 3),
+    CASE (a.id % 7)
+        WHEN 0 THEN @cmt1
+        WHEN 1 THEN @cmt2
+        WHEN 2 THEN @cmt3
+        WHEN 3 THEN @cmt4
+        WHEN 4 THEN @cmt5
+        WHEN 5 THEN @cmt6
+        ELSE @cmt7
+    END,
+    DATEADD(MINUTE, 15, COALESCE(a.checkout_time, a.mid_verify_time, a.checkin_time))
+FROM attendance a
+WHERE a.status IN ('MID_VERIFIED', 'CHECKED_OUT')
+  AND (a.id % 2) = 0;
+GO
+
+UPDATE a
+SET participation_score =
+    CASE
+        WHEN a.status = 'ABSENT' THEN 0
+        ELSE
+            50
+            + CASE WHEN a.mid_verify_time IS NOT NULL THEN 20 ELSE 0 END
+            + CASE WHEN qs.id IS NOT NULL THEN 20 ELSE 0 END
+            + CASE WHEN ef.id IS NOT NULL THEN 10 ELSE 0 END
+    END
+FROM attendance a
+LEFT JOIN quiz_submission qs ON qs.event_id = a.event_id AND qs.student_id = a.student_id
+LEFT JOIN event_feedback ef ON ef.event_id = a.event_id AND ef.student_id = a.student_id;
+GO
+
+-- ---------------------------------------------------------------------
+-- EMAIL LOG  (xác nhận đăng ký + gửi ticket + báo cáo admin)
+-- ---------------------------------------------------------------------
+INSERT INTO email_log (to_email, subject, content, sent_at, status, user_id, registration_id, event_id)
+SELECT
+    u.email,
+    N'AEMS - Xác nhận đăng ký: ' + e.title,
+    N'Hệ thống AEMS đã ghi nhận trạng thái đăng ký "' + r.status + N'" của bạn cho sự kiện "' + e.title + N'" lúc ' + CONVERT(NVARCHAR(20), r.registration_date, 120) + N'.',
+    DATEADD(MINUTE, 5, r.registration_date),
+    CASE WHEN (r.id % 37) = 0 THEN 'FAILED' ELSE 'SENT' END,
+    u.id,
+    r.id,
+    e.id
+FROM registration r
+JOIN student s ON s.id = r.student_id
+JOIN users   u ON u.id = s.user_id
+JOIN event   e ON e.id = r.event_id;
+GO
+
+INSERT INTO email_log (to_email, subject, content, sent_at, status, user_id, registration_id, event_id)
+SELECT
+    u.email,
+    N'AEMS - Ticket & QR check-in cho ' + e.title,
+    N'Mã ticket: ' + t.code + N'. Vui lòng xuất trình mã này tại quầy check-in của sự kiện "' + e.title + N'".',
+    t.sent_date,
+    CASE WHEN (t.id % 41) = 0 THEN 'FAILED' ELSE 'SENT' END,
+    u.id,
+    r.id,
+    e.id
+FROM ticket t
+JOIN registration r ON r.id = t.registration_id
+JOIN student s ON s.id = r.student_id
+JOIN users   u ON u.id = s.user_id
+JOIN event   e ON e.id = r.event_id;
+GO
+
+DECLARE @adminId BIGINT = (SELECT TOP 1 id FROM users WHERE email = 'admin01@fpt.edu.vn');
+DECLARE @adminEmail VARCHAR(100) = (SELECT email FROM users WHERE id = @adminId);
+DECLARE @k INT = 1;
+WHILE @k <= 20
+>>>>>>> a4dfe83916a51c29358f20bfa25155def4251119
 BEGIN
     INSERT INTO event (title, description, location, start_time, end_time, capacity, image_url, budget, status, created_at, department_id)
     VALUES (
@@ -400,8 +933,71 @@ GO
 -- ---------------------------------------------------------------------
 -- DATA SEEDING: 35 EVENT PROPOSALS
 -- ---------------------------------------------------------------------
+<<<<<<< HEAD
 DECLARE @prop_i INT = 1;
 WHILE @prop_i <= 35
+=======
+INSERT INTO activity_log (user_id, activity_type, description, points_earned, created_at)
+SELECT
+    u.id, 'REGISTER_EVENT',
+    N'Đăng ký sự kiện ' + e.title,
+    5,
+    r.registration_date
+FROM registration r
+JOIN student s ON s.id = r.student_id
+JOIN users   u ON u.id = s.user_id
+JOIN event   e ON e.id = r.event_id
+WHERE r.status = 'REGISTERED';
+
+INSERT INTO activity_log (user_id, activity_type, description, points_earned, created_at)
+    SELECT
+    u.id, 'CHECK_IN',
+    N'Check-in ' + e.title + N' (' + a.status + N')',
+    CASE WHEN a.status IN ('MID_VERIFIED', 'CHECKED_OUT') THEN 10 ELSE 0 END,
+    a.checkin_time
+FROM attendance a
+JOIN registration r ON r.id = a.registration_id
+JOIN student s ON s.id = r.student_id
+JOIN users   u ON u.id = s.user_id
+JOIN event   e ON e.id = r.event_id;
+
+INSERT INTO activity_log (user_id, activity_type, description, points_earned, created_at)
+SELECT
+    u.id, 'FEEDBACK',
+    N'Gửi feedback ' + CAST(f.rating AS NVARCHAR(2)) + N'/5 cho ' + e.title,
+    8,
+    f.created_at
+FROM feedback f
+JOIN student s ON s.id = f.student_id
+JOIN users   u ON u.id = s.user_id
+JOIN event   e ON e.id = f.event_id;
+
+INSERT INTO activity_log (user_id, activity_type, description, points_earned, created_at)
+SELECT
+    u.id, 'QUIZ_SUBMIT',
+    N'Nộp quiz sau sự kiện ' + e.title + N' - điểm ' + CAST(qs.total_score AS NVARCHAR(10)),
+    CAST(qs.total_score AS INT),
+    qs.submitted_at
+FROM quiz_submission qs
+JOIN student s ON s.id = qs.student_id
+JOIN users   u ON u.id = s.user_id
+JOIN event   e ON e.id = qs.event_id;
+
+INSERT INTO activity_log (user_id, activity_type, description, points_earned, created_at)
+SELECT
+    u.id, 'EVENT_FEEDBACK',
+    N'Gửi feedback chi tiết cho ' + e.title,
+    10,
+    ef.submitted_at
+FROM event_feedback ef
+JOIN student s ON s.id = ef.student_id
+JOIN users   u ON u.id = s.user_id
+JOIN event   e ON e.id = ef.event_id;
+
+DECLARE @adminUserId BIGINT = (SELECT TOP 1 id FROM users WHERE email = 'admin01@fpt.edu.vn');
+DECLARE @j INT = 1;
+WHILE @j <= 30
+>>>>>>> a4dfe83916a51c29358f20bfa25155def4251119
 BEGIN
     INSERT INTO event_proposal (title, description, location, capacity, image_url, budget, proposed_date, status, note, created_at, department_id)
     VALUES (
@@ -424,6 +1020,7 @@ GO
 -- ---------------------------------------------------------------------
 -- DATA SEEDING: 500 REGISTRATIONS, TICKETS, ATTENDANCE, FEEDBACK
 -- ---------------------------------------------------------------------
+<<<<<<< HEAD
 DECLARE @s_id BIGINT, @e_id BIGINT;
 DECLARE @reg_count INT = 0;
 DECLARE @max_students INT = (SELECT COUNT(*) FROM student);
@@ -534,4 +1131,33 @@ SELECT 'Attendance', COUNT(*) FROM attendance UNION ALL
 SELECT 'Feedback', COUNT(*) FROM feedback UNION ALL
 SELECT 'Email Log', COUNT(*) FROM email_log UNION ALL
 SELECT 'Activity Log', COUNT(*) FROM activity_log;
+=======
+PRINT N'';
+PRINT N'=====================================================';
+PRINT N'  AEMS FPT seed completed.';
+PRINT N'  - role:           ' + CAST((SELECT COUNT(*) FROM role)           AS NVARCHAR(10));
+PRINT N'  - department:     ' + CAST((SELECT COUNT(*) FROM department)     AS NVARCHAR(10));
+PRINT N'  - users:          ' + CAST((SELECT COUNT(*) FROM users)          AS NVARCHAR(10));
+PRINT N'  - student:        ' + CAST((SELECT COUNT(*) FROM student)        AS NVARCHAR(10));
+PRINT N'  - event:          ' + CAST((SELECT COUNT(*) FROM event)          AS NVARCHAR(10));
+PRINT N'  - event_proposal: ' + CAST((SELECT COUNT(*) FROM event_proposal) AS NVARCHAR(10));
+PRINT N'  - registration:   ' + CAST((SELECT COUNT(*) FROM registration)   AS NVARCHAR(10));
+PRINT N'  - ticket:         ' + CAST((SELECT COUNT(*) FROM ticket)         AS NVARCHAR(10));
+PRINT N'  - attendance:     ' + CAST((SELECT COUNT(*) FROM attendance)     AS NVARCHAR(10));
+PRINT N'  - feedback:       ' + CAST((SELECT COUNT(*) FROM feedback)       AS NVARCHAR(10));
+PRINT N'  - attendance_session: ' + CAST((SELECT COUNT(*) FROM attendance_session) AS NVARCHAR(10));
+PRINT N'  - quiz_question:  ' + CAST((SELECT COUNT(*) FROM quiz_question)  AS NVARCHAR(10));
+PRINT N'  - quiz_submission:' + CAST((SELECT COUNT(*) FROM quiz_submission) AS NVARCHAR(10));
+PRINT N'  - quiz_answer:    ' + CAST((SELECT COUNT(*) FROM quiz_answer)    AS NVARCHAR(10));
+PRINT N'  - event_feedback: ' + CAST((SELECT COUNT(*) FROM event_feedback) AS NVARCHAR(10));
+PRINT N'  - email_log:      ' + CAST((SELECT COUNT(*) FROM email_log)      AS NVARCHAR(10));
+PRINT N'  - activity_log:   ' + CAST((SELECT COUNT(*) FROM activity_log)   AS NVARCHAR(10));
+PRINT N'';
+PRINT N'  Tài khoản mẫu (mật khẩu placeholder, gọi /api/auth/init-passwords để hash):';
+PRINT N'    admin01@fpt.edu.vn / admin123';
+PRINT N'    dept01@fpt.edu.vn  / dept123';
+PRINT N'    com01@fpt.edu.vn   / com123';
+PRINT N'    sv001@fpt.edu.vn   / stu123';
+PRINT N'=====================================================';
+>>>>>>> a4dfe83916a51c29358f20bfa25155def4251119
 GO

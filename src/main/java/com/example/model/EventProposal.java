@@ -31,11 +31,23 @@ public class EventProposal {
     private String imageUrls;
 
     @Column(precision = 18, scale = 2)
-    private BigDecimal budget;
+    private BigDecimal budget = BigDecimal.ZERO;
     
     @Column(nullable = false)
     private LocalDateTime proposedDate;
-    
+
+    @Column(name = "proposed_end_date")
+    private LocalDateTime proposedEndDate;
+
+    @Column(columnDefinition = "NVARCHAR(200)")
+    private String organizer;
+
+    @Column(name = "speakers", columnDefinition = "NVARCHAR(800)")
+    private String speakers;
+
+    @Column(name = "support_staff_needed")
+    private Integer supportStaffNeeded;
+
     @Column(nullable = false, length = 50)
     private String status; // PENDING, APPROVED, REVISION, REJECTED
     
@@ -44,7 +56,10 @@ public class EventProposal {
     
     @Column(nullable = false)
     private LocalDateTime createdAt;
-    
+
+    @Column(name = "quiz_payload", columnDefinition = "NVARCHAR(MAX)")
+    private String quizPayload;
+
     @ManyToOne
     @JoinColumn(name = "departmentId", nullable = false)
     private Department department;
@@ -134,6 +149,38 @@ public class EventProposal {
         this.proposedDate = proposedDate;
     }
 
+    public LocalDateTime getProposedEndDate() {
+        return proposedEndDate;
+    }
+
+    public void setProposedEndDate(LocalDateTime proposedEndDate) {
+        this.proposedEndDate = proposedEndDate;
+    }
+
+    public String getOrganizer() {
+        return organizer;
+    }
+
+    public void setOrganizer(String organizer) {
+        this.organizer = organizer;
+    }
+
+    public String getSpeakers() {
+        return speakers;
+    }
+
+    public void setSpeakers(String speakers) {
+        this.speakers = speakers;
+    }
+
+    public Integer getSupportStaffNeeded() {
+        return supportStaffNeeded;
+    }
+
+    public void setSupportStaffNeeded(Integer supportStaffNeeded) {
+        this.supportStaffNeeded = supportStaffNeeded;
+    }
+
     public String getStatus() {
         return status;
     }
@@ -164,5 +211,13 @@ public class EventProposal {
 
     public void setDepartment(Department department) {
         this.department = department;
+    }
+
+    public String getQuizPayload() {
+        return quizPayload;
+    }
+
+    public void setQuizPayload(String quizPayload) {
+        this.quizPayload = quizPayload;
     }
 }

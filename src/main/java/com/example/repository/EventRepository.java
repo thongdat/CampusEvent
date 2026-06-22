@@ -15,6 +15,7 @@ import java.util.Optional;
 public interface EventRepository extends JpaRepository<Event, Long> {
     List<Event> findByDepartmentId(Long departmentId);
     List<Event> findByStatus(String status);
+    Optional<Event> findFirstByTitleAndDepartmentIdOrderByIdAsc(String title, Long departmentId);
     Optional<Event> findFirstByTitleAndDepartmentIdAndStartTimeOrderByIdAsc(String title, Long departmentId, LocalDateTime startTime);
     long countByDepartmentId(Long departmentId);
     long countByStartTimeLessThan(LocalDateTime endTime);
@@ -23,4 +24,17 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
     @Query("select coalesce(sum(e.capacity), 0) from Event e where e.startTime < :endTime")
     Long sumCapacityBefore(@Param("endTime") LocalDateTime endTime);
+
+    /** Nạp tất cả event kèm department trong 1 query (tránh N+1 và lazy-load ngoài request). */
+    @Query("select e from Event e left join fetch e.department")
+    List<Event> findAllWithDepartment();
+
+    /** Event đã kết thúc (endTime < cutoff) nhưng chưa được hệ thống tự đóng. */
+    List<Event> findByAutoClosedAtIsNullAndEndTimeIsNotNullAndEndTimeLessThan(LocalDateTime cutoff);
+
+    /** Event sắp diễn ra trong khoảng [from, to) — dùng để gửi thư mời trước sự kiện. */
+    List<Event> findByStartTimeGreaterThanEqualAndStartTimeLessThan(LocalDateTime from, LocalDateTime to);
+
+    /** Event sắp diễn ra trong khoảng [from, to] — bao gồm đúng mốc trước 7 ngày. */
+    List<Event> findByStartTimeGreaterThanEqualAndStartTimeLessThanEqual(LocalDateTime from, LocalDateTime to);
 }

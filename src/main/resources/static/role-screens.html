@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chọn vai trò · Campus Events</title>
+    <link rel="icon" type="image/svg+xml" href="/api/favicon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -89,26 +90,53 @@
         </article>
     </div>
 
-    <section class="mt-12 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-        <h2 class="text-lg font-bold text-slate-900">Tài khoản demo (sau khi chạy seed)</h2>
-        <p class="mt-1 text-sm text-slate-500">Truy cập <a class="text-sky-700 hover:underline" href="login.html">đăng nhập</a> rồi nhập thông tin dưới đây. Mật khẩu seed cần chạy <code class="rounded bg-slate-100 px-1.5 py-0.5 text-xs">POST /api/auth/init-passwords</code> sau khi import SQL.</p>
-        <div class="mt-4 grid gap-3 text-sm sm:grid-cols-2">
-            <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                <p class="font-bold text-slate-900">Admin</p>
-                <p class="text-slate-600"><code>admin@fpt.edu.vn</code> / <code>admin123</code></p>
+    <section class="mt-12 rounded-3xl border border-amber-200 bg-gradient-to-br from-orange-50 via-white to-amber-50 p-6 shadow-sm sm:p-8">
+        <div class="flex items-center gap-3">
+            <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 to-amber-600 text-xl text-white shadow">🔑</span>
+            <div>
+                <h2 class="text-lg font-bold text-slate-900">Tài khoản test cho demo AEMS</h2>
+                <p class="text-sm text-slate-500">Đăng nhập tại <a class="font-semibold text-orange-700 hover:underline" href="login.html">login</a> với 1 trong các tài khoản dưới đây.</p>
             </div>
-            <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                <p class="font-bold text-slate-900">Khoa</p>
-                <p class="text-slate-600"><code>dept.it@fpt.edu.vn</code> / <code>dept123</code></p>
+        </div>
+        <div class="mt-5 grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-3">
+            <div class="rounded-xl border border-slate-200 bg-white p-3">
+                <p class="font-bold text-slate-900">👑 Admin</p>
+                <p class="text-slate-600 mt-1"><code class="rounded bg-slate-100 px-1.5 py-0.5">aems.admin01@uni.edu.vn</code></p>
+                <p class="text-slate-500 text-xs">Mật khẩu: <code>admin123</code></p>
             </div>
-            <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                <p class="font-bold text-slate-900">Hội đồng</p>
-                <p class="text-slate-600"><code>committee1@fpt.edu.vn</code> / <code>committee123</code></p>
+            <div class="rounded-xl border border-orange-300 bg-orange-50 p-3 ring-1 ring-orange-200">
+                <p class="font-bold text-orange-900">🏛 Trưởng khoa CNTT (HEAD)</p>
+                <p class="text-slate-600 mt-1"><code class="rounded bg-white px-1.5 py-0.5">head.cntt@fpt.edu.vn</code></p>
+                <p class="text-slate-500 text-xs">Mật khẩu: <code>khoa1234</code> · Xem báo cáo, dashboard, AEMS Toolkit</p>
             </div>
-            <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                <p class="font-bold text-slate-900">Sinh viên</p>
-                <p class="text-slate-600"><code>student1@fpt.edu.vn</code> / <code>student123</code></p>
+            <div class="rounded-xl border border-orange-300 bg-orange-50 p-3 ring-1 ring-orange-200">
+                <p class="font-bold text-orange-900">🏛 Trưởng khoa Kinh tế (HEAD)</p>
+                <p class="text-slate-600 mt-1"><code class="rounded bg-white px-1.5 py-0.5">head.kinhte@fpt.edu.vn</code></p>
+                <p class="text-slate-500 text-xs">Mật khẩu: <code>khoa1234</code></p>
             </div>
+            <div class="rounded-xl border border-slate-200 bg-white p-3">
+                <p class="font-bold text-slate-900">🎓 Nhân viên khoa (STAFF)</p>
+                <p class="text-slate-600 mt-1"><code class="rounded bg-slate-100 px-1.5 py-0.5">staff.swe@fpt.edu.vn</code></p>
+                <p class="text-slate-500 text-xs">Mật khẩu: <code>khoa1234</code> · Chỉ tạo proposal</p>
+            </div>
+            <div class="rounded-xl border border-slate-200 bg-white p-3">
+                <p class="font-bold text-slate-900">⚖ Hội đồng</p>
+                <p class="text-slate-600 mt-1"><code class="rounded bg-slate-100 px-1.5 py-0.5">committee01@uni.edu.vn</code></p>
+                <p class="text-slate-500 text-xs">Mật khẩu: <code>com123</code></p>
+            </div>
+            <div class="rounded-xl border border-slate-200 bg-white p-3">
+                <p class="font-bold text-slate-900">🎒 Sinh viên</p>
+                <p class="text-slate-600 mt-1"><code class="rounded bg-slate-100 px-1.5 py-0.5">student001@uni.edu.vn</code></p>
+                <p class="text-slate-500 text-xs">Mật khẩu: <code>stu123</code></p>
+            </div>
+        </div>
+        <div class="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+            <p class="font-bold">💡 Flow demo AEMS (Trưởng khoa)</p>
+            <ol class="mt-2 list-decimal space-y-1 pl-5">
+                <li>Đăng nhập bằng <code>head.cntt@fpt.edu.vn</code> → vào <a class="font-semibold underline" href="screen-department.html">Department Console</a></li>
+                <li>Bấm <strong>AEMS Toolkit</strong> ở sidebar → chọn 1 sự kiện sắp diễn ra</li>
+                <li><strong>QR</strong>: mã đổi mỗi 3 phút · <strong>Quiz</strong>: thêm câu hỏi · <strong>Dashboard</strong>: xem điểm tham gia</li>
+            </ol>
         </div>
     </section>
 </main>

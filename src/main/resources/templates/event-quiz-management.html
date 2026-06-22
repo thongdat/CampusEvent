@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Quản lý Quiz — AEMS</title>
+    <link rel="icon" type="image/svg+xml" href="/api/favicon.svg">
+    <link rel="stylesheet" th:href="@{/css/aems.css}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body class="aems">
+<div class="aems-stripe"></div>
+<main class="aems-shell">
+    <header class="aems-header">
+        <div class="aems-header__brand">
+            <span class="aems-header__mark">Q</span>
+            <div>
+                <span class="aems-eyebrow">AEMS · Quiz checkout</span>
+                <h1 class="aems-header__title">Quản lý câu hỏi quiz cho sự kiện</h1>
+                <p class="aems-header__sub">Tạo ngân hàng câu hỏi — sinh viên sẽ nhận ngẫu nhiên 5 câu khi checkout.</p>
+            </div>
+        </div>
+        <a class="aems-btn aems-btn--primary" th:href="@{'/department/attendance/events/' + ${eventId} + '/dashboard'}">📊 Dashboard event</a>
+    </header>
+
+    <section class="aems-card" style="margin-bottom: 1.25rem;">
+        <div class="aems-card__head">
+            <h2 class="aems-card__title">Thêm câu hỏi mới</h2>
+            <span class="aems-badge aems-badge--info">Multiple choice / Short answer</span>
+        </div>
+        <div class="aems-card__body">
+            <form id="questionForm" style="display: grid; gap: .85rem;">
+                <div>
+                    <label class="aems-label" for="questionText">Nội dung câu hỏi *</label>
+                    <textarea id="questionText" name="questionText" class="aems-textarea" rows="2" placeholder="Ví dụ: Spring Boot dùng annotation nào để khai báo Controller?" required></textarea>
+                </div>
+                <div class="aems-row">
+                    <div>
+                        <label class="aems-label">Loại câu hỏi</label>
+                        <select name="questionType" class="aems-select" id="questionType">
+                            <option value="MULTIPLE_CHOICE">Trắc nghiệm</option>
+                            <option value="SHORT_ANSWER">Tự luận ngắn</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="aems-label">Đáp án đúng (A/B/C/D)</label>
+                        <input name="correctAnswer" class="aems-input" id="correctAnswer" placeholder="A" maxlength="1">
+                    </div>
+                    <div>
+                        <label class="aems-label">Điểm</label>
+                        <input name="points" class="aems-input" type="number" value="1" min="1" max="10">
+                    </div>
+                </div>
+                <div class="aems-row" id="optionRow">
+                    <div><label class="aems-label">A</label><input name="optionA" class="aems-input" placeholder="Phương án A"></div>
+                    <div><label class="aems-label">B</label><input name="optionB" class="aems-input" placeholder="Phương án B"></div>
+                    <div><label class="aems-label">C</label><input name="optionC" class="aems-input" placeholder="Phương án C"></div>
+                    <div><label class="aems-label">D</label><input name="optionD" class="aems-input" placeholder="Phương án D"></div>
+                </div>
+                <button class="aems-btn aems-btn--primary" style="justify-self: start;">+ Thêm câu hỏi</button>
+            </form>
+        </div>
+    </section>
+
+    <section class="aems-card">
+        <div class="aems-card__head">
+            <h2 class="aems-card__title">Ngân hàng câu hỏi hiện tại</h2>
+            <span class="aems-badge aems-badge--fpt" th:text="'Tổng ' + ${#lists.size(questions)} + ' câu'">0</span>
+        </div>
+        <div class="aems-card__body" style="padding: 0; overflow-x: auto;">
+            <table class="aems-table">
+                <thead>
+                <tr>
+                    <th style="width: 50px;">#</th>
+                    <th>Câu hỏi</th>
+                    <th style="width: 130px;">Loại</th>
+                    <th style="width: 80px;">Đáp án</th>
+                    <th style="width: 70px;">Điểm</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="q, iter : ${questions}">
+                    <td th:text="${iter.count}"></td>
+                    <td th:text="${q.questionText}"></td>
+                    <td>
+                        <span th:class="${q.questionType == 'MULTIPLE_CHOICE'} ? 'aems-badge aems-badge--info' : 'aems-badge aems-badge--warn'"
+                              th:text="${q.questionType == 'MULTIPLE_CHOICE'} ? 'Trắc nghiệm' : 'Tự luận'"></span>
+                    </td>
+                    <td th:text="${q.correctAnswer ?: '—'}"></td>
+                    <td th:text="${q.points}"></td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(questions)}">
+                    <td colspan="5" style="text-align:center; padding: 2.5rem; color: var(--aems-ink-muted);">
+                        Chưa có câu hỏi nào. Thêm 5–10 câu để sinh viên có thể quiz khi checkout.
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+<script th:inline="javascript">
+const eventId = [[${eventId}]];
+const typeSel = document.getElementById('questionType');
+const optRow = document.getElementById('optionRow');
+const correct = document.getElementById('correctAnswer');
+function toggleType() {
+    const isMc = typeSel.value === 'MULTIPLE_CHOICE';
+    optRow.style.display = isMc ? '' : 'none';
+    correct.parentElement.style.display = isMc ? '' : 'none';
+}
+typeSel.addEventListener('change', toggleType);
+document.getElementById('questionForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const body = Object.fromEntries(new FormData(e.target).entries());
+    const res = await fetch(`/api/department/quiz/events/${eventId}/questions`, {
+        method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)
+    });
+    if (res.ok) location.reload(); else alert('Lỗi: ' + await res.text());
+});
+</script>
+</body>
+</html>

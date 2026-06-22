@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Thống kê phản hồi — AEMS</title>
+    <link rel="icon" type="image/svg+xml" href="/api/favicon.svg">
+    <link rel="stylesheet" th:href="@{/css/aems.css}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body class="aems">
+<div class="aems-stripe"></div>
+<main class="aems-shell">
+    <header class="aems-header">
+        <div class="aems-header__brand">
+            <span class="aems-header__mark">⭐</span>
+            <div>
+                <span class="aems-eyebrow">AEMS · Phản hồi sinh viên</span>
+                <h1 class="aems-header__title">Báo cáo cảm nhận về event</h1>
+                <p class="aems-header__sub">Theo dõi rating từng tiêu chí và đọc comment để cải thiện chương trình kế tiếp.</p>
+            </div>
+        </div>
+        <a class="aems-btn aems-btn--primary" th:href="@{'/department/attendance/events/' + ${eventId} + '/dashboard'}">📊 Dashboard event</a>
+    </header>
+
+    <section class="aems-grid" style="margin-bottom: 1.5rem;">
+        <div class="aems-metric">
+            <p class="aems-metric__label">⭐ Tổng thể</p>
+            <p class="aems-metric__value" th:text="${stats.averageEventRating != null ? #numbers.formatDecimal(stats.averageEventRating, 1, 1) : '0.0'} + ' / 5'">0</p>
+            <p class="aems-metric__hint">Trung bình mọi rating</p>
+        </div>
+        <div class="aems-metric">
+            <p class="aems-metric__label">📚 Nội dung</p>
+            <p class="aems-metric__value" th:text="${stats.averageContentRating != null ? #numbers.formatDecimal(stats.averageContentRating, 1, 1) : '0.0'} + ' / 5'">0</p>
+        </div>
+        <div class="aems-metric">
+            <p class="aems-metric__label">🎤 Diễn giả</p>
+            <p class="aems-metric__value" th:text="${stats.averageSpeakerRating != null ? #numbers.formatDecimal(stats.averageSpeakerRating, 1, 1) : '0.0'} + ' / 5'">0</p>
+        </div>
+        <div class="aems-metric">
+            <p class="aems-metric__label">🛠 Tổ chức</p>
+            <p class="aems-metric__value" th:text="${stats.averageOrganizationRating != null ? #numbers.formatDecimal(stats.averageOrganizationRating, 1, 1) : '0.0'} + ' / 5'">0</p>
+        </div>
+    </section>
+
+    <!-- ===================== PHÂN TÍCH AI ===================== -->
+    <section class="aems-card" style="margin-bottom: 1.5rem; border-top: 4px solid var(--aems-fpt);">
+        <div class="aems-card__head">
+            <h2 class="aems-card__title">🤖 Phân tích AI từ phản hồi &amp; kết quả quiz</h2>
+            <span class="aems-badge aems-badge--fpt" th:text="${ai.source}">AI</span>
+        </div>
+        <div class="aems-card__body" style="display: grid; gap: 1.1rem;">
+
+            <p th:if="${ai.available == false}" style="margin: 0; text-align: center; padding: 1.5rem; color: var(--aems-ink-muted);"
+               th:text="${ai.summary}">Chưa có dữ liệu.</p>
+
+            <div th:if="${ai.available}" style="display: grid; gap: 1.1rem;">
+                <!-- Tóm tắt -->
+                <div style="padding: 1rem 1.15rem; background: var(--aems-fpt-wash); border-radius: 14px; border-left: 4px solid var(--aems-fpt);">
+                    <p style="margin: 0 0 .35rem; font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: var(--aems-fpt);">Tóm tắt</p>
+                    <p style="margin: 0; line-height: 1.65; color: var(--aems-ink);" th:text="${ai.summary}"></p>
+                </div>
+
+                <div th:if="${ai.quizAvailable}" style="display:grid;gap:.75rem;padding:1rem 1.15rem;border:1px solid #bfdbfe;border-radius:14px;background:#eff6ff;">
+                    <p style="margin:0;font-size:.8rem;font-weight:800;color:#1d4ed8;">Kết quả tiếp thu qua quiz</p>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.75rem;">
+                        <div><span style="font-size:.72rem;color:#64748b;">Lượt nộp</span><strong style="display:block;font-size:1.15rem;" th:text="${ai.quizAnalysis.submissionCount}">0</strong></div>
+                        <div><span style="font-size:.72rem;color:#64748b;">Số câu hỏi</span><strong style="display:block;font-size:1.15rem;" th:text="${ai.quizAnalysis.questionCount}">0</strong></div>
+                        <div><span style="font-size:.72rem;color:#64748b;">Điểm trung bình</span><strong style="display:block;font-size:1.15rem;" th:text="${ai.quizAnalysis.averagePercent} + '%'">0%</strong></div>
+                    </div>
+                    <p th:if="${ai.quizAnalysis.hardestQuestion != null}" style="margin:0;font-size:.8rem;color:#334155;">
+                        Câu khó nhất: <strong th:text="${ai.quizAnalysis.hardestQuestion.question}">Question</strong>
+                        · đúng <strong th:text="${ai.quizAnalysis.hardestQuestion.correctRate} + '%'">0%</strong>
+                    </p>
+                </div>
+                <div th:unless="${ai.quizAvailable}" style="padding:1rem 1.15rem;border:1px dashed #93c5fd;border-radius:14px;background:#eff6ff;color:#475569;font-size:.85rem;">
+                    <strong style="color:#1d4ed8;">Chưa có kết quả quiz để phân tích.</strong>
+                    Hãy đồng bộ Google Checkout Form hoặc yêu cầu sinh viên nộp quiz trong hệ thống.
+                </div>
+
+                <!-- Cảm xúc -->
+                <div>
+                    <p style="margin: 0 0 .5rem; font-size: .8rem; font-weight: 800; color: var(--aems-ink);">Cảm xúc của sinh viên</p>
+                    <div style="display: flex; height: 14px; border-radius: 999px; overflow: hidden; background: #eee;">
+                        <span th:style="${'width:' + ai.sentiment.positiveRate + '%;background:#16a34a;'}" title="Tích cực"></span>
+                        <span th:style="${'width:' + (100 - ai.sentiment.positiveRate - ai.sentiment.negativeRate) + '%;background:#cbd5e1;'}" title="Trung lập"></span>
+                        <span th:style="${'width:' + ai.sentiment.negativeRate + '%;background:#dc2626;'}" title="Tiêu cực"></span>
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 1rem; margin-top: .55rem; font-size: .8rem;">
+                        <span style="color:#16a34a; font-weight:700;">● Tích cực: <span th:text="${ai.sentiment.positive}">0</span> (<span th:text="${ai.sentiment.positiveRate}">0</span>%)</span>
+                        <span style="color:#64748b; font-weight:700;">● Trung lập: <span th:text="${ai.sentiment.neutral}">0</span></span>
+                        <span style="color:#dc2626; font-weight:700;">● Tiêu cực: <span th:text="${ai.sentiment.negative}">0</span> (<span th:text="${ai.sentiment.negativeRate}">0</span>%)</span>
+                    </div>
+                </div>
+
+                <!-- Chủ đề nổi bật -->
+                <div th:if="${not #lists.isEmpty(ai.themes)}">
+                    <p style="margin: 0 0 .5rem; font-size: .8rem; font-weight: 800; color: var(--aems-ink);">Chủ đề được nhắc đến</p>
+                    <div style="display: flex; flex-wrap: wrap; gap: .5rem;">
+                        <span th:each="t : ${ai.themes}"
+                              th:classappend="${t.tone}"
+                              th:style="${(t.tone == 'negative') ? 'padding:.3rem .7rem;border-radius:999px;font-size:.78rem;font-weight:700;background:#fee2e2;color:#b91c1c;' : ((t.tone == 'positive') ? 'padding:.3rem .7rem;border-radius:999px;font-size:.78rem;font-weight:700;background:#dcfce7;color:#15803d;' : 'padding:.3rem .7rem;border-radius:999px;font-size:.78rem;font-weight:700;background:#f1f5f9;color:#475569;')}">
+                            <span th:text="${t.label}">Chủ đề</span> · <span th:text="${t.count}">0</span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Khuyến nghị -->
+                <div th:if="${not #lists.isEmpty(ai.recommendations)}">
+                    <p style="margin: 0 0 .5rem; font-size: .8rem; font-weight: 800; color: var(--aems-ink);">💡 Khuyến nghị cải thiện</p>
+                    <ul style="margin: 0; padding-left: 1.1rem; display: grid; gap: .4rem; color: var(--aems-ink); line-height: 1.55;">
+                        <li th:each="r : ${ai.recommendations}" th:text="${r}"></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="aems-card">
+        <div class="aems-card__head">
+            <h2 class="aems-card__title">Bình luận của sinh viên</h2>
+            <span class="aems-badge aems-badge--fpt" th:text="${#lists.size(stats.comments)} + ' bình luận'">0</span>
+        </div>
+        <div class="aems-card__body" style="display: grid; gap: .85rem;">
+            <div th:each="c : ${stats.comments}" style="padding: .85rem 1rem; background: var(--aems-fpt-wash); border-radius: 12px; border-left: 4px solid var(--aems-fpt);">
+                <p style="margin: 0; color: var(--aems-ink); line-height: 1.5;" th:text="${c}"></p>
+            </div>
+            <p th:if="${#lists.isEmpty(stats.comments)}" style="margin: 0; text-align: center; padding: 2rem; color: var(--aems-ink-muted);">
+                Chưa có bình luận nào.
+            </p>
+        </div>
+    </section>
+</main>
+</body>
+</html>

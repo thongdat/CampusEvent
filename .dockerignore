@@ -1,0 +1,12 @@
+.git
+.github
+.idea
+.vscode
+target
+apache-maven-3.9.9
+*.dll
+*.docx
+database_full.sql
+application-local.properties
+.env
+.env.*
