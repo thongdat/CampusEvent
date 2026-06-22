@@ -149,3 +149,17 @@ public class AemsFeatureSchemaMigration implements ApplicationRunner {
         }
     }
 }
+    /*
+     * Ghi chú:
+     * - Class AemsFeatureSchemaMigration dùng để tự động cập nhật cấu trúc database
+     *   khi ứng dụng Spring Boot khởi chạy.
+     * - Class này kiểm tra và thêm các cột còn thiếu vào các bảng như student,
+     *   users, event, attendance và bảng đề xuất sự kiện.
+     * - Ngoài ra, class còn tự tạo các bảng mới nếu chưa tồn tại, bao gồm:
+     *   attendance_session, quiz_question, quiz_submission, quiz_answer
+     *   và event_feedback.
+     * - Các hàm addColumnIfMissing(), executeIfTableMissing() giúp tránh lỗi
+     *   khi chạy migration nhiều lần vì chỉ thêm cột hoặc tạo bảng nếu chưa có.
+     * - Annotation @ConditionalOnProperty cho phép bật/tắt chức năng migration
+     *   thông qua cấu hình app.schema-migration.enabled.
+     */
