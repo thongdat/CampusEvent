@@ -502,6 +502,7 @@
         eventsPage: 1,
         myRegsPage: 1
     };
+    const registrationRequests = new Set();
 
     // ----------------------------- SESSION -----------------------------
     function readUser() {
@@ -998,7 +999,8 @@
             const e = await api('/student/events/' + id);
             $('#modalBody').innerHTML = renderEventModalBody(e);
             $('#modalBody').querySelector('[data-event-register]')?.addEventListener('click', () => register(id));
-            $('#modalBody').querySelector('[data-event-cancel]')?.addEventListener('click', () => cancelRegistration(Number($('#modalBody').querySelector('[data-event-cancel]').dataset.regId)));
+            $('#modalBody').querySelector('[data-event-cancel]')?.addEventListener('click', () =>
+                cancelRegistration(Number($('#modalBody').querySelector('[data-event-cancel]').dataset.regId), e.title));
             const fbToggle = $('#modalBody').querySelector('[data-fb-toggle]');
             fbToggle?.addEventListener('click', () => {
                 const list = $('#modalBody').querySelector('[data-fb-list]');
@@ -1114,6 +1116,9 @@
             setTimeout(() => location.href = (API_BASE + '/login.html'), 800);
             return;
         }
+        if (registrationRequests.has(eventId)) return;
+        registrationRequests.add(eventId);
+        setRegistrationButtonsBusy(eventId, true);
         try {
             const result = await api('/student/events/' + eventId + '/register', { method: 'POST', body: {} });
             if (result.alreadyRegistered) {
@@ -1124,12 +1129,55 @@
             await Promise.all([loadEvents(), loadMe(), refreshNotifications(), STATE.currentTab === 'mine' ? loadMyRegs() : Promise.resolve()]);
         } catch (e) {
             toast(e.message || 'Đăng ký thất bại', 'error');
+        } finally {
+            registrationRequests.delete(eventId);
+            setRegistrationButtonsBusy(eventId, false);
         }
     }
 
-    async function cancelRegistration(regId) {
+    function setRegistrationButtonsBusy(eventId, busy) {
+        $$('[data-event-register="' + eventId + '"]').forEach(button => {
+            if (busy) {
+                button.dataset.idleLabel = button.innerHTML;
+                button.disabled = true;
+                button.innerHTML = '<span class="inline-block animate-spin">↻</span> Đang đăng ký…';
+                button.classList.add('cursor-wait', 'opacity-70');
+            } else {
+                button.disabled = false;
+                if (button.dataset.idleLabel) button.innerHTML = button.dataset.idleLabel;
+                button.classList.remove('cursor-wait', 'opacity-70');
+            }
+        });
+    }
+
+    function cancelRegistration(regId, eventTitle) {
         if (!regId) return;
-        if (!confirm('Bạn chắc chắn muốn huỷ đăng ký?')) return;
+        openModal(`
+        <div class="p-6 sm:p-7">
+            <div class="flex items-start gap-4">
+                <span class="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-rose-100 text-2xl text-rose-700">!</span>
+                <div>
+                    <h3 class="text-xl font-extrabold text-ink">Huỷ đăng ký sự kiện?</h3>
+                    <p class="mt-1 text-sm leading-6 text-ink-muted">Bạn sẽ mất suất tham dự và mã vé hiện tại${eventTitle ? ` của <strong>${escapeHtml(eventTitle)}</strong>` : ''}.</p>
+                </div>
+            </div>
+            <div class="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                Nếu sự kiện đã có danh sách chờ, suất của bạn có thể được chuyển ngay cho sinh viên khác.
+            </div>
+            <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                <button class="rounded-xl border border-fpt-100 bg-white px-4 py-2.5 text-sm font-bold text-ink hover:bg-fpt-50" data-modal-close>Giữ đăng ký</button>
+                <button id="btnConfirmCancelRegistration" class="rounded-xl bg-rose-600 px-5 py-2.5 text-sm font-extrabold text-white shadow hover:bg-rose-700">Xác nhận huỷ</button>
+            </div>
+        </div>`);
+        $('#btnConfirmCancelRegistration').addEventListener('click', () => performCancelRegistration(regId));
+    }
+
+    async function performCancelRegistration(regId) {
+        const button = $('#btnConfirmCancelRegistration');
+        if (!button || button.disabled) return;
+        button.disabled = true;
+        button.classList.add('cursor-wait', 'opacity-70');
+        button.textContent = 'Đang huỷ…';
         try {
             await api('/student/registrations/' + regId, { method: 'DELETE' });
             toast('Đã huỷ đăng ký');
@@ -1137,6 +1185,9 @@
             await Promise.all([loadEvents(), loadMe(), loadMyRegs(), refreshNotifications()]);
         } catch (e) {
             toast(e.message || 'Huỷ thất bại', 'error');
+            button.disabled = false;
+            button.classList.remove('cursor-wait', 'opacity-70');
+            button.textContent = 'Xác nhận huỷ';
         }
     }
 
@@ -1204,7 +1255,7 @@
                     </p>
                     <div class="mt-1 flex items-center gap-2">
                         ${fbBtn}
-                        ${(!isPast && r.status === 'REGISTERED') ? `<button data-cancel-reg="${regId}" class="rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-xs font-bold text-rose-600 hover:bg-rose-50">Huỷ</button>` : ''}
+                        ${(!isPast && r.status === 'REGISTERED') ? `<button data-cancel-reg="${regId}" data-cancel-title="${escapeAttr(e.title || '')}" class="rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-xs font-bold text-rose-600 hover:bg-rose-50">Huỷ</button>` : ''}
                         <button data-event-detail="${e.id}" class="ml-auto rounded-lg border border-fpt-100 bg-white px-3 py-1.5 text-xs font-bold text-ink hover:bg-fpt-50">Xem chi tiết</button>
                     </div>
                 </div>
@@ -1212,7 +1263,8 @@
         }).join('');
         list.querySelectorAll('[data-event-detail]').forEach(el => el.addEventListener('click', () => showEventDetail(Number(el.dataset.eventDetail))));
         list.querySelectorAll('[data-fb-event]').forEach(el => el.addEventListener('click', () => openFeedbackModal(Number(el.dataset.fbEvent))));
-        list.querySelectorAll('[data-cancel-reg]').forEach(el => el.addEventListener('click', () => cancelRegistration(Number(el.dataset.cancelReg))));
+        list.querySelectorAll('[data-cancel-reg]').forEach(el => el.addEventListener('click', () =>
+            cancelRegistration(Number(el.dataset.cancelReg), el.dataset.cancelTitle || '')));
 
         pagination.hidden = totalPages <= 1;
         if (totalPages > 1) {
