@@ -165,7 +165,7 @@ public class AttendanceService {
     }
 
     private Registration requireRegistered(Long eventId, Long studentId) {
-        Registration registration = registrationRepository.findByEventIdAndStudentId(eventId, studentId)
+        Registration registration = registrationRepository.findPreferredByEventIdAndStudentId(eventId, studentId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Student is not registered for this event"));
         if (!"REGISTERED".equalsIgnoreCase(registration.getStatus())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Registration status must be REGISTERED");
