@@ -156,3 +156,12 @@ public final class AcademicStructure {
                 .trim();
     }
 }
+    /*
+     * Ghi chú:
+     * - Class AcademicStructure dùng để quản lý cấu trúc học thuật gồm khoa và ngành học.
+     * - Dữ liệu được lưu trong FACULTIES theo dạng: tên khoa -> danh sách ngành.
+     * - Các phương thức hỗ trợ kiểm tra khoa, tìm khoa theo ngành, chuẩn hóa tên ngành/khoa
+     *   và xử lý các tên viết tắt hoặc tên tiếng Anh như CNTT, IT Department, Economics.
+     * - Hàm normalize() giúp bỏ dấu tiếng Việt, chuyển chữ thường và chuẩn hóa chuỗi
+     *   để việc so sánh dữ liệu chính xác hơn.
+     */
