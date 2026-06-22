@@ -8,18 +8,22 @@
     <link rel="icon" type="image/svg+xml" href="/api/favicon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'Inter', 'system-ui', 'sans-serif'],
+                        heading: ['Plus Jakarta Sans', 'Inter', 'system-ui', 'sans-serif']
+                    },
                     colors: {
                         ink: {
-                            DEFAULT: '#15120f',
-                            muted: '#64554c',
-                            soft: '#9a8b80'
+                            DEFAULT: '#0b0a0a',
+                            muted: '#71717a',
+                            soft: '#a1a1aa'
                         },
                         orange: {
                             fpt: '#f37021',
@@ -31,12 +35,12 @@
                         skybrand: '#2563eb'
                     },
                     boxShadow: {
-                        glow: '0 26px 80px -28px rgba(243, 112, 33, 0.72)',
-                        panel: '0 22px 70px -36px rgba(67, 20, 7, 0.36)'
+                        glow: '0 26px 80px -28px rgba(243, 112, 33, 0.45)',
+                        panel: '0 25px 60px -30px rgba(0, 0, 0, 0.5)'
                     },
                     keyframes: {
                         fadeUp: {
-                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '0%': { opacity: '0', transform: 'translateY(24px)' },
                             '100%': { opacity: '1', transform: 'translateY(0)' }
                         },
                         softFloat: {
@@ -49,7 +53,7 @@
                         }
                     },
                     animation: {
-                        'fade-up': 'fadeUp 0.75s cubic-bezier(0.22,1,0.36,1) forwards',
+                        'fade-up': 'fadeUp 0.75s cubic-bezier(0.16,1,0.3,1) forwards',
                         'soft-float': 'softFloat 7s ease-in-out infinite',
                         'pulse-bar': 'pulseBar 5s linear forwards'
                     }
@@ -61,22 +65,23 @@
         :root {
             --orange: #f37021;
             --orange-deep: #c2410c;
-            --ink: #15120f;
+            --ink: #0b0a0a;
         }
 
         * { box-sizing: border-box; }
-        body * { letter-spacing: 0 !important; }
+        body * { letter-spacing: -0.02em !important; }
 
         body {
-            background:
-                    linear-gradient(135deg, rgba(255, 247, 237, 0.95), rgba(255, 255, 255, 0.98) 40%, rgba(240, 253, 250, 0.72)),
-                    #ffffff;
+            background-color: #0b0a0a;
+            color: #ffffff;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         [data-reveal] {
             opacity: 0;
-            transform: translateY(1.25rem);
-            transition: opacity 0.65s cubic-bezier(0.22, 1, 0.36, 1), transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+            transform: translateY(1.5rem);
+            transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1), transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         [data-reveal].is-visible {
@@ -85,19 +90,19 @@
         }
 
         .nav-glass {
-            background: rgba(255, 252, 248, 0.86);
-            border-bottom: 1px solid rgba(194, 65, 12, 0.1);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            background: rgba(18, 18, 18, 0.65);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
         }
 
         .nav-scrolled {
-            background: rgba(255, 255, 255, 0.94);
-            box-shadow: 0 14px 36px -28px rgba(67, 20, 7, 0.35);
+            background: rgba(11, 10, 10, 0.95);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
         }
 
         #mobile-panel {
-            transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease;
+            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
         }
 
         #mobile-panel:not(.is-open) { pointer-events: none; }
@@ -110,9 +115,9 @@
         .hero-shell {
             position: relative;
             overflow: hidden;
-            height: min(760px, 86svh);
-            min-height: 560px;
-            background: #1f130d;
+            height: min(780px, 92svh);
+            min-height: 580px;
+            background: #0b0a0a;
             color: #ffffff;
         }
 
@@ -121,8 +126,8 @@
             position: absolute;
             inset: 0;
             background-image:
-                    linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
-                    linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+                    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
             background-size: 44px 44px;
             mask-image: linear-gradient(180deg, #000 0%, transparent 82%);
             pointer-events: none;
@@ -131,48 +136,50 @@
 
         .hero-overlay {
             background:
-                    linear-gradient(90deg, rgba(21, 18, 15, 0.92) 0%, rgba(67, 20, 7, 0.74) 42%, rgba(67, 20, 7, 0.18) 100%),
-                    linear-gradient(0deg, rgba(21, 18, 15, 0.65), rgba(21, 18, 15, 0.08) 40%, rgba(21, 18, 15, 0.45));
+                    radial-gradient(circle at 20% 50%, rgba(11, 10, 10, 0.98) 0%, rgba(11, 10, 10, 0.88) 45%, rgba(11, 10, 10, 0.3) 100%),
+                    linear-gradient(0deg, rgba(11, 10, 10, 0.8), transparent 60%);
         }
 
         .text-gradient {
-            background: linear-gradient(100deg, #fb923c 0%, #ffffff 46%, #5eead4 100%);
+            background: linear-gradient(135deg, #fb923c 0%, #f37021 50%, #ea580c 100%);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
+            display: inline-block;
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #f37021 0%, #ea580c 50%, #c2410c 100%);
-            box-shadow: 0 18px 32px -18px rgba(194, 65, 12, 0.8);
-            transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+            background: #ffffff;
+            color: #0b0a0a;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .btn-primary:hover {
+            background: #f37021;
+            color: #ffffff;
             transform: translateY(-2px);
-            filter: brightness(1.03);
-            box-shadow: 0 22px 38px -18px rgba(194, 65, 12, 0.9);
+            box-shadow: 0 12px 30px rgba(243, 112, 33, 0.25);
         }
 
         .btn-primary:active { transform: translateY(0); }
 
         .fpt-slide {
             opacity: 0;
-            transform: scale(1.04);
-            transition: opacity 0.9s ease, transform 1.4s cubic-bezier(0.22, 1, 0.36, 1);
+            transform: scale(1.03);
+            transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), transform 1.6s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .fpt-slide.is-active {
-            opacity: 1;
+            opacity: 0.85;
             transform: scale(1);
         }
 
         .slide-dot {
             width: 2.5rem;
-            height: 0.22rem;
+            height: 0.25rem;
             overflow: hidden;
             border-radius: 999px;
-            background: rgba(255, 255, 255, 0.38);
+            background: rgba(255, 255, 255, 0.15);
         }
 
         .slide-dot span {
@@ -181,138 +188,153 @@
             width: 100%;
             transform: scaleX(0);
             transform-origin: left;
-            background: #fff;
+            background: #f37021;
         }
 
         .slide-dot.is-active span {
             animation: pulseBar 5s linear forwards;
         }
 
-        .metric-card {
-            background: rgba(255, 255, 255, 0.72);
-            border: 1px solid rgba(251, 146, 60, 0.18);
-            backdrop-filter: blur(14px);
-            -webkit-backdrop-filter: blur(14px);
-        }
-
-        .feature-card {
-            background:
-                    linear-gradient(#fff, #fff) padding-box,
-                    linear-gradient(135deg, rgba(243, 112, 33, 0.35), rgba(15, 118, 110, 0.18), rgba(37, 99, 235, 0.16)) border-box;
-            border: 1px solid transparent;
-            transition: transform 0.25s ease, box-shadow 0.25s ease;
-        }
-
-        .feature-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 24px 60px -34px rgba(67, 20, 7, 0.42);
-        }
-
-        .section-orange {
-            background:
-                    linear-gradient(180deg, #fff7ed 0%, #ffffff 100%);
-        }
-
-        .dark-band {
-            background:
-                    linear-gradient(135deg, #1f130d 0%, #431407 54%, #15120f 100%);
-        }
-
-        .gallery-card img {
-            transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-        }
-
-        .gallery-card:hover img { transform: scale(1.06); }
-
         .event-live-card {
-            border: 1px solid rgba(226, 232, 240, 0.9);
-            background: #fff;
-            box-shadow: 0 18px 48px -30px rgba(67, 20, 7, 0.36);
-            transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
-        }
-
-        .event-live-card img {
-            transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            background: #121212;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .event-live-card:hover {
             border-color: rgba(243, 112, 33, 0.3);
-            box-shadow: 0 28px 70px -38px rgba(67, 20, 7, 0.44);
             transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .event-live-card img {
+            transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .event-live-card:hover img { transform: scale(1.04); }
 
-        .event-live-card .event-card-media {
-            height: 9rem;
+        .main-header {
+            position: fixed;
+            top: 20px;
+            left: 5%;
+            width: 90%;
+            background: rgba(18, 18, 18, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 100px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            transition: all 0.3s ease;
         }
 
-        @media (min-width: 640px) {
-            .event-live-card .event-card-media {
-                height: 9.75rem;
-            }
+        .navbar-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 10px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        @media (min-width: 1024px) {
-            .event-live-card .event-card-media {
-                height: 10.5rem;
-            }
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 1.1rem;
         }
 
-        @media (prefers-reduced-motion: reduce) {
-            *, *::before, *::after {
-                animation-duration: 0.01ms !important;
-                animation-iteration-count: 1 !important;
-                scroll-behavior: auto !important;
-                transition-duration: 0.01ms !important;
-            }
+        .logo-icon {
+            background: linear-gradient(135deg, #f37021, #ff8c42);
+            color: white;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
         }
 
-        .rounded-2xl,
-        .rounded-3xl,
-        .rounded-\[2rem\] {
-            border-radius: inherit;
+        .nav-menu {
+            display: flex;
+            gap: 4px;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: #a1a1aa;
+            font-weight: 500;
+            font-size: 0.85rem;
+            padding: 8px 16px;
+            border-radius: 100px;
+            transition: all 0.2s ease;
+        }
+
+        .nav-link:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .btn-cta {
+            background: #ffffff;
+            color: #0b0a0a;
+            border: none;
+            padding: 8px 18px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border-radius: 100px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-cta:hover {
+            background: #f37021;
+            color: #ffffff;
         }
     </style>
 </head>
-<body class="font-sans text-ink antialiased">
-<header id="site-header" class="fixed inset-x-0 top-0 z-50 nav-glass transition-all duration-300">
-    <div class="flex h-16 w-full items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-        <a href="#" class="flex items-center gap-3 font-bold tracking-tight text-ink transition-opacity hover:opacity-85">
-            <span class="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-fpt to-orange-deep text-white shadow-lg shadow-orange-500/25">
-                <svg class="h-5 w-5" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 5h16v14H4z"/><path d="M8 3v4M16 3v4M4 9h16"/></svg>
-            </span>
-            <span class="hidden text-lg sm:inline">Campus Pulse</span>
+<body class="font-sans text-white antialiased">
+<header id="site-header" class="main-header transition-all duration-300">
+    <div class="navbar-container">
+        <a href="#" class="brand-logo">
+            <div class="logo-icon">
+                <i class="fas fa-calendar-alt"></i>
+            </div>
+            <span>Campus Pulse</span>
         </a>
 
         <nav class="hidden items-center gap-1 md:flex" aria-label="Chính">
-            <a href="#roles" class="rounded-full px-4 py-2 text-sm font-semibold text-ink-muted transition-colors hover:bg-orange-100 hover:text-orange-deep">Vai trò</a>
-            <a href="#events" class="rounded-full px-4 py-2 text-sm font-semibold text-ink-muted transition-colors hover:bg-orange-100 hover:text-orange-deep">Sự kiện</a>
-            <a href="#faq" class="rounded-full px-4 py-2 text-sm font-semibold text-ink-muted transition-colors hover:bg-orange-100 hover:text-orange-deep">FAQ</a>
+            <a href="#roles" class="nav-link">Vai trò</a>
+            <a href="#events" class="nav-link">Sự kiện</a>
+            <a href="#faq" class="nav-link">FAQ</a>
         </nav>
 
-        <div class="flex items-center gap-2 sm:gap-3">
-            <a href="login.html" data-auth-cta class="btn-primary hidden rounded-full px-5 py-2.5 text-sm font-bold text-white sm:inline">Bắt đầu ngay</a>
-            <button type="button" id="menu-btn" class="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-orange-200/80 bg-white/90 text-ink shadow-sm md:hidden" aria-expanded="false" aria-controls="mobile-panel" aria-label="Mở menu">
-                <svg id="icon-open" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-                <svg id="icon-close" class="hidden h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        <div class="flex items-center gap-2">
+            <a href="login.html" data-auth-cta class="btn-primary hidden rounded-full px-4 py-1.5 text-xs font-bold sm:inline">Bắt đầu ngay</a>
+            <button type="button" id="menu-btn" class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white shadow-sm md:hidden" aria-expanded="false" aria-controls="mobile-panel" aria-label="Mở menu">
+                <svg id="icon-open" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                <svg id="icon-close" class="hidden h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
         </div>
     </div>
 
-    <div id="mobile-panel" class="fixed inset-x-0 top-16 z-40 max-h-[calc(100dvh-4rem)] overflow-y-auto border-b border-orange-100 bg-white/96 opacity-0 -translate-y-2 shadow-xl shadow-orange-900/10 backdrop-blur-xl md:hidden" hidden>
+    <div id="mobile-panel" class="fixed inset-x-0 top-16 z-40 max-h-[calc(100dvh-4rem)] overflow-y-auto rounded-2xl border border-white/5 bg-[#121212]/96 opacity-0 -translate-y-2 shadow-xl backdrop-blur-xl md:hidden" hidden>
         <nav class="flex flex-col gap-1 p-4" aria-label="Menu di động">
-            <a href="#roles" class="rounded-2xl px-4 py-3 text-sm font-semibold text-ink-muted hover:bg-orange-50 hover:text-orange-deep">Vai trò</a>
-            <a href="#events" class="rounded-2xl px-4 py-3 text-sm font-semibold text-ink-muted hover:bg-orange-50 hover:text-orange-deep">Sự kiện</a>
-            <a href="#faq" class="rounded-2xl px-4 py-3 text-sm font-semibold text-ink-muted hover:bg-orange-50 hover:text-orange-deep">FAQ</a>
-            <hr class="my-2 border-orange-100">
-            <a href="login.html" data-auth-cta class="btn-primary mt-2 rounded-2xl py-3 text-center text-sm font-bold text-white">Bắt đầu ngay</a>
+            <a href="#roles" class="rounded-xl px-4 py-2.5 text-sm font-medium text-ink-soft hover:bg-white/5 hover:text-white">Vai trò</a>
+            <a href="#events" class="rounded-xl px-4 py-2.5 text-sm font-medium text-ink-soft hover:bg-white/5 hover:text-white">Sự kiện</a>
+            <a href="#faq" class="rounded-xl px-4 py-2.5 text-sm font-medium text-ink-soft hover:bg-white/5 hover:text-white">FAQ</a>
+            <hr class="my-2 border-white/5">
+            <a href="login.html" data-auth-cta class="btn-primary mt-1 rounded-xl py-2.5 text-center text-sm font-bold">Bắt đầu ngay</a>
         </nav>
     </div>
 </header>
 
 <main>
-    <section class="hero-shell flex items-center pt-16" aria-labelledby="hero-title">
+    <section class="hero-shell flex items-center pt-12" aria-labelledby="hero-title">
         <div class="absolute inset-0">
             <img class="fpt-slide is-active absolute inset-0 h-full w-full object-cover" src="https://daihoc.fpt.edu.vn/wp-content/uploads/2025/12/banner-truong-dai-hoc-fpt-co-so-ha-noi.jpg" width="1600" height="1000" alt="Campus Đại học FPT cơ sở Hà Nội">
             <img class="fpt-slide absolute inset-0 h-full w-full object-cover" src="https://daihoc.fpt.edu.vn/wp-content/uploads/2025/12/50-CLB-sinh-vien-Truong-Dai-hoc-FPT-campus-Ha-Noi.jpg" width="1600" height="1000" alt="Hoạt động câu lạc bộ sinh viên FPT">
@@ -320,45 +342,45 @@
             <div class="hero-overlay absolute inset-0"></div>
         </div>
 
-        <div class="relative z-10 w-full px-4 py-10 sm:px-6 sm:py-12 lg:px-8 lg:py-14">
+        <div class="relative z-10 w-full px-4 py-10 sm:px-6 lg:px-8">
             <div class="max-w-3xl">
-                <p class="animate-fade-up mb-5 inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/12 px-4 py-2 text-xs font-extrabold uppercase tracking-[0.18em] text-orange-100 shadow-sm backdrop-blur" style="animation-delay:0.04s;opacity:0">
-                    <span class="inline-block h-2 w-2 rounded-full bg-orange-fpt shadow-[0_0_0_5px_rgba(243,112,33,0.15)]"></span>
+                <p class="animate-fade-up mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-orange-400 shadow-sm backdrop-blur" style="animation-delay:0.04s;opacity:0">
+                    <span class="inline-block h-1.5 w-1.5 rounded-full bg-orange-fpt shadow-[0_0_10px_#f37021] animate-pulse"></span>
                     <span id="slide-eyebrow">FPT Event Hub · Smart Priority Matching</span>
                 </p>
-                <h1 id="slide-title" class="animate-fade-up text-4xl font-extrabold leading-[1.04] text-white sm:text-5xl lg:text-6xl" style="animation-delay:0.12s;opacity:0">
-                    Sự kiện FPT, <span class="text-gradient">đúng người – đúng slot.</span>
+                <h1 id="slide-title" class="animate-fade-up text-4xl font-extrabold leading-[1.12] text-white sm:text-5xl lg:text-6xl tracking-tight" style="animation-delay:0.12s;opacity:0">
+                    Sự kiện FPT, <br><span class="text-gradient">đúng người – đúng slot.</span>
                 </h1>
-                <p id="slide-desc" class="animate-fade-up mt-5 max-w-2xl text-base leading-7 text-orange-50/86 sm:text-lg sm:leading-8" style="animation-delay:0.2s;opacity:0">
+                <p id="slide-desc" class="animate-fade-up mt-6 max-w-2xl text-sm leading-relaxed text-ink-soft sm:text-base" style="animation-delay:0.2s;opacity:0">
                     Hệ thống sự kiện sinh viên FPT với cơ chế xếp slot ưu tiên theo ngành, kỳ học và điểm rèn luyện. Một nơi cho 4 vai trò.
                 </p>
-                <div class="animate-fade-up mt-7 flex flex-wrap items-center gap-3" style="animation-delay:0.28s;opacity:0">
-                    <a href="login.html" class="btn-primary inline-flex items-center justify-center rounded-full px-7 py-3.5 text-sm font-bold text-white">
+                <div class="animate-fade-up mt-8 flex flex-wrap items-center gap-4" style="animation-delay:0.28s;opacity:0">
+                    <a href="login.html" class="btn-primary inline-flex items-center justify-center rounded-full px-6 py-3 text-xs font-bold">
                         Đăng nhập ngay
                     </a>
-                    <a href="#events" class="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/12 px-7 py-3.5 text-sm font-bold text-white shadow-sm backdrop-blur transition hover:bg-white/20">
+                    <a href="#events" class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-6 py-3 text-xs font-bold text-white shadow-sm backdrop-blur transition hover:bg-white/15">
                         Xem lịch sự kiện
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                        <svg class="h-3.5 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
                     </a>
                 </div>
 
-                <div class="animate-fade-up mt-8 hidden max-w-xl grid-cols-3 gap-3 sm:grid" style="animation-delay:0.36s;opacity:0">
-                    <div class="border-l border-white/24 pl-4">
-                        <span class="block text-2xl font-extrabold text-orange-100" id="metric-events">--</span>
-                        <span class="mt-1 block text-xs font-semibold text-orange-50/72">sự kiện đang triển khai</span>
+                <div class="animate-fade-up mt-10 grid max-w-xl grid-cols-3 gap-6 border-t border-white/10 pt-8 sm:grid" style="animation-delay:0.36s;opacity:0">
+                    <div>
+                        <span class="block text-3xl font-bold text-white tracking-tight" id="metric-events">3</span>
+                        <span class="mt-1 block text-xs font-medium text-ink-muted uppercase tracking-wider">sự kiện triển khai</span>
                     </div>
-                    <div class="border-l border-white/24 pl-4">
-                        <span class="block text-2xl font-extrabold text-teal-100" id="metric-registrations">--</span>
-                        <span class="mt-1 block text-xs font-semibold text-orange-50/72">lượt đăng ký ưu tiên</span>
+                    <div class="border-l border-white/10 pl-6">
+                        <span class="block text-3xl font-bold text-orange-400 tracking-tight" id="metric-registrations">604</span>
+                        <span class="mt-1 block text-xs font-medium text-ink-muted uppercase tracking-wider">lượt đăng ký ưu tiên</span>
                     </div>
-                    <div class="border-l border-white/24 pl-4">
-                        <span class="block text-2xl font-extrabold text-blue-100" id="metric-users">--</span>
-                        <span class="mt-1 block text-xs font-semibold text-orange-50/72">sinh viên &amp; cán bộ</span>
+                    <div class="border-l border-white/10 pl-6">
+                        <span class="block text-3xl font-bold text-white tracking-tight" id="metric-users">107</span>
+                        <span class="mt-1 block text-xs font-medium text-ink-muted uppercase tracking-wider">sinh viên &amp; cán bộ</span>
                     </div>
                 </div>
             </div>
 
-            <div class="animate-fade-up mt-7 flex gap-2 text-white" style="animation-delay:0.44s;opacity:0">
+            <div class="animate-fade-up mt-8 flex gap-2 text-white" style="animation-delay:0.44s;opacity:0">
                 <div class="flex shrink-0 gap-2" aria-label="Ảnh đang hiển thị">
                     <button type="button" class="slide-dot is-active" data-slide-dot="0" aria-label="Xem ảnh 1"><span></span></button>
                     <button type="button" class="slide-dot" data-slide-dot="1" aria-label="Xem ảnh 2"><span></span></button>
@@ -368,170 +390,159 @@
         </div>
     </section>
 
-    <section id="roles" class="section-orange py-16 sm:py-20">
+    <section id="roles" class="bg-[#0e0d0d] py-16 sm:py-20 border-b border-white/5">
         <div class="w-full px-4 sm:px-6 lg:px-8">
             <div class="mx-auto max-w-2xl text-center" data-reveal>
-                <p class="text-sm font-extrabold uppercase tracking-[0.22em] text-orange-deep">Vai trò</p>
-                <h2 class="mt-3 text-3xl font-extrabold text-ink sm:text-4xl">Đăng nhập — vào đúng không gian của bạn.</h2>
+                <p class="section-label text-xs font-bold uppercase tracking-wider text-orange-fpt">Vai trò</p>
+                <h2 class="mt-4 text-3xl font-bold text-white tracking-tight sm:text-4xl">Đăng nhập — vào đúng không gian của bạn.</h2>
             </div>
 
             <div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <a href="screen-student.html" data-reveal class="group rounded-2xl border border-orange-100 bg-white p-5 transition hover:-translate-y-1 hover:shadow-panel">
+                <a href="screen-student.html" class="group rounded-2xl border border-white/5 bg-[#121212] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-orange-500/30">
                     <span class="text-2xl">🎓</span>
-                    <h3 class="mt-3 text-base font-extrabold text-ink">Sinh viên</h3>
-                    <p class="mt-1 text-sm leading-6 text-ink-muted">Tìm sự kiện hợp ngành, đăng ký nhanh và mang theo vé QR đi check-in.</p>
+                    <h3 class="mt-4 text-base font-bold text-white">Sinh viên</h3>
+                    <p class="mt-2 text-xs leading-relaxed text-ink-muted">Tìm sự kiện hợp ngành, đăng ký nhanh và mang theo vé QR đi check-in.</p>
                 </a>
-                <a href="screen-department.html" data-reveal class="group rounded-2xl border border-teal-100 bg-white p-5 transition hover:-translate-y-1 hover:shadow-panel">
+                <a href="screen-department.html" class="group rounded-2xl border border-white/5 bg-[#121212] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-orange-500/30">
                     <span class="text-2xl">🏛️</span>
-                    <h3 class="mt-3 text-base font-extrabold text-ink">Khoa</h3>
-                    <p class="mt-1 text-sm leading-6 text-ink-muted">Tạo đề xuất chương trình, theo dõi độ phủ và đọc phản hồi sinh viên.</p>
+                    <h3 class="mt-4 text-base font-bold text-white">Khoa</h3>
+                    <p class="mt-2 text-xs leading-relaxed text-ink-muted">Tạo đề xuất chương trình, theo dõi độ phủ và đọc phản hồi sinh viên.</p>
                 </a>
-                <a href="screen-committee.html" data-reveal class="group rounded-2xl border border-blue-100 bg-white p-5 transition hover:-translate-y-1 hover:shadow-panel">
+                <a href="screen-committee.html" class="group rounded-2xl border border-white/5 bg-[#121212] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-orange-500/30">
                     <span class="text-2xl">⚖️</span>
-                    <h3 class="mt-3 text-base font-extrabold text-ink">Hội đồng</h3>
-                    <p class="mt-1 text-sm leading-6 text-ink-muted">Xem đề xuất, ghi nhận xét và đưa quyết định duyệt chỉ trong vài cú click.</p>
+                    <h3 class="mt-4 text-base font-bold text-white">Hội đồng</h3>
+                    <p class="mt-2 text-xs leading-relaxed text-ink-muted">Xem đề xuất, ghi nhận xét và đưa quyết định duyệt chỉ trong vài cú click.</p>
                 </a>
-                <a href="admin-screen/overview.html" data-reveal class="group rounded-2xl border border-purple-100 bg-white p-5 transition hover:-translate-y-1 hover:shadow-panel">
+                <a href="admin-screen/overview.html" class="group rounded-2xl border border-white/5 bg-[#121212] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-orange-500/30">
                     <span class="text-2xl">🛡️</span>
-                    <h3 class="mt-3 text-base font-extrabold text-ink">Quản trị</h3>
-                    <p class="mt-1 text-sm leading-6 text-ink-muted">Bao quát toàn hệ thống — người dùng, vai trò, sự kiện và nhật ký vận hành.</p>
+                    <h3 class="mt-4 text-base font-bold text-white">Quản trị</h3>
+                    <p class="mt-2 text-xs leading-relaxed text-ink-muted">Bao quát toàn hệ thống — người dùng, vai trò, sự kiện và nhật ký vận hành.</p>
                 </a>
             </div>
         </div>
     </section>
 
-    <section id="events" class="bg-white py-16 sm:py-20">
+    <section id="events" class="bg-[#0b0a0a] py-16 sm:py-20">
         <div class="w-full px-4 sm:px-6 lg:px-8">
             <div data-reveal class="flex flex-wrap items-end justify-between gap-4">
                 <div class="max-w-2xl">
-                    <p class="text-sm font-extrabold uppercase tracking-[0.22em] text-orange-deep">Sự kiện đang mở</p>
-                    <h2 class="mt-3 text-3xl font-extrabold text-ink sm:text-4xl">Các sự kiện sắp diễn ra gần nhất.</h2>
+                    <p class="section-label text-xs font-bold uppercase tracking-wider text-orange-fpt">Sự kiện đang mở</p>
+                    <h2 class="mt-4 text-3xl font-bold text-white tracking-tight sm:text-4xl">Các sự kiện sắp diễn ra gần nhất.</h2>
                 </div>
-                <a href="login.html" class="inline-flex items-center gap-1 rounded-full bg-orange-fpt px-5 py-2.5 text-sm font-extrabold text-white shadow-glow hover:brightness-105">
+                <a href="login.html" class="inline-flex items-center gap-1 rounded-full bg-orange-fpt px-5 py-2 text-xs font-bold text-white shadow-glow hover:brightness-105 transition-all">
                     Đăng nhập để đăng ký
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                    <svg class="h-3.5 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
                 </a>
             </div>
 
-            <div id="landing-events" class="mx-auto mt-10 grid max-w-6xl gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                <article class="event-live-card rounded-xl p-3" data-reveal>
-                    <p class="text-sm font-bold text-ink-muted">Đang tải sự kiện từ database...</p>
+            <div id="landing-events" class="mx-auto mt-10 grid max-w-6xl gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                <article class="event-live-card rounded-xl p-4" data-reveal>
+                    <p class="text-xs font-medium text-ink-muted">Đang tải sự kiện từ database...</p>
                 </article>
             </div>
         </div>
     </section>
 
-    <section id="faq" class="section-orange py-16 sm:py-20">
+    <section id="faq" class="bg-[#0e0d0d] py-16 sm:py-20 border-t border-b border-white/5">
         <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
             <div class="text-center" data-reveal>
-                <p class="text-sm font-extrabold uppercase tracking-[0.22em] text-orange-deep">FAQ</p>
-                <h2 class="mt-3 text-3xl font-extrabold text-ink sm:text-4xl">Câu hỏi nhanh</h2>
+                <p class="section-label text-xs font-bold uppercase tracking-wider text-orange-fpt">FAQ</p>
+                <h2 class="mt-4 text-3xl font-bold text-white tracking-tight sm:text-4xl">Câu hỏi nhanh</h2>
             </div>
 
             <dl class="mt-10 grid gap-3">
-                <details data-reveal class="group rounded-2xl border border-orange-100 bg-white p-5">
-                    <summary class="flex cursor-pointer list-none items-center justify-between gap-4 font-extrabold text-ink">
+                <details data-reveal class="group rounded-xl border border-white/5 bg-[#121212] p-5">
+                    <summary class="flex cursor-pointer list-none items-center justify-between gap-4 font-bold text-white text-sm sm:text-base">
                         Đăng nhập bằng cách nào?
-                        <span class="text-orange-deep transition group-open:rotate-180">▾</span>
+                        <span class="text-orange-400 transition group-open:rotate-180">▾</span>
                     </summary>
-                    <dd class="mt-2 text-sm leading-6 text-ink-muted">Dùng tài khoản email &amp; mật khẩu, hoặc đăng nhập nhanh bằng Google. Hệ thống tự đưa bạn vào đúng không gian của vai trò: Sinh viên, Khoa, Hội đồng hoặc Quản trị.</dd>
+                    <dd class="mt-3 text-xs leading-relaxed text-ink-muted border-t border-white/5 pt-3">Dùng tài khoản email &amp; mật khẩu, hoặc đăng nhập nhanh bằng Google. Hệ thống tự đưa bạn vào đúng không gian của vai trò: Sinh viên, Khoa, Hội đồng hoặc Quản trị.</dd>
                 </details>
-                <details data-reveal class="group rounded-2xl border border-orange-100 bg-white p-5">
-                    <summary class="flex cursor-pointer list-none items-center justify-between gap-4 font-extrabold text-ink">
+                <details data-reveal class="group rounded-xl border border-white/5 bg-[#121212] p-5">
+                    <summary class="flex cursor-pointer list-none items-center justify-between gap-4 font-bold text-white text-sm sm:text-base">
                         Đăng ký sự kiện và xếp slot ưu tiên thế nào?
-                        <span class="text-orange-deep transition group-open:rotate-180">▾</span>
+                        <span class="text-orange-400 transition group-open:rotate-180">▾</span>
                     </summary>
-                    <dd class="mt-2 text-sm leading-6 text-ink-muted">Sinh viên chọn sự kiện hợp ngành và đăng ký trực tiếp. Khi số đăng ký vượt sức chứa, slot được ưu tiên theo mức độ liên quan ngành/kỳ học và thời gian đăng ký — phần còn lại vào danh sách chờ.</dd>
+                    <dd class="mt-3 text-xs leading-relaxed text-ink-muted border-t border-white/5 pt-3">Sinh viên chọn sự kiện hợp ngành and đăng ký trực tiếp. Khi số đăng ký vượt sức chứa, slot được ưu tiên theo mức độ liên quan ngành/kỳ học và thời gian đăng ký — phần còn lại vào danh sách chờ.</dd>
                 </details>
-                <details data-reveal class="group rounded-2xl border border-orange-100 bg-white p-5">
-                    <summary class="flex cursor-pointer list-none items-center justify-between gap-4 font-extrabold text-ink">
+                <details data-reveal class="group rounded-xl border border-white/5 bg-[#121212] p-5">
+                    <summary class="flex cursor-pointer list-none items-center justify-between gap-4 font-bold text-white text-sm sm:text-base">
                         Check-in tại sự kiện ra sao?
-                        <span class="text-orange-deep transition group-open:rotate-180">▾</span>
+                        <span class="text-orange-400 transition group-open:rotate-180">▾</span>
                     </summary>
-                    <dd class="mt-2 text-sm leading-6 text-ink-muted">Tới sự kiện, sinh viên quét mã QR động (đổi mỗi 30 giây để chống gian lận) để mở phiếu check-in. Hệ thống đối chiếu email với danh sách đăng ký để xác nhận có mặt.</dd>
+                    <dd class="mt-3 text-xs leading-relaxed text-ink-muted border-t border-white/5 pt-3">Tới sự kiện, sinh viên quét mã QR động (đổi mỗi 30 giây để chống gian lận) để mở phiếu check-in. Hệ thống đối chiếu email với danh sách đăng ký để xác nhận có mặt.</dd>
                 </details>
-                <details data-reveal class="group rounded-2xl border border-orange-100 bg-white p-5">
-                    <summary class="flex cursor-pointer list-none items-center justify-between gap-4 font-extrabold text-ink">
+                <details data-reveal class="group rounded-xl border border-white/5 bg-[#121212] p-5">
+                    <summary class="flex cursor-pointer list-none items-center justify-between gap-4 font-bold text-white text-sm sm:text-base">
                         Check-out và phản hồi cuối buổi?
-                        <span class="text-orange-deep transition group-open:rotate-180">▾</span>
+                        <span class="text-orange-400 transition group-open:rotate-180">▾</span>
                     </summary>
-                    <dd class="mt-2 text-sm leading-6 text-ink-muted">Cuối sự kiện, sinh viên hoàn thành phiếu check-out gồm một quiz ngắn và đánh giá. Đã check-in và check-out đầy đủ thì được ghi nhận hoàn tất tham dự; Khoa xem được toàn bộ thống kê.</dd>
+                    <dd class="mt-3 text-xs leading-relaxed text-ink-muted border-t border-white/5 pt-3">Cuối sự kiện, sinh viên hoàn thành phiếu check-out gồm một quiz ngắn và đánh giá. Đã check-in và check-out đầy đủ thì được ghi nhận hoàn tất tham dự; Khoa xem được toàn bộ thống kê.</dd>
                 </details>
             </dl>
         </div>
     </section>
 
     <section id="cta" class="mx-auto mb-16 mt-20 max-w-6xl px-4 sm:mb-20 sm:mt-24 sm:px-6 lg:px-8">
-        <div class="overflow-hidden rounded-[2rem] bg-gradient-to-br from-orange-fpt via-orange-deep to-[#431407] px-6 py-14 text-center text-white shadow-glow sm:px-10 sm:py-16">
+        <div class="overflow-hidden rounded-2xl bg-gradient-to-br from-orange-fpt via-orange-deep to-[#1f130d] px-6 py-14 text-center text-white shadow-glow">
             <div class="mx-auto max-w-3xl" data-reveal>
-                <h2 class="text-2xl font-extrabold sm:text-3xl">Đăng nhập — vào đúng không gian của bạn.</h2>
+                <h2 class="text-xl font-bold sm:text-2xl">Đăng nhập — vào đúng không gian của bạn.</h2>
                 <div class="mt-6 flex flex-wrap justify-center gap-3">
-                    <a href="login.html" class="inline-flex rounded-full bg-white px-6 py-3 text-sm font-extrabold text-orange-deep shadow-xl transition hover:bg-orange-50">Đăng nhập / Đăng ký</a>
+                    <a href="login.html" class="inline-flex rounded-full bg-white px-6 py-2.5 text-xs font-bold text-orange-deep shadow-xl transition hover:bg-orange-50">Đăng nhập / Đăng ký</a>
                 </div>
             </div>
         </div>
     </section>
 </main>
 
-<footer class="bg-[#15120f] text-orange-50/76">
-    <div class="w-full px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
-        <div class="grid gap-5 md:grid-cols-12 md:gap-7">
+<footer class="bg-[#0b0a0a] text-ink-soft border-t border-white/5">
+    <div class="w-full px-4 py-8 sm:px-6 lg:px-8">
+        <div class="grid gap-6 md:grid-cols-12">
             <div class="md:col-span-5">
-                <div class="flex items-center gap-2.5 font-extrabold text-white">
-                    <span class="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-orange-fpt to-orange-deep text-white shadow-lg shadow-orange-900/40">
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-width="2" d="M4 5h16v14H4zM8 3v4M16 3v4"/></svg>
+                <div class="flex items-center gap-2.5 font-bold text-white">
+                    <span class="flex h-7 w-7 items-center justify-center rounded-xl bg-gradient-to-br from-orange-fpt to-orange-deep text-white shadow-md">
+                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-width="2.5" d="M4 5h16v14H4zM8 3v4M16 3v4"/></svg>
                     </span>
-                    <span class="text-base">Campus Pulse</span>
+                    <span class="text-sm font-bold">Campus Pulse</span>
                 </div>
-                <p class="mt-2 max-w-sm text-xs leading-5 text-orange-50/60">Nền tảng quản lý sự kiện sinh viên Đại học FPT — đăng ký theo slot ưu tiên, vé QR, check-in nhanh và phản hồi gọn trong một nơi.</p>
-                <div class="mt-3 flex items-center gap-2.5">
-                    <a href="https://www.facebook.com/FPT.University.HCM" target="_blank" rel="noopener" aria-label="Facebook" class="flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white transition hover:border-orange-fpt hover:bg-orange-fpt">
-                        <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.879V14.89H7.898V12h2.54V9.797c0-2.507 1.493-3.891 3.776-3.891 1.094 0 2.238.195 2.238.195v2.461h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.989C18.343 21.128 22 16.991 22 12z"/></svg>
+                <p class="mt-3 max-w-sm text-xs leading-relaxed text-ink-muted">Nền tảng quản lý sự kiện sinh viên Đại học FPT — đăng ký theo slot ưu tiên, vé QR, check-in nhanh và phản hồi gọn trong một nơi.</p>
+                <div class="mt-4 flex items-center gap-2.5">
+                    <a href="https://www.facebook.com/FPT.University.HCM" target="_blank" rel="noopener" class="flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white transition hover:bg-orange-fpt">
+                        <svg class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.879V14.89H7.898V12h2.54V9.797c0-2.507 1.493-3.891 3.776-3.891 1.094 0 2.238.195 2.238.195v2.461h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.989C18.343 21.128 22 16.991 22 12z"/></svg>
                     </a>
-                    <a href="https://www.youtube.com/@FPTUniversity" target="_blank" rel="noopener" aria-label="YouTube" class="flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white transition hover:border-orange-fpt hover:bg-orange-fpt">
-                        <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.376.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136C4.495 20.455 12 20.455 12 20.455s7.505 0 9.376-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-                    </a>
-                    <a href="https://www.linkedin.com/school/fpt-university/" target="_blank" rel="noopener" aria-label="LinkedIn" class="flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white transition hover:border-orange-fpt hover:bg-orange-fpt">
-                        <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.063 2.063 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-                    </a>
-                    <a href="mailto:support@fpt.edu.vn" aria-label="Email" class="flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white transition hover:border-orange-fpt hover:bg-orange-fpt">
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l9 6 9-6M5 19h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2z"/></svg>
+                    <a href="https://www.youtube.com/@FPTUniversity" target="_blank" rel="noopener" class="flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white transition hover:bg-orange-fpt">
+                        <svg class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.376.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136C4.495 20.455 12 20.455 12 20.455s7.505 0 9.376-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
                     </a>
                 </div>
             </div>
 
             <div class="md:col-span-3">
-                <p class="text-xs font-extrabold uppercase tracking-[0.2em] text-orange-200">Khám phá</p>
-                <ul class="mt-2.5 space-y-1.5 text-xs">
-                    <li><a href="#roles" class="text-orange-50/70 transition hover:text-white">Vai trò</a></li>
-                    <li><a href="#events" class="text-orange-50/70 transition hover:text-white">Sự kiện</a></li>
-                    <li><a href="#faq" class="text-orange-50/70 transition hover:text-white">FAQ</a></li>
-                    <li><a href="login.html" class="text-orange-50/70 transition hover:text-white">Đăng nhập</a></li>
+                <p class="text-xs font-bold uppercase tracking-wider text-white">Khám phá</p>
+                <ul class="mt-3 space-y-2 text-xs">
+                    <li><a href="#roles" class="text-ink-muted transition hover:text-white">Vai trò</a></li>
+                    <li><a href="#events" class="text-ink-muted transition hover:text-white">Sự kiện</a></li>
+                    <li><a href="#faq" class="text-ink-muted transition hover:text-white">FAQ</a></li>
                 </ul>
             </div>
 
             <div class="md:col-span-4">
-                <p class="text-xs font-extrabold uppercase tracking-[0.2em] text-orange-200">Liên hệ</p>
-                <ul class="mt-2.5 space-y-2 text-xs">
-                    <li class="flex items-start gap-2.5 text-orange-50/70">
-                        <svg class="mt-0.5 h-4 w-4 shrink-0 text-orange-fpt" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 22s-7-6.7-7-12a7 7 0 1 1 14 0c0 5.3-7 12-7 12z"/><circle cx="12" cy="10" r="2.5"/></svg>
-                        <span>Khu đô thị fpt Đà Nẵng</span>
+                <p class="text-xs font-bold uppercase tracking-wider text-white">Liên hệ</p>
+                <ul class="mt-3 space-y-2.5 text-xs">
+                    <li class="flex items-start gap-2 text-ink-muted">
+                        <svg class="mt-0.5 h-3.5 w-3.5 shrink-0 text-orange-fpt" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 22s-7-6.7-7-12a7 7 0 1 1 14 0c0 5.3-7 12-7 12z"/><circle cx="12" cy="10" r="2.5"/></svg>
+                        <span>Khu đô thị FPT Đà Nẵng</span>
                     </li>
-                    <li class="flex items-center gap-2.5">
-                        <svg class="h-4 w-4 shrink-0 text-orange-fpt" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.88.34 1.74.64 2.57a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.51-1.51a2 2 0 0 1 2.11-.45c.83.3 1.69.52 2.57.64A2 2 0 0 1 22 16.92z"/></svg>
-                        <a href="tel:02473001866" class="text-orange-50/70 transition hover:text-white">0848171106</a>
-                    </li>
-                    <li class="flex items-center gap-2.5">
-                        <svg class="h-4 w-4 shrink-0 text-orange-fpt" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l9 6 9-6M5 19h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2z"/></svg>
-                        <a href="mailto:support@fpt.edu.vn" class="text-orange-50/70 transition hover:text-white">support@fpt.edu.vn</a>
+                    <li class="flex items-center gap-2">
+                        <svg class="h-3.5 w-3.5 shrink-0 text-orange-fpt" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.88.34 1.74.64 2.57a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.51-1.51a2 2 0 0 1 2.11-.45c.83.3 1.69.52 2.57.64A2 2 0 0 1 22 16.92z"/></svg>
+                        <a href="tel:0848171106" class="text-ink-muted transition hover:text-white">0848171106</a>
                     </li>
                 </ul>
             </div>
         </div>
     </div>
 
-    <div class="border-t border-white/8">
-        <div class="flex w-full flex-col items-start gap-1 px-4 py-2.5 text-[11px] text-orange-50/50 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+    <div class="border-t border-white/5">
+        <div class="flex w-full flex-col items-start gap-1 px-4 py-3 text-[10px] text-ink-muted sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
             <span>© 2026 Campus Pulse · Đại học FPT — Toàn cầu · Công nghệ · Khởi nghiệp.</span>
             <span class="flex items-center gap-3">
                 <span>Made with <span class="text-orange-fpt">♥</span> for FPT students</span>
@@ -644,7 +655,15 @@
             });
             if (slideContent[currentSlide]) {
                 if (eyebrow) eyebrow.textContent = slideContent[currentSlide].eyebrow;
-                if (title) title.textContent = slideContent[currentSlide].title;
+                if (title) {
+                    if (currentSlide === 2) {
+                        title.innerHTML = 'Mỗi sự kiện là một<br><span class="text-gradient">bước trưởng thành.</span>';
+                    } else if (currentSlide === 1) {
+                        title.innerHTML = 'Hoạt động sinh viên<br><span class="text-gradient">luôn có nhịp.</span>';
+                    } else {
+                        title.innerHTML = 'Sự kiện FPT,<br><span class="text-gradient">đúng người – đúng slot.</span>';
+                    }
+                }
                 if (desc) desc.textContent = slideContent[currentSlide].desc;
             }
         }
@@ -708,8 +727,18 @@
             });
         }
 
-        function number(value) {
-            return Number(value || 0).toLocaleString('vi-VN');
+        function eventImage(event) {
+            if (event.imageUrl) return event.imageUrl;
+            return 'https://images.unsplash.com/photo-1540575467063-027a26d3b38c?auto=format&fit=crop&w=900&q=80';
+        }
+
+        function statusCopy(event) {
+            var status = String(event.status || '').toUpperCase();
+            var start = new Date(event.startTime || 0).getTime();
+            if (status === 'CANCELLED') return 'Đã hủy';
+            if (Number.isFinite(start) && start < Date.now()) return 'Đã diễn ra';
+            if (status === 'PUBLISHED') return 'Đang mở';
+            return status || 'Sắp diễn ra';
         }
 
         function eventDate(value) {
@@ -727,52 +756,31 @@
             var leftUpcoming = leftValid && leftTime >= now;
             var rightUpcoming = rightValid && rightTime >= now;
             if (leftUpcoming !== rightUpcoming) return leftUpcoming ? -1 : 1;
-            if (!leftValid && !rightValid) return String(left && left.title || '').localeCompare(String(right && right.title || ''), 'vi');
-            if (!leftValid) return 1;
-            if (!rightValid) return -1;
-            return leftUpcoming ? leftTime - rightTime : rightTime - leftTime;
-        }
-
-        function statusCopy(event) {
-            var status = String(event.status || '').toUpperCase();
-            var start = new Date(event.startTime || 0).getTime();
-            if (status === 'CANCELLED') return 'Đã hủy';
-            if (Number.isFinite(start) && start < Date.now()) return 'Đã diễn ra';
-            if (status === 'PUBLISHED') return 'Đang mở';
-            return status || 'Sắp diễn ra';
-        }
-
-        function eventImage(event) {
-            if (event.imageUrl) return event.imageUrl;
-            var signal = String((event.title || '') + ' ' + (event.departmentName || '')).toLowerCase();
-            if (signal.includes('marketing') || signal.includes('kinh tế') || signal.includes('business')) return 'https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=900&q=80';
-            if (signal.includes('ai') || signal.includes('data')) return 'https://images.unsplash.com/photo-1555255707-c07966088b7b?auto=format&fit=crop&w=900&q=80';
-            if (signal.includes('design') || signal.includes('ux')) return 'https://images.unsplash.com/photo-1558655146-d09347e92766?auto=format&fit=crop&w=900&q=80';
-            return 'https://images.unsplash.com/photo-1540575467063-027a26d3b38c?auto=format&fit=crop&w=900&q=80';
+            return leftTime - rightTime;
         }
 
         function eventCard(event) {
             var capacity = Number(event.capacity || 0);
             var registered = Number(event.registrationCount || 0);
             var fill = capacity > 0 ? Math.min(100, Math.round(registered * 100 / capacity)) : 0;
-            return '<article data-reveal class="event-live-card overflow-hidden rounded-xl">' +
-                '<div class="event-card-media overflow-hidden"><img src="' + escapeHtml(eventImage(event)) + '" alt="' + escapeHtml(event.title) + '" class="h-full w-full object-cover" width="640" height="360"></div>' +
-                '<div class="p-4">' +
+            return '<article data-reveal class="event-live-card overflow-hidden rounded-2xl border border-white/5 bg-[#121212]">' +
+                '<div class="event-card-media overflow-hidden h-40 bg-zinc-900"><img src="' + escapeHtml(eventImage(event)) + '" alt="' + escapeHtml(event.title) + '" class="h-full w-full object-cover opacity-80" width="640" height="360"></div>' +
+                '<div class="p-5">' +
                 '<div class="flex items-center justify-between gap-2">' +
-                '<span class="rounded-full bg-orange-50 px-2.5 py-0.5 text-[11px] font-extrabold text-orange-deep">' + escapeHtml(statusCopy(event)) + '</span>' +
-                '<span class="truncate text-[11px] font-bold text-ink-soft">' + escapeHtml(event.departmentName || 'Campus') + '</span>' +
+                '<span class="rounded-full bg-orange-500/10 px-2.5 py-0.5 text-[10px] font-bold text-orange-400 uppercase tracking-wide">' + escapeHtml(statusCopy(event)) + '</span>' +
+                '<span class="truncate text-[11px] font-semibold text-ink-soft uppercase tracking-wider">' + escapeHtml(event.departmentName || 'Campus') + '</span>' +
                 '</div>' +
-                '<h3 class="mt-2.5 line-clamp-2 min-h-[2.75rem] text-base font-extrabold leading-snug text-ink">' + escapeHtml(event.title) + '</h3>' +
-                '<p class="mt-2 truncate text-xs leading-5 text-ink-muted">' + eventDate(event.startTime) + ' · ' + escapeHtml(event.location || 'FPT Campus') + '</p>' +
-                '<div class="mt-3 h-1.5 overflow-hidden rounded-full bg-orange-100"><span class="block h-full rounded-full bg-gradient-to-r from-orange-fpt to-forest" style="width:' + fill + '%"></span></div>' +
-                '<p class="mt-1.5 text-[11px] font-bold text-ink-muted">' + number(registered) + ' / ' + number(capacity) + ' lượt đăng ký</p>' +
+                '<h3 class="mt-3 line-clamp-2 min-h-[2.5rem] text-sm font-bold leading-snug text-white tracking-tight">' + escapeHtml(event.title) + '</h3>' +
+                '<p class="mt-2 truncate text-xs text-ink-muted">' + eventDate(event.startTime) + ' · ' + escapeHtml(event.location || 'FPT Campus') + '</p>' +
+                '<div class="mt-4 h-1 overflow-hidden rounded-full bg-white/5"><span class="block h-full rounded-full bg-gradient-to-r from-orange-fpt to-orange-deep" style="width:' + fill + '%"></span></div>' +
+                '<p class="mt-2 text-[11px] font-semibold text-ink-soft">' + Number(registered).toLocaleString('vi-VN') + ' / ' + Number(capacity).toLocaleString('vi-VN') + ' sinh viên giữ chỗ</p>' +
                 '</div>' +
                 '</article>';
         }
 
         function paintLandingData(events, overview) {
             events = (Array.isArray(events) && events.length ? events : fallbackEvents).slice().sort(compareEvents);
-            var topEventLimit = 6;
+            var topEventLimit = 3;
             var topEvents = events.slice(0, topEventLimit);
             var eventWrap = document.getElementById('landing-events');
             if (eventWrap) {
@@ -782,15 +790,18 @@
                 });
             }
             var stats = overview && overview.stats ? overview.stats : {};
-            var totalRegistrations = stats.totalRegistrations || events.reduce(function (sum, event) { return sum + Number(event.registrationCount || 0); }, 0);
-            var totalUsers = stats.totalUsers || 500;
-            var totalEvents = stats.totalEvents || events.length;
+
+            var totalEvents = stats.totalEvents || 3;
+            var totalRegistrations = stats.totalRegistrations || 604;
+            var totalUsers = stats.totalUsers || 107;
+
             var eventMetric = document.getElementById('metric-events');
             var registrationMetric = document.getElementById('metric-registrations');
             var userMetric = document.getElementById('metric-users');
-            if (eventMetric) eventMetric.textContent = number(totalEvents);
-            if (registrationMetric) registrationMetric.textContent = number(totalRegistrations);
-            if (userMetric) userMetric.textContent = number(totalUsers);
+
+            if (eventMetric) eventMetric.textContent = Number(totalEvents).toLocaleString('vi-VN');
+            if (registrationMetric) registrationMetric.textContent = Number(totalRegistrations).toLocaleString('vi-VN');
+            if (userMetric) userMetric.textContent = Number(totalUsers).toLocaleString('vi-VN');
         }
 
         var PUBLIC_BASE = window.location.protocol === 'file:' ? 'http://localhost:8081/api/public' : '/api/public';
@@ -808,8 +819,6 @@
     })();
 </script>
 <script>
-    // Nhận biết phiên đăng nhập: nếu đã đăng nhập, các nút "Đăng nhập" trên trang chủ
-    // chuyển thành "Vào hệ thống" và trỏ thẳng dashboard theo vai trò → KHÔNG bắt đăng nhập lại.
     (function () {
         var raw = sessionStorage.getItem('user') || localStorage.getItem('user');
         if (!raw) return;
@@ -826,17 +835,14 @@
         };
         var dashboard = routes[String(user.role).toUpperCase()] || 'screen-student.html';
 
-        // Chỉ nút CTA chính đổi nhãn thành "Vào hệ thống" (tránh nhiều nút trùng nhau).
         document.querySelectorAll('a[data-auth-cta]').forEach(function (a) {
             a.setAttribute('href', dashboard);
             a.textContent = 'Vào hệ thống';
         });
-        // Các link đăng nhập khác chỉ trỏ thẳng dashboard, giữ nguyên nhãn theo ngữ cảnh.
         document.querySelectorAll('a[href="login.html"]').forEach(function (a) {
             a.setAttribute('href', dashboard);
         });
     })();
-    // abcc
 </script>
 </body>
 </html>
