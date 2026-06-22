@@ -6,6 +6,7 @@
     <meta name="description" content="Đăng nhập vào hệ thống quản lý sự kiện sinh viên">
     <meta name="color-scheme" content="light">
     <title>Đăng nhập — Campus Events</title>
+    <link rel="icon" type="image/svg+xml" href="/api/favicon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -36,7 +37,8 @@
             font-family: var(--font-body);
             font-optical-sizing: auto;
             color: var(--ink);
-            background-color: #ffffff;
+            background:
+                linear-gradient(180deg, #ffffff 0%, #ffffff 50%, #ffe5cc 56%, #fb923c 100%);
             -webkit-font-smoothing: antialiased;
         }
 
@@ -47,7 +49,35 @@
             padding: clamp(0.75rem, 2.5vw, 1.75rem);
             position: relative;
             overflow-x: clip;
-            background: #ffffff;
+            background:
+                linear-gradient(180deg, rgba(255,255,255,.96) 0%, rgba(255,255,255,.92) 48%, rgba(255,229,204,.92) 56%, rgba(243,112,33,.55) 100%);
+        }
+
+        .login-page::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 50%;
+            background:
+                radial-gradient(circle at 15% 80%, rgba(243, 112, 33, .55), transparent 22rem),
+                radial-gradient(circle at 85% 95%, rgba(234, 88, 12, .45), transparent 24rem),
+                radial-gradient(circle at 50% 100%, rgba(194, 65, 12, .35), transparent 28rem),
+                linear-gradient(165deg, rgba(243, 112, 33, .25) 0%, rgba(234, 88, 12, .42) 60%, rgba(194, 65, 12, .55) 100%),
+                repeating-linear-gradient(135deg, rgba(255,255,255,.18) 0 1px, transparent 1px 22px);
+            border-top: 1px solid rgba(243, 112, 33, .35);
+            pointer-events: none;
+        }
+
+        .login-page::after {
+            content: "";
+            position: absolute;
+            inset: auto 0 0 0;
+            height: 14px;
+            background: linear-gradient(90deg, #f37021 0%, #ea580c 35%, #fb923c 70%, #f6b21a 100%);
+            box-shadow: 0 -4px 24px -8px rgba(194, 65, 12, .65);
+            pointer-events: none;
         }
 
         .login-layout {
@@ -61,6 +91,7 @@
             border: 1px solid var(--line-strong);
             box-shadow:
                 0 1px 2px rgba(15, 23, 42, 0.04),
+                0 30px 70px -24px rgba(124, 45, 18, 0.22),
                 0 24px 48px -20px rgba(15, 23, 42, 0.1);
             overflow: hidden;
         }
@@ -81,7 +112,9 @@
             position: absolute;
             inset: 0;
             z-index: -1;
-            background: linear-gradient(135deg, #eff6ff 0%, #f0f4ff 40%, #faf5ff 100%);
+            background:
+                linear-gradient(165deg, rgba(255,255,255,0) 0 62%, rgba(251,146,60,.16) 62% 100%),
+                linear-gradient(135deg, #eff6ff 0%, #f0f4ff 40%, #fff7ed 100%);
         }
 
         .login-intro__bg svg.decor {
@@ -685,16 +718,14 @@
         function clearMsg() { msg.className = 'form-error'; msg.textContent = ''; }
         function clearErrors() { emailInput.classList.remove('input-error'); passInput.classList.remove('input-error'); }
 
-        // Redirect theo role sau khi login thành công
-        function redirectByRole(role) {
-            var routes = {
-                'ADMIN': 'admin-screen/overview.html',
-                'MANAGER': 'screen-department.html',
-                'DEPARTMENT': 'screen-department.html',
-                'COMMITTEE': 'screen-committee.html',
-                'STUDENT': 'screen-student.html'
-            };
-            window.location.href = routes[role] || 'screen-student.html';
+        function redirectThroughSuccess(user) {
+            var params = new URLSearchParams({
+                id: user.id || 0,
+                name: user.fullName || user.email || 'Người dùng',
+                email: user.email || '',
+                role: user.role || 'STUDENT'
+            });
+            window.location.href = 'oauth-success.html?' + params.toString();
         }
 
         form.addEventListener('submit', function(e) {
@@ -743,7 +774,7 @@
                     localStorage.setItem('userName', data.user.fullName || data.user.email || '');
                     localStorage.setItem('userRole', data.user.role || '');
                     showMsg(data.message, 'success');
-                    setTimeout(function() { redirectByRole(data.user.role); }, 1200);
+                    setTimeout(function() { redirectThroughSuccess(data.user); }, 350);
                 } else {
                     // Phân biệt lỗi khóa tài khoản và sai thông tin
                     var isLocked = data.message && data.message.indexOf('khóa') !== -1;
@@ -755,33 +786,10 @@
                 }
             })
             .catch(function() {
-                // Fallback: nếu backend chưa chạy, dùng mock data để demo
+                // Không có "đăng nhập giả lập" phía client. Mọi xác thực đều qua backend
+                // để tránh lộ thông tin tài khoản và bỏ qua kiểm tra bảo mật.
                 btn.classList.remove('loading'); btn.disabled = false;
-                var MOCK = [
-                    { email: 'admin@example.com', password: 'admin123', role: 'ADMIN', locked: false },
-                    { email: 'department@example.com', password: 'dept123', role: 'DEPARTMENT', locked: false, major: 'Công nghệ Thông tin', faculty: 'Công nghệ Thông tin' },
-                    { email: 'committee@example.com', password: 'com123', role: 'COMMITTEE', locked: false },
-                    { email: 'student@example.com', password: 'student123', role: 'STUDENT', locked: false, major: 'Công nghệ Thông tin', faculty: 'Công nghệ Thông tin' },
-                    { email: 'student@fpt.edu.vn', password: 'student123', role: 'STUDENT', locked: false, major: 'Kỹ thuật phần mềm', faculty: 'Công nghệ Thông tin' },
-                    { email: 'sv1@fpt.edu.vn', password: 'stu123', role: 'STUDENT', locked: false, major: 'Kỹ thuật phần mềm', faculty: 'Công nghệ Thông tin' },
-                    { email: 'locked@example.com', password: 'locked123', role: 'ADMIN', locked: true }
-                ];
-                var user = MOCK.find(function(u) { return u.email === email && u.password === pass; });
-                if (!user) {
-                    emailInput.classList.add('input-error');
-                    passInput.classList.add('input-error');
-                    showMsg('Email hoặc mật khẩu không chính xác.', 'error');
-                    return;
-                }
-                if (user.locked) {
-                    showMsg('Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.', 'locked');
-                    return;
-                }
-                sessionStorage.setItem('user', JSON.stringify({ fullName: 'Demo User', email: user.email, role: user.role, major: user.major || '', faculty: user.faculty || '' }));
-                localStorage.setItem('userName', 'Demo User');
-                localStorage.setItem('userRole', user.role);
-                showMsg('Đăng nhập thành công! (offline mode)', 'success');
-                setTimeout(function() { redirectByRole(user.role); }, 1200);
+                showMsg('Không kết nối được máy chủ. Vui lòng thử lại sau.', 'error');
             });
         });
 

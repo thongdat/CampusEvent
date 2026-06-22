@@ -732,6 +732,10 @@ button {
     gap: .85rem;
 }
 
+.metric-grid-three {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .metric {
     position: relative;
     min-width: 0;
@@ -775,6 +779,52 @@ button {
 .metric.accent .metric-value {
     color: var(--orange-dark);
 }
+
+/* KPI có màu chủ đề để phân biệt nhanh từng nhóm chỉ số. */
+.metric.tone-blue { background: linear-gradient(180deg, var(--blue-soft) 0%, #fff 100%); border-color: #bfdbfe; }
+.metric.tone-blue .metric-value { color: var(--blue); }
+.metric.tone-orange { background: linear-gradient(180deg, var(--orange-soft) 0%, #fff 100%); border-color: #fed7aa; }
+.metric.tone-orange .metric-value { color: var(--orange-dark); }
+.metric.tone-teal { background: linear-gradient(180deg, var(--teal-soft) 0%, #fff 100%); border-color: #99f6e4; }
+.metric.tone-teal .metric-value { color: var(--teal); }
+.metric.tone-green { background: linear-gradient(180deg, var(--green-soft) 0%, #fff 100%); border-color: #a7f3d0; }
+.metric.tone-green .metric-value { color: var(--green); }
+
+/* Metric lồng trong panel (vd "Cần xử lý") làm phẳng để không chồng bóng đổ. */
+.panel .metric {
+    background: var(--paper-2);
+    border-color: var(--line);
+    box-shadow: none;
+}
+
+.panel .metric:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+/* Huy hiệu icon cho KPI: hàng tiêu đề + ô icon bo tròn theo màu chủ đề. */
+.metric-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: .5rem;
+}
+
+.metric-icon {
+    display: inline-grid;
+    flex: none;
+    place-items: center;
+    height: 2.1rem;
+    width: 2.1rem;
+    border-radius: .6rem;
+    background: rgba(15, 23, 42, .06);
+    color: var(--muted);
+}
+
+.metric.tone-blue .metric-icon { background: rgba(37, 99, 235, .12); color: var(--blue); }
+.metric.tone-orange .metric-icon { background: rgba(243, 112, 33, .14); color: var(--orange-dark); }
+.metric.tone-teal .metric-icon { background: rgba(15, 118, 110, .12); color: var(--teal); }
+.metric.tone-green .metric-icon { background: rgba(4, 120, 87, .12); color: var(--green); }
 
 .split-grid {
     display: grid;
@@ -1834,6 +1884,505 @@ tbody tr.selected {
     font-weight: 800;
 }
 
+/* ===== Modern Admin Dashboard Skin ===== */
+body {
+    background:
+        radial-gradient(circle at 28% 0%, rgba(37, 99, 235, .08), transparent 28rem),
+        radial-gradient(circle at 100% 0%, rgba(243, 112, 33, .08), transparent 26rem),
+        #f8fafc;
+}
+
+.app-shell {
+    grid-template-columns: 17.25rem minmax(0, 1fr);
+}
+
+.sidebar {
+    background:
+        radial-gradient(circle at 20% 0%, rgba(37, 99, 235, .24), transparent 14rem),
+        linear-gradient(180deg, #071326 0%, #0b172a 48%, #06101f 100%);
+    color: #dbe4f0;
+    box-shadow: inset -1px 0 0 rgba(255, 255, 255, .08);
+}
+
+.brand {
+    min-height: 5.5rem;
+    padding: 0 1.25rem;
+    border-bottom: 1px solid rgba(255, 255, 255, .08);
+}
+
+.brand-mark {
+    width: 2.45rem;
+    height: 2.45rem;
+    border-radius: .55rem;
+    font-size: 1.05rem;
+}
+
+.brand-title {
+    font-size: .98rem;
+}
+
+.brand-subtitle {
+    margin-top: .25rem;
+    color: #94a3b8;
+    font-size: .72rem;
+}
+
+.sidebar-toggle {
+    background: rgba(255, 255, 255, .07);
+    border: 1px solid rgba(255, 255, 255, .08);
+}
+
+.nav-search {
+    min-height: 2.75rem;
+    margin: 1rem .95rem .45rem;
+    padding: .55rem .75rem;
+    border-radius: .65rem;
+    background: rgba(255, 255, 255, .06);
+}
+
+.nav {
+    padding: .45rem .95rem .75rem;
+}
+
+.nav-group {
+    margin: 1.1rem .45rem .45rem;
+    color: #7f8ea3;
+    font-size: .68rem;
+}
+
+.nav-link {
+    min-height: 2.75rem;
+    border-radius: .65rem;
+    margin-bottom: .25rem;
+    padding: .65rem .78rem;
+    color: #d8e1ec;
+}
+
+.nav-link [data-lucide] {
+    color: #a8b5c6;
+}
+
+.nav-link.active {
+    background: linear-gradient(90deg, rgba(243, 112, 33, .92), rgba(124, 45, 18, .52));
+    box-shadow: 0 14px 28px -18px rgba(243, 112, 33, .95);
+}
+
+.nav-link.active::before {
+    display: none;
+}
+
+.nav-link.active [data-lucide] {
+    color: #ffffff;
+}
+
+.sidebar-footer {
+    padding: .95rem;
+}
+
+.sidebar-account {
+    grid-template-columns: 2.4rem minmax(0, 1fr) auto;
+    min-height: 3.65rem;
+    border: 1px solid rgba(255, 255, 255, .08);
+    border-radius: .65rem;
+    background: rgba(255, 255, 255, .08);
+    padding: .65rem .75rem;
+}
+
+.sidebar-account::after {
+    content: "⌄";
+    color: #cbd5e1;
+}
+
+.sidebar-account .account-mark {
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #ffb84d, #f37021);
+}
+
+.sidebar-copy {
+    display: none;
+}
+
+.main {
+    background: transparent;
+}
+
+.topbar {
+    position: relative;
+    min-height: 6rem;
+    padding: 1.25rem 2rem .75rem;
+    border-bottom: 0;
+    background: transparent;
+    backdrop-filter: none;
+}
+
+.breadcrumb {
+    display: none;
+}
+
+.page-title {
+    margin: 0;
+    font-size: 1.45rem;
+    font-weight: 900;
+    color: #0b1324;
+}
+
+.page-subtitle {
+    margin-top: .35rem;
+    color: #66758a;
+    font-size: .9rem;
+    font-weight: 650;
+}
+
+.topbar-actions {
+    gap: .75rem;
+}
+
+.command-trigger,
+.date-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: .55rem;
+    min-height: 2.75rem;
+    border: 1px solid #dfe6ef;
+    border-radius: .65rem;
+    background: rgba(255, 255, 255, .86);
+    color: #30415c;
+    padding: .55rem .78rem;
+    box-shadow: 0 12px 30px -24px rgba(15, 23, 42, .45);
+}
+
+.command-trigger {
+    width: min(16rem, 30vw);
+    justify-content: flex-start;
+}
+
+.command-trigger span {
+    flex: 1;
+    text-align: left;
+}
+
+.command-trigger kbd {
+    background: #f3f6fb;
+    color: #64748b;
+}
+
+.date-chip {
+    font-size: .82rem;
+    font-weight: 850;
+}
+
+.notif-btn {
+    position: relative;
+    display: inline-grid;
+    width: 2.65rem;
+    height: 2.65rem;
+    place-items: center;
+    border: 0;
+    background: transparent;
+    color: #3b4b63;
+}
+
+.notif-btn span {
+    position: absolute;
+    top: .25rem;
+    right: .18rem;
+    display: inline-grid;
+    min-width: 1rem;
+    height: 1rem;
+    place-items: center;
+    border-radius: 999px;
+    background: #ef4444;
+    color: #fff;
+    font-size: .58rem;
+    font-weight: 900;
+}
+
+.account-trigger {
+    min-height: 2.85rem;
+    border: 0;
+    background: transparent;
+    padding: .15rem;
+}
+
+.account-trigger .account-copy,
+.account-trigger [data-lucide] {
+    display: none;
+}
+
+.account-avatar {
+    width: 2.65rem;
+    height: 2.65rem;
+    border-radius: 999px;
+    background: #e9ddff;
+    color: #6d3dd1;
+}
+
+.content {
+    gap: 1.25rem;
+    padding: 1rem 2rem 2rem;
+}
+
+.metric-grid {
+    gap: 1.15rem;
+}
+
+.metric,
+.panel,
+.table-panel,
+.module-card {
+    border-color: #dde5f0;
+    border-radius: .7rem;
+    background: rgba(255, 255, 255, .88);
+    box-shadow: 0 18px 45px -32px rgba(15, 23, 42, .48);
+}
+
+.metric {
+    min-height: 9.2rem;
+    padding: 1.2rem 1.25rem;
+    overflow: hidden;
+}
+
+.metric-label {
+    color: #465773;
+    font-size: .75rem;
+}
+
+.metric-value {
+    margin-top: .65rem;
+    font-size: 2rem;
+}
+
+.metric-hint {
+    color: #5c6c83;
+    font-size: .82rem;
+}
+
+.metric-icon {
+    width: 2.6rem;
+    height: 2.6rem;
+    border-radius: 999px;
+}
+
+.metric.tone-blue,
+.metric.tone-orange,
+.metric.tone-teal,
+.metric.tone-green {
+    background: rgba(255, 255, 255, .88);
+}
+
+.metric.tone-blue { border-color: #cfe0ff; }
+.metric.tone-orange { border-color: #fedcc3; }
+.metric.tone-teal { border-color: #c5eee8; }
+.metric.tone-green { border-color: #caf0df; }
+
+.metric-spark {
+    position: absolute;
+    right: 1rem;
+    bottom: 1.25rem;
+    width: 5.9rem;
+    height: 1.8rem;
+    fill: none;
+}
+
+.metric-spark path {
+    stroke: currentColor;
+    stroke-width: 2.4;
+    stroke-linecap: round;
+}
+
+.metric.tone-blue .metric-spark { color: #2563eb; }
+.metric.tone-orange .metric-spark { color: #f37021; }
+.metric.tone-teal .metric-spark { color: #0f766e; }
+.metric.tone-green .metric-spark { color: #047857; }
+
+.panel {
+    padding: 1.2rem;
+}
+
+.panel-header {
+    margin-bottom: .9rem;
+}
+
+.panel-title {
+    font-size: 1.05rem;
+    font-weight: 900;
+}
+
+.panel-note {
+    color: #66758a;
+}
+
+.split-grid {
+    grid-template-columns: minmax(0, 1.45fr) minmax(20rem, 1fr);
+    gap: 1.25rem;
+}
+
+.line-chart {
+    width: 100%;
+    min-height: 17rem;
+    padding-top: .4rem;
+}
+
+.line-chart svg {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.chart-grid-line {
+    stroke: #dbe4ef;
+    stroke-dasharray: 3 5;
+}
+
+.chart-axis,
+.chart-label {
+    fill: #64748b;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.chart-label,
+.chart-value {
+    text-anchor: middle;
+}
+
+.chart-value {
+    fill: #0f172a;
+    font-size: 12px;
+    font-weight: 900;
+}
+
+.chart-area {
+    fill: url(#eventAreaGrad);
+}
+
+.chart-line {
+    fill: none;
+    stroke: #2563eb;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.chart-dot {
+    fill: #fff;
+    stroke: #2563eb;
+    stroke-width: 3;
+}
+
+.action-list {
+    display: grid;
+    gap: .75rem;
+}
+
+.action-card {
+    display: grid;
+    grid-template-columns: 3.6rem minmax(0, 1fr) auto;
+    align-items: center;
+    gap: .9rem;
+    min-height: 5.9rem;
+    border: 1px solid #dde5f0;
+    border-radius: .7rem;
+    background: rgba(255, 255, 255, .82);
+    padding: .9rem;
+}
+
+.action-card:hover {
+    border-color: #cbd5e1;
+    background: #fff;
+}
+
+.action-icon {
+    display: inline-grid;
+    width: 3.6rem;
+    height: 3.6rem;
+    place-items: center;
+    border-radius: .7rem;
+}
+
+.action-icon.tone-blue { background: #eaf2ff; color: #2563eb; }
+.action-icon.tone-orange { background: #fff1e6; color: #ea580c; }
+.action-icon.tone-rose { background: #ffe9ee; color: #e11d48; }
+
+.action-card strong,
+.action-card b,
+.action-card small {
+    display: block;
+}
+
+.action-card strong {
+    color: #465773;
+    font-size: .76rem;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.action-card b {
+    margin-top: .15rem;
+    color: #0b1324;
+    font-size: 1.35rem;
+}
+
+.action-card small {
+    color: #66758a;
+    font-size: .82rem;
+}
+
+.table-panel {
+    border-radius: .7rem;
+}
+
+.panel .table-panel {
+    box-shadow: none;
+}
+
+thead {
+    background: #f8fafc;
+    color: #52627a;
+}
+
+th,
+td {
+    padding: .78rem 1rem;
+}
+
+tbody tr:hover {
+    background: #fbfdff;
+}
+
+.event-thumb {
+    width: 3.35rem;
+    height: 2.55rem;
+    border-radius: .35rem;
+}
+
+.btn,
+.icon-btn,
+.control {
+    border-color: #dde5f0;
+    border-radius: .6rem;
+}
+
+.btn {
+    min-height: 2.45rem;
+}
+
+.btn.primary {
+    border-color: #0b1324;
+    background: #0b1324;
+}
+
+.btn.accent {
+    border-color: #f37021;
+    background: #f37021;
+}
+
+.progress {
+    height: .35rem;
+}
+
 /* Responsive */
 .only-mobile {
     display: none;
@@ -1900,12 +2449,16 @@ tbody tr.selected {
         padding-right: 1rem;
     }
 
-    .metric-grid,
     .triple-grid,
     .kanban,
-    .form-grid,
-    .skeleton-grid {
+    .form-grid {
         grid-template-columns: 1fr;
+    }
+
+    /* Giữ KPI 2 cột trên điện thoại lớn cho cảm giác dashboard, chỉ về 1 cột ở màn rất nhỏ. */
+    .metric-grid,
+    .skeleton-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .timeline-item {
@@ -1917,6 +2470,11 @@ tbody tr.selected {
     .page-subtitle,
     .breadcrumb {
         display: none;
+    }
+
+    .metric-grid,
+    .skeleton-grid {
+        grid-template-columns: 1fr;
     }
 
     .page-title {

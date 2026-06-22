@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Trạng thái tham dự — AEMS</title>
+    <link rel="icon" type="image/svg+xml" href="/api/favicon.svg">
+    <link rel="stylesheet" th:href="@{/css/aems.css}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body class="aems">
+<div class="aems-stripe"></div>
+<main class="aems-shell" style="max-width: 600px;">
+    <header class="aems-header">
+        <div class="aems-header__brand">
+            <span class="aems-header__mark">🎫</span>
+            <div>
+                <span class="aems-eyebrow">AEMS · Trạng thái cá nhân</span>
+                <h1 class="aems-header__title">Bạn đang ở bước nào?</h1>
+                <p class="aems-header__sub">Event ID: <strong th:text="${eventId}">—</strong></p>
+            </div>
+        </div>
+    </header>
+
+    <div class="aems-card">
+        <div class="aems-card__body" style="display: grid; gap: 1rem;">
+            <ol style="margin: 0; padding-left: 1.25rem; line-height: 2;">
+                <li>✅ Đăng ký event (REGISTERED)</li>
+                <li>📲 Quét QR đầu buổi (CHECKED_IN)</li>
+                <li>⏱ Quét QR giữa buổi (MID_VERIFIED) — nếu khoa mở</li>
+                <li>📝 Làm quiz checkout</li>
+                <li>⭐ Gửi feedback</li>
+                <li>🏁 Bấm hoàn tất checkout (COMPLETED)</li>
+            </ol>
+            <div class="aems-flex" style="justify-content: center;">
+                <a class="aems-btn" th:href="@{'/student/attendance/events/' + ${eventId} + '/checkout'}">→ Tới quiz checkout</a>
+                <a class="aems-btn aems-btn--primary" th:href="@{'/student/attendance/events/' + ${eventId} + '/checkout-feedback'}">→ Tới feedback</a>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>

@@ -2,17 +2,18 @@
     const API_BASE = window.location.protocol === 'file:'
         ? 'http://localhost:8081/api/admin'
         : '/api/admin';
+    const CACHE_TTL_MS = 20_000;
+    const CACHE_PREFIX = 'aems-admin-api-cache:';
     let logoutInProgress = false;
 
     const navItems = [
-        { group: 'Tổng quan', id: 'overview', label: 'Dashboard', icon: 'layout-dashboard', href: 'overview.html', keywords: 'tong quan home dashboard' },
+        { group: 'Tổng quan', id: 'overview', label: 'Tổng quan', icon: 'layout-dashboard', href: 'overview.html', keywords: 'tong quan home dashboard' },
         { group: 'Tổng quan', id: 'reports', label: 'Báo cáo', icon: 'bar-chart-3', href: 'reports.html', keywords: 'reports analytics bao cao thong ke' },
         { group: 'Người dùng', id: 'users', label: 'Người dùng', icon: 'users', href: 'users.html', keywords: 'users nguoi dung tai khoan' },
         { group: 'Người dùng', id: 'roles', label: 'Phân quyền', icon: 'shield-check', href: 'roles.html', keywords: 'roles permissions phan quyen' },
         { group: 'Người dùng', id: 'departments', label: 'Khoa & Bộ môn', icon: 'building-2', href: 'departments.html', keywords: 'departments khoa bo mon' },
         { group: 'Sự kiện', id: 'proposals', label: 'Đề xuất', icon: 'clipboard-list', href: 'proposals.html', keywords: 'proposals de xuat workflow' },
         { group: 'Sự kiện', id: 'events', label: 'Sự kiện', icon: 'calendar-days', href: 'events.html', keywords: 'events su kien lich' },
-        { group: 'Sự kiện', id: 'committees', label: 'Hội đồng', icon: 'users-round', href: 'committees.html', keywords: 'committees hoi dong duyet' },
         { group: 'Sự kiện', id: 'registrations', label: 'Đăng ký', icon: 'ticket-check', href: 'registrations.html', keywords: 'registrations dang ky waitlist attendance' },
         { group: 'Sự kiện', id: 'feedback', label: 'Phản hồi', icon: 'message-square-heart', href: 'feedback.html', keywords: 'feedback phan hoi rating' },
         { group: 'Hệ thống', id: 'email', label: 'Email & Thông báo', icon: 'mail-check', href: 'email.html', keywords: 'email mail notification thong bao' },
@@ -20,7 +21,7 @@
     ];
 
     const pageMeta = {
-        overview: ['Tổng quan hệ thống', 'Số liệu nhanh, cảnh báo vận hành và các việc cần xử lý hôm nay.', 'Tổng quan'],
+        overview: ['Xin chào, Admin User! 👋', 'Đây là tổng quan hệ thống hôm nay.', 'Tổng quan'],
         reports: ['Báo cáo & Phân tích', 'Thống kê event, tỷ lệ tham dự, rating và xuất file báo cáo.', 'Báo cáo'],
         logs: ['Nhật ký hoạt động', 'Theo dõi mọi hành động và truy cập của người dùng.', 'Nhật ký'],
         users: ['Quản lý người dùng', 'Danh sách tài khoản, phân loại, khóa/mở khóa và đặt lại mật khẩu.', 'Người dùng'],
@@ -28,7 +29,6 @@
         departments: ['Khoa & Bộ môn', 'Cây tổ chức, thêm/sửa/xoá khoa, bộ môn và gán trưởng khoa.', 'Khoa & Bộ môn'],
         proposals: ['Đề xuất sự kiện', 'Theo dõi proposal, phân hội đồng, công bố hoặc loại bỏ.', 'Đề xuất'],
         events: ['Quản lý sự kiện', 'Tạo/sửa/huỷ event, ngân sách, sức chứa và event nổi bật.', 'Sự kiện'],
-        committees: ['Hội đồng duyệt', 'Danh sách hội đồng, thành viên và bảng workflow duyệt.', 'Hội đồng'],
         registrations: ['Đăng ký & Điểm danh', 'Danh sách đăng ký, waitlist và check-in của sinh viên.', 'Đăng ký'],
         feedback: ['Phản hồi & Đánh giá', 'Danh sách feedback, phân tích rating và xử lý bình luận.', 'Phản hồi'],
         email: ['Email & Thông báo', 'Email templates, gửi thông báo, announcement và lịch sử email.', 'Email']
@@ -40,11 +40,6 @@
         { faculty: 'Thiết kế & Truyền thông', departments: ['Thiết kế Mỹ thuật số', 'Thiết kế Đồ họa', 'Truyền thông đa phương tiện'] },
         { faculty: 'Ngôn ngữ', departments: ['Ngôn ngữ Anh', 'Ngôn ngữ Nhật'] },
         { faculty: 'Du lịch - Khách sạn', departments: ['Du lịch - Khách sạn', 'Hospitality Management'] }
-    ];
-
-    const permissionRows = [
-        'Dashboard', 'Users', 'Roles', 'Departments', 'Proposals', 'Events',
-        'Committees', 'Registrations', 'Feedback', 'Reports', 'Email', 'System'
     ];
 
     const state = {
@@ -127,6 +122,11 @@
         return String(value || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     }
 
+    function matchesSearch(haystack, query) {
+        const text = normalize(haystack);
+        return normalize(query).split(/\s+/).filter(Boolean).every(token => text.includes(token));
+    }
+
     function facultyOfDepartment(name) {
         const key = normalize(name);
         if (['it department', 'information technology', 'cntt'].includes(key)) {
@@ -193,15 +193,75 @@
         return imageValues(selected.concat(imageLibrary.map(item => item.url)));
     }
 
+    function cacheKey(path) {
+        return `${CACHE_PREFIX}${path}`;
+    }
+
+    function clearApiCache() {
+        try {
+            Object.keys(sessionStorage)
+                .filter(key => key.startsWith(CACHE_PREFIX))
+                .forEach(key => sessionStorage.removeItem(key));
+        } catch (error) {
+            // Cache is an optimization only.
+        }
+    }
+
+    function getCached(path) {
+        try {
+            const raw = sessionStorage.getItem(cacheKey(path));
+            if (!raw) return null;
+            const entry = JSON.parse(raw);
+            if (!entry || Date.now() - Number(entry.time || 0) > CACHE_TTL_MS) {
+                sessionStorage.removeItem(cacheKey(path));
+                return null;
+            }
+            return entry.data;
+        } catch (error) {
+            return null;
+        }
+    }
+
+    function setCached(path, data) {
+        try {
+            sessionStorage.setItem(cacheKey(path), JSON.stringify({ time: Date.now(), data }));
+        } catch (error) {
+            // Storage may be full or disabled; the app should still work.
+        }
+    }
+
     async function api(path, options = {}) {
-        const response = await fetch(`${API_BASE}${path}`, {
-            headers: {
-                Accept: 'application/json',
-                'Content-Type': 'application/json',
-                ...(options.headers || {})
-            },
-            ...options
-        });
+        const method = String(options.method || 'GET').toUpperCase();
+        // Timeout để request không treo vô hạn khi máy chủ/DB đang "ngủ dậy" (cold start).
+        const timeoutMs = options.timeoutMs || 60000;
+        const controller = new AbortController();
+        const timer = window.setTimeout(() => controller.abort(), timeoutMs);
+        let response;
+        try {
+            response = await fetch(`${API_BASE}${path}`, {
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                    ...(options.headers || {})
+                },
+                signal: controller.signal,
+                ...options
+            });
+        } catch (err) {
+            if (err && err.name === 'AbortError') {
+                throw new Error('Máy chủ đang khởi động (cold start). Vui lòng thử lại sau vài giây.');
+            }
+            throw err;
+        } finally {
+            window.clearTimeout(timer);
+        }
+        if (response.status === 401) {
+            window.location.href = '/api/login.html';
+            throw new Error('Bạn cần đăng nhập để tiếp tục.');
+        }
+        if (response.status === 403) {
+            throw new Error('Bạn không có quyền truy cập chức năng này.');
+        }
         if (!response.ok) {
             let message = `HTTP ${response.status}`;
             try {
@@ -212,13 +272,22 @@
             }
             throw new Error(message);
         }
+        if (method !== 'GET') {
+            clearApiCache();
+        }
         if (response.status === 204) return null;
         return response.json();
     }
 
     async function load(path, fallback) {
+        const cached = getCached(path);
+        if (cached !== null) {
+            return cached;
+        }
         try {
-            return await api(path);
+            const data = await api(path);
+            setCached(path, data);
+            return data;
         } catch (error) {
             console.warn(`Admin API fallback for ${path}:`, error);
             return fallback;
@@ -479,6 +548,7 @@
         const nav = renderNavList(navItems);
         const user = currentUser();
         const collapsedClass = localGet('sidebarCollapsed', false) ? ' collapsed' : '';
+        const today = new Date().toLocaleDateString('vi-VN');
 
         document.getElementById('app').innerHTML = `
             <div class="app-shell${collapsedClass}" id="appShell">
@@ -530,8 +600,11 @@
                         </div>
                         <div class="topbar-actions">
                             <button class="command-trigger" type="button" id="commandTrigger" title="Mở Command Palette (Ctrl+K)">
-                                ${icon('search', 'h-3.5 w-3.5')}<span>Tìm kiếm</span><kbd>Ctrl K</kbd>
+                                ${icon('search', 'h-4 w-4')}<span>Tìm kiếm...</span><kbd>Ctrl K</kbd>
                             </button>
+                            <div class="date-chip" title="Ngày hiện tại">
+                                ${icon('calendar-days', 'h-4 w-4')}<span>${h(today)}</span>
+                            </div>
                             <div class="toolbar">${actions}</div>
                             ${accountMenu()}
                         </div>
@@ -615,10 +688,10 @@
         const navSearch = document.getElementById('navSearch');
         if (navSearch) {
             navSearch.addEventListener('input', event => {
-                const query = normalize(event.target.value);
+                const query = event.target.value;
                 document.querySelectorAll('#navList .nav-link').forEach(link => {
-                    const keywords = normalize(link.dataset.keywords || '');
-                    link.style.display = !query || keywords.includes(query) ? '' : 'none';
+                    const keywords = link.dataset.keywords || '';
+                    link.style.display = !query || matchesSearch(keywords, query) ? '' : 'none';
                 });
                 document.querySelectorAll('#navList .nav-group').forEach(group => {
                     let next = group.nextElementSibling;
@@ -640,12 +713,19 @@
         refreshIcons();
     }
 
-    function metric(label, value, hint = '') {
+    function metric(label, value, hint = '', tone = '', iconName = '') {
+        const toneClass = tone ? ` tone-${tone}` : '';
+        const iconBadge = iconName ? `<span class="metric-icon">${icon(iconName, 'h-4 w-4')}</span>` : '';
+        const spark = tone ? `<svg class="metric-spark" viewBox="0 0 92 28" aria-hidden="true"><path d="M2 21 C12 12 18 18 27 11 S43 3 53 11 S67 18 76 13 S86 14 90 18"></path></svg>` : '';
         return `
-            <article class="metric">
-                <p class="metric-label">${h(label)}</p>
+            <article class="metric${toneClass}">
+                <div class="metric-top">
+                    <p class="metric-label">${h(label)}</p>
+                    ${iconBadge}
+                </div>
                 <p class="metric-value">${h(value)}</p>
                 <p class="metric-hint">${h(hint)}</p>
+                ${spark}
             </article>`;
     }
 
@@ -677,19 +757,50 @@
     }
 
     function chart(monthly = []) {
-        const max = Math.max(...monthly.map(item => Number(item.events || 0)), 1);
+        if (!monthly.length) {
+            return emptyState({ icon: 'bar-chart-3', title: 'Chưa có dữ liệu biểu đồ' });
+        }
+        const width = 720;
+        const height = 260;
+        const padX = 44;
+        const padTop = 22;
+        const padBottom = 46;
+        const values = monthly.map(item => Number(item.events || 0));
+        const max = Math.max(...values, 5);
+        const stepX = monthly.length > 1 ? (width - padX * 2) / (monthly.length - 1) : 0;
+        const yOf = value => padTop + (height - padTop - padBottom) * (1 - (Number(value || 0) / max));
+        const points = monthly.map((item, index) => ({
+            x: padX + stepX * index,
+            y: yOf(item.events),
+            value: Number(item.events || 0),
+            label: item.label
+        }));
+        const line = points.map((point, index) => `${index ? 'L' : 'M'} ${point.x.toFixed(1)} ${point.y.toFixed(1)}`).join(' ');
+        const area = `${line} L ${points[points.length - 1].x.toFixed(1)} ${height - padBottom} L ${points[0].x.toFixed(1)} ${height - padBottom} Z`;
+        const grid = [0, .25, .5, .75, 1].map(ratio => {
+            const y = padTop + (height - padTop - padBottom) * ratio;
+            const label = Math.round(max * (1 - ratio));
+            return `<g><line x1="${padX}" y1="${y.toFixed(1)}" x2="${width - padX}" y2="${y.toFixed(1)}" class="chart-grid-line"></line><text x="14" y="${(y + 4).toFixed(1)}" class="chart-axis">${label}</text></g>`;
+        }).join('');
         return `
-            <div class="chart" style="grid-template-columns: repeat(${Math.max(monthly.length, 1)}, minmax(3.8rem, 1fr));">
-                ${monthly.map(item => {
-                    const height = Math.max(4, Math.round(Number(item.events || 0) / max * 100));
-                    const current = item.currentMonth ? ' current' : '';
-                    return `
-                        <div class="bar-column">
-                            <div class="bar-track"><div class="bar-value${current}" style="height:${height}%"></div></div>
-                            <p class="bar-label">${h(item.label)}</p>
-                            <p class="bar-sub">${number(item.events)} event</p>
-                        </div>`;
-                }).join('')}
+            <div class="line-chart">
+                <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Thống kê sự kiện theo tháng">
+                    <defs>
+                        <linearGradient id="eventAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#2563eb" stop-opacity=".26"></stop>
+                            <stop offset="100%" stop-color="#2563eb" stop-opacity=".02"></stop>
+                        </linearGradient>
+                    </defs>
+                    ${grid}
+                    <path d="${area}" class="chart-area"></path>
+                    <path d="${line}" class="chart-line"></path>
+                    ${points.map(point => `
+                        <g>
+                            <circle cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="4.5" class="chart-dot"></circle>
+                            <text x="${point.x.toFixed(1)}" y="${(point.y - 13).toFixed(1)}" class="chart-value">${number(point.value)}</text>
+                            <text x="${point.x.toFixed(1)}" y="${height - 16}" class="chart-label">${h(point.label)}</text>
+                        </g>`).join('')}
+                </svg>
             </div>`;
     }
 
@@ -935,8 +1046,7 @@
         }));
         let activeIndex = 0;
         const renderList = (query = '') => {
-            const normalized = normalize(query);
-            const filtered = items.filter(item => !normalized || item.keywords.includes(normalized));
+            const filtered = items.filter(item => !query || matchesSearch(item.keywords, query));
             if (activeIndex >= filtered.length) activeIndex = Math.max(0, filtered.length - 1);
             const groups = filtered.reduce((acc, item) => {
                 (acc[item.group] = acc[item.group] || []).push(item);
@@ -1104,9 +1214,14 @@
         const input = document.getElementById(id);
         if (!input) return;
         input.addEventListener('input', event => {
-            render(event.target.value, items);
+            const value = event.target.value;
+            render(value, items);
             const restored = document.getElementById(id);
-            if (restored) restored.value = event.target.value;
+            if (restored) {
+                restored.value = value;
+                restored.focus();
+                restored.setSelectionRange(value.length, value.length);
+            }
         });
     }
 
@@ -1118,6 +1233,25 @@
                 <span>Trang ${number(page)} / ${number(pages)} · ${number(visible)} / ${number(total)} kết quả</span>
                 <button class="icon-btn" type="button" data-page-step="1" ${page >= pages ? 'disabled' : ''}>${icon('chevron-right')}</button>
             </div>`;
+    }
+
+    function pageItems(key, items, pageSize = 20) {
+        const pages = Math.max(1, Math.ceil(items.length / pageSize));
+        const pageKey = `${key}Page`;
+        const page = Math.min(Math.max(Number(state.filters[pageKey] || 1), 1), pages);
+        const start = (page - 1) * pageSize;
+        const visible = items.slice(start, start + pageSize);
+        state.filters[pageKey] = page;
+        return { page, pages, visible, total: items.length };
+    }
+
+    function bindPagination(key, pager, render, args = []) {
+        document.querySelectorAll(`[data-pagination="${key}"] [data-page-step]`).forEach(button => {
+            button.onclick = () => {
+                state.filters[`${key}Page`] = Math.min(Math.max(pager.page + Number(button.dataset.pageStep), 1), pager.pages);
+                render(...args);
+            };
+        });
     }
 
     function exportCsv(filename, rows) {
@@ -1134,12 +1268,10 @@
     async function renderOverview() {
         state.page = 'overview';
         shell(`<a class="btn primary" href="reports.html">${icon('bar-chart-3')}Mở báo cáo</a>`);
-        const [overview, events, proposals, registrations, feedback] = await Promise.all([
+        const [overview, events, proposals] = await Promise.all([
             load('/overview', {}),
             load('/events', []),
-            load('/proposals', []),
-            load('/registrations', []),
-            load('/feedback', [])
+            load('/proposals', [])
         ]);
         const stats = overview.stats || {};
         const reports = overview.reports || {};
@@ -1148,10 +1280,10 @@
         const upcoming = events.filter(item => new Date(item.startTime) >= new Date()).slice(0, 6);
         content(`
             <div class="metric-grid">
-                ${metric('Tổng user', number(stats.totalUsers), `${number(stats.activeUsers)} active · ${number(stats.lockedUsers)} locked`)}
-                ${metric('Events', number(stats.totalEvents), `${number(stats.todayEvents)} hôm nay · ${number(stats.upcomingEvents)} sắp tới`)}
-                ${metric('Registrations', number(stats.totalRegistrations), `${number(stats.attendanceCount)} attendance`)}
-                ${metric('Feedback', `${Number(stats.averageRating || reports.averageRating || 0).toLocaleString('vi-VN', { maximumFractionDigits: 1 })}/5`, `${number(feedback.length)} phản hồi`)}
+                ${metric('Tổng user', number(stats.totalUsers), `${number(stats.activeUsers)} active · ${number(stats.lockedUsers)} locked`, 'blue', 'users')}
+                ${metric('Events', number(stats.totalEvents), `${number(stats.todayEvents)} hôm nay · ${number(stats.upcomingEvents)} sắp tới`, 'orange', 'calendar-days')}
+                ${metric('Registrations', number(stats.totalRegistrations), `${number(stats.attendanceCount)} attendance`, 'teal', 'clipboard-check')}
+                ${metric('Feedback', `${Number(stats.averageRating || reports.averageRating || 0).toLocaleString('vi-VN', { maximumFractionDigits: 1 })}/5`, `${number(stats.totalFeedback)} phản hồi`, 'green', 'star')}
             </div>
             <div class="split-grid">
                 <section class="panel">
@@ -1165,11 +1297,26 @@
                     ${chart(reports.monthly || [])}
                 </section>
                 <section class="panel">
-                    <h2 class="panel-title">Cần xử lý</h2>
-                    <div class="content" style="padding:.85rem 0 0">
-                        ${metric('Pending proposals', number(pending.length), 'Proposal chờ duyệt hoặc cần chỉnh sửa')}
-                        ${metric('Waitlist', number(registrations.filter(item => item.status === 'WAITLIST').length), 'Sinh viên đang trong hàng chờ')}
-                        ${metric('Email failed', number(stats.failedEmails), 'Lỗi gửi thông báo')}
+                    <div class="panel-header">
+                        <h2 class="panel-title">Cần xử lý</h2>
+                        <a class="btn" href="proposals.html">Xem tất cả</a>
+                    </div>
+                    <div class="action-list">
+                        <a class="action-card" href="proposals.html">
+                            <span class="action-icon tone-blue">${icon('file-text')}</span>
+                            <span><strong>Pending proposals</strong><b>${number(pending.length)}</b><small>Proposal chờ duyệt hoặc cần chỉnh sửa</small></span>
+                            ${icon('chevron-right')}
+                        </a>
+                        <a class="action-card" href="registrations.html">
+                            <span class="action-icon tone-orange">${icon('clock-3')}</span>
+                            <span><strong>Waitlist</strong><b>${number(stats.waitlistRegistrations)}</b><small>Sinh viên đang trong hàng chờ</small></span>
+                            ${icon('chevron-right')}
+                        </a>
+                        <a class="action-card" href="email.html">
+                            <span class="action-icon tone-rose">${icon('mail-warning')}</span>
+                            <span><strong>Email failed</strong><b>${number(stats.failedEmails)}</b><small>Lỗi gửi thông báo</small></span>
+                            ${icon('chevron-right')}
+                        </a>
                     </div>
                 </section>
             </div>
@@ -1181,7 +1328,7 @@
                     </div>
                     ${upcoming.length ? table(['Event', 'Khoa', 'Thời gian', 'Tỷ lệ lấp đầy'], upcoming.map(event => `
                         <tr>
-                            <td><span class="cell-title">${h(event.title)}</span><span class="cell-sub">${h(event.location || 'N/A')}</span></td>
+                            <td><span class="event-cell"><img class="event-thumb" src="${h(eventImageUrl(event))}" alt=""><span><span class="cell-title">${h(event.title)}</span><span class="cell-sub">${h(event.location || 'N/A')}</span></span></span></td>
                             <td>${h(event.departmentName)}</td>
                             <td>${dateTime(event.startTime)}</td>
                             <td><div class="progress"><span style="width:${Math.min(100, Number(event.fillRate || 0))}%"></span></div><span class="cell-sub">${percent(event.fillRate)}</span></td>
@@ -1203,8 +1350,7 @@
             ${moduleChecklist([
                 { title: 'User / Role / Department', status: 'CRUD', copy: 'Tạo, sửa, khóa, reset mật khẩu, gán role và quản lý khoa.' },
                 { title: 'Proposal / Event / Registration', status: 'Workflow', tone: 'orange', copy: 'Theo dõi duyệt proposal, publish event, capacity, waitlist và attendance.' },
-                { title: 'Feedback / Reports / Email', status: 'Analytics', tone: 'blue', copy: 'Phân tích rating, export báo cáo, template email và lịch sử gửi.' },
-                { title: 'Security / Deployment', status: 'Ops', tone: 'teal', copy: 'Cấu hình OAuth2, captcha, SMTP, backup, server và container status.' }
+                { title: 'Feedback / Reports / Email', status: 'Analytics', tone: 'blue', copy: 'Phân tích rating, export báo cáo và theo dõi lịch sử gửi email.' }
             ])}
         `);
     }
@@ -1227,7 +1373,8 @@
         const payload = await load('/activity-logs?page=0&size=120', { items: [] });
         const logs = payload.items || [];
         const render = (q = '') => {
-            const filtered = logs.filter(log => !q || normalize(`${log.activityType} ${log.description} ${log.userName} ${log.userEmail}`).includes(normalize(q)));
+            const filtered = logs.filter(log => !q || matchesSearch(`${log.activityType} ${log.description} ${log.userName} ${log.userEmail}`, q));
+            const pager = pageItems('logs', filtered, 25);
             content(`
                 <div class="metric-grid">
                     ${metric('Total logs', number(payload.totalItems || logs.length), 'Activity logs')}
@@ -1235,8 +1382,11 @@
                     ${metric('Users involved', number(new Set(logs.map(log => log.userEmail).filter(Boolean)).size), 'User có hoạt động')}
                     ${metric('Types', number(new Set(logs.map(log => log.activityType).filter(Boolean)).size), 'Loại hoạt động')}
                 </div>
-                <div class="toolbar">${searchBox('logSearch', 'Tìm activity, user, mô tả...')}<span class="metric-hint">${number(filtered.length)} log</span></div>
-                ${table(['Thời gian', 'Loại', 'User', 'Mô tả', 'Điểm'], filtered.map(log => `
+                <div class="toolbar">
+                    ${searchBox('logSearch', 'Tìm activity, user, mô tả...')}
+                    ${pagination('logs', pager.page, pager.pages, pager.total, pager.visible.length)}
+                </div>
+                ${table(['Thời gian', 'Loại', 'User', 'Mô tả', 'Điểm'], pager.visible.map(log => `
                     <tr>
                         <td>${dateTime(log.createdAt)}</td>
                         <td>${badge(log.activityType || 'N/A', 'blue')}</td>
@@ -1245,7 +1395,15 @@
                         <td>${number(log.pointsEarned)}</td>
                     </tr>`))}
             `);
-            bindFilters('logSearch', logs, render);
+            const search = document.getElementById('logSearch');
+            if (search) {
+                search.value = q;
+                search.addEventListener('input', event => {
+                    state.filters.logsPage = 1;
+                    render(event.target.value);
+                });
+            }
+            bindPagination('logs', pager, render, [q]);
             document.getElementById('exportLogs').onclick = () => exportCsv('activity-logs.csv', [
                 ['Time', 'Type', 'User', 'Email', 'Description', 'Points'],
                 ...logs.map(log => [log.createdAt, log.activityType, log.userName, log.userEmail, log.description, log.pointsEarned])
@@ -1263,6 +1421,10 @@
             .filter(role => role.name !== 'ADMIN')
             .map(role => ({ value: role.id, label: role.name }));
         const statusOptions = [{ value: 'true', label: 'ACTIVE' }, { value: 'false', label: 'LOCKED' }];
+        const departmentPositionOptions = [
+            { value: 'STAFF', label: 'Nhân sự khoa/Bộ môn' },
+            { value: 'HEAD', label: 'Trưởng khoa/Bộ môn' }
+        ];
 
         const openUserForm = (user = {}) => {
             const roleOptions = user.role === 'ADMIN'
@@ -1275,6 +1437,7 @@
                 { name: 'email', label: 'Email', type: 'email', required: true },
                 { name: 'phone', label: 'Số điện thoại', required: true },
                 { name: 'roleId', label: 'Role', type: 'select', options: roleOptions, required: true },
+                { name: 'departmentPosition', label: 'Chức vụ khoa/Bộ môn', type: 'select', options: departmentPositionOptions },
                 { name: 'active', label: 'Trạng thái', type: 'select', options: statusOptions },
                 { name: 'password', label: user.id ? 'Mật khẩu mới' : 'Mật khẩu', type: 'password' },
                 { name: 'major', label: 'Khoa/Major' },
@@ -1282,7 +1445,7 @@
                 { name: 'studentCode', label: 'Mã sinh viên' },
                 { name: 'totalPoints', label: 'Điểm', type: 'number' }
             ],
-            values: { ...user, roleId: user.roleId || managerRole?.id || safeRoleOptions[0]?.value || '', active: user.active === false ? 'false' : 'true' },
+            values: { ...user, roleId: user.roleId || managerRole?.id || safeRoleOptions[0]?.value || '', departmentPosition: user.departmentPosition || 'STAFF', active: user.active === false ? 'false' : 'true' },
             onSubmit: async payload => {
                 payload.active = payload.active === 'true';
                 if (!payload.password) delete payload.password;
@@ -1302,6 +1465,7 @@
                 ['Email', user.email],
                 ['Phone', user.phone],
                 ['Role', user.role],
+                ['Chức vụ khoa/Bộ môn', user.departmentPositionLabel || user.departmentPosition || 'STAFF'],
                 ['Khoa/Major', user.major],
                 ['Mã sinh viên', user.studentCode || 'N/A'],
                 ['Trạng thái', user.status],
@@ -1347,7 +1511,7 @@
             const facultyFilter = state.filters.userFaculty || 'all';
             const sortKey = state.filters.userSort || 'role';
             const filtered = users
-                .filter(user => !q || normalize(`${user.fullName} ${user.email} ${user.role} ${user.major}`).includes(normalize(q)))
+                .filter(user => !q || matchesSearch(`${user.fullName} ${user.email} ${user.role} ${user.major}`, q))
                 .filter(user => roleFilter === 'all' || String(user.role) === roleFilter)
                 .filter(user => facultyFilter === 'all' || userFaculty(user) === facultyFilter)
                 .sort((left, right) => {
@@ -1365,6 +1529,7 @@
                     if (sortKey === 'created') return new Date(right.createdAt || 0) - new Date(left.createdAt || 0);
                     return String(left.fullName || '').localeCompare(String(right.fullName || ''), 'vi');
                 });
+            const pager = pageItems('users', filtered, 25);
             content(`
                 <div class="metric-grid">
                     ${metric('All Users', number(users.length), 'User List')}
@@ -1377,12 +1542,13 @@
                     ${selectBox('userRoleFilter', roleFilterOptions)}
                     ${selectBox('userFacultyFilter', facultyFilterOptions)}
                     ${selectBox('userSort', sortOptions)}
-                    <span class="metric-hint">${number(filtered.length)} user</span>
+                    ${pagination('users', pager.page, pager.pages, pager.total, pager.visible.length)}
                 </div>
-                ${table(['User', 'Role', 'Khoa', 'Status', 'Điểm', 'Hành động'], filtered.map(user => `
+                ${table(['User', 'Role', 'Chức vụ', 'Khoa', 'Status', 'Điểm', 'Hành động'], pager.visible.map(user => `
                     <tr>
                         <td><span class="cell-title">${h(user.fullName)}</span><span class="cell-sub">${h(user.email)}</span></td>
                         <td>${badge(user.role || 'N/A', tone(user.role))}</td>
+                        <td>${badge(user.departmentPositionLabel || user.departmentPosition || 'STAFF', user.departmentPosition === 'HEAD' ? 'green' : 'gray')}</td>
                         <td>${h(user.major || 'N/A')}<span class="cell-sub">${h(userFaculty(user))}${user.studentCode ? ' · ' + h(user.studentCode) : ''}</span></td>
                         <td>${badge(user.status, tone(user.status))}</td>
                         <td>${number(user.totalPoints)}</td>
@@ -1409,19 +1575,26 @@
             if (roleSelect) roleSelect.value = roleFilter;
             if (facultySelect) facultySelect.value = facultyFilter;
             if (sortSelect) sortSelect.value = sortKey;
-            if (search) search.addEventListener('input', event => render(event.target.value));
+            if (search) search.addEventListener('input', event => {
+                state.filters.usersPage = 1;
+                render(event.target.value);
+            });
             if (roleSelect) roleSelect.addEventListener('change', event => {
                 state.filters.userRole = event.target.value;
+                state.filters.usersPage = 1;
                 render();
             });
             if (facultySelect) facultySelect.addEventListener('change', event => {
                 state.filters.userFaculty = event.target.value;
+                state.filters.usersPage = 1;
                 render();
             });
             if (sortSelect) sortSelect.addEventListener('change', event => {
                 state.filters.userSort = event.target.value;
+                state.filters.usersPage = 1;
                 render();
             });
+            bindPagination('users', pager, render);
             bindActionMenus();
             document.querySelectorAll('[data-detail]').forEach(button => button.onclick = () => detail(users.find(user => String(user.id) === button.dataset.detail)));
             document.querySelectorAll('[data-edit]').forEach(button => button.onclick = () => openUserForm(users.find(user => String(user.id) === button.dataset.edit)));
@@ -1476,23 +1649,12 @@
             }
         });
 
-        const permissionMatrix = roles.map(role => `
-            <tr>
-                <td><span class="cell-title">${h(role.name)}</span><span class="cell-sub">${h(role.description || '')}</span></td>
-                ${permissionRows.map(permission => {
-                    const checked = role.name === 'ADMIN' || (role.name === 'DEPARTMENT' && ['Dashboard', 'Departments', 'Proposals', 'Events', 'Reports'].includes(permission))
-                        || (role.name === 'COMMITTEE' && ['Dashboard', 'Proposals', 'Events', 'Registrations', 'Feedback'].includes(permission))
-                        || (role.name === 'STUDENT' && ['Events', 'Registrations', 'Feedback'].includes(permission));
-                    return `<td>${checked ? badge('Allow', 'green') : badge('No', 'gray')}</td>`;
-                }).join('')}
-            </tr>`).join('');
-
         content(`
             <div class="metric-grid">
-                ${metric('Roles', number(roles.length), 'Role List')}
-                ${metric('Assigned users', number(users.length), 'User đang có role')}
-                ${metric('Admin users', number(users.filter(user => user.role === 'ADMIN').length), 'Quản trị viên')}
-                ${metric('Permission modules', number(permissionRows.length), 'Module phân quyền')}
+                ${metric('Roles', number(roles.length), 'Role List', 'blue', 'shield-check')}
+                ${metric('Người dùng', number(users.length), 'User đang có role', 'teal', 'users')}
+                ${metric('Admin', number(users.filter(user => user.role === 'ADMIN').length), 'Quản trị viên', 'orange', 'user-cog')}
+                ${metric('Sinh viên', number(users.filter(user => user.role === 'STUDENT').length), 'Tài khoản sinh viên', 'green', 'graduation-cap')}
             </div>
             ${table(['Role', 'Description', 'Users', 'Actions'], roles.map(role => `
                 <tr>
@@ -1504,17 +1666,6 @@
                         <button class="icon-btn danger" data-delete-role="${role.id}">${icon('trash-2')}</button>
                     </div></td>
                 </tr>`))}
-            <section class="panel">
-                <div class="panel-header">
-                    <div>
-                        <h2 class="panel-title">Permission Management</h2>
-                        <p class="panel-note">Ma trận quyền theo module. Role ADMIN có toàn quyền.</p>
-                    </div>
-                </div>
-                <div class="table-panel" style="margin-top:.85rem"><div class="table-scroll">
-                    <table><thead><tr><th>Role</th>${permissionRows.map(item => `<th>${h(item)}</th>`).join('')}</tr></thead><tbody>${permissionMatrix}</tbody></table>
-                </div></div>
-            </section>
         `);
         document.getElementById('addRole').onclick = () => openRoleForm();
         document.getElementById('assignRole').onclick = assignRole;
@@ -1534,6 +1685,7 @@
         const managerCandidates = users.filter(user => user.role !== 'ADMIN');
         const managerFor = department =>
             users.find(user => String(user.id) === String(department.managerId))
+            || users.find(user => ['MANAGER', 'DEPARTMENT'].includes(user.role) && user.departmentPosition === 'HEAD' && normalize(user.major) === normalize(department.name))
             || users.find(user => ['MANAGER', 'DEPARTMENT'].includes(user.role) && normalize(user.major) === normalize(department.name));
         const grouped = departments.reduce((acc, department) => {
             const faculty = department.facultyName || facultyOfDepartment(department.name);
@@ -1582,6 +1734,7 @@
                     body: JSON.stringify({
                         ...selected,
                         roleId: managerRole?.id || selected.roleId,
+                        departmentPosition: 'HEAD',
                         major: department.name,
                         active: true
                     })
@@ -1648,55 +1801,10 @@
         state.page = 'proposals';
         shell();
         const proposals = await load('/proposals', []);
-        const committees = getCommittees();
-        const committeeMap = localGet('proposalCommittees', {});
         const statusCounts = summarizeStatuses(proposals);
-        const statusOptions = ['PENDING', 'APPROVED', 'REVISION', 'REJECTED'].map(value => ({ value, label: value }));
+        const statusOptions = ['PENDING', 'REVISION', 'REJECTED'].map(value => ({ value, label: value }));
         const needsReview = proposals.filter(item => ['PENDING', 'REVISION'].includes(String(item.status).toUpperCase()));
-        const readyToPublish = proposals.filter(item => String(item.status).toUpperCase() === 'APPROVED');
-
-        const publish = proposal => openForm({
-            title: 'Publish Proposal',
-            fields: [
-                { name: 'location', label: 'Địa điểm', required: true, defaultValue: 'FPT Campus' },
-                { name: 'startTime', label: 'Bắt đầu', type: 'datetime-local', required: true },
-                { name: 'endTime', label: 'Kết thúc', type: 'datetime-local', required: true },
-                { name: 'capacity', label: 'Capacity', type: 'number', defaultValue: 100 },
-                { name: 'budget', label: 'Ngân sách', type: 'number', defaultValue: 0 },
-                { name: 'imageUrls', label: 'Ảnh sự kiện', type: 'image-picker', full: true },
-                { name: 'note', label: 'Ghi chú publish', type: 'textarea', full: true }
-            ],
-            values: {
-                location: proposal.location || 'FPT Campus',
-                capacity: proposal.capacity || 100,
-                budget: proposal.budget || 0,
-                imageUrls: proposal.imageUrls || proposal.imageUrl || '',
-                startTime: dateTimeInput(proposal.proposedDate),
-                endTime: dateTimeInput(proposal.proposedDate, 2)
-            },
-            onSubmit: async payload => {
-                const result = await api(`/proposals/${proposal.id}/publish`, { method: 'POST', body: JSON.stringify(payload) });
-                if (result?.event?.id && committeeMap[proposal.id]) {
-                    const eventCommitteeMap = localGet('eventCommittees', {});
-                    eventCommitteeMap[result.event.id] = committeeMap[proposal.id];
-                    localSet('eventCommittees', eventCommitteeMap);
-                }
-                toast('Đã publish proposal thành event.');
-                renderProposals();
-            }
-        });
-
-        const assignCommittee = proposal => openForm({
-            title: 'Assign Committee',
-            fields: [{ name: 'committeeId', label: 'Committee', type: 'select', options: committees.map(item => ({ value: item.id, label: item.name })) }],
-            values: { committeeId: committeeMap[proposal.id] || '' },
-            onSubmit: async payload => {
-                committeeMap[proposal.id] = payload.committeeId;
-                localSet('proposalCommittees', committeeMap);
-                toast('Đã phân committee.');
-                renderProposals();
-            }
-        });
+        const pager = pageItems('proposals', proposals, 20);
 
         const updateStatus = proposal => openForm({
             title: 'Proposal Status Tracking',
@@ -1716,26 +1824,22 @@
             <div class="metric-grid">
                 ${metric('Workflow proposals', number(proposals.length), 'Chưa chuyển thành event')}
                 ${metric('Need review', number(needsReview.length), 'Pending hoặc cần chỉnh sửa')}
-                ${metric('Ready to publish', number(readyToPublish.length), 'Đã duyệt')}
+                ${metric('Auto publish', 'Bật', 'Duyệt xong tự lên sự kiện')}
                 ${metric('Rejected', number(statusCounts.REJECTED), 'Không tiếp tục')}
             </div>
-            ${table(['Proposal', 'Khoa', 'Ngày đề xuất', 'Status', 'Committee', 'Actions'], proposals.map(proposal => {
-                const committee = committees.find(item => String(item.id) === String(committeeMap[proposal.id]));
-                const canPublish = String(proposal.status).toUpperCase() === 'APPROVED';
+            <div class="toolbar">${pagination('proposals', pager.page, pager.pages, pager.total, pager.visible.length)}</div>
+            ${table(['Proposal', 'Khoa', 'Ngày đề xuất', 'Status', 'Actions'], pager.visible.map(proposal => {
                 return `<tr>
                     <td><span class="cell-title">${h(proposal.title)}</span><span class="cell-sub">${h(proposal.description || '')}</span></td>
                     <td>${h(proposal.departmentName)}</td>
                     <td>${dateTime(proposal.proposedDate)}</td>
                     <td>${badge(proposal.status, tone(proposal.status))}</td>
-                    <td>${committee ? badge(committee.name, 'blue') : badge('Chưa phân', 'amber')}</td>
                     <td><div class="row-actions">
                         <button class="icon-btn" data-proposal-detail="${proposal.id}" title="Xem chi tiết">${icon('eye')}</button>
-                        ${canPublish ? `<button class="icon-btn" data-proposal-publish="${proposal.id}" title="Công bố thành event">${icon('send')}</button>` : ''}
                         <div class="action-menu" data-menu="proposal-${proposal.id}">
                             <button class="icon-btn" type="button" data-menu-trigger="proposal-${proposal.id}" aria-label="Thêm thao tác" title="Thêm thao tác">${icon('more-horizontal')}</button>
                             <div class="action-menu-pop" data-menu-pop="proposal-${proposal.id}" role="menu">
                                 <button class="action-item" type="button" data-proposal-status="${proposal.id}">${icon('list-checks', 'h-3.5 w-3.5')}<span>Đổi trạng thái</span></button>
-                                <button class="action-item" type="button" data-proposal-committee="${proposal.id}">${icon('users-round', 'h-3.5 w-3.5')}<span>Phân hội đồng</span></button>
                                 <div class="action-divider"></div>
                                 <button class="action-item danger" type="button" data-proposal-delete="${proposal.id}">${icon('trash-2', 'h-3.5 w-3.5')}<span>Xóa proposal</span></button>
                             </div>
@@ -1745,6 +1849,7 @@
             }))}
         `);
         bindActionMenus();
+        bindPagination('proposals', pager, renderProposals);
         document.querySelectorAll('[data-proposal-detail]').forEach(button => button.onclick = () => {
             const proposal = proposals.find(item => String(item.id) === button.dataset.proposalDetail);
             openDetail('Proposal Detail', `${detailGrid([
@@ -1752,13 +1857,13 @@
                 ['Department', proposal.departmentName],
                 ['Status', proposal.status],
                 ['Proposed date', dateTime(proposal.proposedDate)],
+                ['Organizer', proposal.organizer || 'N/A'],
+                ['Speakers', proposal.speakers || 'N/A'],
                 ['Created', dateTime(proposal.createdAt)],
                 ['Note', proposal.note || 'N/A']
             ])}<div class="panel" style="margin-top:1rem"><p class="panel-note">${h(proposal.description || '')}</p></div>`);
         });
         document.querySelectorAll('[data-proposal-status]').forEach(button => button.onclick = () => updateStatus(proposals.find(item => String(item.id) === button.dataset.proposalStatus)));
-        document.querySelectorAll('[data-proposal-committee]').forEach(button => button.onclick = () => assignCommittee(proposals.find(item => String(item.id) === button.dataset.proposalCommittee)));
-        document.querySelectorAll('[data-proposal-publish]').forEach(button => button.onclick = () => publish(proposals.find(item => String(item.id) === button.dataset.proposalPublish)));
         document.querySelectorAll('[data-proposal-delete]').forEach(button => button.onclick = () => confirmAction('Xóa proposal này?', async () => {
             await api(`/proposals/${button.dataset.proposalDelete}`, { method: 'DELETE' });
             toast('Đã xóa proposal.');
@@ -1796,6 +1901,8 @@
                 { name: 'endTime', label: 'Kết thúc', type: 'datetime-local', required: true },
                 { name: 'capacity', label: 'Capacity', type: 'number', defaultValue: 100 },
                 { name: 'budget', label: 'Ngân sách', type: 'number', defaultValue: 0 },
+                { name: 'organizer', label: 'Người phụ trách' },
+                { name: 'speakers', label: 'Diễn giả', type: 'textarea', full: true },
                 { name: 'imageUrls', label: 'Ảnh sự kiện', type: 'image-picker', full: true },
                 { name: 'description', label: 'Mô tả', type: 'textarea', full: true }
             ],
@@ -1851,6 +1958,8 @@
             capacity: Number(event.capacity || 100),
             budget: Number(event.budget || 0),
             imageUrl: event.imageUrl || '',
+            organizer: event.organizer || '',
+            speakers: event.speakers || '',
             description: event.description || '',
             ...overrides
         });
@@ -1901,6 +2010,7 @@
             toast(featured[event.id] ? 'Đã đưa vào Featured Events.' : 'Đã bỏ khỏi Featured Events.');
             renderEvents();
         };
+        const pager = pageItems('events', events, 20);
 
         content(`
             <div class="metric-grid">
@@ -1909,7 +2019,8 @@
                 ${metric('Committee', number(events.filter(item => committeeForEvent(item)).length), 'Event có người phụ trách')}
                 ${metric('Budget', money(events.reduce((sum, item) => sum + Number(item.budget || 0), 0)), 'Tổng ngân sách')}
             </div>
-            ${table(['Event', 'Khoa', 'Committee', 'Thời gian', 'Capacity', 'Ngân sách', 'Status', 'Actions'], events.map(event => `
+            <div class="toolbar">${pagination('events', pager.page, pager.pages, pager.total, pager.visible.length)}</div>
+            ${table(['Event', 'Khoa', 'Committee', 'Thời gian', 'Capacity', 'Ngân sách', 'Status', 'Actions'], pager.visible.map(event => `
                 <tr>
                     <td>
                         <div class="event-cell">
@@ -1942,6 +2053,7 @@
                 </tr>`))}
         `);
         bindActionMenus();
+        bindPagination('events', pager, renderEvents);
         document.getElementById('addEvent').onclick = () => openEventForm();
         document.getElementById('addBudget').onclick = () => events.length ? budgetForm() : toast('Chưa có event để thêm ngân sách.', 'warn');
         document.querySelectorAll('[data-event-detail]').forEach(button => button.onclick = () => {
@@ -1952,6 +2064,8 @@
                 ['Department', event.departmentName],
                 ['Committee', committeeForEvent(event)?.name || 'Chưa phân'],
                 ['Location', event.location],
+                ['Organizer', event.organizer || 'N/A'],
+                ['Speakers', event.speakers || 'N/A'],
                 ['Status', event.status],
                 ['Capacity', number(event.capacity)],
                 ['Budget', money(event.budget)],
@@ -1982,92 +2096,36 @@
         ]);
     }
 
-    async function renderCommittees() {
-        state.page = 'committees';
-        shell(`<button class="btn primary" id="createCommittee">${icon('plus')}Create Committee</button>`);
-        const [users, proposals] = await Promise.all([load('/users', []), load('/proposals', [])]);
-        let committees = getCommittees();
-
-        const save = () => localSet('committees', committees);
-        const openCommitteeForm = (committee = {}) => openForm({
-            title: committee.id ? 'Edit Committee' : 'Create Committee',
-            fields: [
-                { name: 'name', label: 'Tên committee', required: true },
-                { name: 'status', label: 'Status', type: 'select', options: ['ACTIVE', 'REVIEW', 'PAUSED'].map(value => ({ value, label: value })) }
-            ],
-            values: committee,
-            onSubmit: async payload => {
-                if (committee.id) Object.assign(committee, payload);
-                else committees.push({ id: `committee-${Date.now()}`, name: payload.name, status: payload.status, members: [] });
-                save();
-                toast('Đã lưu committee.');
-                renderCommittees();
-            }
-        });
-
-        const manageMembers = committee => openForm({
-            title: 'Assign Members',
-            fields: [{ name: 'memberId', label: 'Thêm thành viên', type: 'select', options: users.map(user => ({ value: user.id, label: `${user.fullName} - ${user.role}` })) }],
-            onSubmit: async payload => {
-                committee.members = [...new Set([...(committee.members || []), payload.memberId])];
-                save();
-                toast('Đã thêm thành viên.');
-                renderCommittees();
-            }
-        });
-
-        const workflow = ['PENDING', 'REVISION', 'APPROVED', 'PUBLISHED'].map(status => `
-            <div class="kanban-column">
-                <h3 class="kanban-title">${h(status)}</h3>
-                ${proposals.filter(item => String(item.status).toUpperCase() === status).slice(0, 5).map(item => `
-                    <div class="mini-card"><strong>${h(item.title)}</strong><span>${h(item.departmentName)} · ${dateTime(item.proposedDate)}</span></div>
-                `).join('') || '<div class="empty">Trống</div>'}
-            </div>`).join('');
-
-        content(`
-            <div class="metric-grid">
-                ${metric('Committees', number(committees.length), 'Committee List')}
-                ${metric('Members assigned', number(committees.reduce((sum, item) => sum + (item.members || []).length, 0)), 'Tổng thành viên')}
-                ${metric('Active', number(committees.filter(item => item.status === 'ACTIVE').length), 'Đang hoạt động')}
-                ${metric('Pending proposals', number(proposals.filter(item => item.status === 'PENDING').length), 'Workflow duyệt')}
-            </div>
-            ${table(['Committee', 'Members', 'Status', 'Actions'], committees.map(committee => {
-                const memberNames = (committee.members || []).map(id => users.find(user => String(user.id) === String(id))?.fullName).filter(Boolean);
-                return `<tr>
-                    <td><span class="cell-title">${h(committee.name)}</span></td>
-                    <td>${memberNames.length ? h(memberNames.join(', ')) : badge('Chưa có', 'amber')}</td>
-                    <td>${badge(committee.status, tone(committee.status))}</td>
-                    <td><div class="row-actions">
-                        <button class="icon-btn" data-committee-members="${committee.id}">${icon('user-plus')}</button>
-                        <button class="icon-btn" data-committee-edit="${committee.id}">${icon('pencil')}</button>
-                        <button class="icon-btn danger" data-committee-remove="${committee.id}">${icon('user-minus')}</button>
-                    </div></td>
-                </tr>`;
-            }))}
-            <section class="panel">
-                <h2 class="panel-title">Approval Workflow</h2>
-                <p class="panel-note">Theo dõi proposal qua các trạng thái duyệt.</p>
-                <div class="kanban" style="margin-top:.85rem">${workflow}</div>
-            </section>
-        `);
-        document.getElementById('createCommittee').onclick = () => openCommitteeForm();
-        document.querySelectorAll('[data-committee-members]').forEach(button => button.onclick = () => manageMembers(committees.find(item => item.id === button.dataset.committeeMembers)));
-        document.querySelectorAll('[data-committee-edit]').forEach(button => button.onclick = () => openCommitteeForm(committees.find(item => item.id === button.dataset.committeeEdit)));
-        document.querySelectorAll('[data-committee-remove]').forEach(button => button.onclick = () => {
-            const committee = committees.find(item => item.id === button.dataset.committeeRemove);
-            if ((committee.members || []).length) committee.members.pop();
-            else committees = committees.filter(item => item.id !== committee.id);
-            save();
-            toast('Đã xóa thành viên hoặc committee trống.');
-            renderCommittees();
-        });
-    }
-
     async function renderRegistrations() {
         state.page = 'registrations';
-        shell();
-        const registrations = await load('/registrations', []);
+        shell(`<button class="btn primary" id="addRegistration">${icon('user-plus')}Thêm người tham dự</button>`);
+        const [registrations, events] = await Promise.all([load('/registrations', []), load('/events', [])]);
         const statusCounts = summarizeStatuses(registrations);
+        const eventOptions = events
+            .slice()
+            .sort(compareEventsByTime)
+            .map(event => ({ value: event.id, label: `${event.title} - ${dateTime(event.startTime)}` }));
+
+        const addRegistration = () => openForm({
+            title: 'Thêm người tham dự sự kiện',
+            submitText: 'Thêm & gửi email',
+            fields: [
+                { name: 'eventId', label: 'Sự kiện', type: 'select', options: eventOptions, required: true, full: true },
+                { name: 'fullName', label: 'Họ và tên', required: true },
+                { name: 'email', label: 'Email nhận thông báo', type: 'email', required: true },
+                { name: 'studentCode', label: 'MSSV', required: true },
+                { name: 'major', label: 'Ngành/Khoa', required: true },
+                { name: 'semester', label: 'Kỳ/Năm học', type: 'number', defaultValue: 1 },
+                { name: 'status', label: 'Trạng thái', type: 'select', options: ['REGISTERED', 'WAITLIST'].map(value => ({ value, label: value })) },
+                { name: 'note', label: 'Ghi chú', type: 'textarea', full: true }
+            ],
+            values: { status: 'REGISTERED' },
+            onSubmit: async payload => {
+                const result = await api('/registrations', { method: 'POST', body: JSON.stringify(payload) });
+                toast(result.emailStatus === 'FAILED' ? 'Đã thêm người tham dự nhưng gửi email thất bại.' : 'Đã thêm người tham dự và gửi email.', result.emailStatus === 'FAILED' ? 'error' : 'success');
+                renderRegistrations();
+            }
+        });
 
         const updateStatus = registration => openForm({
             title: 'Registration Detail / Status',
@@ -2083,8 +2141,8 @@
             }
         });
 
-        const render = (q = '') => {
-            const filtered = registrations.filter(item => !q || normalize(`${item.eventTitle} ${item.studentName} ${item.studentEmail} ${item.studentCode} ${item.status}`).includes(normalize(q)));
+        const render = (q = '', keepSearchFocus = false) => {
+            const filtered = registrations.filter(item => !q || matchesSearch(`${item.eventTitle} ${item.studentName} ${item.studentEmail} ${item.studentCode} ${item.studentMajor} ${item.status} ${item.attendanceStatus}`, q));
             const pageSize = 50;
             const pages = Math.max(1, Math.ceil(filtered.length / pageSize));
             const page = Math.min(Math.max(Number(state.filters.registrationPage || 1), 1), pages);
@@ -2118,9 +2176,13 @@
             const search = document.getElementById('registrationSearch');
             if (search) {
                 search.value = q;
+                if (keepSearchFocus) {
+                    search.focus();
+                    search.setSelectionRange(q.length, q.length);
+                }
                 search.addEventListener('input', event => {
                     state.filters.registrationPage = 1;
-                    render(event.target.value);
+                    render(event.target.value, true);
                 });
             }
             document.querySelectorAll('[data-pagination="registrations"] [data-page-step]').forEach(button => {
@@ -2143,6 +2205,7 @@
                 ]));
             });
             document.querySelectorAll('[data-registration-status]').forEach(button => button.onclick = () => updateStatus(registrations.find(item => String(item.id) === button.dataset.registrationStatus)));
+            document.getElementById('addRegistration').onclick = addRegistration;
         };
         render();
     }
@@ -2155,7 +2218,7 @@
         const ratings = [5, 4, 3, 2, 1].map(star => ({ star, count: feedback.filter(item => Number(item.rating) === star).length }));
         const max = Math.max(...ratings.map(item => item.count), 1);
         const render = (q = '') => {
-            const filtered = feedback.filter(item => !q || normalize(`${item.eventTitle} ${item.studentName} ${item.comment}`).includes(normalize(q)));
+            const filtered = feedback.filter(item => !q || matchesSearch(`${item.eventTitle} ${item.studentName} ${item.studentEmail} ${item.comment}`, q));
             content(`
                 <div class="metric-grid">
                     ${metric('Feedback', number(feedback.length), 'Feedback List')}
@@ -2204,7 +2267,7 @@
 
     async function renderReports() {
         state.page = 'reports';
-        shell(`<button class="btn" id="exportReport">${icon('file-spreadsheet')}Export Excel</button><button class="btn" id="printReport">${icon('file-text')}Export PDF</button>`);
+        shell();
         const [reports, events, registrations, users] = await Promise.all([
             load('/reports', {}),
             load('/events', []),
@@ -2218,21 +2281,30 @@
         }, {});
         content(`
             <div class="metric-grid">
-                ${metric('Registration rate', percent(reports.registrationRate), `${number(reports.elapsedRegistrations)} / ${number(reports.elapsedCapacity)} capacity`)}
-                ${metric('Attendance rate', percent(reports.attendanceRate), `${number(reports.elapsedAttendance)} check-in`)}
-                ${metric('Average rating', `${Number(reports.averageRating || 0).toLocaleString('vi-VN', { maximumFractionDigits: 1 })}/5`, 'Event đã diễn ra')}
-                ${metric('Student participation', number(registrations.length), `${number(users.filter(user => user.role === 'STUDENT').length)} sinh viên`)}
+                ${metric('Registration rate', percent(reports.registrationRate), `${number(reports.elapsedRegistrations)} / ${number(reports.elapsedCapacity)} capacity`, 'blue', 'ticket-check')}
+                ${metric('Attendance rate', percent(reports.attendanceRate), `${number(reports.elapsedAttendance)} check-in`, 'teal', 'clipboard-check')}
+                ${metric('Average rating', `${Number(reports.averageRating || 0).toLocaleString('vi-VN', { maximumFractionDigits: 1 })}/5`, 'Event đã diễn ra', 'orange', 'star')}
+                ${metric('Student participation', number(registrations.length), `${number(users.filter(user => user.role === 'STUDENT').length)} sinh viên`, 'green', 'graduation-cap')}
             </div>
             <section class="panel">
-                <h2 class="panel-title">Event Statistics</h2>
+                <div class="panel-header">
+                    <div>
+                        <h2 class="panel-title">Thống kê sự kiện</h2>
+                        <p class="panel-note">Xu hướng event theo tháng và dữ liệu tham dự.</p>
+                    </div>
+                    <button class="btn" id="exportReports">${icon('download')}Xuất CSV</button>
+                </div>
                 ${chart(reports.monthly || [])}
             </section>
             <div class="split-grid">
                 <section class="panel">
-                    <h2 class="panel-title">Attendance Reports</h2>
+                    <div class="panel-header">
+                        <h2 class="panel-title">Attendance Reports</h2>
+                        <a class="btn" href="registrations.html">Chi tiết</a>
+                    </div>
                     ${table(['Event', 'Registered', 'Attendance', 'Fill'], events.slice(0, 10).map(event => `
                         <tr>
-                            <td>${h(event.title)}<span class="cell-sub">${h(event.departmentName)}</span></td>
+                            <td><span class="event-cell"><img class="event-thumb" src="${h(eventImageUrl(event))}" alt=""><span><span class="cell-title">${h(event.title)}</span><span class="cell-sub">${h(event.departmentName)}</span></span></span></td>
                             <td>${number(event.registrationCount)}</td>
                             <td>${number(event.attendanceCount)}</td>
                             <td><div class="progress"><span style="width:${Math.min(100, Number(event.fillRate || 0))}%"></span></div><span class="cell-sub">${percent(event.fillRate)}</span></td>
@@ -2251,47 +2323,23 @@
                 <p class="panel-note">${h(reports.formula?.averageRating || '')}</p>
             </section>
         `);
-        document.getElementById('exportReport').onclick = () => exportCsv('admin-report.csv', [
-            ['Metric', 'Value'],
-            ['Registration rate', percent(reports.registrationRate)],
-            ['Attendance rate', percent(reports.attendanceRate)],
-            ['Average rating', reports.averageRating],
-            ['Events', events.length],
-            ['Registrations', registrations.length]
-        ]);
-        document.getElementById('printReport').onclick = () => window.print();
+        document.getElementById('exportReports')?.addEventListener('click', () => {
+            exportCsv('aems-reports.csv', [
+                ['Metric', 'Value'],
+                ['Registration rate', percent(reports.registrationRate)],
+                ['Attendance rate', percent(reports.attendanceRate)],
+                ['Average rating', `${Number(reports.averageRating || 0).toLocaleString('vi-VN', { maximumFractionDigits: 1 })}/5`],
+                ['Student participation', number(registrations.length)]
+            ]);
+        });
     }
 
     async function renderEmail() {
         state.page = 'email';
-        shell(`<button class="btn primary" id="sendNotification">${icon('send')}Send Notification</button><button class="btn" id="addTemplate">${icon('file-plus')}Email Template</button>`);
+        shell(`<button class="btn primary" id="sendNotification">${icon('send')}Gửi email</button>`);
         const payload = await load('/email-logs?page=0&size=80', { items: [] });
         const logs = payload.items || [];
-        let templates = localGet('emailTemplates', [
-            { id: 'welcome', name: 'Welcome Event', subject: 'Chào mừng bạn đến với sự kiện', content: 'Xin chào, vé QR của bạn đã sẵn sàng.' },
-            { id: 'reminder', name: 'Event Reminder', subject: 'Nhắc lịch sự kiện', content: 'Sự kiện sẽ bắt đầu trong thời gian tới.' }
-        ]);
-        let announcements = localGet('announcements', []);
-
-        const saveTemplates = () => localSet('emailTemplates', templates);
-        const saveAnnouncements = () => localSet('announcements', announcements);
-
-        const templateForm = (template = {}) => openForm({
-            title: template.id ? 'Email Templates' : 'Create Email Template',
-            fields: [
-                { name: 'name', label: 'Tên template', required: true },
-                { name: 'subject', label: 'Subject', required: true },
-                { name: 'content', label: 'Nội dung', type: 'textarea', full: true, required: true }
-            ],
-            values: template,
-            onSubmit: async payload => {
-                if (template.id) Object.assign(template, payload);
-                else templates.push({ id: `tpl-${Date.now()}`, ...payload });
-                saveTemplates();
-                toast('Đã lưu template.');
-                renderEmail();
-            }
-        });
+        const emailPager = pageItems('email', logs, 20);
 
         const sendForm = () => openForm({
             title: 'Send Notifications',
@@ -2307,65 +2355,26 @@
             }
         });
 
-        const announcementForm = () => openForm({
-            title: 'Announcement Management',
-            fields: [
-                { name: 'title', label: 'Tiêu đề', required: true },
-                { name: 'audience', label: 'Đối tượng', type: 'select', options: ['All', 'Students', 'Departments', 'Committees'].map(value => ({ value, label: value })) },
-                { name: 'content', label: 'Nội dung', type: 'textarea', full: true, required: true }
-            ],
-            onSubmit: async payload => {
-                announcements.unshift({ id: Date.now(), createdAt: new Date().toISOString(), ...payload });
-                saveAnnouncements();
-                toast('Đã tạo announcement.');
-                renderEmail();
-            }
-        });
-
         content(`
-            <div class="metric-grid">
+            <div class="metric-grid metric-grid-three">
                 ${metric('Email History', number(payload.totalItems || logs.length), 'Lịch sử email')}
                 ${metric('Sent', number(logs.filter(log => log.status === 'SENT').length), 'Gửi thành công')}
                 ${metric('Failed', number(logs.filter(log => log.status === 'FAILED').length), 'Gửi lỗi')}
-                ${metric('Templates', number(templates.length), 'Template email')}
             </div>
-            <div class="split-grid">
-                <section class="panel">
-                    <div class="panel-header">
-                        <h2 class="panel-title">Email History</h2>
-                        <button class="btn" id="createAnnouncement">${icon('megaphone')}Announcement</button>
-                    </div>
-                    ${table(['Email', 'Subject', 'Status', 'Sent At'], logs.map(log => `
+            <section class="panel">
+                    <div class="panel-header"><h2 class="panel-title">Email History</h2></div>
+                    <div class="toolbar">${pagination('email', emailPager.page, emailPager.pages, emailPager.total, emailPager.visible.length)}</div>
+                    ${table(['Email', 'Subject', 'Status', 'Sent At'], emailPager.visible.map(log => `
                         <tr>
                             <td>${h(log.toEmail)}</td>
                             <td>${h(log.subject)}<span class="cell-sub">${h(log.eventTitle || '')}</span></td>
                             <td>${badge(log.status, tone(log.status))}</td>
                             <td>${dateTime(log.sentAt)}</td>
                         </tr>`))}
-                </section>
-                <section class="panel">
-                    <h2 class="panel-title">Email Templates</h2>
-                    <div style="display:grid;gap:.55rem;margin-top:.85rem">
-                        ${templates.map(template => `
-                            <div class="mini-card">
-                                <strong>${h(template.name)}</strong>
-                                <span>${h(template.subject)}</span>
-                                <div class="inline-actions" style="margin-top:.55rem;justify-content:flex-start">
-                                    <button class="btn" data-template-edit="${template.id}">${icon('pencil')}Edit</button>
-                                </div>
-                            </div>`).join('')}
-                    </div>
-                    <h2 class="panel-title" style="margin-top:1rem">Announcements</h2>
-                    <div style="display:grid;gap:.55rem;margin-top:.85rem">
-                        ${announcements.slice(0, 4).map(item => `<div class="mini-card"><strong>${h(item.title)}</strong><span>${h(item.audience)} · ${dateTime(item.createdAt)}</span></div>`).join('') || '<div class="empty">Chưa có announcement.</div>'}
-                    </div>
-                </section>
-            </div>
+            </section>
         `);
         document.getElementById('sendNotification').onclick = sendForm;
-        document.getElementById('addTemplate').onclick = () => templateForm();
-        document.getElementById('createAnnouncement').onclick = announcementForm;
-        document.querySelectorAll('[data-template-edit]').forEach(button => button.onclick = () => templateForm(templates.find(item => item.id === button.dataset.templateEdit)));
+        bindPagination('email', emailPager, renderEmail);
     }
 
 
@@ -2379,7 +2388,6 @@
         logs: renderLogs,
         proposals: renderProposals,
         events: renderEvents,
-        committees: renderCommittees,
         registrations: renderRegistrations,
         feedback: renderFeedback
     };

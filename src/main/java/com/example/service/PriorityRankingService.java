@@ -17,17 +17,17 @@ import java.util.Map;
  * Tính điểm ưu tiên đăng ký sự kiện cho từng sinh viên - event.
  *
  * Công thức tổng hợp 4 tiêu chí có trọng số:
- *   Priority = 0.40·M + 0.30·S + 0.20·P + 0.10·T
+ * Priority = 0.40·M + 0.30·S + 0.20·P + 0.10·T
  *
- *   M (40%) - Mức phù hợp chuyên ngành sinh viên với khoa tổ chức:
- *              Đúng chuyên ngành = 100, cùng khoa lớn (liên quan) = 60, khác = 30.
- *   S (30%) - Học kỳ: sinh viên kỳ cuối được ưu tiên hơn.
- *              S = round((min(semester, 9) / 9) * 100). Sem 1 ≈ 11, Sem 9 = 100.
- *   P (20%) - Điểm hoạt động/tích lũy đã chuẩn hóa về 0..100.
- *              Nếu totalPoints > 100 dùng căn bậc hai để tránh sai lệch
- *              do người tích quá nhiều điểm.
- *   T (10%) - Thời gian đăng ký so với khoảng mở đăng ký (createdAt → startTime):
- *              20% đầu = 100, 50% giữa = 70, còn lại = 40.
+ * M (40%) - Mức phù hợp chuyên ngành sinh viên với khoa tổ chức:
+ * Đúng chuyên ngành = 100, cùng khoa lớn (liên quan) = 60, khác = 30.
+ * S (30%) - Học kỳ: sinh viên kỳ cuối được ưu tiên hơn.
+ * S = round((min(semester, 9) / 9) * 100). Sem 1 ≈ 11, Sem 9 = 100.
+ * P (20%) - Điểm hoạt động/tích lũy đã chuẩn hóa về 0..100.
+ * Nếu totalPoints > 100 dùng căn bậc hai để tránh sai lệch
+ * do người tích quá nhiều điểm.
+ * T (10%) - Thời gian đăng ký so với khoảng mở đăng ký (createdAt → startTime):
+ * 20% đầu = 100, 50% giữa = 70, còn lại = 40.
  *
  * Tất cả thành phần đều nằm trong [0, 100] nên Priority cũng [0, 100].
  */
@@ -46,6 +46,37 @@ public class PriorityRankingService {
     public static final double SCORE_TIME_EARLY = 100.0;
     public static final double SCORE_TIME_MID = 70.0;
     public static final double SCORE_TIME_LATE = 40.0;
+
+    /**
+     * Định nghĩa các nhóm hạng ưu tiên để hiển thị nhãn trên giao diện UI.
+
+     */
+    public enum PriorityTier {
+        HIGH("Ưu tiên cao"),
+        MEDIUM("Ưu tiên trung bình"),
+        LOW("Ưu tiên thấp");
+
+        private final String value;
+        PriorityTier(String value) { this.value = value; }
+        public String getValue() { return value; }
+    }
+
+    /**
+     * Phân nhóm sinh viên vào các hạng dựa trên tổng điểm Priority tính toán được.
+
+     */
+    public PriorityTier resolvePriorityTier(Student student, Event event, LocalDateTime registrationDate) {
+        BigDecimal score = computeScore(student, event, registrationDate);
+        double totalScore = score.doubleValue();
+
+        if (totalScore >= 75.0) {
+            return PriorityTier.HIGH;
+        } else if (totalScore >= 45.0) {
+            return PriorityTier.MEDIUM;
+        } else {
+            return PriorityTier.LOW;
+        }
+    }
 
     /**
      * Trả về điểm tổng + bóc tách từng thành phần (M, S, P, T) để hiển thị cho UI.
@@ -200,6 +231,20 @@ public class PriorityRankingService {
             map.put("P", pItem);
             map.put("T", tItem);
             map.put("total", total);
+
+            // Tích hợp nhãn phân nhóm ưu tiên trực tiếp vào breakdown map phục vụ UI Tooltip
+
+            if (total >= 75.0) {
+                map.put("tier", "HIGH");
+                map.put("tierLabel", "Ưu tiên cao");
+            } else if (total >= 45.0) {
+                map.put("tier", "MEDIUM");
+                map.put("tierLabel", "Ưu tiên trung bình");
+            } else {
+                map.put("tier", "LOW");
+                map.put("tierLabel", "Ưu tiên thấp");
+            }
+
             return map;
         }
 
@@ -216,5 +261,46 @@ public class PriorityRankingService {
         u.setSemester(semester);
         u.setTotalPoints(points);
         return u;
+    }
+
+    public static void main(String[] args) {
+        PriorityRankingService service = new PriorityRankingService();
+
+        // ----------------------------------------------------
+        // KỊCH BẢN TEST 1: Ca kiểm thử lý tưởng (Sinh viên ưu tiên cao)
+        // ----------------------------------------------------
+        Student student = new Student();
+        User user = mockUser(9, 144); // Căn bậc hai của 144 * 10 = 120 -> Giới hạn max = 100 điểm
+        student.setUser(user);
+        student.setMajor("Software Engineering");
+
+        // Giả lập 1 Event mẫu
+        Event event = new Event();
+        event.setCreatedAt(LocalDateTime.now().minusDays(10));
+        event.setStartTime(LocalDateTime.now().plusDays(10)); // Khoảng mở 20 ngày
+
+        // Test trường hợp đăng ký ngay lập tức (Thời gian đầu <= 20% -> 100 điểm)
+        Breakdown breakdown = service.computeBreakdown(student, event, LocalDateTime.now().minusDays(9));
+
+        System.out.println("========== TEST REPORT - PRIORITY RANKING ==========");
+        System.out.println("Điểm Học Kỳ (Mục tiêu 100.0): " + breakdown.semesterScore);
+        System.out.println("Điểm Hoạt Động Chuẩn Hóa (Mục tiêu 100.0): " + breakdown.pointsScore);
+        System.out.println("Tổng điểm ưu tiên tích lũy: " + breakdown.total);
+        System.out.println("====================================================");
+
+        // ----------------------------------------------------
+        // KỊCH BẢN TEST 2: Ca biên - Sinh viên khác ngành, đăng ký sát giờ (Late)
+
+        // ----------------------------------------------------
+        Student studentLate = new Student();
+        studentLate.setUser(mockUser(2, 30)); // Kỳ 2, điểm hoạt động ít
+        studentLate.setMajor("Graphic Design"); // Khác ngành với khoa tổ chức
+
+        Breakdown breakdownLate = service.computeBreakdown(studentLate, event, LocalDateTime.now().plusDays(9));
+        System.out.println("\n========== TEST REPORT - EDGE CASE (LATE REGISTER) ==========");
+        System.out.println("Điểm Chuyên Ngành Biên (Mục tiêu 30.0): " + breakdownLate.majorScore);
+        System.out.println("Điểm Thời Gian Biên (Mục tiêu 40.0): " + breakdownLate.timeScore);
+        System.out.println("Tổng điểm ưu tiên ca biên: " + breakdownLate.total);
+        System.out.println("=============================================================");
     }
 }

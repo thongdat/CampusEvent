@@ -30,6 +30,13 @@ public class Registration {
     @Column(name = "priority_score", precision = 5, scale = 2)
     private java.math.BigDecimal priorityScore;
 
+    /**
+     * Thời điểm đã gửi thư mời tham dự qua email (gửi trước sự kiện ~1 tuần).
+     * Null = chưa gửi. Dùng để scheduler gửi đúng 1 lần (idempotent).
+     */
+    @Column(name = "invitation_sent_at")
+    private LocalDateTime invitationSentAt;
+
     @ManyToOne
     @JoinColumn(name = "eventId", nullable = false)
     private Event event;
@@ -102,5 +109,13 @@ public class Registration {
 
     public void setPriorityScore(java.math.BigDecimal priorityScore) {
         this.priorityScore = priorityScore;
+    }
+
+    public LocalDateTime getInvitationSentAt() {
+        return invitationSentAt;
+    }
+
+    public void setInvitationSentAt(LocalDateTime invitationSentAt) {
+        this.invitationSentAt = invitationSentAt;
     }
 }

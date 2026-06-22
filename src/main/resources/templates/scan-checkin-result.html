@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Kết quả check-in — AEMS</title>
+    <link rel="icon" type="image/svg+xml" href="/api/favicon.svg">
+    <link rel="stylesheet" th:href="@{/css/aems.css}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body class="aems">
+<div class="aems-stripe"></div>
+<main class="aems-shell" style="max-width: 560px;">
+    <div class="aems-card" style="text-align: center;">
+        <div style="padding: 2rem 1.5rem 1.5rem; background: linear-gradient(135deg, var(--aems-fpt) 0%, var(--aems-fpt-deep) 100%); color: #fff;">
+            <div style="font-size: 4rem; line-height: 1; margin-bottom: .5rem;">✅</div>
+            <h1 style="margin: 0; font-size: 1.5rem; font-weight: 800;" th:text="${message}">Check-in thành công</h1>
+            <p style="margin: .35rem 0 0; color: #ffe5cc;">Cảm ơn bạn đã có mặt!</p>
+        </div>
+        <div class="aems-card__body" style="display: grid; gap: 1rem; padding: 1.75rem;">
+            <div>
+                <p class="aems-metric__label" style="margin: 0;">Trạng thái</p>
+                <p style="margin: .35rem 0 0; font-size: 1.25rem; font-weight: 800; color: var(--aems-fpt-deep);">
+                    <span th:text="${attendance.status}"></span>
+                </p>
+            </div>
+            <div>
+                <p class="aems-metric__label" style="margin: 0;">Điểm tham gia hiện tại</p>
+                <p style="margin: .35rem 0 0; font-size: 2rem; font-weight: 900; color: var(--aems-ink);">
+                    <span th:text="${attendance.participationScore != null ? attendance.participationScore : 0}">0</span>
+                    <span style="font-size: .85rem; color: var(--aems-ink-muted); font-weight: 600;">/ 100</span>
+                </p>
+                <p style="margin: .15rem 0 0; font-size: .8rem; color: var(--aems-ink-muted);">Điểm sẽ tăng sau khi bạn checkout + làm quiz + gửi feedback.</p>
+            </div>
+            <div class="aems-flex" style="justify-content: center;">
+                <a class="aems-btn" th:href="@{/screen-student.html}">← Về trang sinh viên</a>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>

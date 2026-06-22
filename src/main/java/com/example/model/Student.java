@@ -18,6 +18,15 @@ public class Student {
     
     @Column
     private Integer year;
+
+    @Column(nullable = false)
+    private Integer noShowCount = 0;
+
+    @Column(nullable = false)
+    private Double attendanceReputation = 100.0;
+
+    @Column(name = "gender", columnDefinition = "NVARCHAR(10)")
+    private String gender;
     
     @OneToOne
     @JoinColumn(name = "userId", nullable = false, unique = true)
@@ -70,5 +79,29 @@ public class Student {
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public Integer getNoShowCount() {
+        return noShowCount;
+    }
+
+    public void setNoShowCount(Integer noShowCount) {
+        this.noShowCount = noShowCount;
+    }
+
+    public Double getAttendanceReputation() {
+        return attendanceReputation;
+    }
+
+    public void setAttendanceReputation(Double attendanceReputation) {
+        this.attendanceReputation = attendanceReputation;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
     }
 }

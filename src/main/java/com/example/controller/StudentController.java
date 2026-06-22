@@ -1,6 +1,7 @@
 package com.example.controller;
 
 import com.example.config.AcademicStructure;
+import com.example.config.InvitationScheduler;
 import com.example.model.ActivityLog;
 import com.example.model.Attendance;
 import com.example.model.Event;
@@ -21,7 +22,6 @@ import com.example.service.PriorityRankingService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -38,12 +38,15 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -59,7 +62,6 @@ import java.util.stream.Collectors;
  */
 @RestController
 @RequestMapping(value = "/student", produces = "application/json;charset=UTF-8")
-@CrossOrigin(origins = "*")
 public class StudentController {
 
     private static final DateTimeFormatter ISO = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
@@ -76,6 +78,7 @@ public class StudentController {
     private final FeedbackRepository feedbackRepository;
     private final ActivityLogRepository activityLogRepository;
     private final PriorityRankingService priorityService;
+    private final InvitationScheduler invitationScheduler;
 
     public StudentController(
             UserRepository userRepository,
@@ -86,7 +89,8 @@ public class StudentController {
             AttendanceRepository attendanceRepository,
             FeedbackRepository feedbackRepository,
             ActivityLogRepository activityLogRepository,
-            PriorityRankingService priorityService) {
+            PriorityRankingService priorityService,
+            InvitationScheduler invitationScheduler) {
         this.userRepository = userRepository;
         this.studentRepository = studentRepository;
         this.eventRepository = eventRepository;
@@ -96,6 +100,7 @@ public class StudentController {
         this.feedbackRepository = feedbackRepository;
         this.activityLogRepository = activityLogRepository;
         this.priorityService = priorityService;
+        this.invitationScheduler = invitationScheduler;
     }
 
     // =================================================================
@@ -110,8 +115,11 @@ public class StudentController {
 
         long registeredCount = regs.stream().filter(r -> "REGISTERED".equalsIgnoreCase(r.getStatus())).count();
         long waitlistCount = regs.stream().filter(r -> "WAITLIST".equalsIgnoreCase(r.getStatus())).count();
-        long attendedCount = regs.stream().filter(r -> attendanceRepository.findByRegistrationId(r.getId())
-                .map(a -> "ATTENDED".equalsIgnoreCase(a.getStatus())).orElse(false)).count();
+        // Nạp attendance 1 lần theo registrationId (thay cho N+1 findByRegistrationId trong vòng lặp).
+        List<Long> regIds = regs.stream().map(Registration::getId).collect(Collectors.toList());
+        long attendedCount = regIds.isEmpty() ? 0 : attendanceRepository.findByRegistrationIdIn(regIds).stream()
+                .filter(a -> "ATTENDED".equalsIgnoreCase(a.getStatus()))
+                .count();
         long feedbackCount = feedbackRepository.countByStudentId(student.getId());
 
         Map<String, Object> body = new LinkedHashMap<>();
@@ -166,7 +174,8 @@ public class StudentController {
         Student student = email != null ? resolveStudentOptional(email).orElse(null) : null;
         LocalDateTime now = LocalDateTime.now();
 
-        List<Event> events = eventRepository.findAll().stream()
+        // fetch-join để department được nạp sẵn -> tránh N+1 lazy-load department mỗi event.
+        List<Event> events = eventRepository.findAllWithDepartment().stream()
                 .filter(e -> e.getStatus() != null)
                 .filter(e -> UPCOMING_STATUSES.contains(e.getStatus().toUpperCase(Locale.ROOT))
                         || "COMPLETED".equalsIgnoreCase(e.getStatus()))
@@ -210,8 +219,27 @@ public class StudentController {
                     .collect(Collectors.toList());
         }
 
+        // Nạp đăng ký 1 lần rồi gom theo event (thay cho N+1 findByEventId trong mỗi card).
+        Map<Long, List<Registration>> regsByEvent = new HashMap<>();
+        for (Registration r : registrationRepository.findAll()) {
+            if (r.getEvent() != null && r.getEvent().getId() != null) {
+                regsByEvent.computeIfAbsent(r.getEvent().getId(), k -> new ArrayList<>()).add(r);
+            }
+        }
+        // Đăng ký của riêng sinh viên hiện tại (1 query) để biết myStatus trên từng card.
+        Map<Long, Registration> myRegByEvent = new HashMap<>();
+        if (student != null) {
+            for (Registration r : registrationRepository.findByStudentId(student.getId())) {
+                if (r.getEvent() != null && r.getEvent().getId() != null) {
+                    myRegByEvent.put(r.getEvent().getId(), r);
+                }
+            }
+        }
+
         List<Map<String, Object>> items = events.stream()
-                .map(e -> buildEventCard(e, student, now))
+                .map(e -> buildEventCard(e, student, now,
+                        regsByEvent.getOrDefault(e.getId(), List.of()),
+                        myRegByEvent.get(e.getId())))
                 .collect(Collectors.toList());
 
         Comparator<Map<String, Object>> byStartIso = Comparator.comparing(m -> {
@@ -323,6 +351,7 @@ public class StudentController {
             response.put("status", current.getStatus());
             response.put("priorityScore", current.getPriorityScore() == null ? null : current.getPriorityScore().doubleValue());
             response.put("registrationId", current.getId());
+            addRegistrationGuidance(response, current, student, false);
             return ResponseEntity.ok(response);
         }
 
@@ -384,13 +413,52 @@ public class StudentController {
             activityLogRepository.save(log);
         }
 
+        boolean invitationEmailQueued = invitationScheduler.isInvitationDue(saved, now);
+        if (invitationEmailQueued) {
+            invitationScheduler.queueInvitationAfterCommit(saved.getId(), now);
+        }
+
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("registrationId", saved.getId());
         response.put("status", saved.getStatus());
         response.put("priorityScore", score.doubleValue());
         response.put("ticketCode", ticket == null ? null : ticket.getCode());
+        response.put("invitationEmailQueued", invitationEmailQueued);
         response.put("priorityBreakdown", breakdown.toMap());
+        addRegistrationGuidance(response, saved, student, invitationEmailQueued);
         return ResponseEntity.ok(response);
+    }
+
+    private void addRegistrationGuidance(Map<String, Object> response,
+                                         Registration registration,
+                                         Student student,
+                                         boolean emailQueued) {
+        String email = student.getUser() == null ? "" : String.valueOf(student.getUser().getEmail());
+        response.put("notificationEmail", email);
+
+        if ("WAITLIST".equalsIgnoreCase(registration.getStatus())) {
+            response.put("emailStatus", "WAITLIST");
+            response.put("emailMessage", "Bạn đang ở danh sách chờ. Hệ thống sẽ gửi thư mời khi bạn được xác nhận suất tham dự.");
+            response.put("nextSteps", List.of(
+                    "Theo dõi trạng thái trong mục Đăng ký của tôi.",
+                    "Bạn sẽ tự động được nâng suất khi có người hủy và điểm ưu tiên phù hợp."));
+            return;
+        }
+
+        if (registration.getInvitationSentAt() != null) {
+            response.put("emailStatus", "SENT");
+            response.put("emailMessage", "Thư mời đã được gửi tới email đăng ký của bạn.");
+        } else if (emailQueued) {
+            response.put("emailStatus", "QUEUED");
+            response.put("emailMessage", "Thư mời đang được gửi tới email đăng ký của bạn.");
+        } else {
+            response.put("emailStatus", "SCHEDULED");
+            response.put("emailMessage", "Thư mời sẽ được gửi tới email đăng ký khoảng 7 ngày trước sự kiện.");
+        }
+        response.put("nextSteps", List.of(
+                "Mở mục Đăng ký của tôi để xem trạng thái và mã vé.",
+                "Kiểm tra cả hộp thư Spam/Quảng cáo nếu chưa thấy email.",
+                "Đến sớm và chuẩn bị quét QR check-in tại sự kiện."));
     }
 
     @DeleteMapping("/registrations/{id}")
@@ -454,6 +522,23 @@ public class StudentController {
                 .sorted(myRegsByEventStartDesc)
                 .collect(Collectors.toList());
 
+        List<Long> registrationIds = regs.stream()
+                .map(Registration::getId)
+                .collect(Collectors.toList());
+        Map<Long, Ticket> ticketsByRegistrationId = new HashMap<>();
+        Map<Long, Attendance> attendanceByRegistrationId = new HashMap<>();
+        if (!registrationIds.isEmpty()) {
+            ticketRepository.findByRegistrationIdIn(registrationIds).forEach(ticket ->
+                    ticketsByRegistrationId.put(ticket.getRegistration().getId(), ticket));
+            attendanceRepository.findByRegistrationIdIn(registrationIds).forEach(attendance ->
+                    attendanceByRegistrationId.put(attendance.getRegistration().getId(), attendance));
+        }
+        Set<Long> feedbackEventIds = feedbackRepository.findByStudentId(student.getId()).stream()
+                .map(Feedback::getEvent)
+                .filter(Objects::nonNull)
+                .map(Event::getId)
+                .collect(Collectors.toCollection(HashSet::new));
+
         List<Map<String, Object>> items = regs.stream().map(r -> {
             Map<String, Object> row = new LinkedHashMap<>();
             row.put("registrationId", r.getId());
@@ -478,14 +563,14 @@ public class StudentController {
                 row.put("event", ev);
             }
 
-            ticketRepository.findByRegistrationId(r.getId()).ifPresent(t -> {
+            Optional.ofNullable(ticketsByRegistrationId.get(r.getId())).ifPresent(t -> {
                 Map<String, Object> ticket = new LinkedHashMap<>();
                 ticket.put("code", t.getCode());
                 ticket.put("sentDate", iso(t.getSentDate()));
                 row.put("ticket", ticket);
             });
 
-            attendanceRepository.findByRegistrationId(r.getId()).ifPresent(a -> {
+            Optional.ofNullable(attendanceByRegistrationId.get(r.getId())).ifPresent(a -> {
                 Map<String, Object> att = new LinkedHashMap<>();
                 att.put("status", a.getStatus());
                 att.put("checkinTime", iso(a.getCheckinTime()));
@@ -493,9 +578,7 @@ public class StudentController {
             });
 
             // Đã feedback chưa?
-            boolean hasFeedback = e != null && feedbackRepository.findByStudentId(student.getId()).stream()
-                    .anyMatch(f -> f.getEvent() != null && Objects.equals(f.getEvent().getId(), e.getId()));
-            row.put("feedbackSubmitted", hasFeedback);
+            row.put("feedbackSubmitted", e != null && feedbackEventIds.contains(e.getId()));
 
             return row;
         }).collect(Collectors.toList());
@@ -650,6 +733,15 @@ public class StudentController {
     }
 
     private Map<String, Object> buildEventCard(Event event, Student student, LocalDateTime now) {
+        List<Registration> regs = registrationRepository.findByEventId(event.getId());
+        Registration myReg = student == null ? null
+                : registrationRepository.findByEventIdAndStudentId(event.getId(), student.getId()).orElse(null);
+        return buildEventCard(event, student, now, regs, myReg);
+    }
+
+    /** Bản dựng card KHÔNG tự query DB — dữ liệu đăng ký được truyền vào sẵn (tránh N+1 ở danh sách). */
+    private Map<String, Object> buildEventCard(Event event, Student student, LocalDateTime now,
+                                               List<Registration> regs, Registration myReg) {
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("id", event.getId());
         map.put("title", event.getTitle());
@@ -661,6 +753,8 @@ public class StudentController {
         map.put("imageUrl", event.getImageUrl());
         map.put("status", event.getStatus());
         map.put("budget", event.getBudget());
+        map.put("speakers", event.getSpeakers());
+        map.put("organizer", event.getOrganizer());
         if (event.getDepartment() != null) {
             Map<String, Object> dept = new LinkedHashMap<>();
             dept.put("id", event.getDepartment().getId());
@@ -669,8 +763,7 @@ public class StudentController {
             map.put("department", dept);
         }
 
-        // Đếm slot
-        List<Registration> regs = registrationRepository.findByEventId(event.getId());
+        // Đếm slot (dùng danh sách đăng ký đã nạp sẵn).
         long registered = regs.stream().filter(r -> "REGISTERED".equalsIgnoreCase(r.getStatus())).count();
         long waitlist = regs.stream().filter(r -> "WAITLIST".equalsIgnoreCase(r.getStatus())).count();
         map.put("registeredCount", registered);
@@ -691,11 +784,11 @@ public class StudentController {
             map.put("priorityPoints", bd.pointsScore);
             map.put("priorityTime", bd.timeScore);
 
-            registrationRepository.findByEventIdAndStudentId(event.getId(), student.getId()).ifPresent(r -> {
-                map.put("myRegistrationId", r.getId());
-                map.put("myStatus", r.getStatus());
-                map.put("myPriorityScore", r.getPriorityScore() == null ? null : r.getPriorityScore().doubleValue());
-            });
+            if (myReg != null) {
+                map.put("myRegistrationId", myReg.getId());
+                map.put("myStatus", myReg.getStatus());
+                map.put("myPriorityScore", myReg.getPriorityScore() == null ? null : myReg.getPriorityScore().doubleValue());
+            }
         } else {
             map.put("priorityPreview", 0);
         }

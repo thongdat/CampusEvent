@@ -1,7 +1,9 @@
 package com.example.controller;
 
 import com.example.config.AcademicStructure;
+import com.example.config.InvitationScheduler;
 import com.example.model.ActivityLog;
+import com.example.model.Attendance;
 import com.example.model.Department;
 import com.example.model.EmailLog;
 import com.example.model.Event;
@@ -23,7 +25,15 @@ import com.example.repository.RoleRepository;
 import com.example.repository.StudentRepository;
 import com.example.repository.TicketRepository;
 import com.example.repository.UserRepository;
+import com.example.model.QuizQuestion;
+import com.example.repository.QuizQuestionRepository;
+import com.example.security.GoogleOAuthAccessTokenService;
+import com.example.security.SessionAuth;
 import com.example.service.EmailService;
+import com.example.service.EventFormSyncService;
+import com.example.service.GoogleFormsApiService;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.data.domain.Page;
@@ -32,7 +42,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -44,6 +53,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import javax.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -52,21 +62,22 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(value = "/admin", produces = "application/json;charset=UTF-8")
-@CrossOrigin(origins = "*")
 public class AdminDashboardController {
 
-    private static final List<String> ACTIVE_PROPOSAL_STATUSES = List.of("PENDING", "APPROVED", "REVISION", "REJECTED");
+    private static final List<String> ACTIVE_PROPOSAL_STATUSES = List.of("PENDING", "REVISION", "REJECTED");
     private static final List<String> ACTIONABLE_PROPOSAL_STATUSES = List.of("PENDING", "REVISION");
-    private static final List<String> EVENT_STATUSES = List.of("PENDING", "APPROVED", "PUBLISHED", "COMPLETED", "CANCELLED");
+    private static final List<String> EVENT_STATUSES = List.of("PUBLISHED", "COMPLETED", "CANCELLED");
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
@@ -82,6 +93,14 @@ public class AdminDashboardController {
     private final ActivityLogRepository activityLogRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+    private final InvitationScheduler invitationScheduler;
+    private final QuizQuestionRepository quizQuestionRepository;
+    private final GoogleFormsApiService googleFormsApiService;
+    private final GoogleOAuthAccessTokenService googleOAuthAccessTokenService;
+    private final Map<String, Object> googleFormCreationLocks = new ConcurrentHashMap<>();
+    @org.springframework.beans.factory.annotation.Autowired
+    private EventFormSyncService eventFormSyncService;
+    private static final ObjectMapper QUIZ_MAPPER = new ObjectMapper();
 
     public AdminDashboardController(
             UserRepository userRepository,
@@ -97,7 +116,11 @@ public class AdminDashboardController {
             EmailLogRepository emailLogRepository,
             ActivityLogRepository activityLogRepository,
             PasswordEncoder passwordEncoder,
-            EmailService emailService) {
+            EmailService emailService,
+            InvitationScheduler invitationScheduler,
+            QuizQuestionRepository quizQuestionRepository,
+            GoogleFormsApiService googleFormsApiService,
+            GoogleOAuthAccessTokenService googleOAuthAccessTokenService) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.departmentRepository = departmentRepository;
@@ -112,6 +135,10 @@ public class AdminDashboardController {
         this.activityLogRepository = activityLogRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
+        this.invitationScheduler = invitationScheduler;
+        this.quizQuestionRepository = quizQuestionRepository;
+        this.googleFormsApiService = googleFormsApiService;
+        this.googleOAuthAccessTokenService = googleOAuthAccessTokenService;
     }
 
     @GetMapping("/dashboard")
@@ -137,8 +164,25 @@ public class AdminDashboardController {
         return response;
     }
 
+    /** Cache /overview vì nó chạy rất nhiều count nối tiếp; trên Neon lạnh có thể mất hàng chục giây.
+     *  TTL ngắn để số liệu vẫn đủ tươi cho dashboard, nhưng lần tải lại trong TTL là tức thì. */
+    private static final long OVERVIEW_TTL_MS = 30_000;
+    private volatile Map<String, Object> cachedOverview;
+    private volatile long overviewCachedAt;
+
     @GetMapping("/overview")
     public Map<String, Object> overview() {
+        Map<String, Object> cached = cachedOverview;
+        if (cached != null && System.currentTimeMillis() - overviewCachedAt < OVERVIEW_TTL_MS) {
+            return cached;
+        }
+        Map<String, Object> fresh = computeOverview();
+        cachedOverview = fresh;
+        overviewCachedAt = System.currentTimeMillis();
+        return fresh;
+    }
+
+    private Map<String, Object> computeOverview() {
         Pageable latestEmailPage = PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "sentAt"));
         Pageable latestActivityPage = PageRequest.of(0, 24, Sort.by(Sort.Direction.DESC, "createdAt"));
         LocalDateTime asOf = currentDateTime();
@@ -388,7 +432,6 @@ public class AdminDashboardController {
     }
 
     @PostMapping("/email-logs/send")
-    @Transactional
     public ResponseEntity<Map<String, Object>> sendEmailNotification(@RequestBody Map<String, Object> payload) {
         String toEmail = requiredString(payload, "toEmail");
         String subject = requiredString(payload, "subject");
@@ -440,9 +483,35 @@ public class AdminDashboardController {
 
     @GetMapping("/events")
     public List<Map<String, Object>> events() {
-        return eventRepository.findAll().stream()
+        LocalDateTime asOf = currentDateTime();
+        List<Event> events = eventRepository.findAllWithDepartment();
+        Map<Long, List<Registration>> registrationsByEvent = registrationRepository
+                .findByRegistrationDateLessThanEqual(asOf, Sort.unsorted()).stream()
+                .filter(registration -> registration.getEvent() != null)
+                .collect(Collectors.groupingBy(registration -> registration.getEvent().getId()));
+        // Query GROUP BY (mỗi event 1 dòng) thay cho findAll() quét toàn bảng attendance/feedback.
+        Map<Long, Long> attendedByEvent = new HashMap<>();
+        for (Object[] row : attendanceRepository.countAttendedGroupedByEvent(asOf)) {
+            if (row[0] != null) attendedByEvent.put(((Number) row[0]).longValue(), ((Number) row[1]).longValue());
+        }
+        Map<Long, long[]> feedbackByEvent = new HashMap<>();
+        Map<Long, Double> feedbackAvgByEvent = new HashMap<>();
+        for (Object[] row : feedbackRepository.aggregateGroupedByEvent(asOf)) {
+            if (row[0] == null) continue;
+            long eid = ((Number) row[0]).longValue();
+            feedbackByEvent.put(eid, new long[]{ ((Number) row[1]).longValue() });
+            feedbackAvgByEvent.put(eid, row[2] == null ? 0.0 : ((Number) row[2]).doubleValue());
+        }
+
+        return events.stream()
                 .sorted(this::compareEventsForAdmin)
-                .map(this::buildEvent)
+                .map(event -> buildEvent(
+                        event,
+                        registrationsByEvent.getOrDefault(event.getId(), List.of()),
+                        attendedByEvent.getOrDefault(event.getId(), 0L),
+                        feedbackByEvent.containsKey(event.getId()) ? feedbackByEvent.get(event.getId())[0] : 0L,
+                        feedbackAvgByEvent.getOrDefault(event.getId(), 0.0),
+                        asOf))
                 .collect(Collectors.toList());
     }
 
@@ -483,6 +552,168 @@ public class AdminDashboardController {
         return buildEvent(eventRepository.save(event));
     }
 
+    @PostMapping("/events/{id}/google-form/auto-create")
+    public ResponseEntity<Map<String, Object>> autoCreateCheckinForm(
+            @PathVariable Long id,
+            HttpServletRequest request) {
+        try {
+            return ResponseEntity.ok(autoCreateGoogleFormInternal(id, false, request));
+        } catch (ResponseStatusException ex) {
+            return googleFormError(ex);
+        }
+    }
+
+    @PostMapping("/events/{id}/google-form/auto-create-checkout")
+    public ResponseEntity<Map<String, Object>> autoCreateCheckoutForm(
+            @PathVariable Long id,
+            HttpServletRequest request) {
+        try {
+            return ResponseEntity.ok(autoCreateGoogleFormInternal(id, true, request));
+        } catch (ResponseStatusException ex) {
+            return googleFormError(ex);
+        }
+    }
+
+    /**
+     * Đồng bộ câu trả lời từ Google Form về DB.
+     *  body: { kind: 'in'|'out' }. Google identity is always read from the trusted server session.
+     */
+    @PostMapping("/events/{id}/google-form/sync")
+    public ResponseEntity<Map<String, Object>> syncGoogleFormResponses(
+            @PathVariable Long id,
+            @RequestBody(required = false) Map<String, Object> payload,
+            HttpServletRequest request) {
+        String kind  = payload == null ? "in"  : (payload.get("kind")  == null ? "in"  : String.valueOf(payload.get("kind")).trim().toLowerCase());
+        try {
+            String accessToken = resolveGoogleAccessToken(request);
+            EventFormSyncService.SyncResult r = "out".equals(kind)
+                    ? eventFormSyncService.syncCheckout(id, accessToken)
+                    : eventFormSyncService.syncCheckin(id, accessToken);
+            Map<String, Object> res = r.toMap();
+            boolean out = "out".equals(kind);
+            res.put("kind", out ? "CHECK-OUT" : "CHECK-IN");
+            if (out) {
+                res.put("message", String.format("Check-out: %d phản hồi · %d khớp · %d hoàn thành · %d feedback.",
+                        r.totalResponses, r.matched, r.updated, r.feedbacksAdded));
+            } else {
+                res.put("message", String.format("Check-in: %d phản hồi · %d hợp lệ (email khớp) · %d mới · %d cập nhật · %d đánh vắng.",
+                        r.totalResponses, r.matched, r.created, r.updated, r.absentMarked));
+            }
+            return ResponseEntity.ok(res);
+        } catch (GoogleFormsApiService.GoogleApiException ex) {
+            return googleFormError(new ResponseStatusException(HttpStatus.BAD_GATEWAY, ex.getMessage()));
+        } catch (ResponseStatusException ex) {
+            return googleFormError(ex);
+        }
+    }
+
+    private Map<String, Object> autoCreateGoogleFormInternal(
+            Long id, boolean isCheckout, HttpServletRequest request) {
+        String lockKey = id + (isCheckout ? "|out" : "|in");
+        Object lock = googleFormCreationLocks.computeIfAbsent(lockKey, ignored -> new Object());
+        synchronized (lock) {
+            Event event = eventRepository.findById(id)
+                    .orElseThrow(() -> notFound("Không tìm thấy event."));
+            String currentUrl = isCheckout ? event.getCheckoutFormUrl() : event.getGoogleFormUrl();
+            if (currentUrl != null && !currentUrl.isBlank()) {
+                Map<String, Object> existing = buildEvent(event);
+                existing.put("createdFormUrl", currentUrl);
+                existing.put("kind", isCheckout ? "CHECKOUT" : "CHECKIN");
+                existing.put("reusedExistingForm", true);
+                existing.put("message", "Form đã tồn tại, hệ thống không tạo bản trùng.");
+                return existing;
+            }
+
+            String accessToken = resolveGoogleAccessToken(request);
+            try {
+                GoogleFormsApiService.CreatedForm created = isCheckout
+                        ? googleFormsApiService.createCheckoutForm(event, accessToken, loadQuizItems(event.getId()))
+                        : googleFormsApiService.createCheckinForm(event, accessToken);
+                if (isCheckout) {
+                    event.setCheckoutFormUrl(created.responderUri);
+                    event.setCheckoutFormId(created.formId);
+                    event.setCheckoutSheetId(created.sheetId);
+                } else {
+                    event.setGoogleFormUrl(created.responderUri);
+                    event.setCheckinFormId(created.formId);
+                    event.setCheckinSheetId(created.sheetId);
+                }
+                Event saved = eventRepository.save(event);
+                Map<String, Object> result = buildEvent(saved);
+                result.put("createdFormUrl", created.responderUri);
+                result.put("kind", isCheckout ? "CHECKOUT" : "CHECKIN");
+                result.put("message", "Đã tạo " + (isCheckout ? "Google Form CHECK-OUT" : "Google Form CHECK-IN") + " thành công.");
+                return result;
+            } catch (GoogleFormsApiService.GoogleApiException ex) {
+                throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, ex.getMessage());
+            }
+        }
+    }
+
+    private String resolveGoogleAccessToken(HttpServletRequest request) {
+        String email = SessionAuth.email(request);
+        if (email == null || email.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
+                    "Phiên đăng nhập không hợp lệ. Hãy đăng nhập lại bằng Google.");
+        }
+        try {
+            return googleOAuthAccessTokenService.getValidAccessToken(email);
+        } catch (GoogleOAuthAccessTokenService.TokenUnavailableException ex) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, ex.getMessage());
+        }
+    }
+
+    private ResponseEntity<Map<String, Object>> googleFormError(ResponseStatusException ex) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("success", false);
+        body.put("error", "GOOGLE_FORM_ERROR");
+        body.put("message", ex.getReason() == null ? "Không xử lý được Google Form." : ex.getReason());
+        return ResponseEntity.status(ex.getStatus()).body(body);
+    }
+
+    @PutMapping("/events/{id}/speakers")
+    @Transactional
+    public Map<String, Object> updateEventSpeakers(@PathVariable Long id, @RequestBody Map<String, Object> payload) {
+        Event event = eventRepository.findById(id).orElseThrow(() -> notFound("Không tìm thấy event."));
+        Object raw = payload.get("speakers");
+        String speakers = raw == null ? "" : String.valueOf(raw).trim();
+        event.setSpeakers(speakers.isEmpty() ? null : speakers);
+        return buildEvent(eventRepository.save(event));
+    }
+
+    @PutMapping("/events/{id}/google-form-url")
+    @Transactional
+    public Map<String, Object> updateEventGoogleFormUrl(@PathVariable Long id, @RequestBody Map<String, Object> payload) {
+        Event event = eventRepository.findById(id).orElseThrow(() -> notFound("Không tìm thấy event."));
+        Object raw = payload.get("googleFormUrl");
+        String url = raw == null ? "" : String.valueOf(raw).trim();
+        event.setGoogleFormUrl(normaliseFormUrl(url));
+        return buildEvent(eventRepository.save(event));
+    }
+
+    @PutMapping("/events/{id}/google-form-url-checkout")
+    @Transactional
+    public Map<String, Object> updateEventCheckoutFormUrl(@PathVariable Long id, @RequestBody Map<String, Object> payload) {
+        Event event = eventRepository.findById(id).orElseThrow(() -> notFound("Không tìm thấy event."));
+        Object raw = payload.get("checkoutFormUrl");
+        String url = raw == null ? "" : String.valueOf(raw).trim();
+        event.setCheckoutFormUrl(normaliseFormUrl(url));
+        return buildEvent(eventRepository.save(event));
+    }
+
+    private String normaliseFormUrl(String url) {
+        if (url == null || url.isBlank()) return null;
+        String lower = url.toLowerCase(Locale.ROOT);
+        boolean ok = lower.startsWith("https://docs.google.com/forms/")
+                || lower.startsWith("https://forms.gle/")
+                || lower.startsWith("https://forms.office.com/")
+                || lower.startsWith("http://localhost");
+        if (!ok) {
+            throw badRequest("URL phải là link Google Forms (docs.google.com/forms/ hoặc forms.gle/)");
+        }
+        return url;
+    }
+
     @DeleteMapping("/events/{id}")
     @Transactional
     public Map<String, Object> deleteEvent(@PathVariable Long id) {
@@ -501,8 +732,10 @@ public class AdminDashboardController {
 
     @GetMapping("/proposals")
     public List<Map<String, Object>> proposals() {
+        // Nạp danh sách committee 1 lần (thay cho query lặp lại trong từng proposal).
+        List<User> committees = userRepository.findByRole_NameAndStatus("COMMITTEE", true);
         return eventProposalRepository.findByStatusIn(ACTIVE_PROPOSAL_STATUSES, Sort.by(Sort.Direction.DESC, "createdAt")).stream()
-                .map(this::buildProposal)
+                .map(p -> buildProposal(p, committees))
                 .collect(Collectors.toList());
     }
 
@@ -520,6 +753,9 @@ public class AdminDashboardController {
     public Map<String, Object> updateProposal(@PathVariable Long id, @RequestBody Map<String, Object> payload) {
         EventProposal proposal = eventProposalRepository.findById(id).orElseThrow(() -> notFound("Không tìm thấy proposal."));
         String status = textOrEmpty(proposal.getStatus()).toUpperCase(Locale.ROOT);
+        if ("REJECTED".equals(status)) {
+            throw badRequest("Proposal đã bị từ chối và đã đóng, không thể chỉnh sửa hoặc gửi lại.");
+        }
         if (!"PENDING".equals(status) && !"REVISION".equals(status)) {
             throw badRequest("Chỉ proposal đang PENDING hoặc REVISION mới được chỉnh sửa.");
         }
@@ -532,7 +768,12 @@ public class AdminDashboardController {
     @Transactional
     public Map<String, Object> updateProposalStatus(@PathVariable Long id, @RequestBody Map<String, Object> payload) {
         EventProposal proposal = eventProposalRepository.findById(id).orElseThrow(() -> notFound("Không tìm thấy proposal."));
-        proposal.setStatus(normalizeStatus(requiredString(payload, "status"), ACTIVE_PROPOSAL_STATUSES, "Status proposal không hợp lệ."));
+        String currentStatus = textOrEmpty(proposal.getStatus()).toUpperCase(Locale.ROOT);
+        String nextStatus = normalizeStatus(requiredString(payload, "status"), ACTIVE_PROPOSAL_STATUSES, "Status proposal không hợp lệ.");
+        if ("REJECTED".equals(currentStatus) && !"REJECTED".equals(nextStatus)) {
+            throw badRequest("Proposal đã bị từ chối và đã đóng, không thể gửi lại hoặc đổi trạng thái.");
+        }
+        proposal.setStatus(nextStatus);
         proposal.setNote(textOrNull(stringValue(payload, "note", textOrEmpty(proposal.getNote()))));
         return buildProposal(eventProposalRepository.save(proposal));
     }
@@ -546,7 +787,8 @@ public class AdminDashboardController {
             throw badRequest("Chỉ proposal đã APPROVED mới được publish thành event.");
         }
         LocalDateTime start = localDateTimeValue(payload, "startTime", proposal.getProposedDate());
-        LocalDateTime end = localDateTimeValue(payload, "endTime", start.plusHours(2));
+        LocalDateTime defaultEnd = proposal.getProposedEndDate() != null ? proposal.getProposedEndDate() : start.plusHours(2);
+        LocalDateTime end = localDateTimeValue(payload, "endTime", defaultEnd);
         validateEventWindow(start, end);
         Integer capacity = intValue(payload, "capacity", firstNonNull(proposal.getCapacity(), 100));
         if (capacity == null || capacity <= 0) {
@@ -571,9 +813,15 @@ public class AdminDashboardController {
         publishPayload.putIfAbsent("location", firstNonBlank(proposal.getLocation(), savedEvent.getLocation(), "FPT Campus"));
         savedEvent.setLocation(textOrNull(stringValue(publishPayload, "location", firstNonBlank(savedEvent.getLocation(), proposal.getLocation(), "FPT Campus"))));
         savedEvent.setCapacity(capacity);
+        savedEvent.setEndTime(end);
+        savedEvent.setOrganizer(textOrNull(stringValue(publishPayload, "organizer", textOrEmpty(proposal.getOrganizer()))));
+        savedEvent.setSpeakers(textOrNull(stringValue(publishPayload, "speakers", textOrEmpty(proposal.getSpeakers()))));
+        savedEvent.setSupportStaffNeeded(intValue(publishPayload, "supportStaffNeeded",
+                firstNonNull(proposal.getSupportStaffNeeded(), 0)));
         savedEvent.setStatus("PUBLISHED");
         applyEventMediaAndBudget(savedEvent, publishPayload);
         savedEvent = eventRepository.save(savedEvent);
+        copyQuizToEvent(savedEvent, proposal.getQuizPayload());
         Map<String, Object> result = buildProposal(proposal);
         eventProposalRepository.delete(proposal);
         result.put("removedFromWorkflow", true);
@@ -591,9 +839,54 @@ public class AdminDashboardController {
 
     @GetMapping("/registrations")
     public List<Map<String, Object>> registrations() {
-        return registrationRepository.findByRegistrationDateLessThanEqual(currentDateTime(), Sort.by(Sort.Direction.DESC, "registrationDate")).stream()
-                .map(this::buildRegistration)
+        List<Registration> regs = registrationRepository.findByRegistrationDateLessThanEqual(
+                currentDateTime(), Sort.by(Sort.Direction.DESC, "registrationDate"));
+        // Nạp attendance 1 lần theo danh sách registrationId (thay cho N+1 findByRegistrationId).
+        Map<Long, Attendance> attendanceByReg = new HashMap<>();
+        List<Long> regIds = regs.stream().map(Registration::getId).collect(Collectors.toList());
+        if (!regIds.isEmpty()) {
+            for (Attendance a : attendanceRepository.findByRegistrationIdIn(regIds)) {
+                if (a.getRegistration() != null && a.getRegistration().getId() != null) {
+                    attendanceByReg.put(a.getRegistration().getId(), a);
+                }
+            }
+        }
+        return regs.stream()
+                .map(r -> buildRegistration(r, attendanceByReg.get(r.getId())))
                 .collect(Collectors.toList());
+    }
+
+    @PostMapping("/registrations")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> createRegistration(@RequestBody Map<String, Object> payload) {
+        Event event = eventRepository.findById(longValue(payload, "eventId", null))
+                .orElseThrow(() -> badRequest("Sự kiện không tồn tại."));
+        Student student = upsertStudentFromRegistrationPayload(payload);
+
+        registrationRepository.findByEventIdAndStudentId(event.getId(), student.getId())
+                .ifPresent(existing -> {
+                    throw badRequest("Sinh viên này đã có trong danh sách sự kiện.");
+                });
+
+        String status = normalizeStatus(stringValue(payload, "status", "REGISTERED"), List.of("REGISTERED", "WAITLIST", "CANCELLED"), "Status đăng ký không hợp lệ.");
+        Registration registration = new Registration(
+                currentDateTime(),
+                status,
+                textOrNull(stringValue(payload, "note", "Thêm thủ công bởi admin")),
+                event,
+                student
+        );
+        Registration saved = registrationRepository.save(registration);
+
+        Map<String, Object> result = buildRegistration(saved);
+        result.put("emailStatus", sendRegistrationEmail(saved));
+        LocalDateTime invitationTime = currentDateTime();
+        boolean invitationEmailQueued = invitationScheduler.isInvitationDue(saved, invitationTime);
+        if (invitationEmailQueued) {
+            invitationScheduler.queueInvitationAfterCommit(saved.getId(), invitationTime);
+        }
+        result.put("invitationEmailQueued", invitationEmailQueued);
+        return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 
     @PutMapping("/registrations/{id}/status")
@@ -669,8 +962,10 @@ public class AdminDashboardController {
         stats.put("upcomingEvents", upcomingEvents);
         stats.put("pendingProposals", pendingProposals);
         stats.put("totalRegistrations", registrationRepository.countByRegistrationDateLessThanEqual(asOf));
+        stats.put("waitlistRegistrations", registrationRepository.countByStatus("WAITLIST"));
         stats.put("totalTickets", ticketRepository.countBySentDateLessThanEqual(asOf));
         stats.put("attendanceCount", attendanceRepository.countByCheckinTimeLessThanEqual(asOf));
+        stats.put("totalFeedback", feedbackRepository.count());
         stats.put("averageRating", round(averageRating != null ? averageRating : 0));
         stats.put("sentEmails", sentEmails);
         stats.put("failedEmails", failedEmails);
@@ -700,7 +995,10 @@ public class AdminDashboardController {
         item.put("roleId", user.getRole() != null ? user.getRole().getId() : null);
         item.put("role", user.getRole() != null ? user.getRole().getName() : "");
         item.put("roleDescription", user.getRole() != null ? textOrEmpty(user.getRole().getDescription()) : "");
+        item.put("departmentPosition", firstNonBlank(user.getDepartmentPosition(), defaultDepartmentPosition(user), "STAFF"));
+        item.put("departmentPositionLabel", departmentPositionLabel(firstNonBlank(user.getDepartmentPosition(), defaultDepartmentPosition(user), "STAFF")));
         item.put("major", firstNonBlank(user.getMajor(), student != null ? student.getMajor() : null, "N/A"));
+        item.put("facultyName", AcademicStructure.facultyOf(firstNonBlank(user.getMajor(), student != null ? student.getMajor() : null, "")));
         item.put("studentId", student != null ? student.getId() : null);
         item.put("studentCode", student != null ? textOrEmpty(student.getStudentCode()) : "");
         item.put("semester", firstNonNull(user.getSemester(), student != null ? student.getYear() : null, 0));
@@ -709,9 +1007,16 @@ public class AdminDashboardController {
     }
 
     private List<Map<String, Object>> buildRoles(List<Role> roles) {
+        // Đếm user theo roleId 1 lần (thay cho countByRole_Id lặp mỗi role).
+        Map<Long, Long> usersByRole = new HashMap<>();
+        for (User u : userRepository.findAll()) {
+            if (u.getRole() != null && u.getRole().getId() != null) {
+                usersByRole.merge(u.getRole().getId(), 1L, Long::sum);
+            }
+        }
         return roles.stream()
                 .sorted(Comparator.comparing(Role::getName, Comparator.nullsLast(String::compareToIgnoreCase)))
-                .map(role -> buildRole(role, userRepository.countByRole_Id(role.getId())))
+                .map(role -> buildRole(role, usersByRole.getOrDefault(role.getId(), 0L)))
                 .collect(Collectors.toList());
     }
 
@@ -725,17 +1030,32 @@ public class AdminDashboardController {
     }
 
     private List<Map<String, Object>> buildDepartments(List<Department> departments) {
+        // Nạp 1 lần: toàn bộ user (cho việc tìm manager) + đếm student theo major.
+        List<User> allUsers = userRepository.findAll();
+        Map<String, Long> studentCountByMajor = new HashMap<>();
+        for (Student s : studentRepository.findAll()) {
+            String major = textOrEmpty(s.getMajor());
+            if (!major.isEmpty()) {
+                studentCountByMajor.merge(major, 1L, Long::sum);
+            }
+        }
         return departments.stream()
                 .sorted(Comparator.comparing(Department::getName, Comparator.nullsLast(String::compareToIgnoreCase)))
-                .map(this::buildDepartment)
+                .map(d -> buildDepartment(d, allUsers, studentCountByMajor))
                 .collect(Collectors.toList());
     }
 
     private Map<String, Object> buildDepartment(Department department) {
+        return buildDepartment(department, userRepository.findAll(), null);
+    }
+
+    private Map<String, Object> buildDepartment(Department department,
+                                                List<User> allUsers,
+                                                Map<String, Long> studentCountByMajor) {
         long eventCount = eventRepository.countByDepartmentId(department.getId());
         long proposalCount = eventProposalRepository.countByDepartmentIdAndStatusIn(department.getId(), ACTIVE_PROPOSAL_STATUSES);
-        long studentCount = countStudentsForDepartment(department);
-        User manager = managerForDepartment(department);
+        long studentCount = countStudentsForDepartment(department, studentCountByMajor);
+        User manager = managerForDepartment(department, allUsers);
 
         Map<String, Object> item = new LinkedHashMap<>();
         item.put("id", department.getId());
@@ -762,9 +1082,13 @@ public class AdminDashboardController {
     }
 
     private User managerForDepartment(Department department) {
+        return managerForDepartment(department, userRepository.findAll());
+    }
+
+    private User managerForDepartment(Department department, List<User> allUsers) {
         String departmentName = textOrEmpty(department.getName());
         String facultyName = AcademicStructure.facultyOf(departmentName);
-        return userRepository.findAll().stream()
+        return allUsers.stream()
                 .filter(user -> Boolean.TRUE.equals(user.getStatus()))
                 .filter(user -> user.getRole() != null)
                 .filter(user -> {
@@ -776,29 +1100,42 @@ public class AdminDashboardController {
                     return sameKey(major, departmentName) || sameKey(major, facultyName);
                 })
                 .sorted(Comparator
-                        .comparing((User user) -> "MANAGER".equalsIgnoreCase(user.getRole().getName()) ? 0 : 1)
+                        .comparing((User user) -> "HEAD".equalsIgnoreCase(user.getDepartmentPosition()) ? 0 : 1)
+                        .thenComparing(user -> "MANAGER".equalsIgnoreCase(user.getRole().getName()) ? 0 : 1)
                         .thenComparing(User::getFullName, Comparator.nullsLast(String::compareToIgnoreCase)))
                 .findFirst()
                 .orElse(null);
     }
 
     private long countStudentsForDepartment(Department department) {
+        return countStudentsForDepartment(department, null);
+    }
+
+    /** countByMajor có thể lấy từ map đã nạp sẵn; nếu map null thì query trực tiếp. */
+    private long countStudentsForDepartment(Department department, Map<String, Long> studentCountByMajor) {
         String name = textOrEmpty(department.getName());
         if (AcademicStructure.isFaculty(name)) {
             return AcademicStructure.departmentsForFaculty(name).stream()
-                    .mapToLong(studentRepository::countByMajor)
+                    .mapToLong(major -> countByMajor(major, studentCountByMajor))
                     .sum();
         }
-        long count = studentRepository.countByMajor(name);
+        long count = countByMajor(name, studentCountByMajor);
         if (count > 0) {
             return count;
         }
         String description = textOrEmpty(department.getDescription());
         String prefix = "Bộ phận ";
         if (description.startsWith(prefix)) {
-            return studentRepository.countByMajor(description.substring(prefix.length()).trim());
+            return countByMajor(description.substring(prefix.length()).trim(), studentCountByMajor);
         }
         return 0;
+    }
+
+    private long countByMajor(String major, Map<String, Long> studentCountByMajor) {
+        if (studentCountByMajor != null) {
+            return studentCountByMajor.getOrDefault(major, 0L);
+        }
+        return studentRepository.countByMajor(major);
     }
 
     private Map<String, Object> buildReports() {
@@ -911,25 +1248,28 @@ public class AdminDashboardController {
 
     private Map<String, Object> buildEvent(Event event) {
         LocalDateTime asOf = currentDateTime();
-        boolean eventHasStarted = event.getStartTime() != null && !event.getStartTime().isAfter(asOf);
         List<Registration> registrations = registrationRepository.findByEventId(event.getId()).stream()
                 .filter(registration -> registration.getRegistrationDate() != null && !registration.getRegistrationDate().isAfter(asOf))
                 .collect(Collectors.toList());
+        List<Attendance> attendances = attendanceRepository.findByEventId(event.getId()).stream()
+                .filter(attendance -> attendance.getCheckinTime() != null && !attendance.getCheckinTime().isAfter(asOf))
+                .collect(Collectors.toList());
+        boolean eventHasStarted = event.getStartTime() != null && !event.getStartTime().isAfter(asOf);
         List<Feedback> feedbacks = eventHasStarted
                 ? feedbackRepository.findByEventId(event.getId()).stream()
                         .filter(feedback -> feedback.getCreatedAt() != null && !feedback.getCreatedAt().isAfter(asOf))
                         .collect(Collectors.toList())
                 : List.of();
-        long attended = registrations.stream()
-                .filter(registration -> attendanceRepository.findByRegistrationId(registration.getId())
-                        .map(attendance -> eventHasStarted
-                                && attendance.getCheckinTime() != null
-                                && !attendance.getCheckinTime().isAfter(asOf)
-                                && "ATTENDED".equalsIgnoreCase(attendance.getStatus()))
-                        .orElse(false))
-                .count();
-        long waitlist = registrations.stream()
-                .filter(registration -> "WAITLIST".equalsIgnoreCase(registration.getStatus()))
+        return buildEvent(event, registrations, attendances, feedbacks, asOf);
+    }
+
+    private Map<String, Object> buildEvent(Event event,
+                                           List<Registration> registrations,
+                                           List<Attendance> attendances,
+                                           List<Feedback> feedbacks,
+                                           LocalDateTime asOf) {
+        long attendedCount = attendances.stream()
+                .filter(attendance -> !"ABSENT".equalsIgnoreCase(attendance.getStatus()))
                 .count();
         double averageRating = feedbacks.stream()
                 .map(Feedback::getRating)
@@ -937,6 +1277,26 @@ public class AdminDashboardController {
                 .mapToInt(Integer::intValue)
                 .average()
                 .orElse(0);
+        return buildEvent(event, registrations, attendedCount, feedbacks.size(), averageRating, asOf);
+    }
+
+    private Map<String, Object> buildEvent(Event event,
+                                           List<Registration> registrations,
+                                           long attendedCount,
+                                           long feedbackCount,
+                                           double feedbackAvg,
+                                           LocalDateTime asOf) {
+        boolean eventHasStarted = event.getStartTime() != null && !event.getStartTime().isAfter(asOf);
+        long attended = eventHasStarted ? attendedCount : 0;
+        long waitlist = registrations.stream()
+                .filter(registration -> "WAITLIST".equalsIgnoreCase(registration.getStatus()))
+                .count();
+        // Chỉ đếm đăng ký đang hiệu lực (REGISTERED) để KHỚP với Dashboard điểm danh,
+        // không tính waitlist/cancelled → tránh lệch số gây hiểu nhầm.
+        long registeredCount = registrations.stream()
+                .filter(registration -> "REGISTERED".equalsIgnoreCase(registration.getStatus()))
+                .count();
+        double averageRating = feedbackAvg;
 
         Map<String, Object> item = new LinkedHashMap<>();
         item.put("id", event.getId());
@@ -954,15 +1314,27 @@ public class AdminDashboardController {
         item.put("departmentId", event.getDepartment() != null ? event.getDepartment().getId() : null);
         item.put("departmentName", event.getDepartment() != null ? textOrEmpty(event.getDepartment().getName()) : "");
         item.put("facultyName", event.getDepartment() != null ? AcademicStructure.facultyOf(event.getDepartment().getName()) : "Khác");
-        item.put("registrationCount", registrations.size());
+        item.put("registrationCount", registeredCount);
         item.put("waitlistCount", waitlist);
         item.put("attendanceCount", attended);
-        item.put("feedbackCount", feedbacks.size());
+        item.put("feedbackCount", feedbackCount);
         item.put("averageRating", round(averageRating));
         item.put("fillRate", event.getCapacity() != null && event.getCapacity() > 0
                 ? round(registrations.size() * 100.0 / event.getCapacity())
                 : 0);
         item.put("featured", event.getCapacity() != null && event.getCapacity() >= 200);
+        item.put("googleFormUrl", textOrEmpty(event.getGoogleFormUrl()));
+        item.put("hasGoogleForm", event.getGoogleFormUrl() != null && !event.getGoogleFormUrl().isBlank());
+        item.put("checkinFormId", textOrEmpty(event.getCheckinFormId()));
+        item.put("checkinSheetId", textOrEmpty(event.getCheckinSheetId()));
+        item.put("checkoutFormUrl", textOrEmpty(event.getCheckoutFormUrl()));
+        item.put("hasCheckoutForm", event.getCheckoutFormUrl() != null && !event.getCheckoutFormUrl().isBlank());
+        item.put("checkoutFormId", textOrEmpty(event.getCheckoutFormId()));
+        item.put("checkoutSheetId", textOrEmpty(event.getCheckoutSheetId()));
+        item.put("lastSheetSyncAt", event.getLastSheetSyncAt());
+        item.put("speakers", textOrEmpty(event.getSpeakers()));
+        item.put("organizer", textOrEmpty(event.getOrganizer()));
+        item.put("supportStaffNeeded", firstNonNull(event.getSupportStaffNeeded(), 0));
         return item;
     }
 
@@ -986,6 +1358,10 @@ public class AdminDashboardController {
     }
 
     private Map<String, Object> buildProposal(EventProposal proposal) {
+        return buildProposal(proposal, userRepository.findByRole_NameAndStatus("COMMITTEE", true));
+    }
+
+    private Map<String, Object> buildProposal(EventProposal proposal, List<User> committees) {
         Map<String, Object> item = new LinkedHashMap<>();
         item.put("id", proposal.getId());
         item.put("title", textOrEmpty(proposal.getTitle()));
@@ -996,20 +1372,26 @@ public class AdminDashboardController {
         item.put("imageUrls", imageListForResponse(proposal.getImageUrl(), proposal.getImageUrls()));
         item.put("budget", firstNonNull(proposal.getBudget(), BigDecimal.ZERO));
         item.put("proposedDate", proposal.getProposedDate());
+        item.put("proposedEndDate", proposal.getProposedEndDate());
+        item.put("organizer", textOrEmpty(proposal.getOrganizer()));
+        item.put("speakers", textOrEmpty(proposal.getSpeakers()));
+        item.put("supportStaffNeeded", firstNonNull(proposal.getSupportStaffNeeded(), 0));
         item.put("status", textOrEmpty(proposal.getStatus()));
         item.put("note", textOrEmpty(proposal.getNote()));
         item.put("createdAt", proposal.getCreatedAt());
         item.put("departmentId", proposal.getDepartment() != null ? proposal.getDepartment().getId() : null);
         item.put("departmentName", proposal.getDepartment() != null ? textOrEmpty(proposal.getDepartment().getName()) : "");
         item.put("facultyName", proposal.getDepartment() != null ? AcademicStructure.facultyOf(proposal.getDepartment().getName()) : "Khác");
-        item.put("committeeName", committeeNameForProposal(proposal));
+        item.put("committeeName", committeeNameForProposal(proposal, committees));
         item.put("committeeStatus", "ASSIGNED");
+        List<Map<String, Object>> quizQuestions = parseQuizPayload(proposal.getQuizPayload());
+        item.put("quizQuestions", quizQuestions);
+        item.put("quizQuestionCount", quizQuestions.size());
         return item;
     }
 
-    private String committeeNameForProposal(EventProposal proposal) {
-        List<User> committees = userRepository.findByRole_NameAndStatus("COMMITTEE", true);
-        if (committees.isEmpty()) {
+    private String committeeNameForProposal(EventProposal proposal, List<User> committees) {
+        if (committees == null || committees.isEmpty()) {
             return "Hội đồng duyệt chung";
         }
         long seed = proposal.getId() != null ? proposal.getId() : 0;
@@ -1018,11 +1400,16 @@ public class AdminDashboardController {
     }
 
     private Map<String, Object> buildRegistration(Registration registration) {
+        return buildRegistration(registration,
+                attendanceRepository.findByRegistrationId(registration.getId()).orElse(null));
+    }
+
+    private Map<String, Object> buildRegistration(Registration registration, Attendance attendanceRecord) {
         Student student = registration.getStudent();
         User user = student != null ? student.getUser() : null;
         Event event = registration.getEvent();
         LocalDateTime asOf = currentDateTime();
-        Map<String, Object> attendance = attendanceRepository.findByRegistrationId(registration.getId())
+        Map<String, Object> attendance = java.util.Optional.ofNullable(attendanceRecord)
                 .filter(record -> record.getCheckinTime() != null && !record.getCheckinTime().isAfter(asOf))
                 .map(record -> {
                     Map<String, Object> item = new LinkedHashMap<>();
@@ -1083,6 +1470,8 @@ public class AdminDashboardController {
             throw badRequest("Capacity phải lớn hơn 0.");
         }
         event.setStatus(normalizeStatus(requiredString(payload, "status"), EVENT_STATUSES, "Status event không hợp lệ."));
+        event.setSpeakers(textOrNull(stringValue(payload, "speakers", textOrEmpty(event.getSpeakers()))));
+        event.setOrganizer(textOrNull(stringValue(payload, "organizer", textOrEmpty(event.getOrganizer()))));
         event.setDepartment(resolveDepartment(longValue(payload, "departmentId", event.getDepartment() != null ? event.getDepartment().getId() : null)));
         if (creating) {
             event.setCreatedAt(currentDateTime());
@@ -1105,10 +1494,24 @@ public class AdminDashboardController {
         proposal.setDescription(textOrNull(stringValue(payload, "description", "")));
         proposal.setLocation(textOrNull(stringValue(payload, "location", textOrEmpty(proposal.getLocation()))));
         proposal.setProposedDate(localDateTimeValue(payload, "proposedDate", creating ? currentDateTime().plusDays(14) : proposal.getProposedDate()));
+        // Khung giờ kết thúc: nếu không nhập, mặc định +2 giờ so với giờ bắt đầu.
+        LocalDateTime proposedEnd = localDateTimeValue(payload, "proposedEndDate",
+                proposal.getProposedEndDate() != null ? proposal.getProposedEndDate() : proposal.getProposedDate().plusHours(2));
+        if (proposedEnd != null && !proposedEnd.isAfter(proposal.getProposedDate())) {
+            throw badRequest("Giờ kết thúc phải sau giờ bắt đầu.");
+        }
+        proposal.setProposedEndDate(proposedEnd);
         proposal.setCapacity(intValue(payload, "capacity", firstNonNull(proposal.getCapacity(), 100)));
         if (proposal.getCapacity() == null || proposal.getCapacity() <= 0) {
             throw badRequest("Sức chứa phải lớn hơn 0.");
         }
+        proposal.setOrganizer(textOrNull(stringValue(payload, "organizer", textOrEmpty(proposal.getOrganizer()))));
+        proposal.setSpeakers(textOrNull(stringValue(payload, "speakers", textOrEmpty(proposal.getSpeakers()))));
+        Integer supportStaff = intValue(payload, "supportStaffNeeded", firstNonNull(proposal.getSupportStaffNeeded(), 0));
+        if (supportStaff != null && supportStaff < 0) {
+            throw badRequest("Số người hỗ trợ không hợp lệ.");
+        }
+        proposal.setSupportStaffNeeded(supportStaff);
         List<String> images = imageListFromPayload(payload, textOrEmpty(proposal.getImageUrl()), proposal.getImageUrls());
         proposal.setImageUrl(images.isEmpty() ? null : images.get(0));
         proposal.setImageUrls(joinImageUrls(images));
@@ -1119,10 +1522,120 @@ public class AdminDashboardController {
         proposal.setBudget(budget);
         proposal.setNote(textOrNull(stringValue(payload, "note", textOrEmpty(proposal.getNote()))));
         proposal.setDepartment(resolveDepartment(longValue(payload, "departmentId", proposal.getDepartment() != null ? proposal.getDepartment().getId() : null)));
+        applyQuizPayload(proposal, payload);
         if (creating) {
             proposal.setStatus("PENDING");
             proposal.setCreatedAt(currentDateTime());
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void applyQuizPayload(EventProposal proposal, Map<String, Object> payload) {
+        Object raw = payload.get("quizQuestions");
+        if (raw == null) {
+            return;
+        }
+        if (raw instanceof String s) {
+            String trimmed = s.trim();
+            proposal.setQuizPayload(trimmed.isEmpty() ? null : trimmed);
+            return;
+        }
+        if (!(raw instanceof List)) {
+            return;
+        }
+        List<Map<String, Object>> list = (List<Map<String, Object>>) raw;
+        List<Map<String, Object>> sanitized = new ArrayList<>();
+        for (Map<String, Object> item : list) {
+            if (item == null) {
+                continue;
+            }
+            String text = textOrEmpty(String.valueOf(item.getOrDefault("questionText", ""))).trim();
+            if (text.isEmpty()) {
+                continue;
+            }
+            Map<String, Object> clean = new LinkedHashMap<>();
+            clean.put("questionText", text);
+            String type = String.valueOf(item.getOrDefault("questionType", "MULTIPLE_CHOICE")).trim();
+            clean.put("questionType", type.isEmpty() ? "MULTIPLE_CHOICE" : type.toUpperCase(Locale.ROOT));
+            clean.put("optionA", textOrEmpty(String.valueOf(item.getOrDefault("optionA", ""))));
+            clean.put("optionB", textOrEmpty(String.valueOf(item.getOrDefault("optionB", ""))));
+            clean.put("optionC", textOrEmpty(String.valueOf(item.getOrDefault("optionC", ""))));
+            clean.put("optionD", textOrEmpty(String.valueOf(item.getOrDefault("optionD", ""))));
+            clean.put("correctAnswer", textOrEmpty(String.valueOf(item.getOrDefault("correctAnswer", "A"))).toUpperCase(Locale.ROOT));
+            Object points = item.getOrDefault("points", 1);
+            int p = 1;
+            try { p = points instanceof Number n ? n.intValue() : Integer.parseInt(String.valueOf(points)); } catch (Exception ignored) {}
+            clean.put("points", Math.max(1, p));
+            sanitized.add(clean);
+        }
+        if (sanitized.isEmpty()) {
+            proposal.setQuizPayload(null);
+            return;
+        }
+        try {
+            proposal.setQuizPayload(QUIZ_MAPPER.writeValueAsString(sanitized));
+        } catch (Exception ex) {
+            throw badRequest("Không thể lưu danh sách câu hỏi quiz: " + ex.getMessage());
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Map<String, Object>> parseQuizPayload(String payload) {
+        if (payload == null || payload.isBlank()) {
+            return List.of();
+        }
+        try {
+            return QUIZ_MAPPER.readValue(payload, new TypeReference<List<Map<String, Object>>>() {});
+        } catch (Exception ex) {
+            return List.of();
+        }
+    }
+
+    private void copyQuizToEvent(Event event, String quizPayload) {
+        List<Map<String, Object>> questions = parseQuizPayload(quizPayload);
+        if (questions.isEmpty()) {
+            return;
+        }
+        if (quizQuestionRepository.countByEventId(event.getId()) > 0) {
+            return;
+        }
+        for (Map<String, Object> q : questions) {
+            QuizQuestion question = new QuizQuestion();
+            question.setEvent(event);
+            question.setQuestionText(String.valueOf(q.getOrDefault("questionText", "")));
+            question.setQuestionType(String.valueOf(q.getOrDefault("questionType", "MULTIPLE_CHOICE")).toUpperCase(Locale.ROOT));
+            question.setOptionA(toNullable(q.get("optionA")));
+            question.setOptionB(toNullable(q.get("optionB")));
+            question.setOptionC(toNullable(q.get("optionC")));
+            question.setOptionD(toNullable(q.get("optionD")));
+            question.setCorrectAnswer(toNullable(q.get("correctAnswer")));
+            Object points = q.getOrDefault("points", 1);
+            int p = 1;
+            try { p = points instanceof Number n ? n.intValue() : Integer.parseInt(String.valueOf(points)); } catch (Exception ignored) {}
+            question.setPoints(Math.max(1, p));
+            quizQuestionRepository.save(question);
+        }
+    }
+
+    private String toNullable(Object value) {
+        if (value == null) return null;
+        String s = String.valueOf(value).trim();
+        return s.isEmpty() ? null : s;
+    }
+
+    /** Đọc quiz của event → DTO để truyền cho Google Forms API (thêm vào form check-in). */
+    private List<GoogleFormsApiService.QuizItem> loadQuizItems(Long eventId) {
+        List<QuizQuestion> questions = quizQuestionRepository.findByEventIdOrderByIdAsc(eventId);
+        List<GoogleFormsApiService.QuizItem> items = new ArrayList<>();
+        for (QuizQuestion q : questions) {
+            if (q.getQuestionText() == null || q.getQuestionText().isBlank()) continue;
+            List<String> options = new ArrayList<>();
+            for (String opt : new String[]{q.getOptionA(), q.getOptionB(), q.getOptionC(), q.getOptionD()}) {
+                if (opt != null && !opt.isBlank()) options.add(opt.trim());
+            }
+            items.add(new GoogleFormsApiService.QuizItem(q.getQuestionText().trim(), options));
+        }
+        return items;
     }
 
     private int compareEventsForAdmin(Event left, Event right) {
@@ -1165,10 +1678,7 @@ public class AdminDashboardController {
         if (event.getEndTime() != null && !event.getEndTime().isAfter(asOf)) {
             return "COMPLETED";
         }
-        if ("COMPLETED".equals(status)) {
-            return "PUBLISHED";
-        }
-        return status;
+        return "PUBLISHED";
     }
 
     private LocalDateTime currentDateTime() {
@@ -1189,6 +1699,29 @@ public class AdminDashboardController {
         user.setMajor(textOrNull(stringValue(payload, "major", "")));
         user.setSemester(intValue(payload, "semester", null));
         user.setTotalPoints(intValue(payload, "totalPoints", creating ? 0 : firstNonNull(user.getTotalPoints(), 0)));
+        String position = stringValue(payload, "departmentPosition", creating ? defaultDepartmentPosition(user, role) : firstNonBlank(user.getDepartmentPosition(), defaultDepartmentPosition(user, role), "STAFF"));
+        user.setDepartmentPosition(normalizeDepartmentPosition(position));
+    }
+
+    private String defaultDepartmentPosition(User user) {
+        return defaultDepartmentPosition(user, user.getRole());
+    }
+
+    private String defaultDepartmentPosition(User user, Role role) {
+        String roleName = role == null ? "" : textOrEmpty(role.getName()).toUpperCase(Locale.ROOT);
+        return "MANAGER".equals(roleName) ? "HEAD" : "STAFF";
+    }
+
+    private String normalizeDepartmentPosition(String value) {
+        String normalized = textOrEmpty(value).toUpperCase(Locale.ROOT);
+        if ("HEAD".equals(normalized) || "TRUONG_KHOA".equals(normalized) || "TRUONG_BO_MON".equals(normalized)) {
+            return "HEAD";
+        }
+        return "STAFF";
+    }
+
+    private String departmentPositionLabel(String value) {
+        return "HEAD".equalsIgnoreCase(value) ? "Trưởng khoa/Bộ môn" : "Nhân sự khoa/Bộ môn";
     }
 
     private void upsertStudentForUser(User user, Map<String, Object> payload) {
@@ -1213,6 +1746,95 @@ public class AdminDashboardController {
         student.setYear(firstNonNull(user.getSemester(), intValue(payload, "semester", 1)));
         student.setUser(user);
         studentRepository.save(student);
+    }
+
+    private Student upsertStudentFromRegistrationPayload(Map<String, Object> payload) {
+        String email = requiredString(payload, "email").toLowerCase(Locale.ROOT);
+        String fullName = requiredString(payload, "fullName");
+        String studentCode = requiredString(payload, "studentCode").trim().toUpperCase(Locale.ROOT);
+        String major = requiredString(payload, "major");
+        Integer semester = intValue(payload, "semester", 1);
+
+        Role studentRole = roleRepository.findByName("STUDENT");
+        if (studentRole == null) {
+            throw badRequest("Chưa cấu hình role STUDENT.");
+        }
+
+        Student student = studentRepository.findByStudentCode(studentCode).orElse(null);
+        User user = userRepository.findByEmail(email).orElse(null);
+        if (student != null && user != null && !Objects.equals(student.getUser().getId(), user.getId())) {
+            throw badRequest("MSSV và email đang thuộc hai tài khoản khác nhau.");
+        }
+
+        if (student != null) {
+            user = student.getUser();
+        }
+        if (user == null) {
+            user = new User();
+            user.setEmail(email);
+            user.setPassword(passwordEncoder.encode("12345678"));
+            user.setCreatedAt(currentDateTime());
+            user.setStatus(true);
+        }
+
+        user.setFullName(fullName);
+        user.setRole(studentRole);
+        user.setMajor(major);
+        user.setSemester(semester);
+        user.setTotalPoints(firstNonNull(user.getTotalPoints(), 0));
+        user.setDepartmentPosition("STAFF");
+        User savedUser = userRepository.save(user);
+
+        if (student == null) {
+            student = studentRepository.findByUserId(savedUser.getId()).orElse(new Student());
+        }
+        student.setStudentCode(studentCode);
+        student.setMajor(major);
+        student.setYear(semester);
+        student.setUser(savedUser);
+        return studentRepository.save(student);
+    }
+
+    private String sendRegistrationEmail(Registration registration) {
+        Student student = registration.getStudent();
+        User user = student != null ? student.getUser() : null;
+        Event event = registration.getEvent();
+        String toEmail = user != null ? textOrEmpty(user.getEmail()) : "";
+        if (toEmail.isBlank() || event == null) {
+            return "SKIPPED";
+        }
+
+        String subject = "AEMS - Xác nhận tham dự " + textOrEmpty(event.getTitle());
+        String content = "Xin chào " + textOrEmpty(user.getFullName()) + ",\n\n"
+                + "Bạn đã được thêm vào danh sách tham dự sự kiện: " + textOrEmpty(event.getTitle()) + ".\n"
+                + "Thời gian: " + (event.getStartTime() != null ? event.getStartTime().format(DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy")) : "Sẽ thông báo") + "\n"
+                + "Địa điểm: " + firstNonBlank(event.getLocation(), "FPT Campus", "FPT Campus") + "\n"
+                + "Trạng thái đăng ký: " + textOrEmpty(registration.getStatus()) + "\n\n"
+                + "Vui lòng kiểm tra thông tin và có mặt đúng giờ để check-in.";
+
+        Map<String, Object> logPayload = new LinkedHashMap<>();
+        logPayload.put("toEmail", toEmail);
+        logPayload.put("subject", subject);
+        logPayload.put("content", content);
+        logPayload.put("sentAt", currentDateTime().toString());
+        logPayload.put("userId", user.getId());
+        logPayload.put("eventId", event.getId());
+        logPayload.put("registrationId", registration.getId());
+
+        try {
+            emailService.sendPlainEmail(toEmail, subject, content);
+            logPayload.put("status", "SENT");
+            EmailLog emailLog = new EmailLog();
+            applyEmailPayload(emailLog, logPayload, true);
+            emailLogRepository.save(emailLog);
+            return "SENT";
+        } catch (Exception exception) {
+            logPayload.put("status", "FAILED");
+            EmailLog emailLog = new EmailLog();
+            applyEmailPayload(emailLog, logPayload, true);
+            emailLogRepository.save(emailLog);
+            return "FAILED";
+        }
     }
 
     private void applyEmailPayload(EmailLog emailLog, Map<String, Object> payload, boolean creating) {
