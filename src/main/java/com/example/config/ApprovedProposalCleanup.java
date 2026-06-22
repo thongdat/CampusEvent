@@ -137,7 +137,7 @@ public class ApprovedProposalCleanup implements ApplicationRunner {
         return null;
     }
 }
-```java
+
     /*
      * Ghi chú:
      * - Class ApprovedProposalCleanup dùng để xử lý các đề xuất sự kiện đã được duyệt
@@ -151,4 +151,4 @@ public class ApprovedProposalCleanup implements ApplicationRunner {
      * - Các hàm phụ như parsePoints(), quizNullable(), firstNonBlank() giúp xử lý dữ liệu
      *   an toàn, tránh lỗi khi dữ liệu bị null, rỗng hoặc sai định dạng.
      */
-```
+
