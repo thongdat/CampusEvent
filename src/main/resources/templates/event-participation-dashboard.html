@@ -17,14 +17,16 @@
             <div>
                 <span class="aems-eyebrow">AEMS · Tham dự &amp; điểm tham gia</span>
                 <h1 class="aems-header__title">Dashboard tổng quan event</h1>
-                <p class="aems-header__sub">Theo dõi check-in, mid-verify, checkout, quiz và rating từ một nơi duy nhất.</p>
+                <p class="aems-header__sub">Theo dõi check-in, checkout, quiz và rating từ một nơi duy nhất.</p>
             </div>
         </div>
         <div class="aems-flex" th:if="${!eventEnded}">
+            <a class="aems-btn" href="/api/aems-toolkit.html">← Về trang chính</a>
             <a class="aems-btn" th:href="@{'/department/attendance/events/' + ${eventId} + '/qr'}">QR check-in</a>
             <a class="aems-btn" th:href="@{'/department/quiz/events/' + ${eventId}}">Quản lý quiz</a>
         </div>
         <div class="aems-flex" th:if="${eventEnded}">
+            <a class="aems-btn" href="/api/aems-toolkit.html">← Về trang chính</a>
             <a class="aems-btn aems-btn--primary" th:href="@{'/department/feedback/events/' + ${eventId}}">Feedback</a>
         </div>
     </header>
@@ -44,7 +46,6 @@
     <section class="aems-grid" style="margin-bottom: 1.5rem;">
         <div class="aems-metric"><p class="aems-metric__label">Đăng ký</p><p class="aems-metric__value" th:text="${stats.totalRegisteredStudents ?: 0}">0</p><p class="aems-metric__hint">Tổng sinh viên đã đăng ký</p></div>
         <div class="aems-metric"><p class="aems-metric__label">Check-in</p><p class="aems-metric__value" th:text="${stats.checkedInStudents ?: 0}">0</p><p class="aems-metric__hint">Đã quét QR đầu buổi</p></div>
-        <div class="aems-metric"><p class="aems-metric__label">Mid-verify</p><p class="aems-metric__value" th:text="${stats.midVerifiedStudents ?: 0}">0</p><p class="aems-metric__hint">Còn ở giữa buổi</p></div>
         <div class="aems-metric"><p class="aems-metric__label">Checkout</p><p class="aems-metric__value" th:text="${stats.checkedOutStudents ?: 0}">0</p><p class="aems-metric__hint">Đã hoàn tất ra về</p></div>
         <div class="aems-metric"><p class="aems-metric__label">Completed</p><p class="aems-metric__value" th:text="${stats.completedStudents ?: 0}">0</p><p class="aems-metric__hint">Quiz + feedback đầy đủ</p></div>
         <div class="aems-metric"><p class="aems-metric__label">Vắng</p><p class="aems-metric__value" style="color:#b91c1c;" th:text="${stats.absentStudents ?: 0}">0</p><p class="aems-metric__hint">Đăng ký nhưng không check-in</p></div>

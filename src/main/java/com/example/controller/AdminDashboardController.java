@@ -607,6 +607,44 @@ public class AdminDashboardController {
         }
     }
 
+    /**
+     * Mở/ĐÓNG Google Form (ngừng nhận phản hồi).
+     * Dùng cho phiên chiếu QR 30 giây: mở form khi bắt đầu chiếu, đóng form khi hết giờ.
+     * body: { kind: 'in'|'out', accepting: true|false }
+     * Chỉ áp dụng cho form do hệ thống tự tạo (có checkinFormId/checkoutFormId).
+     */
+    @PostMapping("/events/{id}/google-form/accepting")
+    public ResponseEntity<Map<String, Object>> setGoogleFormAccepting(
+            @PathVariable Long id,
+            @RequestBody(required = false) Map<String, Object> payload,
+            HttpServletRequest request) {
+        String kind = payload == null ? "in" : (payload.get("kind") == null ? "in" : String.valueOf(payload.get("kind")).trim().toLowerCase());
+        boolean accepting = payload != null && Boolean.parseBoolean(String.valueOf(payload.get("accepting")));
+        try {
+            Event event = eventRepository.findById(id)
+                    .orElseThrow(() -> notFound("Không tìm thấy event."));
+            String formId = "out".equals(kind) ? event.getCheckoutFormId() : event.getCheckinFormId();
+            Map<String, Object> res = new LinkedHashMap<>();
+            if (formId == null || formId.isBlank()) {
+                res.put("success", false);
+                res.put("supported", false);
+                res.put("message", "Form này không do hệ thống tạo nên không thể đóng/mở tự động.");
+                return ResponseEntity.ok(res);
+            }
+            String accessToken = resolveGoogleAccessToken(request);
+            googleFormsApiService.setAcceptingResponses(formId, accessToken, accepting);
+            res.put("success", true);
+            res.put("supported", true);
+            res.put("accepting", accepting);
+            res.put("message", accepting ? "Đã mở form nhận phản hồi." : "Đã đóng form (ngừng nhận phản hồi).");
+            return ResponseEntity.ok(res);
+        } catch (GoogleFormsApiService.GoogleApiException ex) {
+            return googleFormError(new ResponseStatusException(HttpStatus.BAD_GATEWAY, ex.getMessage()));
+        } catch (ResponseStatusException ex) {
+            return googleFormError(ex);
+        }
+    }
+
     private Map<String, Object> autoCreateGoogleFormInternal(
             Long id, boolean isCheckout, HttpServletRequest request) {
         String lockKey = id + (isCheckout ? "|out" : "|in");

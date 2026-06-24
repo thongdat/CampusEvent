@@ -72,10 +72,41 @@
                         Câu khó nhất: <strong th:text="${ai.quizAnalysis.hardestQuestion.question}">Question</strong>
                         · đúng <strong th:text="${ai.quizAnalysis.hardestQuestion.correctRate} + '%'">0%</strong>
                     </p>
+
+                    <!-- Kết luận: sinh viên có hiểu bài không + bổ sung cho sự kiện sau -->
+                    <div th:if="${ai.quizAnalysis.comprehension != null and ai.quizAnalysis.comprehension.available}"
+                         th:with="cmp=${ai.quizAnalysis.comprehension}"
+                         th:style="${(cmp.tone == 'good') ? 'padding:.85rem 1rem;border-radius:12px;background:#dcfce7;border:1px solid #86efac;' : ((cmp.tone == 'warn') ? 'padding:.85rem 1rem;border-radius:12px;background:#fef9c3;border:1px solid #fde047;' : 'padding:.85rem 1rem;border-radius:12px;background:#fee2e2;border:1px solid #fca5a5;')}">
+                        <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.4rem;">
+                            <span style="font-size:.78rem;font-weight:800;color:#334155;">🎯 Kết luận: Sinh viên có hiểu bài không?</span>
+                            <span th:text="${cmp.level}"
+                                  th:style="${(cmp.tone == 'good') ? 'padding:.15rem .6rem;border-radius:999px;font-size:.72rem;font-weight:800;background:#16a34a;color:#fff;' : ((cmp.tone == 'warn') ? 'padding:.15rem .6rem;border-radius:999px;font-size:.72rem;font-weight:800;background:#ca8a04;color:#fff;' : 'padding:.15rem .6rem;border-radius:999px;font-size:.72rem;font-weight:800;background:#dc2626;color:#fff;')}">Mức</span>
+                        </div>
+                        <p style="margin:0 0 .5rem;font-size:.83rem;line-height:1.55;color:#1f2937;" th:text="${cmp.verdict}"></p>
+
+                        <div th:if="${not #lists.isEmpty(cmp.weakQuestions)}" style="margin-bottom:.5rem;">
+                            <p style="margin:0 0 .25rem;font-size:.74rem;font-weight:800;color:#b91c1c;">Nội dung sinh viên còn yếu</p>
+                            <ul style="margin:0;padding-left:1.1rem;display:grid;gap:.25rem;font-size:.8rem;color:#334155;line-height:1.45;">
+                                <li th:each="w : ${cmp.weakQuestions}">
+                                    <span th:text="${w.question}">Câu hỏi</span> · đúng <strong th:text="${w.correctRate} + '%'">0%</strong>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div th:if="${not #lists.isEmpty(cmp.followUps)}">
+                            <p style="margin:0 0 .25rem;font-size:.74rem;font-weight:800;color:#334155;">📌 Bổ sung cho các sự kiện tiếp theo</p>
+                            <ul style="margin:0;padding-left:1.1rem;display:grid;gap:.25rem;font-size:.8rem;color:#334155;line-height:1.45;">
+                                <li th:each="f : ${cmp.followUps}" th:text="${f}"></li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
-                <div th:unless="${ai.quizAvailable}" style="padding:1rem 1.15rem;border:1px dashed #93c5fd;border-radius:14px;background:#eff6ff;color:#475569;font-size:.85rem;">
-                    <strong style="color:#1d4ed8;">Chưa có kết quả quiz để phân tích.</strong>
-                    Hãy đồng bộ Google Checkout Form hoặc yêu cầu sinh viên nộp quiz trong hệ thống.
+                <div th:unless="${ai.quizAvailable}" style="display:flex;gap:.6rem;align-items:flex-start;padding:.85rem 1.05rem;border:1px solid #e2e8f0;border-radius:14px;background:#f8fafc;color:#64748b;font-size:.83rem;line-height:1.5;">
+                    <span style="font-size:1rem;">ℹ️</span>
+                    <span>
+                        <strong style="color:#334155;">Sự kiện này chưa có lượt nộp quiz.</strong>
+                        Phần phân tích quiz sẽ tự hiển thị khi sinh viên hoàn tất quiz check-out hoặc sau khi đồng bộ Google Checkout Form.
+                    </span>
                 </div>
 
                 <!-- Cảm xúc -->
@@ -122,14 +153,72 @@
             <span class="aems-badge aems-badge--fpt" th:text="${#lists.size(stats.comments)} + ' bình luận'">0</span>
         </div>
         <div class="aems-card__body" style="display: grid; gap: .85rem;">
-            <div th:each="c : ${stats.comments}" style="padding: .85rem 1rem; background: var(--aems-fpt-wash); border-radius: 12px; border-left: 4px solid var(--aems-fpt);">
-                <p style="margin: 0; color: var(--aems-ink); line-height: 1.5;" th:text="${c}"></p>
+            <div id="commentList" data-page-size="5" style="display: grid; gap: .85rem;">
+                <div th:each="c : ${stats.comments}" class="comment-item" style="padding: .85rem 1rem; background: var(--aems-fpt-wash); border-radius: 12px; border-left: 4px solid var(--aems-fpt);">
+                    <p style="margin: 0; color: var(--aems-ink); line-height: 1.5;" th:text="${c}"></p>
+                </div>
             </div>
             <p th:if="${#lists.isEmpty(stats.comments)}" style="margin: 0; text-align: center; padding: 2rem; color: var(--aems-ink-muted);">
                 Chưa có bình luận nào.
             </p>
+            <div id="commentPagination" style="display: none; align-items: center; justify-content: space-between; gap: .75rem; flex-wrap: wrap; padding-top: .35rem;">
+                <p id="commentRange" style="margin: 0; font-size: .78rem; color: var(--aems-ink-muted);"></p>
+                <div id="commentPages" style="display: flex; align-items: center; gap: .4rem; flex-wrap: wrap;"></div>
+            </div>
         </div>
     </section>
 </main>
+<script>
+    (function () {
+        var list = document.getElementById('commentList');
+        if (!list) return;
+        var items = Array.prototype.slice.call(list.querySelectorAll('.comment-item'));
+        var pageSize = parseInt(list.getAttribute('data-page-size'), 10) || 5;
+        var pagination = document.getElementById('commentPagination');
+        var pagesBox = document.getElementById('commentPages');
+        var rangeLabel = document.getElementById('commentRange');
+        if (items.length <= pageSize) return;
+
+        var totalPages = Math.ceil(items.length / pageSize);
+        var current = 1;
+
+        function btn(label, page, opts) {
+            opts = opts || {};
+            var b = document.createElement('button');
+            b.type = 'button';
+            b.textContent = label;
+            b.disabled = !!opts.disabled;
+            var active = !!opts.active;
+            b.style.cssText = 'min-width:34px;height:34px;padding:0 .6rem;border-radius:9px;font-weight:700;font-size:.82rem;cursor:pointer;'
+                + 'border:1px solid ' + (active ? 'var(--aems-fpt)' : '#e2e8f0') + ';'
+                + 'background:' + (active ? 'var(--aems-fpt)' : '#fff') + ';'
+                + 'color:' + (active ? '#fff' : 'var(--aems-ink)') + ';'
+                + (opts.disabled ? 'opacity:.45;cursor:not-allowed;' : '');
+            if (!opts.disabled && !active) {
+                b.addEventListener('click', function () { render(page); });
+            }
+            return b;
+        }
+
+        function render(page) {
+            current = Math.min(Math.max(1, page), totalPages);
+            var start = (current - 1) * pageSize;
+            var end = start + pageSize;
+            items.forEach(function (el, i) {
+                el.style.display = (i >= start && i < end) ? '' : 'none';
+            });
+            pagesBox.innerHTML = '';
+            pagesBox.appendChild(btn('Trước', current - 1, { disabled: current === 1 }));
+            for (var p = 1; p <= totalPages; p++) {
+                pagesBox.appendChild(btn(String(p), p, { active: p === current }));
+            }
+            pagesBox.appendChild(btn('Sau', current + 1, { disabled: current === totalPages }));
+            rangeLabel.textContent = 'Hiển thị ' + (start + 1) + '-' + Math.min(end, items.length) + ' trong ' + items.length + ' bình luận';
+        }
+
+        pagination.style.display = 'flex';
+        render(1);
+    })();
+</script>
 </body>
 </html>

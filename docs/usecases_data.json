@@ -1,0 +1,85 @@
+{
+  "meta": {
+    "title": "AEMS / CampusEvent – Phân công Use Case & Tiến độ 10 tuần",
+    "project": "Academic Event Management System (Spring Boot MVC, JPA)",
+    "group": "SWR301_SE20A05_Group1",
+    "note": "Use case được rà soát lại theo bộ Test Case của dự án: bỏ phần không có/không kiểm thử, gộp các thao tác CRUD, gán đúng người phụ trách như trong kế hoạch kiểm thử."
+  },
+  "members": [
+    { "short": "Anh",  "code": "AnhNVT",  "name": "Anh (AnhNVT)",                "module": "Xác thực & Bảo mật: Đăng nhập, Đăng ký + OTP, Quên/Đặt lại mật khẩu, Google OAuth, Phân quyền" },
+    { "short": "Đạt",  "code": "DatHVT",  "name": "Hồ Văn Thông Đạt (DatHVT)",   "module": "Sinh viên: Khám phá sự kiện, Đăng ký & Xếp hạng ưu tiên (RBL)" },
+    { "short": "Tú",   "code": "TuHNC",   "name": "Tú (TuHNC)",                  "module": "Điểm danh & Quiz: Check-in QR động, Mid-session, Check-out, Quiz, Dashboard tham gia" },
+    { "short": "Sang", "code": "SangTM",  "name": "Sang (SangTM)",               "module": "Quản trị hệ thống (Admin), Sự kiện, Đề xuất & Hội đồng, Thống kê & AI phản hồi" }
+  ],
+  "usecases": [
+    { "code": "UC01", "name": "Đăng nhập email/mật khẩu", "actor": "Chung", "desc": "Xác thực tài khoản, mở session, cộng điểm đăng nhập, chống brute-force (khóa tạm).", "owner": "Anh", "week": 2 },
+    { "code": "UC02", "name": "Đăng nhập Google OAuth", "actor": "Chung", "desc": "Đăng nhập SSO bằng Google, tạo/đăng nhập user và điều hướng theo vai trò.", "owner": "Anh", "week": 3 },
+    { "code": "UC03", "name": "Kiểm tra cấu hình OAuth", "actor": "Hệ thống", "desc": "Frontend gọi oauth-status để bật/ẩn nút đăng nhập Google.", "owner": "Anh", "week": 2 },
+    { "code": "UC04", "name": "Hoàn tất hồ sơ cho user Google mới", "actor": "Chung", "desc": "User Google chưa có hồ sơ được dẫn sang trang bổ sung thông tin sinh viên.", "owner": "Anh", "week": 3 },
+    { "code": "UC05", "name": "Gửi OTP đăng ký", "actor": "Khách", "desc": "Gửi mã OTP 6 số (hiệu lực 5 phút) tới email trước khi tạo tài khoản.", "owner": "Anh", "week": 2 },
+    { "code": "UC06", "name": "Đăng ký tài khoản (SV/Khoa)", "actor": "Khách", "desc": "Tạo User + hồ sơ sau khi OTP hợp lệ; kiểm tra trùng email/SĐT/MSSV, validate dữ liệu.", "owner": "Anh", "week": 3 },
+    { "code": "UC07", "name": "Quên mật khẩu – gửi OTP", "actor": "Chung", "desc": "Gửi OTP đặt lại mật khẩu qua email khi tài khoản tồn tại.", "owner": "Anh", "week": 3 },
+    { "code": "UC08", "name": "Xác minh OTP", "actor": "Chung", "desc": "Kiểm tra OTP hợp lệ/còn hạn; khóa tạm khi sai nhiều lần.", "owner": "Anh", "week": 3 },
+    { "code": "UC09", "name": "Đặt lại mật khẩu", "actor": "Chung", "desc": "Đổi sang mật khẩu mới (BCrypt) sau khi OTP hợp lệ.", "owner": "Anh", "week": 3 },
+    { "code": "UC10", "name": "Tra cứu cấu trúc Khoa/Ngành", "actor": "Chung", "desc": "Lấy danh sách khoa–ngành cho form đăng ký và bộ lọc sự kiện.", "owner": "Anh", "week": 2 },
+    { "code": "UC11", "name": "Đăng xuất", "actor": "Chung", "desc": "Hủy session và quay về trang đăng nhập.", "owner": "Anh", "week": 2 },
+    { "code": "UC12", "name": "Kiểm soát phân quyền truy cập", "actor": "Hệ thống", "desc": "Chặn/redirect khi truy cập trái vai trò hoặc chưa đăng nhập (AuthorizationInterceptor).", "owner": "Anh", "week": 4 },
+
+    { "code": "UC13", "name": "Xem trang landing công khai", "actor": "Khách", "desc": "Xem thống kê và sự kiện nổi bật mà không cần đăng nhập.", "owner": "Đạt", "week": 4 },
+    { "code": "UC14", "name": "Xem hồ sơ & thống kê cá nhân", "actor": "Sinh viên", "desc": "Profile, lịch sử đăng ký/điểm danh/feedback, điểm tích lũy & xếp hạng.", "owner": "Đạt", "week": 4 },
+    { "code": "UC15", "name": "Duyệt & tìm kiếm sự kiện", "actor": "Sinh viên", "desc": "Lọc upcoming/past/today/recommended theo khoa và từ khóa.", "owner": "Đạt", "week": 4 },
+    { "code": "UC16", "name": "Gợi ý & xếp hạng ưu tiên (RBL)", "actor": "Sinh viên", "desc": "Tính điểm ưu tiên 0.4M+0.3S+0.2P+0.1T theo ngành/kỳ/điểm/thời gian, sắp xếp gợi ý.", "owner": "Đạt", "week": 5 },
+    { "code": "UC17", "name": "Xem chi tiết sự kiện", "actor": "Sinh viên", "desc": "Thông tin sự kiện, bóc tách điểm ưu tiên (M/S/P/T), hàng đợi ẩn danh, feedback nổi bật.", "owner": "Đạt", "week": 5 },
+    { "code": "UC18", "name": "Đăng ký sự kiện", "actor": "Sinh viên", "desc": "Đăng ký REGISTERED/WAITLIST theo ưu tiên, cấp mã vé, cộng điểm hoạt động.", "owner": "Đạt", "week": 5 },
+    { "code": "UC19", "name": "Hủy đăng ký", "actor": "Sinh viên", "desc": "Hủy đăng ký và tự động đôn WAITLIST điểm cao nhất lên REGISTERED.", "owner": "Đạt", "week": 6 },
+    { "code": "UC20", "name": "Xem đăng ký & vé của tôi", "actor": "Sinh viên", "desc": "Xem trạng thái đăng ký, mã vé, tình trạng điểm danh & feedback.", "owner": "Đạt", "week": 6 },
+    { "code": "UC21", "name": "Bảng xếp hạng điểm hoạt động", "actor": "Sinh viên", "desc": "Top 10 sinh viên theo điểm, đánh dấu chính mình (isMe).", "owner": "Đạt", "week": 6 },
+
+    { "code": "UC22", "name": "Chiếu QR động & dashboard điểm danh", "actor": "Khoa/Bộ môn", "desc": "Chiếu QR xoay 30s và theo dõi tỷ lệ check-in/mid/checkout realtime.", "owner": "Tú", "week": 5 },
+    { "code": "UC23", "name": "Check-in qua QR động", "actor": "Sinh viên", "desc": "Quét QR token 30s, làm quiz bắt buộc, ghi CHECKED_IN; hỗ trợ walk-in tự đăng ký.", "owner": "Tú", "week": 5 },
+    { "code": "UC24", "name": "Mở phiên giữa buổi & đánh vắng", "actor": "Khoa/Bộ môn", "desc": "Mở QR mid-session và đánh dấu ABSENT cho người không xác minh.", "owner": "Tú", "week": 6 },
+    { "code": "UC25", "name": "Xác minh giữa buổi (mid-session)", "actor": "Sinh viên", "desc": "Quét QR giữa buổi ghi MID_VERIFIED, cộng điểm tham dự.", "owner": "Tú", "week": 6 },
+    { "code": "UC26", "name": "Làm & nộp quiz check-out", "actor": "Sinh viên", "desc": "Lấy câu hỏi ngẫu nhiên (mặc định 5), làm và chấm điểm quiz.", "owner": "Tú", "week": 6 },
+    { "code": "UC27", "name": "Check-out & tính điểm tham gia", "actor": "Sinh viên", "desc": "Tính participationScore (40 + min(40, quiz%*0.4)) và phân loại mức tham gia (COMPLETED).", "owner": "Tú", "week": 7 },
+    { "code": "UC28", "name": "Quản lý & thống kê quiz (Khoa)", "actor": "Khoa/Bộ môn", "desc": "CRUD ngân hàng câu hỏi và xem kết quả/thống kê quiz theo sự kiện.", "owner": "Tú", "week": 7 },
+    { "code": "UC29", "name": "Gửi khảo sát feedback", "actor": "Sinh viên", "desc": "Đánh giá đa chiều (rating 1..5) + bình luận sau khi đã tham dự.", "owner": "Tú", "week": 7 },
+    { "code": "UC30", "name": "Copy quiz từ đề xuất sang sự kiện", "actor": "Hệ thống", "desc": "Khi duyệt đề xuất, copy quiz sang event mới (idempotent, không nhân đôi).", "owner": "Tú", "week": 7 },
+
+    { "code": "UC31", "name": "Quản lý người dùng (CRUD)", "actor": "Admin", "desc": "Xem/tạo/sửa/xóa-khóa user và hồ sơ sinh viên, gán vai trò.", "owner": "Sang", "week": 4 },
+    { "code": "UC32", "name": "Quản lý vai trò (CRUD)", "actor": "Admin", "desc": "Thêm/sửa/xóa vai trò kèm số lượng user thuộc vai trò.", "owner": "Sang", "week": 4 },
+    { "code": "UC33", "name": "Quản lý khoa/bộ môn (CRUD)", "actor": "Admin", "desc": "Thêm/sửa/xóa khoa, xem quản lý và số liệu event/proposal/sinh viên.", "owner": "Sang", "week": 4 },
+    { "code": "UC34", "name": "Quản lý sự kiện (tạo/sửa/xóa)", "actor": "Admin/Khoa", "desc": "Tạo trực tiếp, sửa, xóa hoặc chuyển CANCELLED khi sự kiện đã có dữ liệu.", "owner": "Sang", "week": 5 },
+    { "code": "UC35", "name": "Đổi trạng thái & điều chỉnh sức chứa", "actor": "Admin/Khoa", "desc": "Chuyển PUBLISHED/COMPLETED/CANCELLED, mở thêm/đóng slot capacity.", "owner": "Sang", "week": 5 },
+    { "code": "UC36", "name": "Cập nhật diễn giả", "actor": "Admin/Khoa", "desc": "Gán hoặc chỉnh sửa danh sách diễn giả của sự kiện.", "owner": "Sang", "week": 5 },
+    { "code": "UC37", "name": "Quản lý đăng ký (Admin)", "actor": "Admin", "desc": "Xem, thêm thủ công, đổi trạng thái đăng ký của sinh viên.", "owner": "Sang", "week": 5 },
+    { "code": "UC38", "name": "Tạo & gửi lại đề xuất sự kiện", "actor": "Khoa/Bộ môn", "desc": "Soạn đề xuất (mô tả, ngày, địa điểm, capacity, ngân sách) và gửi duyệt.", "owner": "Sang", "week": 6 },
+    { "code": "UC39", "name": "Cập nhật/xóa đề xuất", "actor": "Khoa/Bộ môn", "desc": "Sửa khi PENDING/REVISION hoặc xóa bản nháp chưa duyệt.", "owner": "Sang", "week": 6 },
+    { "code": "UC40", "name": "Soạn quiz trong đề xuất", "actor": "Khoa/Bộ môn", "desc": "Lưu câu hỏi quiz (JSON) để mang sang sự kiện khi được duyệt.", "owner": "Sang", "week": 6 },
+    { "code": "UC41", "name": "Hội đồng xem & theo dõi đề xuất", "actor": "Hội đồng", "desc": "Dashboard tổng quan, danh sách chờ duyệt và chi tiết từng đề xuất.", "owner": "Sang", "week": 6 },
+    { "code": "UC42", "name": "Hội đồng duyệt/từ chối/yêu cầu sửa", "actor": "Hội đồng", "desc": "Approve (tạo Event PUBLISHED + copy quiz), Reject (kèm lý do), Revision.", "owner": "Sang", "week": 7 },
+    { "code": "UC43", "name": "Publish đề xuất đã duyệt", "actor": "Admin/Hội đồng", "desc": "Chuyển đề xuất APPROVED thành Event PUBLISHED hiển thị cho sinh viên.", "owner": "Sang", "week": 7 },
+    { "code": "UC44", "name": "Dashboard tổng hợp Admin", "actor": "Admin", "desc": "Thống kê user, vai trò, khoa, sự kiện cho quản trị viên.", "owner": "Sang", "week": 7 },
+    { "code": "UC45", "name": "Báo cáo thống kê & xuất CSV", "actor": "Admin", "desc": "Sự kiện/đăng ký theo tháng, tỷ lệ đăng ký–điểm danh, rating TB; xuất CSV.", "owner": "Sang", "week": 7 },
+    { "code": "UC46", "name": "Lịch sử & gửi email hệ thống", "actor": "Admin", "desc": "Xem (phân trang) log email và gửi email thông báo, ghi log gửi.", "owner": "Sang", "week": 7 },
+    { "code": "UC47", "name": "Nhật ký hoạt động & xuất CSV", "actor": "Admin", "desc": "Xem log đăng nhập/đăng ký/feedback (phân trang) và xuất CSV.", "owner": "Sang", "week": 7 },
+    { "code": "UC48", "name": "Tự tạo & đồng bộ Google Form", "actor": "Admin/Khoa", "desc": "Tạo form check-in/check-out qua Google API, gán URL và import phản hồi về DB.", "owner": "Sang", "week": 8 },
+    { "code": "UC49", "name": "Thống kê phản hồi & Phân tích AI", "actor": "Khoa/Bộ môn", "desc": "Sentiment, chủ đề, khuyến nghị và kết luận mức độ hiểu bài từ quiz.", "owner": "Sang", "week": 8 }
+  ],
+  "removed": [
+    { "code": "(cũ) Overview hệ thống", "reason": "Trùng với Dashboard tổng hợp Admin (UC44) – đã gộp." },
+    { "code": "(cũ) Theo dõi chỉ số bảo mật", "reason": "Là một phần của dashboard, không có chức năng/kiểm thử riêng – đã gộp." },
+    { "code": "(cũ) Email mời tham dự tự động", "reason": "Scheduler nền, không có test case riêng trong dự án – đã bỏ." }
+  ],
+  "schedule": [
+    { "week": 1,  "phase": "Khởi tạo", "focus": "Phân tích yêu cầu, thiết kế CSDL, dựng khung Spring Boot MVC + JPA, chuẩn bị môi trường & seed dữ liệu.", "uc": "–", "p": { "Đạt": 5,  "Anh": 5,  "Tú": 5,  "Sang": 5 } },
+    { "week": 2,  "phase": "Nền tảng", "focus": "Xác thực cơ bản (đăng nhập, OTP, đăng xuất, cấu trúc khoa); dựng khung màn hình sinh viên & quản trị.", "uc": "UC01, UC03, UC05, UC10, UC11", "p": { "Đạt": 10, "Anh": 35, "Tú": 8,  "Sang": 10 } },
+    { "week": 3,  "phase": "Nền tảng", "focus": "Hoàn thiện xác thực: OAuth, đăng ký + bổ sung hồ sơ, quên/xác minh/đặt lại mật khẩu.", "uc": "UC02, UC04, UC06, UC07, UC08, UC09", "p": { "Đạt": 15, "Anh": 70, "Tú": 12, "Sang": 18 } },
+    { "week": 4,  "phase": "CRUD lõi", "focus": "Quản trị user/vai trò/khoa, phân quyền; landing, hồ sơ & duyệt sự kiện cho sinh viên.", "uc": "UC12, UC13, UC14, UC15, UC31, UC32, UC33", "p": { "Đạt": 35, "Anh": 85, "Tú": 20, "Sang": 38 } },
+    { "week": 5,  "phase": "Nghiệp vụ chính", "focus": "Xếp hạng ưu tiên (RBL) & đăng ký; quản lý sự kiện/đăng ký; chiếu QR & check-in.", "uc": "UC16, UC17, UC18, UC22, UC23, UC34, UC35, UC36, UC37", "p": { "Đạt": 65, "Anh": 88, "Tú": 45, "Sang": 55 } },
+    { "week": 6,  "phase": "Nghiệp vụ chính", "focus": "Hủy/đôn waitlist, xếp hạng; mid-session & quiz check-out; đề xuất & hội đồng (tạo/xem).", "uc": "UC19, UC20, UC21, UC24, UC25, UC26, UC38, UC39, UC40, UC41", "p": { "Đạt": 85, "Anh": 90, "Tú": 70, "Sang": 72 } },
+    { "week": 7,  "phase": "Hoàn thiện", "focus": "Check-out điểm, quản lý quiz, feedback; duyệt/publish đề xuất; dashboard/báo cáo/log admin.", "uc": "UC27, UC28, UC29, UC30, UC42, UC43, UC44, UC45, UC46, UC47", "p": { "Đạt": 90, "Anh": 92, "Tú": 88, "Sang": 88 } },
+    { "week": 8,  "phase": "Hoàn thiện", "focus": "Tích hợp Google Form, phân tích AI phản hồi; rà soát & hoàn thiện toàn bộ tính năng.", "uc": "UC48, UC49", "p": { "Đạt": 92, "Anh": 94, "Tú": 93, "Sang": 95 } },
+    { "week": 9,  "phase": "Tích hợp & E2E", "focus": "Kiểm thử End-to-End theo hành trình người dùng, tích hợp liên module, sửa lỗi.", "uc": "Toàn bộ (E2E)", "p": { "Đạt": 97, "Anh": 98, "Tú": 97, "Sang": 98 } },
+    { "week": 10, "phase": "Hồi quy & bàn giao", "focus": "Kiểm thử hồi quy, tối ưu hiệu năng, viết báo cáo & demo nghiệm thu.", "uc": "Toàn bộ (Regression)", "p": { "Đạt": 100, "Anh": 100, "Tú": 100, "Sang": 100 } }
+  ]
+}

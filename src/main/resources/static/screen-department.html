@@ -493,8 +493,13 @@
 
     // ---------- View: Dashboard ----------
     function viewDashboard() {
-        const evs = filterByFaculty(store.events);
-        const props = filterByFaculty(store.proposals);
+        let evs = filterByFaculty(store.events);
+        let props = filterByFaculty(store.proposals);
+        // Fallback: nếu lọc theo khoa không khớp dữ liệu (vd seed bản deploy đặt tên
+        // khoa/ngành khác) thì dùng toàn bộ dữ liệu đã tải, tránh tình trạng các thẻ
+        // thống kê = 0 trong khi danh sách bên dưới vẫn có sự kiện/proposal.
+        if (evs.length === 0 && store.events.length > 0) evs = store.events;
+        if (props.length === 0 && store.proposals.length > 0) props = store.proposals;
         const totalEvents = evs.length;
         const pendingProps = props.filter(p => String(p.status).toUpperCase() === 'PENDING').length;
         const revisionProps = props.filter(p => String(p.status).toUpperCase() === 'REVISION').length;
