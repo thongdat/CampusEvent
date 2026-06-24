@@ -229,6 +229,36 @@ public class GoogleFormsApiService {
     }
 
     /**
+     * Bật/tắt nhận phản hồi của Google Form (mở/ĐÓNG form).
+     * Dùng để đóng form sau khi hết 30 giây chiếu QR: người nộp muộn sẽ thấy
+     * trang "Biểu mẫu không còn nhận câu trả lời".
+     *
+     * Yêu cầu: formId là form do hệ thống tự tạo (đã lưu checkinFormId/checkoutFormId)
+     * và access token có quyền chỉnh sửa form.
+     */
+    public void setAcceptingResponses(String formId, String accessToken, boolean accepting)
+            throws GoogleApiException {
+        if (formId == null || formId.isBlank()) {
+            throw new GoogleApiException("Form không do hệ thống tạo (thiếu formId) nên không thể đóng/mở tự động. "
+                    + "Hãy dùng nút 'Tự tạo Google Form' để hệ thống quản lý được form.");
+        }
+        if (accessToken == null || accessToken.isBlank()) {
+            throw new GoogleApiException("Thiếu access token Google. Hãy đăng nhập lại bằng Gmail.");
+        }
+        Map<String, Object> body = Map.of(
+                "publishSettings", Map.of(
+                        "publishState", Map.of(
+                                "isPublished", true,
+                                "isAcceptingResponses", accepting
+                        )
+                )
+        );
+        postJson(FORMS_API + "/" + formId + ":setPublishSettings", body, accessToken,
+                accepting ? "open form" : "close form");
+        log.info("Đã {} Google Form {}", accepting ? "MỞ" : "ĐÓNG", formId);
+    }
+
+    /**
      * Forms API GET form trả về `linkedSheetId` trong info.
      * Nếu form chưa link sheet (mặc định Google không tự tạo) → trả null.
      */
