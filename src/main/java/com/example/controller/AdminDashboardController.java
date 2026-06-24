@@ -844,8 +844,12 @@ public class AdminDashboardController {
         // Nạp attendance 1 lần theo danh sách registrationId (thay cho N+1 findByRegistrationId).
         Map<Long, Attendance> attendanceByReg = new HashMap<>();
         List<Long> regIds = regs.stream().map(Registration::getId).collect(Collectors.toList());
-        if (!regIds.isEmpty()) {
-            for (Attendance a : attendanceRepository.findByRegistrationIdIn(regIds)) {
+        // SQL Server chỉ cho tối đa 2.100 parameters trong một statement.
+        // Chia lô để dataset lớn không làm toàn bộ trang Registration trả về 0.
+        final int attendanceBatchSize = 1000;
+        for (int from = 0; from < regIds.size(); from += attendanceBatchSize) {
+            List<Long> batch = regIds.subList(from, Math.min(from + attendanceBatchSize, regIds.size()));
+            for (Attendance a : attendanceRepository.findByRegistrationIdIn(batch)) {
                 if (a.getRegistration() != null && a.getRegistration().getId() != null) {
                     attendanceByReg.put(a.getRegistration().getId(), a);
                 }
@@ -1166,7 +1170,7 @@ public class AdminDashboardController {
 
         long elapsedEventCount = eventRepository.countByStartTimeLessThan(endOfToday);
         long registered = registrationRepository.countByEvent_StartTimeLessThanAndStatus(endOfToday, "REGISTERED");
-        long attended = attendanceRepository.countByStatusAndRegistration_Event_StartTimeLessThan("ATTENDED", endOfToday);
+        long attended = attendanceRepository.countCheckedInForElapsedEvents(endOfToday);
         long elapsedCapacity = firstNonNull(eventRepository.sumCapacityBefore(endOfToday), 0L);
         double registrationRate = elapsedCapacity > 0 ? (registered * 100.0 / elapsedCapacity) : 0;
         double attendanceRate = registered > 0 ? (attended * 100.0 / registered) : 0;
@@ -1176,7 +1180,7 @@ public class AdminDashboardController {
         formula.put("asOfDate", today.toString());
         formula.put("monthlyColumns", "Hiển thị từ tháng 01 đến tháng hiện tại. Hôm nay là " + today + ".");
         formula.put("registrationRate", "Số lượt REGISTERED của event đã diễn ra chia cho tổng sức chứa của các event đó.");
-        formula.put("attendanceRate", "Số lượt ATTENDED của event đã diễn ra chia cho số lượt REGISTERED tương ứng.");
+        formula.put("attendanceRate", "Số lượt đã check-in (không tính ABSENT) của event đã diễn ra chia cho số lượt REGISTERED tương ứng.");
         formula.put("averageRating", "Điểm trung bình từ feedback của những event đã diễn ra.");
 
         Map<String, Object> report = new LinkedHashMap<>();

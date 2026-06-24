@@ -85,9 +85,12 @@ CREATE TABLE IF NOT EXISTS event_proposal (
     status VARCHAR(50) NOT NULL,
     note TEXT,
     created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP,
     quiz_payload TEXT,
     department_id BIGINT NOT NULL REFERENCES department(id)
 );
+
+ALTER TABLE event_proposal ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP;
 
 CREATE TABLE IF NOT EXISTS registration (
     id BIGSERIAL PRIMARY KEY,
