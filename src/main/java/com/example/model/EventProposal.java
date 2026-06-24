@@ -57,6 +57,9 @@ public class EventProposal {
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
     @Column(name = "quiz_payload", columnDefinition = "NVARCHAR(MAX)")
     private String quizPayload;
 
@@ -203,6 +206,14 @@ public class EventProposal {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 
     public Department getDepartment() {

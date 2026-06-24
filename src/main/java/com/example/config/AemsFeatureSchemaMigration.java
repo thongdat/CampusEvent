@@ -49,6 +49,7 @@ public class AemsFeatureSchemaMigration implements ApplicationRunner {
         addColumnIfMissing(proposalTable, "speakers", "NVARCHAR(800) NULL");
         addColumnIfMissing(proposalTable, "support_staff_needed", "INT NULL");
         addColumnIfMissing(proposalTable, "proposed_end_date", "DATETIME2 NULL");
+        addColumnIfMissing(proposalTable, "updated_at", "DATETIME2 NULL");
 
         executeIfTableMissing("attendance_session",
                 "CREATE TABLE attendance_session (" +

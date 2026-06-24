@@ -87,7 +87,11 @@ public class CommitteeController {
             @RequestParam(value = "status", required = false, defaultValue = "PENDING,REVISION") String statusFilter,
             @RequestParam(value = "q", required = false) String query) {
         List<String> statuses = parseStatuses(statusFilter);
-        List<EventProposal> proposals = proposalRepository.findByStatusIn(statuses, Sort.by(Sort.Direction.DESC, "createdAt"));
+        // Hội đồng xử lý theo lịch tổ chức: sự kiện gần hơn ở trên,
+        // sự kiện diễn ra muộn hơn nằm cuối danh sách.
+        Sort eventDateOrder = Sort.by(Sort.Direction.ASC, "proposedDate")
+                .and(Sort.by(Sort.Direction.ASC, "createdAt"));
+        List<EventProposal> proposals = proposalRepository.findByStatusIn(statuses, eventDateOrder);
 
         if (query != null && !query.isBlank()) {
             String needle = query.trim().toLowerCase(Locale.ROOT);
@@ -188,6 +192,7 @@ public class CommitteeController {
         // (tránh tình trạng đã duyệt nhưng vẫn nằm trong danh sách chờ).
         proposal.setStatus("APPROVED");
         proposal.setNote(note != null && !note.isBlank() ? note : "Đã duyệt");
+        proposal.setUpdatedAt(LocalDateTime.now());
 
         EventProposal approved = proposalRepository.save(proposal);
         Map<String, Object> response = toDetail(approved);
@@ -207,6 +212,7 @@ public class CommitteeController {
         }
         proposal.setStatus("REJECTED");
         proposal.setNote("Từ chối: " + reason);
+        proposal.setUpdatedAt(LocalDateTime.now());
         return ResponseEntity.ok(toDetail(proposalRepository.save(proposal)));
     }
 
@@ -221,6 +227,7 @@ public class CommitteeController {
         }
         proposal.setStatus("REVISION");
         proposal.setNote("Yêu cầu chỉnh sửa: " + request);
+        proposal.setUpdatedAt(LocalDateTime.now());
         return ResponseEntity.ok(toDetail(proposalRepository.save(proposal)));
     }
 
@@ -262,6 +269,7 @@ public class CommitteeController {
         m.put("speakers", p.getSpeakers());
         m.put("supportStaffNeeded", p.getSupportStaffNeeded());
         m.put("createdAt", iso(p.getCreatedAt()));
+        m.put("updatedAt", iso(p.getUpdatedAt()));
         m.put("imageUrl", p.getImageUrl());
         m.put("location", p.getLocation());
         m.put("capacity", p.getCapacity());

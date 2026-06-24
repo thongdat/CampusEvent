@@ -21,6 +21,16 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
     long countByCheckinTimeLessThanEqual(LocalDateTime checkinTime);
     long countByStatusAndRegistration_Event_StartTimeLessThan(String status, LocalDateTime endTime);
 
+    /**
+     * Đếm lượt check-in thực tế của các event đã diễn ra. Luồng mới dùng các trạng thái
+     * CHECKED_IN/MID_VERIFIED/CHECKED_OUT/COMPLETED thay vì ATTENDED; ABSENT không được tính.
+     */
+    @Query("select count(a) from Attendance a "
+            + "where a.checkinTime is not null and a.checkinTime < :endTime "
+            + "and a.registration.event.startTime < :endTime "
+            + "and upper(coalesce(a.status, '')) <> 'ABSENT'")
+    long countCheckedInForElapsedEvents(@Param("endTime") LocalDateTime endTime);
+
     /** Đếm số người ĐÃ điểm danh (status != ABSENT, checkin <= asOf) theo từng event — 1 query gộp. */
     @Query("select a.event.id, count(a) from Attendance a "
             + "where a.checkinTime is not null and a.checkinTime <= :asOf "

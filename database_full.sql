@@ -176,6 +176,7 @@ CREATE TABLE event_proposal (
     status        VARCHAR(50)          NOT NULL,
     note          NVARCHAR(MAX),
     created_at    DATETIME2            NOT NULL,
+    updated_at    DATETIME2,
     quiz_payload  NVARCHAR(MAX),
     department_id BIGINT               NOT NULL,
     CONSTRAINT FK_proposal_dept FOREIGN KEY (department_id) REFERENCES department(id)
