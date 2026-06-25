@@ -346,7 +346,100 @@ public class FeedbackAiAnalysisService {
         quiz.put("averagePercent", Math.round(averagePercent * 10.0) / 10.0);
         quiz.put("questionPerformance", questionPerformance);
         quiz.put("hardestQuestion", hardestQuestion);
+        quiz.put("comprehension", buildComprehension(averagePercent, submissions.size(), questionPerformance));
         return quiz;
+    }
+
+    /**
+     * Từ kết quả quiz rút ra KẾT LUẬN: hôm đó sinh viên có hiểu bài không, ở mức nào,
+     * những nội dung còn yếu và cần bổ sung gì cho các sự kiện tiếp theo.
+     */
+    private Map<String, Object> buildComprehension(double averagePercent,
+                                                   int submissionCount,
+                                                   List<Map<String, Object>> questionPerformance) {
+        Map<String, Object> c = new LinkedHashMap<>();
+        if (submissionCount <= 0) {
+            c.put("available", false);
+            return c;
+        }
+        double pct = Math.round(averagePercent * 10.0) / 10.0;
+
+        // Các câu hỏi sinh viên còn yếu (đã chấm và tỷ lệ đúng < 50%).
+        List<Map<String, Object>> weak = new ArrayList<>();
+        for (Map<String, Object> row : questionPerformance) {
+            long graded = ((Number) row.getOrDefault("gradedAttempts", 0L)).longValue();
+            double rate = ((Number) row.getOrDefault("correctRate", 0)).doubleValue();
+            if (graded > 0 && rate < 50.0) {
+                Map<String, Object> w = new LinkedHashMap<>();
+                w.put("question", row.get("question"));
+                w.put("correctRate", rate);
+                weak.add(w);
+            }
+        }
+        weak.sort((a, b) -> Double.compare(
+                ((Number) a.get("correctRate")).doubleValue(),
+                ((Number) b.get("correctRate")).doubleValue()));
+
+        String level;
+        String tone;
+        boolean understood;
+        if (pct >= 80) {
+            level = "Hiểu bài tốt"; tone = "good"; understood = true;
+        } else if (pct >= 65) {
+            level = "Hiểu bài khá"; tone = "good"; understood = true;
+        } else if (pct >= 50) {
+            level = "Hiểu bài ở mức trung bình"; tone = "warn"; understood = false;
+        } else {
+            level = "Chưa nắm vững bài"; tone = "bad"; understood = false;
+        }
+
+        StringBuilder verdict = new StringBuilder();
+        verdict.append("Dựa trên ").append(submissionCount).append(" lượt làm quiz với điểm trung bình ")
+               .append(String.format(Locale.US, "%.1f", pct)).append("%, ");
+        if (pct >= 80) {
+            verdict.append("phần lớn sinh viên đã nắm vững nội dung buổi học.");
+        } else if (pct >= 65) {
+            verdict.append("đa số sinh viên hiểu được nội dung chính, còn một vài điểm cần củng cố.");
+        } else if (pct >= 50) {
+            verdict.append("sinh viên mới tiếp thu được một phần nội dung, nhiều điểm chưa thực sự hiểu rõ.");
+        } else {
+            verdict.append("phần lớn sinh viên chưa nắm được nội dung cốt lõi của buổi học.");
+        }
+        if (!weak.isEmpty()) {
+            verdict.append(" Có ").append(weak.size())
+                   .append(" câu hỏi mà dưới một nửa sinh viên trả lời đúng.");
+        }
+
+        // Đề xuất bổ sung cho các sự kiện tiếp theo.
+        List<String> followUps = new ArrayList<>();
+        if (pct < 50) {
+            followUps.add("Gửi tài liệu tóm tắt + bản ghi (recording) ngay sau sự kiện và tổ chức một buổi ôn tập/recap ngắn.");
+            followUps.add("Giảm tải lý thuyết, tăng ví dụ minh hoạ và thời lượng hỏi-đáp để sinh viên theo kịp.");
+        } else if (pct < 65) {
+            followUps.add("Cuối buổi nên chốt lại 3-5 ý trọng tâm và phát tài liệu tóm tắt để sinh viên ôn lại.");
+            followUps.add("Bổ sung ví dụ thực tế, dễ hiểu cho những nội dung sinh viên còn lúng túng.");
+        } else if (pct >= 80) {
+            followUps.add("Sinh viên tiếp thu tốt — có thể nâng độ khó hoặc thêm câu hỏi vận dụng/bài tập thực hành ở lần sau.");
+        } else {
+            followUps.add("Duy trì cách truyền đạt hiện tại; củng cố thêm vài nội dung sinh viên còn yếu.");
+        }
+        int show = Math.min(2, weak.size());
+        for (int i = 0; i < show; i++) {
+            Map<String, Object> w = weak.get(i);
+            followUps.add("Giảng kỹ hơn nội dung của câu \"" + w.get("question") + "\" (chỉ "
+                    + w.get("correctRate") + "% trả lời đúng) trong các buổi tới.");
+        }
+        followUps.add("Lồng ghép quiz nhanh giữa buổi để theo dõi mức độ hiểu bài theo thời gian thực.");
+
+        c.put("available", true);
+        c.put("level", level);
+        c.put("tone", tone);
+        c.put("understood", understood);
+        c.put("averagePercent", pct);
+        c.put("verdict", verdict.toString());
+        c.put("weakQuestions", weak);
+        c.put("followUps", followUps);
+        return c;
     }
 
     private void addQuizRecommendation(List<String> recommendations, Map<String, Object> quizAnalysis) {

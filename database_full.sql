@@ -176,6 +176,7 @@ CREATE TABLE event_proposal (
     status        VARCHAR(50)          NOT NULL,
     note          NVARCHAR(MAX),
     created_at    DATETIME2            NOT NULL,
+    updated_at    DATETIME2,
     quiz_payload  NVARCHAR(MAX),
     department_id BIGINT               NOT NULL,
     CONSTRAINT FK_proposal_dept FOREIGN KEY (department_id) REFERENCES department(id)
@@ -797,6 +798,8 @@ FROM event e
 WHERE e.status IN ('PUBLISHED', 'APPROVED');
 GO
 
+-- Sinh bài nộp quiz cho MỌI sự kiện PUBLISHED/APPROVED có người tham dự (đã check-in),
+-- bao phủ toàn bộ event để phần "Phân tích AI từ quiz" luôn có dữ liệu.
 INSERT INTO quiz_submission (event_id, student_id, total_score, submitted_at)
 SELECT
     a.event_id,
@@ -804,8 +807,10 @@ SELECT
     CASE WHEN (a.id % 6) = 0 THEN 3 ELSE 5 END,
     DATEADD(MINUTE, 10, COALESCE(a.checkout_time, a.mid_verify_time, a.checkin_time))
 FROM attendance a
-WHERE a.status IN ('MID_VERIFIED', 'CHECKED_OUT')
-  AND (a.id % 3) <> 0;
+JOIN event e ON e.id = a.event_id
+WHERE e.status IN ('PUBLISHED', 'APPROVED')
+  AND a.status IN ('CHECKED_IN', 'MID_VERIFIED', 'CHECKED_OUT')
+  AND (a.id % 4) <> 0;
 GO
 
 INSERT INTO quiz_answer (submission_id, question_id, selected_answer, answer_text, is_correct, score, submitted_at)

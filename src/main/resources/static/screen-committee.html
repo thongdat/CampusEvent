@@ -194,7 +194,7 @@
         </div>
 
         <nav class="sidebar-nav" aria-label="Điều hướng hội đồng">
-            <button type="button" class="nav-button active" data-nav-filter="PENDING,REVISION,APPROVED,REJECTED">
+            <button type="button" class="nav-button" id="overviewNavButton">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 13h6V4H4v9Zm0 7h6v-3H4v3Zm10 0h6v-9h-6v9Zm0-13h6V4h-6v3Z"/></svg>
                 Tổng quan
             </button>
@@ -228,7 +228,7 @@
             </button>
             <button type="button" class="nav-button" id="activityNavButton">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" stroke-linecap="round" d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path stroke-width="2" stroke-linecap="round" d="M3 3v5h5M12 7v5l3 2"/></svg>
-                Hoạt động gần đây
+                Lịch sử hoạt động
             </button>
         </nav>
 
@@ -269,6 +269,7 @@
         </header>
 
         <div class="page-content">
+          <div id="overviewView">
             <div class="page-heading">
                 <div><h1>Tổng quan xét duyệt</h1><p>Theo dõi và xử lý đề xuất sự kiện của các khoa.</p></div>
                 <select id="mobileStatusSelect" class="proposal-select mobile-filter" aria-label="Lọc trạng thái proposal">
@@ -312,7 +313,7 @@
                             <p class="mt-1 text-xs text-slate-500">Chọn trạng thái khác hoặc xoá từ khoá tìm kiếm.</p>
                         </div>
                     </div>
-                    <footer class="queue-footer" id="queueFooter">Danh sách đề xuất</footer>
+                    <footer class="queue-footer" id="queueFooter"></footer>
                 </aside>
 
                 <main class="panel detail-panel">
@@ -321,14 +322,28 @@
                     </div>
                 </main>
             </section>
+          </div>
 
-            <section class="panel activity-panel" id="activitySection">
-                <header class="panel-header">
-                    <div><h2>Hoạt động gần đây</h2><p>Các proposal vừa được hội đồng xử lý.</p></div>
-                    <span id="activityCount" class="text-xs font-bold text-slate-500">—</span>
-                </header>
-                <div id="committeeActivity" class="activity-grid"></div>
-            </section>
+          <section id="activityView" hidden>
+              <div class="page-heading">
+                  <div><h1>Lịch sử hoạt động</h1><p>Các đề xuất vừa được hội đồng xử lý, mới nhất hiển thị trước.</p></div>
+                  <strong id="activityCount" class="text-xs text-slate-500">—</strong>
+              </div>
+              <div class="panel p-4">
+                  <div class="grid gap-3 md:grid-cols-[1fr_220px]">
+                      <input id="activitySearch" class="proposal-select" type="search" placeholder="Tìm tên đề xuất hoặc khoa…">
+                      <select id="activityStatus" class="proposal-select">
+                          <option value="APPROVED,REJECTED,REVISION">Tất cả hoạt động</option>
+                          <option value="APPROVED">Đã duyệt</option>
+                          <option value="REJECTED">Đã từ chối</option>
+                          <option value="REVISION">Yêu cầu chỉnh sửa</option>
+                      </select>
+                  </div>
+              </div>
+              <div id="committeeActivity" class="mt-3 grid gap-3"></div>
+              <div id="activityPagination" class="mt-3 flex items-center justify-center gap-2"></div>
+          </section>
+
         </div>
     </div>
 </div>
@@ -349,10 +364,15 @@
     const API_BASE = '/api';
     const ALL_STATUSES = 'PENDING,REVISION,APPROVED,REJECTED';
     const STATE = {
-        filter: ALL_STATUSES,
+        filter: 'PENDING',
         query: '',
         items: [],
-        selectedId: null
+        selectedId: null,
+        page: 1,
+        pageSize: 10,
+        activityItems: [],
+        activityPage: 1,
+        activityPageSize: 10
     };
 
     function $(s, r = document) { return r.querySelector(s); }
@@ -471,44 +491,6 @@
         const e = m[(status || '').toUpperCase()] || { cls: 'bg-slate-100 text-slate-600', label: status || '—' };
         return `<span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${e.cls}">${e.label}</span>`;
     }
-    function activityText(item) {
-        const status = String(item.status || '').toUpperCase();
-        if (status === 'APPROVED') return ['Đã phê duyệt', 'text-emerald-700 bg-emerald-50'];
-        if (status === 'REJECTED') return ['Đã từ chối', 'text-rose-700 bg-rose-50'];
-        if (status === 'REVISION') return ['Yêu cầu chỉnh sửa', 'text-sky-700 bg-sky-50'];
-        return ['Đang chờ xử lý', 'text-amber-700 bg-amber-50'];
-    }
-    function renderActivity(items) {
-        const box = $('#committeeActivity');
-        if (!box) return;
-        const recent = (items || [])
-            .slice()
-            .sort((a, b) => new Date(b.updatedAt || b.createdAt || b.proposedDate || 0) - new Date(a.updatedAt || a.createdAt || a.proposedDate || 0))
-            .slice(0, 4);
-        $('#activityCount').textContent = recent.length + ' mục';
-        box.innerHTML = recent.length ? recent.map(item => {
-            const [label, cls] = activityText(item);
-            const dept = item.department ? item.department.name : (item.departmentName || 'Khoa');
-            return `
-                <article class="p-4">
-                    <span class="inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold ${cls}">${label}</span>
-                    <p class="mt-2 line-clamp-2 text-sm font-extrabold text-slate-900">${escapeHtml(item.title || 'Không tiêu đề')}</p>
-                    <p class="mt-1 text-xs text-slate-500">${escapeHtml(dept)} · ${fmtDateShort(item.updatedAt || item.createdAt || item.proposedDate)}</p>
-                    <p class="mt-1 text-[11px] font-semibold text-slate-400">Cập nhật ${fmtDate(item.updatedAt || item.createdAt || item.proposedDate)}</p>
-                </article>`;
-        }).join('') : '<div class="p-5 text-sm text-slate-400">Chưa có hoạt động gần đây.</div>';
-    }
-    async function loadActivity() {
-        const box = $('#committeeActivity');
-        if (box) box.innerHTML = '<div class="skeleton m-4 h-20 rounded-lg"></div><div class="skeleton m-4 h-20 rounded-lg"></div>';
-        try {
-            const data = await api('/committee/proposals?status=PENDING,REVISION,APPROVED,REJECTED');
-            renderActivity(data.items || []);
-        } catch (e) {
-            if (box) box.innerHTML = `<div class="p-5 text-sm text-rose-600">${escapeHtml(e.message)}</div>`;
-        }
-    }
-
     // ----------------------------- LOAD -----------------------------
     async function loadOverview() {
         try {
@@ -536,12 +518,11 @@
             const data = await api('/committee/proposals?' + qs.toString());
             STATE.items = data.items || [];
             $('#queueCount').textContent = data.total + ' đề xuất';
-            $('#queueFooter').textContent = data.total ? `Hiển thị ${data.total} đề xuất` : 'Không có đề xuất';
             $('#activeFilterLabel').textContent = filterLabel(STATE.filter);
             renderQueue();
             // Auto select first if none
             if (!STATE.selectedId && STATE.items.length) {
-                selectProposal(STATE.items[0].id);
+                selectProposal(STATE.items[(STATE.page - 1) * STATE.pageSize].id);
             } else if (STATE.selectedId) {
                 const exists = STATE.items.some(i => i.id === STATE.selectedId);
                 if (!exists && STATE.items.length) selectProposal(STATE.items[0].id);
@@ -565,10 +546,15 @@
         if (!STATE.items.length) {
             ul.innerHTML = '';
             $('#queueEmpty').hidden = false;
+            $('#queueFooter').textContent = 'Không có đề xuất';
             return;
         }
         $('#queueEmpty').hidden = true;
-        ul.innerHTML = STATE.items.map(p => {
+        const totalPages = Math.max(1, Math.ceil(STATE.items.length / STATE.pageSize));
+        STATE.page = Math.min(STATE.page, totalPages);
+        const start = (STATE.page - 1) * STATE.pageSize;
+        const pageItems = STATE.items.slice(start, start + STATE.pageSize);
+        ul.innerHTML = pageItems.map(p => {
             const isSelected = p.id === STATE.selectedId;
             const dept = p.department ? p.department.name : '—';
             return `
@@ -592,6 +578,30 @@
                 }
             });
         });
+        renderQueuePagination(totalPages);
+    }
+
+    function renderQueuePagination(totalPages) {
+        const footer = $('#queueFooter');
+        if (!STATE.items.length) {
+            footer.textContent = 'Không có đề xuất';
+            return;
+        }
+        if (totalPages <= 1) {
+            footer.textContent = `Hiển thị ${STATE.items.length} đề xuất`;
+            return;
+        }
+        footer.innerHTML = `
+            <button type="button" data-queue-page="${STATE.page - 1}" ${STATE.page === 1 ? 'disabled' : ''} class="rounded border border-slate-200 px-2 py-1 disabled:opacity-40">‹</button>
+            <span>Trang ${STATE.page}/${totalPages} · ${STATE.items.length} đề xuất</span>
+            <button type="button" data-queue-page="${STATE.page + 1}" ${STATE.page === totalPages ? 'disabled' : ''} class="rounded border border-slate-200 px-2 py-1 disabled:opacity-40">›</button>`;
+        footer.querySelectorAll('[data-queue-page]').forEach(button => button.addEventListener('click', () => {
+            STATE.page = Number(button.dataset.queuePage);
+            STATE.selectedId = null;
+            renderQueue();
+            const first = STATE.items[(STATE.page - 1) * STATE.pageSize];
+            if (first) selectProposal(first.id);
+        }));
     }
 
     async function selectProposal(id, focusDetail = false) {
@@ -799,7 +809,7 @@
             closeModal();
             const labels = { approve: 'Đã phê duyệt', reject: 'Đã từ chối', revise: 'Đã gửi yêu cầu chỉnh sửa' };
             toast((labels[action] || 'Thành công') + (data && data.event ? ' · Event #' + data.event.id : ''));
-            await Promise.all([loadOverview(), loadActivity(), loadQueue()]);
+            await Promise.all([loadOverview(), loadQueue()]);
             if (data && data.id && STATE.items.some(item => item.id === data.id)) await selectProposal(data.id);
         } catch (e) {
             toast(e.message || 'Thao tác thất bại', 'error');
@@ -808,6 +818,79 @@
                 submitButton.textContent = submitButton.dataset.idleText || 'Thử lại';
             }
         }
+    }
+
+    // ----------------------------- ACTIVITY VIEW -----------------------------
+    function showView(view) {
+        const activity = view === 'activity';
+        $('#overviewView').hidden = activity;
+        $('#activityView').hidden = !activity;
+        $('#overviewNavButton').classList.toggle('active', !activity);
+        $('#activityNavButton').classList.toggle('active', activity);
+        closeSidebar();
+        if (activity) loadActivity();
+    }
+
+    async function loadActivity() {
+        $('#committeeActivity').innerHTML = '<div class="skeleton h-24 rounded-lg"></div><div class="skeleton h-24 rounded-lg"></div>';
+        const qs = new URLSearchParams({ status: $('#activityStatus').value });
+        const query = $('#activitySearch').value.trim();
+        if (query) qs.set('q', query);
+        try {
+            const data = await api('/committee/proposals?' + qs.toString());
+            STATE.activityItems = (data.items || []).slice().sort((a, b) => {
+                const aTime = new Date(a.updatedAt || a.createdAt || 0).getTime();
+                const bTime = new Date(b.updatedAt || b.createdAt || 0).getTime();
+                return bTime - aTime || Number(b.id) - Number(a.id);
+            });
+            renderActivity();
+        } catch (e) {
+            $('#committeeActivity').innerHTML = `<div class="panel p-6 text-sm text-rose-600">${escapeHtml(e.message)}</div>`;
+        }
+    }
+
+    function renderActivity() {
+        const totalPages = Math.max(1, Math.ceil(STATE.activityItems.length / STATE.activityPageSize));
+        STATE.activityPage = Math.min(STATE.activityPage, totalPages);
+        const start = (STATE.activityPage - 1) * STATE.activityPageSize;
+        const pageItems = STATE.activityItems.slice(start, start + STATE.activityPageSize);
+        $('#activityCount').textContent = STATE.activityItems.length + ' hoạt động';
+        $('#committeeActivity').innerHTML = pageItems.length ? pageItems.map(item => {
+            const dept = item.department ? item.department.name : '—';
+            return `<article class="panel flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between">
+                <div class="min-w-0">
+                    <div class="flex flex-wrap items-center gap-2">${statusBadge(item.status)}<span class="text-[11px] font-semibold text-slate-400">Xử lý ${fmtDate(item.updatedAt || item.createdAt)}</span></div>
+                    <h2 class="mt-2 truncate text-sm font-extrabold text-slate-900">${escapeHtml(item.title || 'Không tiêu đề')}</h2>
+                    <p class="mt-1 text-xs text-slate-500">${escapeHtml(dept)} · Tổ chức ${fmtDate(item.proposedDate)}</p>
+                    ${item.note ? `<p class="mt-2 text-xs text-slate-500">${escapeHtml(item.note)}</p>` : ''}
+                </div>
+                <button type="button" data-activity-detail="${item.id}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50">Xem chi tiết</button>
+            </article>`;
+        }).join('') : '<div class="panel p-10 text-center text-sm text-slate-500">Chưa có hoạt động phù hợp.</div>';
+        $('#committeeActivity').querySelectorAll('[data-activity-detail]').forEach(button => button.addEventListener('click', async () => {
+            showView('overview');
+            const item = STATE.activityItems.find(entry => entry.id === Number(button.dataset.activityDetail));
+            if (item) applyFilter(item.status);
+            await selectProposal(Number(button.dataset.activityDetail), true);
+        }));
+        renderActivityPagination(totalPages);
+    }
+
+    function renderActivityPagination(totalPages) {
+        const box = $('#activityPagination');
+        if (!STATE.activityItems.length || totalPages <= 1) {
+            box.innerHTML = '';
+            return;
+        }
+        box.innerHTML = `
+            <button type="button" data-activity-page="${STATE.activityPage - 1}" ${STATE.activityPage === 1 ? 'disabled' : ''} class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold disabled:opacity-40">Trang trước</button>
+            <span class="text-xs font-bold text-slate-500">${STATE.activityPage}/${totalPages}</span>
+            <button type="button" data-activity-page="${STATE.activityPage + 1}" ${STATE.activityPage === totalPages ? 'disabled' : ''} class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold disabled:opacity-40">Trang sau</button>`;
+        box.querySelectorAll('[data-activity-page]').forEach(button => button.addEventListener('click', () => {
+            STATE.activityPage = Number(button.dataset.activityPage);
+            renderActivity();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }));
     }
 
     // ----------------------------- FILTERS / NAVIGATION -----------------------------
@@ -822,6 +905,7 @@
     function applyFilter(value) {
         STATE.filter = value || ALL_STATUSES;
         STATE.selectedId = null;
+        STATE.page = 1;
         syncFilterControls();
         closeSidebar();
         loadQueue();
@@ -841,6 +925,7 @@
         searchTimer = setTimeout(() => {
             STATE.query = e.target.value.trim();
             STATE.selectedId = null;
+            STATE.page = 1;
             loadQueue();
         }, 300);
     });
@@ -857,11 +942,14 @@
     }
     $('#menuButton').addEventListener('click', openSidebar);
     sidebarBackdrop.addEventListener('click', closeSidebar);
-    $('#activityNavButton').addEventListener('click', () => {
-        closeSidebar();
-        $('#activitySection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    $('#overviewNavButton').addEventListener('click', () => showView('overview'));
+    $('#activityNavButton').addEventListener('click', () => showView('activity'));
+    $('#activityStatus').addEventListener('change', () => { STATE.activityPage = 1; loadActivity(); });
+    let activitySearchTimer = null;
+    $('#activitySearch').addEventListener('input', () => {
+        clearTimeout(activitySearchTimer);
+        activitySearchTimer = setTimeout(() => { STATE.activityPage = 1; loadActivity(); }, 250);
     });
-
     $('#btnLogout').addEventListener('click', () => {
         localStorage.clear();
         sessionStorage.clear();
@@ -871,9 +959,9 @@
     });
 
     // ----------------------------- BOOT -----------------------------
+    showView('overview');
     syncFilterControls();
     loadOverview();
-    loadActivity();
     loadQueue();
 })();
 </script>

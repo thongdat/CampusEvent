@@ -157,7 +157,7 @@
             <div id="qrModalBody" class="text-center">
                 <div class="qr-wrap mx-auto" style="max-width:320px"><div id="qrModalImg"></div></div>
                 <p class="mt-4 rounded-lg border border-orange-100 bg-orange-50 px-3 py-2 text-xs font-bold text-orange-700" id="qrModalUrl"></p>
-                <p class="mt-3 text-sm text-slate-600">Sinh viên quét QR bằng camera điện thoại. Link thật được ẩn và mã chụp màn hình sẽ hết hạn sau 30 giây.</p>
+                <p class="mt-3 text-sm text-slate-600">Sinh viên quét QR bằng camera điện thoại để mở Google Form check-in. Sau 30 giây, hệ thống tự ĐÓNG Google Form (ngừng nhận phản hồi) — người nộp sau sẽ thấy "biểu mẫu không còn nhận câu trả lời". Mở chiếu lại để mở form cho lượt mới.</p>
             </div>
         </div>
         <footer class="hidden items-center justify-end gap-2 border-t border-slate-200 bg-slate-50 px-5 py-3">
@@ -418,8 +418,7 @@
                         <div class="mb-2.5 flex items-center justify-between">
                             <span class="qr-tag qr-tag-in">● Check-IN</span>
                             <span class="text-[10px] font-bold uppercase tracking-wider text-fpt-700 flex items-center gap-1">
-                                <svg class="h-3 w-3 animate-spin" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                                QR động 30s
+                                ⏱ Phiên 30s · tự đóng
                             </span>
                         </div>
                         <div class="qr-wrap">
@@ -438,7 +437,7 @@
                                 Phóng to để chiếu
                             </button>
                             <button class="btn-rotate-now rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-bold text-slate-700 hover:bg-slate-50" data-event-id="${ev.id}">
-                                ↻ Xoay token
+                                ↻ Tạo mã mới
                             </button>
                             <button class="btn-edit-form rounded-lg border px-3 py-1.5 text-[11px] font-bold ${formBadgeClass(ev, 'in')}"
                                     data-event-id="${ev.id}" data-kind="in" data-current-url="${escapeHtml(ev.googleFormUrl || '')}">
@@ -484,7 +483,7 @@
                         <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17V7m4 10V13m4 4v-2m4 6H3v-6h18v6zm0-10V5a2 2 0 00-2-2H5a2 2 0 00-2 2v6h18z"/></svg>
                         Dashboard
                     </a>
-                    <a href="/api/department/attendance/events/${ev.id}/feedback-stats" target="_blank" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50">
+                    <a href="/api/department/feedback/events/${ev.id}" target="_blank" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50">
                         <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
                         Phản hồi
                     </a>
@@ -658,7 +657,7 @@
         $$('.btn-open-qr').forEach(btn => btn.addEventListener('click', () => openQrModal(btn.dataset)));
         $$('.btn-rotate-now').forEach(btn => btn.addEventListener('click', () => {
             const id = btn.dataset.eventId;
-            toast('Đang xoay token mới…');
+            toast('Đang tạo mã QR mới…');
             rotateOne(id, 'in', true);
         }));
         $$('.btn-preview-form').forEach(btn => btn.addEventListener('click', () => {
@@ -857,18 +856,18 @@
         }
     }
 
+    function buildProtectedRedirectUrl(eventId, token, publicBaseUrl) {
+        // QR trỏ vào server (form-redirect): server kiểm token 30 giây rồi mới chuyển
+        // sang Google Form. Hết 30 giây, quét mã cũ sẽ KHÔNG mở được form (server chặn).
+        const base = (publicBaseUrl || location.origin).replace(/\/+$/, '');
+        return base + '/api/checkin/events/' + encodeURIComponent(eventId)
+            + '/form-redirect?token=' + encodeURIComponent(token);
+    }
+
     function buildCheckinUrl(eventId, token, publicBaseUrl) {
-        const ev = findEvent(eventId);
-        // Protected Google Form flow: QR points to our server first.
-        // The server validates the 30-second token before redirecting to Google Forms.
-        if (ev && ev.googleFormUrl) {
-            if (publicBaseUrl) {
-                return publicBaseUrl + '/api/checkin/events/' + encodeURIComponent(eventId)
-                    + '/form-redirect?token=' + encodeURIComponent(token);
-            }
-            return buildGoogleFormUrl(ev.googleFormUrl, eventId, token, ev.title);
-        }
-        // Fallback: form nội bộ (chỉ dùng khi chưa tạo được Google Form)
+        // Check-in LUÔN đi qua form nội bộ AEMS để server validate token 30 giây.
+        // Hết 30 giây token hết hiệu lực => mọi submit bằng QR cũ đều bị chặn (HTTP 401).
+        // (Không mở thẳng Google Form vì Google Form không kiểm tra được token.)
         return location.origin + '/api/checkin.html?eventId=' + encodeURIComponent(eventId)
             + '&token=' + encodeURIComponent(token);
     }
@@ -888,14 +887,17 @@
             .then(r => r.ok ? r.json() : null)
             .then(data => {
                 if (!data || !data.token) return;
-                const checkinUrl = buildCheckinUrl(eventId, data.token, data.publicBaseUrl || '');
                 const ev = findEvent(eventId);
+                const useGoogle = !!(ev && ev.googleFormUrl);
+                const checkinUrl = useGoogle
+                    ? buildGoogleFormUrl(ev.googleFormUrl, eventId, data.token, ev && ev.title)
+                    : buildCheckinUrl(eventId, data.token, data.publicBaseUrl || '');
                 tokenState.set(formKey(eventId, 'in'), {
                     token: data.token,
                     url: checkinUrl,
                     expiredAt: Date.parse(data.expiredAt),
                     rotateSeconds: data.rotateSeconds || 30,
-                    mode: ev && ev.googleFormUrl ? (data.publicBaseUrl ? 'google-protected' : 'google-direct') : 'local'
+                    mode: useGoogle ? 'google-direct' : 'local'
                 });
                 const host = document.querySelector('[data-qr-host="' + eventId + '|in"]');
                 if (host) {
@@ -955,6 +957,109 @@
         if (cd) cd.textContent = '⏱ 0:30';
     }
 
+    // ----------- Projection 1 phiên 30s rồi tự đóng (check-in form nội bộ) -----------
+    const PROJECTION_SECONDS = 30;
+    let projectionTimer = null;
+
+    function clearProjectionTimer() {
+        if (projectionTimer) { clearInterval(projectionTimer); projectionTimer = null; }
+    }
+
+    // Mở/đóng Google Form (ngừng nhận phản hồi) qua API. Fire-and-forget, lỗi không chặn UI.
+    function setGoogleFormAccepting(eventId, kind, accepting) {
+        return fetch('/api/admin/events/' + encodeURIComponent(eventId) + '/google-form/accepting', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ kind: kind || 'in', accepting: !!accepting })
+        }).then(r => r.ok ? r.json() : null).catch(() => null);
+    }
+
+    function startInternalProjection(eventId, eventTitle) {
+        const key = formKey(eventId, 'in');
+        activeProjectionKey = key;
+        clearProjectionTimer();
+        $('#qrModalUrl').textContent = 'Đang tạo mã QR check-in bảo vệ…';
+        $('#qrModalImg').innerHTML = '<div class="qr-skeleton" style="max-width:320px"></div>';
+        // force=1 => cấp token mới, hiệu lực đúng 30 giây kể từ bây giờ.
+        fetch('/api/checkin/events/' + encodeURIComponent(eventId) + '/qr-token?force=1')
+            .then(r => r.ok ? r.json() : null)
+            .then(data => {
+                if (activeProjectionKey !== key) return; // modal đã đóng/đổi
+                if (!data || !data.token) {
+                    $('#qrModalUrl').textContent = 'Không tạo được mã QR. Vui lòng thử lại.';
+                    return;
+                }
+                // Ưu tiên Google Form của sự kiện (điện thoại quét mở được trực tiếp);
+                // chỉ dùng form nội bộ AEMS khi sự kiện chưa cấu hình Google Form.
+                const ev = findEvent(eventId);
+                const useGoogle = !!(ev && ev.googleFormUrl);
+                // Demo local: QR trỏ THẲNG Google Form (điện thoại quét mở được ngay).
+                // Hết 30 giây, cửa sổ chiếu tự đóng nên không còn QR để quét nữa.
+                const url = useGoogle
+                    ? buildGoogleFormUrl(ev.googleFormUrl, eventId, data.token, eventTitle)
+                    : buildCheckinUrl(eventId, data.token);
+                tokenState.set(key, {
+                    token: data.token,
+                    url: url,
+                    expiredAt: Date.parse(data.expiredAt),
+                    mode: useGoogle ? 'google-direct' : 'internal-projection'
+                });
+
+                // Hiện QR + bắt đầu đếm ngược 30s (hết giờ đóng form nếu là Google).
+                const showQrAndStart = () => {
+                    if (activeProjectionKey !== key) return;
+                    $('#qrModalImg').innerHTML = '<img alt="QR check-in" src="' + buildQrImageUrl(url, 600) + '">';
+                    $('#qrModalUrl').textContent = useGoogle
+                        ? 'Sinh viên quét QR để mở Google Form check-in của sự kiện.'
+                        : 'Sinh viên quét QR để mở form check-in AEMS (email · họ tên · MSSV · quiz).';
+                    runProjectionCountdown(PROJECTION_SECONDS, useGoogle,
+                        useGoogle ? () => setGoogleFormAccepting(eventId, 'in', false) : null);
+                };
+
+                if (useGoogle) {
+                    // QUAN TRỌNG: mở lại form XONG mới hiện QR, tránh sinh viên quét trúng
+                    // lúc form (đã bị đóng ở phiên trước) chưa kịp mở lại.
+                    $('#qrModalUrl').textContent = 'Đang mở lại Google Form để nhận check-in…';
+                    setGoogleFormAccepting(eventId, 'in', true).then(res => {
+                        if (activeProjectionKey !== key) return;
+                        if (res && res.supported === false) {
+                            toast('⚠ Form không do hệ thống tạo nên không tự đóng/mở được.');
+                        } else if (!res || res.success === false) {
+                            toast('⚠ Không mở lại được Google Form. Kiểm tra đăng nhập Gmail / build lại server.');
+                        }
+                        showQrAndStart();
+                    });
+                } else {
+                    showQrAndStart();
+                }
+            })
+            .catch(() => {
+                if (activeProjectionKey !== key) return;
+                $('#qrModalUrl').textContent = 'Không kết nối được máy chủ. Vui lòng thử lại.';
+            });
+    }
+
+    function runProjectionCountdown(seconds, useGoogle, onExpire) {
+        clearProjectionTimer();
+        let remaining = seconds;
+        const render = () => {
+            const mm = Math.floor(remaining / 60);
+            const ss = String(remaining % 60).padStart(2, '0');
+            $('#qrModalSub').textContent = useGoogle
+                ? 'Còn ' + mm + ':' + ss + ' — hết giờ Google Form sẽ tự ĐÓNG (ngừng nhận phản hồi).'
+                : 'Mã QR còn hiệu lực ' + mm + ':' + ss + ' rồi tự đóng. Sau đó mọi check-in bằng mã cũ đều bị chặn.';
+            if (remaining <= 0) {
+                clearProjectionTimer();
+                if (typeof onExpire === 'function') onExpire();
+                toast(useGoogle ? '⛔ Đã đóng Google Form. Người nộp sau sẽ thấy "form đã đóng".' : '⛔ Đã đóng phiên check-in. Mã QR cũ không còn hiệu lực.');
+                closeQrModal();
+            }
+            remaining--;
+        };
+        render();
+        projectionTimer = setInterval(render, 1000);
+    }
+
     function openQrModal(data) {
         const eventId = data.eventId;
         const kind = data.kind || 'in';
@@ -969,7 +1074,7 @@
         const kindLabel = kind === 'out' ? 'Check-OUT &amp; Feedback' : 'Check-IN';
         const subText = kind === 'out'
             ? 'QR feedback cuối buổi.'
-            : 'QR tự đổi nội dung mỗi 30 giây. Ảnh chụp màn hình cũ sẽ hết hạn.';
+            : 'Mã QR check-in có hiệu lực 30 giây rồi tự đóng — mã cũ sẽ bị chặn.';
 
         $('#qrModalTitle').innerHTML = 'QR ' + kindLabel + ' · ' + escapeHtml(data.eventTitle || 'Event');
         $('#qrModalSub').textContent = subText;
@@ -986,14 +1091,8 @@
         $('#qrModal').dataset.kind = kind;
 
         if (kind === 'in') {
-            activeProjectionKey = key;
-            $('#qrModalUrl').textContent = 'Đang tạo QR bảo vệ mới...';
-            $('#qrModalImg').innerHTML = '<div class="qr-skeleton" style="max-width:320px"></div>';
-            rotateOne(eventId, 'in', true).then(() => {
-                if (activeProjectionKey !== key) return;
-                refreshOpenModal(eventId, 'in');
-                startRotationLoop();
-            });
+            // 1 phiên token 30 giây, KHÔNG xoay liên tục; hết giờ tự đóng modal.
+            startInternalProjection(eventId, data.eventTitle);
         }
     }
 
@@ -1004,9 +1103,7 @@
         const state = tokenState.get(formKey(eventId, kind));
         if (!state) return;
         $('#qrModalUrl').textContent = kind === 'in'
-            ? (state.mode === 'google-protected'
-                ? 'Link đã được ẩn. QR mới vừa được cấp, ảnh chụp cũ sẽ hết hạn.'
-                : 'QR đang mở Google Form trực tiếp để điện thoại quét được.')
+            ? 'Sinh viên quét QR để mở form check-in AEMS (mã có hiệu lực 30 giây).'
             : 'Link đã được ẩn trên màn chiếu.';
         $('#qrModalImg').innerHTML = '<img alt="QR" src="' + buildQrImageUrl(state.url, 600) + '">';
     }
@@ -1015,6 +1112,7 @@
         if (activeProjectionKey) resetProjectionCountdown(activeProjectionKey);
         activeProjectionKey = null;
         stopRotationLoop();
+        clearProjectionTimer();
         $('#qrModal').classList.add('hidden');
         $('#qrModal').classList.remove('flex');
     }
