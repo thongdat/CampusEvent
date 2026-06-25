@@ -98,11 +98,23 @@ public class Student {
         this.attendanceReputation = attendanceReputation;
     }
 
-    public Gender getGender() {
+    public String getGender() {
+        return gender != null ? gender.name() : null;
+    }
+
+    public Gender getGenderEnum() {
         return gender;
     }
 
     public void setGender(Gender gender) {
         this.gender = gender;
+    }
+
+    public void setGender(String gender) {
+        if (gender == null || gender.isBlank()) {
+            this.gender = null;
+            return;
+        }
+        this.gender = Gender.valueOf(gender.trim().toUpperCase());
     }
 }
