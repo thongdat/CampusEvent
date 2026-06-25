@@ -168,11 +168,23 @@ public class User {
         this.totalPoints = totalPoints;
     }
 
-    public DepartmentPosition getDepartmentPosition() {
+    public String getDepartmentPosition() {
+        return departmentPosition != null ? departmentPosition.name() : null;
+    }
+
+    public DepartmentPosition getDepartmentPositionEnum() {
         return departmentPosition;
     }
 
     public void setDepartmentPosition(DepartmentPosition departmentPosition) {
         this.departmentPosition = departmentPosition;
+    }
+
+    public void setDepartmentPosition(String departmentPosition) {
+        if (departmentPosition == null || departmentPosition.isBlank()) {
+            this.departmentPosition = null;
+            return;
+        }
+        this.departmentPosition = DepartmentPosition.valueOf(departmentPosition.trim().toUpperCase());
     }
 }
