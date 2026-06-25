@@ -25,8 +25,9 @@ public class Student {
     @Column(nullable = false)
     private Double attendanceReputation = 100.0;
 
-    @Column(name = "gender", columnDefinition = "NVARCHAR(10)")
-    private String gender;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "gender", length = 10)
+    private Gender gender;
     
     @OneToOne
     @JoinColumn(name = "userId", nullable = false, unique = true)
@@ -98,10 +99,22 @@ public class Student {
     }
 
     public String getGender() {
+        return gender != null ? gender.name() : null;
+    }
+
+    public Gender getGenderEnum() {
         return gender;
     }
 
-    public void setGender(String gender) {
+    public void setGender(Gender gender) {
         this.gender = gender;
+    }
+
+    public void setGender(String gender) {
+        if (gender == null || gender.isBlank()) {
+            this.gender = null;
+            return;
+        }
+        this.gender = Gender.valueOf(gender.trim().toUpperCase());
     }
 }

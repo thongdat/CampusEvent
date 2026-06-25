@@ -1,5 +1,6 @@
 package com.example.controller;
 
+import com.example.model.Gender;
 import com.example.model.Attendance;
 import com.example.model.AttendanceSession;
 import com.example.model.Event;
@@ -225,8 +226,8 @@ public class CheckinController {
                         "MSSV " + studentCode + " hoặc email " + email + " chưa được đăng ký trong hệ thống."));
 
         // Lưu / cập nhật giới tính
-        if (student.getGender() == null || student.getGender().isBlank()) {
-            student.setGender(gender);
+        if (student.getGender() == null) {
+            student.setGender(Gender.valueOf(gender));
             student = studentRepository.save(student);
         }
 

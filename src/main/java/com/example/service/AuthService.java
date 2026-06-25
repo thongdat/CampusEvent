@@ -123,7 +123,7 @@ public class AuthService {
                 user.getRole().getName(),
                 user.getMajor(),
                 AcademicStructure.facultyOf(user.getMajor()),
-                user.getDepartmentPosition()
+               user.getDepartmentPosition()
         );
 
         return LoginResponse.success("Đăng nhập thành công!", userInfo);
