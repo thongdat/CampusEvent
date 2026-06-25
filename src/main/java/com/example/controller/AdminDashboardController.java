@@ -607,6 +607,44 @@ public class AdminDashboardController {
         }
     }
 
+    /**
+     * Mở/ĐÓNG Google Form (ngừng nhận phản hồi).
+     * Dùng cho phiên chiếu QR 30 giây: mở form khi bắt đầu chiếu, đóng form khi hết giờ.
+     * body: { kind: 'in'|'out', accepting: true|false }
+     * Chỉ áp dụng cho form do hệ thống tự tạo (có checkinFormId/checkoutFormId).
+     */
+    @PostMapping("/events/{id}/google-form/accepting")
+    public ResponseEntity<Map<String, Object>> setGoogleFormAccepting(
+            @PathVariable Long id,
+            @RequestBody(required = false) Map<String, Object> payload,
+            HttpServletRequest request) {
+        String kind = payload == null ? "in" : (payload.get("kind") == null ? "in" : String.valueOf(payload.get("kind")).trim().toLowerCase());
+        boolean accepting = payload != null && Boolean.parseBoolean(String.valueOf(payload.get("accepting")));
+        try {
+            Event event = eventRepository.findById(id)
+                    .orElseThrow(() -> notFound("Không tìm thấy event."));
+            String formId = "out".equals(kind) ? event.getCheckoutFormId() : event.getCheckinFormId();
+            Map<String, Object> res = new LinkedHashMap<>();
+            if (formId == null || formId.isBlank()) {
+                res.put("success", false);
+                res.put("supported", false);
+                res.put("message", "Form này không do hệ thống tạo nên không thể đóng/mở tự động.");
+                return ResponseEntity.ok(res);
+            }
+            String accessToken = resolveGoogleAccessToken(request);
+            googleFormsApiService.setAcceptingResponses(formId, accessToken, accepting);
+            res.put("success", true);
+            res.put("supported", true);
+            res.put("accepting", accepting);
+            res.put("message", accepting ? "Đã mở form nhận phản hồi." : "Đã đóng form (ngừng nhận phản hồi).");
+            return ResponseEntity.ok(res);
+        } catch (GoogleFormsApiService.GoogleApiException ex) {
+            return googleFormError(new ResponseStatusException(HttpStatus.BAD_GATEWAY, ex.getMessage()));
+        } catch (ResponseStatusException ex) {
+            return googleFormError(ex);
+        }
+    }
+
     private Map<String, Object> autoCreateGoogleFormInternal(
             Long id, boolean isCheckout, HttpServletRequest request) {
         String lockKey = id + (isCheckout ? "|out" : "|in");
@@ -844,8 +882,12 @@ public class AdminDashboardController {
         // Nạp attendance 1 lần theo danh sách registrationId (thay cho N+1 findByRegistrationId).
         Map<Long, Attendance> attendanceByReg = new HashMap<>();
         List<Long> regIds = regs.stream().map(Registration::getId).collect(Collectors.toList());
-        if (!regIds.isEmpty()) {
-            for (Attendance a : attendanceRepository.findByRegistrationIdIn(regIds)) {
+        // SQL Server chỉ cho tối đa 2.100 parameters trong một statement.
+        // Chia lô để dataset lớn không làm toàn bộ trang Registration trả về 0.
+        final int attendanceBatchSize = 1000;
+        for (int from = 0; from < regIds.size(); from += attendanceBatchSize) {
+            List<Long> batch = regIds.subList(from, Math.min(from + attendanceBatchSize, regIds.size()));
+            for (Attendance a : attendanceRepository.findByRegistrationIdIn(batch)) {
                 if (a.getRegistration() != null && a.getRegistration().getId() != null) {
                     attendanceByReg.put(a.getRegistration().getId(), a);
                 }
@@ -1166,7 +1208,7 @@ public class AdminDashboardController {
 
         long elapsedEventCount = eventRepository.countByStartTimeLessThan(endOfToday);
         long registered = registrationRepository.countByEvent_StartTimeLessThanAndStatus(endOfToday, "REGISTERED");
-        long attended = attendanceRepository.countByStatusAndRegistration_Event_StartTimeLessThan("ATTENDED", endOfToday);
+        long attended = attendanceRepository.countCheckedInForElapsedEvents(endOfToday);
         long elapsedCapacity = firstNonNull(eventRepository.sumCapacityBefore(endOfToday), 0L);
         double registrationRate = elapsedCapacity > 0 ? (registered * 100.0 / elapsedCapacity) : 0;
         double attendanceRate = registered > 0 ? (attended * 100.0 / registered) : 0;
@@ -1176,7 +1218,7 @@ public class AdminDashboardController {
         formula.put("asOfDate", today.toString());
         formula.put("monthlyColumns", "Hiển thị từ tháng 01 đến tháng hiện tại. Hôm nay là " + today + ".");
         formula.put("registrationRate", "Số lượt REGISTERED của event đã diễn ra chia cho tổng sức chứa của các event đó.");
-        formula.put("attendanceRate", "Số lượt ATTENDED của event đã diễn ra chia cho số lượt REGISTERED tương ứng.");
+        formula.put("attendanceRate", "Số lượt đã check-in (không tính ABSENT) của event đã diễn ra chia cho số lượt REGISTERED tương ứng.");
         formula.put("averageRating", "Điểm trung bình từ feedback của những event đã diễn ra.");
 
         Map<String, Object> report = new LinkedHashMap<>();

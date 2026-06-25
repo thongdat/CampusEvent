@@ -1235,7 +1235,7 @@
             </div>`;
     }
 
-    function pageItems(key, items, pageSize = 20) {
+    function pageItems(key, items, pageSize = 10) {
         const pages = Math.max(1, Math.ceil(items.length / pageSize));
         const pageKey = `${key}Page`;
         const page = Math.min(Math.max(Number(state.filters[pageKey] || 1), 1), pages);
@@ -1374,7 +1374,7 @@
         const logs = payload.items || [];
         const render = (q = '') => {
             const filtered = logs.filter(log => !q || matchesSearch(`${log.activityType} ${log.description} ${log.userName} ${log.userEmail}`, q));
-            const pager = pageItems('logs', filtered, 25);
+            const pager = pageItems('logs', filtered, 10);
             content(`
                 <div class="metric-grid">
                     ${metric('Total logs', number(payload.totalItems || logs.length), 'Activity logs')}
@@ -1529,7 +1529,7 @@
                     if (sortKey === 'created') return new Date(right.createdAt || 0) - new Date(left.createdAt || 0);
                     return String(left.fullName || '').localeCompare(String(right.fullName || ''), 'vi');
                 });
-            const pager = pageItems('users', filtered, 25);
+            const pager = pageItems('users', filtered, 10);
             content(`
                 <div class="metric-grid">
                     ${metric('All Users', number(users.length), 'User List')}
@@ -1617,6 +1617,7 @@
         const roleOptions = roles
             .filter(role => role.name !== 'ADMIN')
             .map(role => ({ value: role.id, label: role.name }));
+        const rolePager = pageItems('roles', roles, 10);
 
         const openRoleForm = (role = {}) => openForm({
             title: role.id ? 'Edit Role' : 'Create Role',
@@ -1656,7 +1657,8 @@
                 ${metric('Admin', number(users.filter(user => user.role === 'ADMIN').length), 'Quản trị viên', 'orange', 'user-cog')}
                 ${metric('Sinh viên', number(users.filter(user => user.role === 'STUDENT').length), 'Tài khoản sinh viên', 'green', 'graduation-cap')}
             </div>
-            ${table(['Role', 'Description', 'Users', 'Actions'], roles.map(role => `
+            <div class="toolbar">${pagination('roles', rolePager.page, rolePager.pages, rolePager.total, rolePager.visible.length)}</div>
+            ${table(['Role', 'Description', 'Users', 'Actions'], rolePager.visible.map(role => `
                 <tr>
                     <td>${badge(role.name, tone(role.name))}</td>
                     <td>${h(role.description || 'N/A')}</td>
@@ -1669,6 +1671,7 @@
         `);
         document.getElementById('addRole').onclick = () => openRoleForm();
         document.getElementById('assignRole').onclick = assignRole;
+        bindPagination('roles', rolePager, renderRoles);
         document.querySelectorAll('[data-edit-role]').forEach(button => button.onclick = () => openRoleForm(roles.find(role => String(role.id) === button.dataset.editRole)));
         document.querySelectorAll('[data-delete-role]').forEach(button => button.onclick = () => confirmAction('Xóa role này?', async () => {
             await api(`/roles/${button.dataset.deleteRole}`, { method: 'DELETE' });
@@ -1683,11 +1686,13 @@
         const [departments, users, roles] = await Promise.all([load('/departments', []), load('/users', []), load('/roles', [])]);
         const managerRole = roles.find(role => role.name === 'MANAGER') || roles.find(role => role.name === 'DEPARTMENT');
         const managerCandidates = users.filter(user => user.role !== 'ADMIN');
+        const departmentPager = pageItems('departments', departments, 10);
+        const totalFacultyCount = new Set(departments.map(item => item.facultyName || facultyOfDepartment(item.name))).size;
         const managerFor = department =>
             users.find(user => String(user.id) === String(department.managerId))
             || users.find(user => ['MANAGER', 'DEPARTMENT'].includes(user.role) && user.departmentPosition === 'HEAD' && normalize(user.major) === normalize(department.name))
             || users.find(user => ['MANAGER', 'DEPARTMENT'].includes(user.role) && normalize(user.major) === normalize(department.name));
-        const grouped = departments.reduce((acc, department) => {
+        const grouped = departmentPager.visible.reduce((acc, department) => {
             const faculty = department.facultyName || facultyOfDepartment(department.name);
             if (!acc[faculty]) acc[faculty] = [];
             acc[faculty].push(department);
@@ -1746,11 +1751,12 @@
 
         content(`
             <div class="metric-grid">
-                ${metric('Khoa lớn', number(facultyRows.length), 'Đã gom nhóm')}
+                ${metric('Khoa lớn', number(totalFacultyCount), 'Đã gom nhóm')}
                 ${metric('Bộ môn/ngành', number(departments.length), 'Đơn vị quản lý')}
                 ${metric('Events', number(departments.reduce((sum, item) => sum + Number(item.eventCount || 0), 0)), 'Event theo DB')}
                 ${metric('Students', number(departments.reduce((sum, item) => sum + Number(item.studentCount || 0), 0)), 'Sinh viên ước tính')}
             </div>
+            <div class="toolbar">${pagination('departments', departmentPager.page, departmentPager.pages, departmentPager.total, departmentPager.visible.length)}</div>
             <div class="department-tree">
                 ${facultyRows.map(group => `
                     <section class="panel department-group">
@@ -1788,6 +1794,7 @@
             </div>
         `);
         document.getElementById('addDepartment').onclick = () => openDepartmentForm();
+        bindPagination('departments', departmentPager, renderDepartments);
         document.querySelectorAll('[data-manager]').forEach(button => button.onclick = () => assignManager(departments.find(item => String(item.id) === button.dataset.manager)));
         document.querySelectorAll('[data-edit-department]').forEach(button => button.onclick = () => openDepartmentForm(departments.find(item => String(item.id) === button.dataset.editDepartment)));
         document.querySelectorAll('[data-delete-department]').forEach(button => button.onclick = () => confirmAction('Xóa khoa này?', async () => {
@@ -1804,7 +1811,7 @@
         const statusCounts = summarizeStatuses(proposals);
         const statusOptions = ['PENDING', 'REVISION', 'REJECTED'].map(value => ({ value, label: value }));
         const needsReview = proposals.filter(item => ['PENDING', 'REVISION'].includes(String(item.status).toUpperCase()));
-        const pager = pageItems('proposals', proposals, 20);
+        const pager = pageItems('proposals', proposals, 10);
 
         const updateStatus = proposal => openForm({
             title: 'Proposal Status Tracking',
@@ -2010,7 +2017,7 @@
             toast(featured[event.id] ? 'Đã đưa vào Featured Events.' : 'Đã bỏ khỏi Featured Events.');
             renderEvents();
         };
-        const pager = pageItems('events', events, 20);
+        const pager = pageItems('events', events, 10);
 
         content(`
             <div class="metric-grid">
@@ -2143,7 +2150,7 @@
 
         const render = (q = '', keepSearchFocus = false) => {
             const filtered = registrations.filter(item => !q || matchesSearch(`${item.eventTitle} ${item.studentName} ${item.studentEmail} ${item.studentCode} ${item.studentMajor} ${item.status} ${item.attendanceStatus}`, q));
-            const pageSize = 50;
+            const pageSize = 10;
             const pages = Math.max(1, Math.ceil(filtered.length / pageSize));
             const page = Math.min(Math.max(Number(state.filters.registrationPage || 1), 1), pages);
             const start = (page - 1) * pageSize;
@@ -2219,6 +2226,7 @@
         const max = Math.max(...ratings.map(item => item.count), 1);
         const render = (q = '') => {
             const filtered = feedback.filter(item => !q || matchesSearch(`${item.eventTitle} ${item.studentName} ${item.studentEmail} ${item.comment}`, q));
+            const feedbackPager = pageItems('feedback', filtered, 10);
             content(`
                 <div class="metric-grid">
                     ${metric('Feedback', number(feedback.length), 'Feedback List')}
@@ -2228,8 +2236,8 @@
                 </div>
                 <div class="split-grid">
                     <section class="panel">
-                        <div class="toolbar">${searchBox('feedbackSearch', 'Tìm event, sinh viên, comment...')}</div>
-                        ${table(['Event', 'Student', 'Rating', 'Comment', 'Actions'], filtered.map(item => `
+                        <div class="toolbar">${searchBox('feedbackSearch', 'Tìm event, sinh viên, comment...')}${pagination('feedback', feedbackPager.page, feedbackPager.pages, feedbackPager.total, feedbackPager.visible.length)}</div>
+                        ${table(['Event', 'Student', 'Rating', 'Comment', 'Actions'], feedbackPager.visible.map(item => `
                             <tr>
                                 <td>${h(item.eventTitle)}</td>
                                 <td><span class="cell-title">${h(item.studentName || item.studentCode)}</span><span class="cell-sub">${h(item.studentEmail || '')}</span></td>
@@ -2252,6 +2260,7 @@
                 </div>
             `);
             bindFilters('feedbackSearch', feedback, render);
+            bindPagination('feedback', feedbackPager, render, [q]);
             document.querySelectorAll('[data-feedback-delete]').forEach(button => button.onclick = () => confirmAction('Xóa comment này?', async () => {
                 await api(`/feedback/${button.dataset.feedbackDelete}`, { method: 'DELETE' });
                 toast('Đã xóa feedback.');
@@ -2279,6 +2288,8 @@
             acc[major] = (acc[major] || 0) + 1;
             return acc;
         }, {});
+        const reportEventPager = pageItems('reportEvents', events, 10);
+        const reportMajorPager = pageItems('reportMajors', Object.entries(participationByMajor), 10);
         content(`
             <div class="metric-grid">
                 ${metric('Registration rate', percent(reports.registrationRate), `${number(reports.elapsedRegistrations)} / ${number(reports.elapsedCapacity)} capacity`, 'blue', 'ticket-check')}
@@ -2302,7 +2313,8 @@
                         <h2 class="panel-title">Attendance Reports</h2>
                         <a class="btn" href="registrations.html">Chi tiết</a>
                     </div>
-                    ${table(['Event', 'Registered', 'Attendance', 'Fill'], events.slice(0, 10).map(event => `
+                    <div class="toolbar">${pagination('reportEvents', reportEventPager.page, reportEventPager.pages, reportEventPager.total, reportEventPager.visible.length)}</div>
+                    ${table(['Event', 'Registered', 'Attendance', 'Fill'], reportEventPager.visible.map(event => `
                         <tr>
                             <td><span class="event-cell"><img class="event-thumb" src="${h(eventImageUrl(event))}" alt=""><span><span class="cell-title">${h(event.title)}</span><span class="cell-sub">${h(event.departmentName)}</span></span></span></td>
                             <td>${number(event.registrationCount)}</td>
@@ -2312,7 +2324,8 @@
                 </section>
                 <section class="panel">
                     <h2 class="panel-title">Student Participation</h2>
-                    ${table(['Khoa/Major', 'Users'], Object.entries(participationByMajor).map(([major, count]) => `
+                    <div class="toolbar">${pagination('reportMajors', reportMajorPager.page, reportMajorPager.pages, reportMajorPager.total, reportMajorPager.visible.length)}</div>
+                    ${table(['Khoa/Major', 'Users'], reportMajorPager.visible.map(([major, count]) => `
                         <tr><td>${h(major)}</td><td>${number(count)}</td></tr>`))}
                 </section>
             </div>
@@ -2323,6 +2336,8 @@
                 <p class="panel-note">${h(reports.formula?.averageRating || '')}</p>
             </section>
         `);
+        bindPagination('reportEvents', reportEventPager, renderReports);
+        bindPagination('reportMajors', reportMajorPager, renderReports);
         document.getElementById('exportReports')?.addEventListener('click', () => {
             exportCsv('aems-reports.csv', [
                 ['Metric', 'Value'],
@@ -2339,7 +2354,7 @@
         shell(`<button class="btn primary" id="sendNotification">${icon('send')}Gửi email</button>`);
         const payload = await load('/email-logs?page=0&size=80', { items: [] });
         const logs = payload.items || [];
-        const emailPager = pageItems('email', logs, 20);
+        const emailPager = pageItems('email', logs, 10);
 
         const sendForm = () => openForm({
             title: 'Send Notifications',
