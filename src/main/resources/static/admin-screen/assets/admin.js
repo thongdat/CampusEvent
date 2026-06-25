@@ -1227,14 +1227,21 @@
                 const id = trigger.dataset.menuTrigger;
                 const wrapper = trigger.closest('.action-menu');
                 document.querySelectorAll('.action-menu.open').forEach(other => {
-                    if (other !== wrapper) other.classList.remove('open');
+                    if (other !== wrapper) {
+                        other.classList.remove('open');
+                        other.closest('tr')?.classList.remove('menu-open');
+                    }
                 });
                 wrapper.classList.toggle('open');
+                wrapper.closest('tr')?.classList.toggle('menu-open', wrapper.classList.contains('open'));
             });
         });
         if (!bindActionMenus.global) {
             document.addEventListener('click', () => {
-                document.querySelectorAll('.action-menu.open').forEach(menu => menu.classList.remove('open'));
+                document.querySelectorAll('.action-menu.open').forEach(menu => {
+                    menu.classList.remove('open');
+                    menu.closest('tr')?.classList.remove('menu-open');
+                });
             });
             bindActionMenus.global = true;
         }
@@ -1706,6 +1713,13 @@
             }
         });
 
+        const userInitials = user => String(user.fullName || user.email || 'U')
+            .split(/\s+/)
+            .filter(Boolean)
+            .slice(-2)
+            .map(part => part[0])
+            .join('')
+            .toUpperCase();
         const userFaculty = user => facultyOfDepartment(user.major || user.departmentName || '');
         const uniqueOptions = values => [...new Set(values.filter(Boolean))].sort((a, b) => a.localeCompare(b, 'vi'));
         const roleFilterOptions = [{ value: 'all', label: 'Tất cả role' }]
@@ -1777,22 +1791,34 @@
             };
             state.filters.usersPage = pager.page;
             content(`
-                <div class="metric-grid">
-                    ${metric('All Users', number(metrics.totalUsers || pager.total), 'User List')}
-                    ${metric('Active', number(metrics.activeUsers), 'Đang hoạt động')}
-                    ${metric('Locked', number(metrics.lockedUsers), 'Tài khoản khóa')}
-                    ${metric('Roles', number(metrics.totalRoles || roles.length), 'Role đang có')}
+                <div class="user-stat-strip">
+                    <div class="user-stat-item"><span>Users</span><strong>${number(metrics.totalUsers || pager.total)}</strong><small>${number(pager.visible.length)} trong trang</small></div>
+                    <div class="user-stat-item tone-green"><span>Active</span><strong>${number(metrics.activeUsers)}</strong><small>Đang hoạt động</small></div>
+                    <div class="user-stat-item tone-rose"><span>Locked</span><strong>${number(metrics.lockedUsers)}</strong><small>Tài khoản khóa</small></div>
+                    <div class="user-stat-item tone-blue"><span>Roles</span><strong>${number(metrics.totalRoles || roles.length)}</strong><small>Vai trò đang có</small></div>
                 </div>
-                <div class="filter-strip">
-                    ${searchBox('userSearch', 'Tìm tên, email, role, khoa...')}
-                    ${selectBox('userRoleFilter', roleFilterOptions)}
-                    ${selectBox('userFacultyFilter', facultyFilterOptions)}
-                    ${selectBox('userSort', sortOptions)}
-                    ${pagination('users', pager.page, pager.pages, pager.total, pager.visible.length)}
-                </div>
-                ${table(['User', 'Role', 'Chức vụ', 'Khoa', 'Status', 'Điểm', 'Hành động'], pager.visible.map(user => `
-                    <tr>
-                        <td><span class="cell-title">${h(user.fullName)}</span><span class="cell-sub">${h(user.email)}</span></td>
+                <section class="panel user-directory">
+                    <div class="user-directory-head">
+                        <div>
+                            <h2 class="panel-title">User Directory</h2>
+                            <p class="panel-note">Quản lý tài khoản, role, trạng thái và thao tác nhanh.</p>
+                        </div>
+                        ${pagination('users', pager.page, pager.pages, pager.total, pager.visible.length)}
+                    </div>
+                    <div class="user-directory-toolbar">
+                        ${searchBox('userSearch', 'Tìm tên, email, role, khoa...')}
+                        ${selectBox('userRoleFilter', roleFilterOptions)}
+                        ${selectBox('userFacultyFilter', facultyFilterOptions)}
+                        ${selectBox('userSort', sortOptions)}
+                    </div>
+                    ${table(['User', 'Role', 'Chức vụ', 'Khoa', 'Status', 'Điểm', 'Hành động'], pager.visible.map(user => `
+                    <tr class="user-row">
+                        <td>
+                            <span class="user-cell">
+                                <span class="user-avatar">${h(userInitials(user))}</span>
+                                <span><span class="cell-title">${h(user.fullName)}</span><span class="cell-sub">${h(user.email)}</span></span>
+                            </span>
+                        </td>
                         <td>${badge(user.role || 'N/A', tone(user.role))}</td>
                         <td>${badge(user.departmentPositionLabel || user.departmentPosition || 'STAFF', user.departmentPosition === 'HEAD' ? 'green' : 'gray')}</td>
                         <td>${h(user.major || 'N/A')}<span class="cell-sub">${h(userFaculty(user))}${user.studentCode ? ' · ' + h(user.studentCode) : ''}</span></td>
@@ -1812,6 +1838,7 @@
                             </div>
                         </div></td>
                     </tr>`))}
+                </section>
             `);
             const search = document.getElementById('userSearch');
             const roleSelect = document.getElementById('userRoleFilter');
