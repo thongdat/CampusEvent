@@ -198,7 +198,38 @@ public class AdminDashboardController {
     }
 
     @GetMapping("/users")
-    public List<Map<String, Object>> users() {
+    public Object users(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String role,
+            @RequestParam(required = false) String faculty,
+            @RequestParam(defaultValue = "role") String sort) {
+        if (page != null || size != null) {
+            int safePage = Math.max(0, page != null ? page : 0);
+            int safeSize = Math.max(1, Math.min(size != null ? size : 25, 100));
+            Pageable pageable = PageRequest.of(safePage, safeSize, userSort(sort));
+            String query = textOrNull(q);
+            String roleFilter = "all".equalsIgnoreCase(textOrEmpty(role)) ? null : textOrNull(role);
+            List<String> majors = majorsForFaculty(faculty);
+            Page<User> result = majors.isEmpty()
+                    ? userRepository.searchUsers(query, roleFilter, pageable)
+                    : userRepository.searchUsersByMajors(query, roleFilter, majors, pageable);
+            List<Long> userIds = result.getContent().stream()
+                    .map(User::getId)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+            List<Student> students = userIds.isEmpty() ? List.of() : studentRepository.findByUser_IdIn(userIds);
+
+            Map<String, Object> payload = new LinkedHashMap<>();
+            payload.put("items", buildUsersInOrder(result.getContent(), students));
+            payload.put("page", result.getNumber());
+            payload.put("size", result.getSize());
+            payload.put("totalItems", result.getTotalElements());
+            payload.put("totalPages", result.getTotalPages());
+            payload.put("metrics", buildUserMetrics());
+            return payload;
+        }
         return buildUsers(userRepository.findAll(), studentRepository.findAll());
     }
 
@@ -1023,6 +1054,55 @@ public class AdminDashboardController {
                 .sorted(Comparator.comparing(User::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
                 .map(user -> buildUser(user, studentByUserId.get(user.getId())))
                 .collect(Collectors.toList());
+    }
+
+    private List<Map<String, Object>> buildUsersInOrder(List<User> users, List<Student> students) {
+        Map<Long, Student> studentByUserId = students.stream()
+                .filter(student -> student.getUser() != null && student.getUser().getId() != null)
+                .collect(Collectors.toMap(student -> student.getUser().getId(), student -> student, (left, right) -> left));
+
+        return users.stream()
+                .map(user -> buildUser(user, studentByUserId.get(user.getId())))
+                .collect(Collectors.toList());
+    }
+
+    private Map<String, Object> buildUserMetrics() {
+        long totalUsers = userRepository.count();
+        long activeUsers = userRepository.countByStatus(true);
+        Map<String, Object> metrics = new LinkedHashMap<>();
+        metrics.put("totalUsers", totalUsers);
+        metrics.put("activeUsers", activeUsers);
+        metrics.put("lockedUsers", totalUsers - activeUsers);
+        metrics.put("totalRoles", roleRepository.count());
+        return metrics;
+    }
+
+    private Sort userSort(String sort) {
+        String key = textOrEmpty(sort).toLowerCase(Locale.ROOT);
+        if ("name".equals(key)) {
+            return Sort.by(Sort.Direction.ASC, "fullName");
+        }
+        if ("points".equals(key)) {
+            return Sort.by(Sort.Direction.DESC, "totalPoints").and(Sort.by(Sort.Direction.ASC, "fullName"));
+        }
+        if ("created".equals(key)) {
+            return Sort.by(Sort.Direction.DESC, "createdAt");
+        }
+        if ("faculty".equals(key)) {
+            return Sort.by(Sort.Direction.ASC, "major").and(Sort.by(Sort.Direction.ASC, "fullName"));
+        }
+        return Sort.by(Sort.Direction.ASC, "role.name").and(Sort.by(Sort.Direction.ASC, "fullName"));
+    }
+
+    private List<String> majorsForFaculty(String faculty) {
+        String value = textOrEmpty(faculty);
+        if (value.isBlank() || "all".equalsIgnoreCase(value)) {
+            return List.of();
+        }
+        List<String> majors = new ArrayList<>();
+        majors.add(value);
+        majors.addAll(AcademicStructure.departmentsForFaculty(value));
+        return majors.stream().distinct().collect(Collectors.toList());
     }
 
     private Map<String, Object> buildUser(User user, Student student) {
