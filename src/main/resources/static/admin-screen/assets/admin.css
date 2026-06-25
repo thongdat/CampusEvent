@@ -2219,6 +2219,81 @@ body {
     gap: 1.25rem;
 }
 
+.report-stat-panel {
+    display: grid;
+    gap: 1rem;
+}
+
+.report-stat-header {
+    align-items: start;
+    gap: 1rem;
+}
+
+.report-filter {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    justify-content: flex-end;
+    gap: .7rem;
+}
+
+.date-control {
+    display: grid;
+    gap: .35rem;
+    min-width: 9.5rem;
+    color: #52637a;
+    font-size: .78rem;
+    font-weight: 800;
+}
+
+.date-control input {
+    height: 2.9rem;
+    border: 1px solid #d7e0ec;
+    border-radius: .65rem;
+    background: #fff;
+    color: #0f172a;
+    font: inherit;
+    font-size: .9rem;
+    font-weight: 700;
+    padding: 0 .75rem;
+}
+
+.event-stat-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 1rem;
+    align-items: stretch;
+}
+
+.chart-card {
+    min-width: 0;
+    border: 1px solid #e1e8f2;
+    border-radius: .7rem;
+    background: rgba(248, 251, 255, .72);
+    padding: 1rem;
+}
+
+.chart-card-head {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: .85rem;
+    margin-bottom: .6rem;
+}
+
+.chart-card-head h3 {
+    color: #0f172a;
+    font-size: .95rem;
+    font-weight: 900;
+}
+
+.chart-card-head span {
+    color: #64748b;
+    font-size: .8rem;
+    font-weight: 800;
+    text-align: right;
+}
+
 .line-chart {
     width: 100%;
     min-height: 17rem;
@@ -2270,6 +2345,98 @@ body {
     fill: #fff;
     stroke: #2563eb;
     stroke-width: 3;
+}
+
+.pie-chart-wrap {
+    display: grid;
+    grid-template-columns: minmax(10rem, .95fr) minmax(11rem, 1fr);
+    gap: 1rem;
+    align-items: center;
+}
+
+.pie-chart {
+    display: block;
+    width: 100%;
+    max-width: 17rem;
+    margin: 0 auto;
+}
+
+.pie-slice {
+    cursor: pointer;
+    stroke: #fff;
+    stroke-width: 2;
+    transition: filter .16s ease, transform .16s ease;
+    transform-origin: 120px 120px;
+}
+
+.pie-slice:hover {
+    filter: brightness(1.06);
+    transform: scale(1.025);
+}
+
+.pie-hole {
+    fill: #fff;
+    stroke: #e5edf6;
+    stroke-width: 1;
+}
+
+.pie-total,
+.pie-total-label {
+    text-anchor: middle;
+}
+
+.pie-total {
+    fill: #0f172a;
+    font-size: 24px;
+    font-weight: 900;
+}
+
+.pie-total-label {
+    fill: #64748b;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.pie-legend {
+    display: grid;
+    gap: .55rem;
+    min-width: 0;
+}
+
+.pie-legend-item {
+    display: grid;
+    grid-template-columns: .75rem minmax(0, 1fr);
+    gap: .55rem;
+    align-items: start;
+    min-width: 0;
+}
+
+.pie-swatch {
+    width: .75rem;
+    height: .75rem;
+    border-radius: 999px;
+    margin-top: .2rem;
+}
+
+.pie-legend-item strong,
+.pie-legend-item small {
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.pie-legend-item strong {
+    color: #0f172a;
+    font-size: .86rem;
+    font-weight: 900;
+}
+
+.pie-legend-item small {
+    color: #64748b;
+    font-size: .78rem;
+    font-weight: 700;
 }
 
 .action-list {
@@ -2399,6 +2566,10 @@ tbody tr:hover {
     .split-grid {
         grid-template-columns: 1fr;
     }
+
+    .event-stat-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 @media (max-width: 860px) {
@@ -2464,6 +2635,19 @@ tbody tr:hover {
     .timeline-item {
         grid-template-columns: 1fr;
     }
+
+    .report-stat-header {
+        display: grid;
+    }
+
+    .report-filter {
+        justify-content: stretch;
+    }
+
+    .report-filter .btn,
+    .date-control {
+        flex: 1 1 10rem;
+    }
 }
 
 @media (max-width: 520px) {
@@ -2488,6 +2672,22 @@ tbody tr:hover {
 
     .control {
         width: 100%;
+    }
+
+    .pie-chart-wrap {
+        grid-template-columns: 1fr;
+    }
+
+    .chart-card {
+        padding: .85rem;
+    }
+
+    .chart-card-head {
+        display: grid;
+    }
+
+    .chart-card-head span {
+        text-align: left;
     }
 }
 

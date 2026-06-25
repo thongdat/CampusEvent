@@ -756,23 +756,100 @@
         return `<label class="control"><select id="${h(id)}">${options.map(option => `<option value="${h(option.value)}">${h(option.label)}</option>`).join('')}</select></label>`;
     }
 
-    function chart(monthly = []) {
-        if (!monthly.length) {
-            return emptyState({ icon: 'bar-chart-3', title: 'Chưa có dữ liệu biểu đồ' });
+    function inputDateValue(date) {
+        const value = date instanceof Date ? date : new Date(date);
+        if (Number.isNaN(value.getTime())) return '';
+        const pad = part => String(part).padStart(2, '0');
+        return `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(value.getDate())}`;
+    }
+
+    function parseDateInput(value, endOfDay = false) {
+        if (!value) return null;
+        const date = new Date(`${value}T${endOfDay ? '23:59:59' : '00:00:00'}`);
+        return Number.isNaN(date.getTime()) ? null : date;
+    }
+
+    function defaultReportRange() {
+        const now = new Date();
+        return {
+            from: inputDateValue(new Date(now.getFullYear(), 0, 1)),
+            to: inputDateValue(now)
+        };
+    }
+
+    function reportEventDate(event) {
+        const date = new Date(event?.startTime || event?.createdAt || 0);
+        return Number.isNaN(date.getTime()) ? null : date;
+    }
+
+    function eventBucketLabel(date, mode) {
+        if (mode === 'month') {
+            return `${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
+        }
+        if (mode === 'week') {
+            const first = new Date(date);
+            const day = date.getDay() || 7;
+            first.setDate(date.getDate() - day + 1);
+            return `Tuần ${inputDateValue(first).slice(5).replace('-', '/')}`;
+        }
+        return inputDateValue(date).slice(5).replace('-', '/');
+    }
+
+    function buildEventTrend(events, fromDate, toDate) {
+        const days = Math.max(1, Math.ceil((toDate - fromDate) / 86400000) + 1);
+        const mode = days > 120 ? 'month' : days > 45 ? 'week' : 'day';
+        const buckets = new Map();
+        const cursor = new Date(fromDate);
+        while (cursor <= toDate) {
+            buckets.set(eventBucketLabel(cursor, mode), { label: eventBucketLabel(cursor, mode), events: 0, registrations: 0, attendance: 0 });
+            cursor.setDate(cursor.getDate() + (mode === 'day' ? 1 : mode === 'week' ? 7 : 32));
+            if (mode === 'month') cursor.setDate(1);
+        }
+        events.forEach(event => {
+            const date = reportEventDate(event);
+            if (!date) return;
+            const label = eventBucketLabel(date, mode);
+            const bucket = buckets.get(label) || { label, events: 0, registrations: 0, attendance: 0 };
+            bucket.events += 1;
+            bucket.registrations += Number(event.registrationCount || 0);
+            bucket.attendance += Number(event.attendanceCount || 0);
+            buckets.set(label, bucket);
+        });
+        return [...buckets.values()];
+    }
+
+    function buildEventFaculties(events) {
+        const colors = ['#2563eb', '#0f766e', '#f37021', '#7c3aed', '#db2777', '#0891b2', '#65a30d'];
+        const grouped = events.reduce((acc, event) => {
+            const name = facultyOfDepartment(event.departmentName || event.department || event.major || 'Khác');
+            if (!acc[name]) acc[name] = [];
+            acc[name].push(event);
+            return acc;
+        }, {});
+        return Object.entries(grouped)
+            .map(([name, items], index) => ({ name, items, count: items.length, color: colors[index % colors.length] }))
+            .sort((left, right) => right.count - left.count || left.name.localeCompare(right.name, 'vi'));
+    }
+
+    function eventLineChart(trend = []) {
+        if (!trend.length) {
+            return emptyState({ icon: 'bar-chart-3', title: 'Không có dữ liệu trong khoảng thời gian đã chọn.' });
         }
         const width = 720;
         const height = 260;
         const padX = 44;
         const padTop = 22;
         const padBottom = 46;
-        const values = monthly.map(item => Number(item.events || 0));
+        const values = trend.map(item => Number(item.events || 0));
         const max = Math.max(...values, 5);
-        const stepX = monthly.length > 1 ? (width - padX * 2) / (monthly.length - 1) : 0;
+        const stepX = trend.length > 1 ? (width - padX * 2) / (trend.length - 1) : 0;
         const yOf = value => padTop + (height - padTop - padBottom) * (1 - (Number(value || 0) / max));
-        const points = monthly.map((item, index) => ({
+        const points = trend.map((item, index) => ({
             x: padX + stepX * index,
             y: yOf(item.events),
             value: Number(item.events || 0),
+            registrations: Number(item.registrations || 0),
+            attendance: Number(item.attendance || 0),
             label: item.label
         }));
         const line = points.map((point, index) => `${index ? 'L' : 'M'} ${point.x.toFixed(1)} ${point.y.toFixed(1)}`).join(' ');
@@ -784,7 +861,7 @@
         }).join('');
         return `
             <div class="line-chart">
-                <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Thống kê sự kiện theo tháng">
+                <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Xu hướng số lượng sự kiện">
                     <defs>
                         <linearGradient id="eventAreaGrad" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="0%" stop-color="#2563eb" stop-opacity=".26"></stop>
@@ -797,10 +874,64 @@
                     ${points.map(point => `
                         <g>
                             <circle cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="4.5" class="chart-dot"></circle>
+                            <title>${h(`${point.label}\nTổng số sự kiện: ${number(point.value)}\nĐăng ký: ${number(point.registrations)}\nTham dự: ${number(point.attendance)}`)}</title>
                             <text x="${point.x.toFixed(1)}" y="${(point.y - 13).toFixed(1)}" class="chart-value">${number(point.value)}</text>
                             <text x="${point.x.toFixed(1)}" y="${height - 16}" class="chart-label">${h(point.label)}</text>
                         </g>`).join('')}
                 </svg>
+            </div>`;
+    }
+
+    function chart(monthly = []) {
+        return eventLineChart(monthly);
+    }
+
+    function pieSlicePath(cx, cy, radius, startAngle, endAngle) {
+        const start = {
+            x: cx + radius * Math.cos(startAngle),
+            y: cy + radius * Math.sin(startAngle)
+        };
+        const end = {
+            x: cx + radius * Math.cos(endAngle),
+            y: cy + radius * Math.sin(endAngle)
+        };
+        const largeArc = endAngle - startAngle > Math.PI ? 1 : 0;
+        return `M ${cx} ${cy} L ${start.x.toFixed(2)} ${start.y.toFixed(2)} A ${radius} ${radius} 0 ${largeArc} 1 ${end.x.toFixed(2)} ${end.y.toFixed(2)} Z`;
+    }
+
+    function eventPieChart(groups = []) {
+        const total = groups.reduce((sum, item) => sum + item.count, 0);
+        if (!total) {
+            return emptyState({ icon: 'pie-chart', title: 'Không có dữ liệu trong khoảng thời gian đã chọn.' });
+        }
+        let angle = -Math.PI / 2;
+        const slices = groups.map(group => {
+            const nextAngle = angle + (group.count / total) * Math.PI * 2;
+            const slice = { ...group, path: pieSlicePath(120, 120, 92, angle, nextAngle), percent: group.count / total * 100 };
+            angle = nextAngle;
+            return slice;
+        });
+        return `
+            <div class="pie-chart-wrap">
+                <svg class="pie-chart" viewBox="0 0 240 240" role="img" aria-label="Cơ cấu sự kiện theo ngành">
+                    ${slices.map(slice => {
+                        const names = slice.items.slice(0, 4).map(item => item.title).filter(Boolean).join(', ');
+                        const more = slice.items.length > 4 ? `, +${slice.items.length - 4} sự kiện khác` : '';
+                        return `<path class="pie-slice" d="${slice.path}" fill="${slice.color}">
+                            <title>${h(`${slice.name}\nSố lượng: ${number(slice.count)} sự kiện\nTỷ lệ: ${slice.percent.toLocaleString('vi-VN', { maximumFractionDigits: 1 })}%\nSự kiện: ${names || 'N/A'}${more}`)}</title>
+                        </path>`;
+                    }).join('')}
+                    <circle cx="120" cy="120" r="48" class="pie-hole"></circle>
+                    <text x="120" y="114" class="pie-total">${number(total)}</text>
+                    <text x="120" y="136" class="pie-total-label">sự kiện</text>
+                </svg>
+                <div class="pie-legend">
+                    ${slices.map(slice => `
+                        <div class="pie-legend-item" title="${h(slice.items.map(item => item.title).filter(Boolean).join(', '))}">
+                            <span class="pie-swatch" style="background:${slice.color}"></span>
+                            <span><strong>${h(slice.name)}</strong><small>${number(slice.count)} sự kiện · ${slice.percent.toLocaleString('vi-VN', { maximumFractionDigits: 1 })}%</small></span>
+                        </div>`).join('')}
+                </div>
             </div>`;
     }
 
@@ -1415,7 +1546,10 @@
     async function renderUsers() {
         state.page = 'users';
         shell(`<button class="btn primary" id="addUser">${icon('user-plus')}Create User</button>`);
-        const [users, roles] = await Promise.all([load('/users', []), load('/roles', [])]);
+        const roles = await load('/roles', []);
+        let users = [];
+        let renderToken = 0;
+        let searchTimer = null;
         const managerRole = roles.find(role => role.name === 'MANAGER') || roles.find(role => role.name === 'DEPARTMENT');
         const safeRoleOptions = roles
             .filter(role => role.name !== 'ADMIN')
@@ -1494,9 +1628,9 @@
         const userFaculty = user => facultyOfDepartment(user.major || user.departmentName || '');
         const uniqueOptions = values => [...new Set(values.filter(Boolean))].sort((a, b) => a.localeCompare(b, 'vi'));
         const roleFilterOptions = [{ value: 'all', label: 'Tất cả role' }]
-            .concat(uniqueOptions(users.map(user => user.role)).map(value => ({ value, label: value })));
+            .concat(uniqueOptions(roles.map(role => role.name)).map(value => ({ value, label: value })));
         const facultyFilterOptions = [{ value: 'all', label: 'Tất cả khoa/bộ môn' }]
-            .concat(uniqueOptions(users.map(user => userFaculty(user))).map(value => ({ value, label: value })));
+            .concat(academicStructure.map(item => ({ value: item.faculty, label: item.faculty })));
         const sortOptions = [
             { value: 'role', label: 'Sort: Role' },
             { value: 'faculty', label: 'Sort: Khoa/Bộ môn' },
@@ -1505,13 +1639,38 @@
             { value: 'created', label: 'Sort: Mới tạo' }
         ];
 
-        const render = (q = state.filters.userSearch || '') => {
+        const fetchUsers = q => {
+            const params = new URLSearchParams({
+                page: String(Math.max(Number(state.filters.usersPage || 1), 1) - 1),
+                size: '25',
+                sort: state.filters.userSort || 'role'
+            });
+            const roleFilter = state.filters.userRole || 'all';
+            const facultyFilter = state.filters.userFaculty || 'all';
+            if (q) params.set('q', q);
+            if (roleFilter !== 'all') params.set('role', roleFilter);
+            if (facultyFilter !== 'all') params.set('faculty', facultyFilter);
+            return load(`/users?${params.toString()}`, {
+                items: [],
+                page: 0,
+                size: 25,
+                totalItems: 0,
+                totalPages: 1,
+                metrics: {}
+            });
+        };
+
+        const render = async (q = state.filters.userSearch || '') => {
+            const token = ++renderToken;
             state.filters.userSearch = q;
             const roleFilter = state.filters.userRole || 'all';
             const facultyFilter = state.filters.userFaculty || 'all';
             const sortKey = state.filters.userSort || 'role';
+            const payload = await fetchUsers(q);
+            if (token !== renderToken) return;
+            users = payload.items || [];
+            const metrics = payload.metrics || {};
             const filtered = users
-                .filter(user => !q || matchesSearch(`${user.fullName} ${user.email} ${user.role} ${user.major}`, q))
                 .filter(user => roleFilter === 'all' || String(user.role) === roleFilter)
                 .filter(user => facultyFilter === 'all' || userFaculty(user) === facultyFilter)
                 .sort((left, right) => {
@@ -1529,13 +1688,19 @@
                     if (sortKey === 'created') return new Date(right.createdAt || 0) - new Date(left.createdAt || 0);
                     return String(left.fullName || '').localeCompare(String(right.fullName || ''), 'vi');
                 });
-            const pager = pageItems('users', filtered, 10);
+            const pager = {
+                page: Number(payload.page || 0) + 1,
+                pages: Math.max(1, Number(payload.totalPages || 1)),
+                total: Number(payload.totalItems || users.length),
+                visible: filtered
+            };
+            state.filters.usersPage = pager.page;
             content(`
                 <div class="metric-grid">
-                    ${metric('All Users', number(users.length), 'User List')}
-                    ${metric('Active', number(users.filter(user => user.status === 'ACTIVE').length), 'Đang hoạt động')}
-                    ${metric('Locked', number(users.filter(user => user.status === 'LOCKED').length), 'Tài khoản khóa')}
-                    ${metric('Roles', number(roles.length), 'Role đang có')}
+                    ${metric('All Users', number(metrics.totalUsers || pager.total), 'User List')}
+                    ${metric('Active', number(metrics.activeUsers), 'Đang hoạt động')}
+                    ${metric('Locked', number(metrics.lockedUsers), 'Tài khoản khóa')}
+                    ${metric('Roles', number(metrics.totalRoles || roles.length), 'Role đang có')}
                 </div>
                 <div class="filter-strip">
                     ${searchBox('userSearch', 'Tìm tên, email, role, khoa...')}
@@ -1576,8 +1741,11 @@
             if (facultySelect) facultySelect.value = facultyFilter;
             if (sortSelect) sortSelect.value = sortKey;
             if (search) search.addEventListener('input', event => {
-                state.filters.usersPage = 1;
-                render(event.target.value);
+                clearTimeout(searchTimer);
+                searchTimer = setTimeout(() => {
+                    state.filters.usersPage = 1;
+                    render(event.target.value);
+                }, 250);
             });
             if (roleSelect) roleSelect.addEventListener('change', event => {
                 state.filters.userRole = event.target.value;
@@ -2288,7 +2456,22 @@
             acc[major] = (acc[major] || 0) + 1;
             return acc;
         }, {});
-        const reportEventPager = pageItems('reportEvents', events, 10);
+        const defaultRange = defaultReportRange();
+        const reportFrom = state.filters.reportFrom || defaultRange.from;
+        const reportTo = state.filters.reportTo || defaultRange.to;
+        const fromDate = parseDateInput(reportFrom);
+        const toDate = parseDateInput(reportTo, true);
+        const rangeIsValid = fromDate && toDate && fromDate <= toDate;
+        const filteredEvents = rangeIsValid
+            ? events.filter(event => {
+                const date = reportEventDate(event);
+                return date && date >= fromDate && date <= toDate;
+            })
+            : [];
+        const trend = rangeIsValid ? buildEventTrend(filteredEvents, fromDate, toDate) : [];
+        const faculties = buildEventFaculties(filteredEvents);
+        const hasChartData = filteredEvents.length > 0;
+        const reportEventPager = pageItems('reportEvents', filteredEvents, 10);
         const reportMajorPager = pageItems('reportMajors', Object.entries(participationByMajor), 10);
         content(`
             <div class="metric-grid">
@@ -2297,15 +2480,38 @@
                 ${metric('Average rating', `${Number(reports.averageRating || 0).toLocaleString('vi-VN', { maximumFractionDigits: 1 })}/5`, 'Event đã diễn ra', 'orange', 'star')}
                 ${metric('Student participation', number(registrations.length), `${number(users.filter(user => user.role === 'STUDENT').length)} sinh viên`, 'green', 'graduation-cap')}
             </div>
-            <section class="panel">
-                <div class="panel-header">
+            <section class="panel report-stat-panel">
+                <div class="panel-header report-stat-header">
                     <div>
                         <h2 class="panel-title">Thống kê sự kiện</h2>
-                        <p class="panel-note">Xu hướng event theo tháng và dữ liệu tham dự.</p>
+                        <p class="panel-note">Xu hướng số lượng sự kiện và cơ cấu sự kiện theo ngành.</p>
                     </div>
-                    <button class="btn" id="exportReports">${icon('download')}Xuất CSV</button>
+                    <div class="report-filter" role="group" aria-label="Lọc khoảng thời gian thống kê">
+                        <label class="date-control"><span>Từ ngày</span><input id="reportFrom" type="date" value="${h(reportFrom)}"></label>
+                        <label class="date-control"><span>Đến ngày</span><input id="reportTo" type="date" value="${h(reportTo)}"></label>
+                        <button class="btn primary" id="applyReportRange">${icon('check')}Áp dụng</button>
+                        <button class="btn" id="resetReportRange">${icon('rotate-ccw')}Đặt lại</button>
+                        <button class="btn" id="exportReports">${icon('download')}Xuất CSV</button>
+                    </div>
                 </div>
-                ${chart(reports.monthly || [])}
+                ${rangeIsValid ? '' : '<div class="empty">Ngày bắt đầu không được lớn hơn ngày kết thúc và không được để trống.</div>'}
+                ${rangeIsValid && !hasChartData ? '<div class="empty">Không có dữ liệu trong khoảng thời gian đã chọn.</div>' : ''}
+                <div class="event-stat-grid">
+                    <article class="chart-card">
+                        <div class="chart-card-head">
+                            <h3>Xu hướng số lượng sự kiện</h3>
+                            <span>${h(reportFrom)} - ${h(reportTo)}</span>
+                        </div>
+                        ${eventLineChart(hasChartData ? trend : [])}
+                    </article>
+                    <article class="chart-card">
+                        <div class="chart-card-head">
+                            <h3>Cơ cấu sự kiện theo ngành</h3>
+                            <span>${number(filteredEvents.length)} sự kiện</span>
+                        </div>
+                        ${eventPieChart(faculties)}
+                    </article>
+                </div>
             </section>
             <div class="split-grid">
                 <section class="panel">
@@ -2338,13 +2544,50 @@
         `);
         bindPagination('reportEvents', reportEventPager, renderReports);
         bindPagination('reportMajors', reportMajorPager, renderReports);
+        document.getElementById('applyReportRange')?.addEventListener('click', () => {
+            const from = document.getElementById('reportFrom')?.value || '';
+            const to = document.getElementById('reportTo')?.value || '';
+            const parsedFrom = parseDateInput(from);
+            const parsedTo = parseDateInput(to, true);
+            if (!parsedFrom || !parsedTo) {
+                toast('Vui lòng chọn đầy đủ Từ ngày và Đến ngày.', 'error');
+                return;
+            }
+            if (parsedFrom > parsedTo) {
+                toast('Ngày bắt đầu không được lớn hơn ngày kết thúc.', 'error');
+                return;
+            }
+            state.filters.reportFrom = from;
+            state.filters.reportTo = to;
+            renderReports();
+        });
+        document.getElementById('resetReportRange')?.addEventListener('click', () => {
+            delete state.filters.reportFrom;
+            delete state.filters.reportTo;
+            renderReports();
+        });
         document.getElementById('exportReports')?.addEventListener('click', () => {
             exportCsv('aems-reports.csv', [
                 ['Metric', 'Value'],
                 ['Registration rate', percent(reports.registrationRate)],
                 ['Attendance rate', percent(reports.attendanceRate)],
                 ['Average rating', `${Number(reports.averageRating || 0).toLocaleString('vi-VN', { maximumFractionDigits: 1 })}/5`],
-                ['Student participation', number(registrations.length)]
+                ['Student participation', number(registrations.length)],
+                [],
+                ['Từ ngày', reportFrom],
+                ['Đến ngày', reportTo],
+                ['Số sự kiện trong khoảng', filteredEvents.length],
+                [],
+                ['Mốc thời gian', 'Số sự kiện', 'Đăng ký', 'Tham dự'],
+                ...trend.map(item => [item.label, item.events, item.registrations, item.attendance]),
+                [],
+                ['Ngành', 'Số sự kiện', 'Tỷ lệ', 'Sự kiện tiêu biểu'],
+                ...faculties.map(item => [
+                    item.name,
+                    item.count,
+                    `${(item.count / Math.max(filteredEvents.length, 1) * 100).toLocaleString('vi-VN', { maximumFractionDigits: 1 })}%`,
+                    item.items.slice(0, 4).map(event => event.title).join(', ')
+                ])
             ]);
         });
     }
