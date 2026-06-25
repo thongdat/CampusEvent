@@ -80,7 +80,11 @@ public class Registration {
         this.registrationDate = registrationDate;
     }
 
-    public RegistrationStatus getStatus() {
+    public String getStatus() {
+        return status != null ? status.name() : null;
+    }
+
+    public RegistrationStatus getStatusEnum() {
         return status;
     }
 
