@@ -1,5 +1,6 @@
 package com.example.controller;
 
+import com.example.model.DepartmentPosition;
 import com.example.config.AcademicStructure;
 import com.example.config.InvitationScheduler;
 import com.example.model.ActivityLog;
@@ -1037,8 +1038,8 @@ public class AdminDashboardController {
         item.put("roleId", user.getRole() != null ? user.getRole().getId() : null);
         item.put("role", user.getRole() != null ? user.getRole().getName() : "");
         item.put("roleDescription", user.getRole() != null ? textOrEmpty(user.getRole().getDescription()) : "");
-        item.put("departmentPosition", firstNonBlank(user.getDepartmentPosition(), defaultDepartmentPosition(user), "STAFF"));
-        item.put("departmentPositionLabel", departmentPositionLabel(firstNonBlank(user.getDepartmentPosition(), defaultDepartmentPosition(user), "STAFF")));
+        item.put("departmentPosition", firstNonBlank(departmentPositionName(user), defaultDepartmentPosition(user), "STAFF"));
+        item.put("departmentPositionLabel", departmentPositionLabel(firstNonBlank(departmentPositionName(user), defaultDepartmentPosition(user), "STAFF")));
         item.put("major", firstNonBlank(user.getMajor(), student != null ? student.getMajor() : null, "N/A"));
         item.put("facultyName", AcademicStructure.facultyOf(firstNonBlank(user.getMajor(), student != null ? student.getMajor() : null, "")));
         item.put("studentId", student != null ? student.getId() : null);
@@ -1142,7 +1143,7 @@ public class AdminDashboardController {
                     return sameKey(major, departmentName) || sameKey(major, facultyName);
                 })
                 .sorted(Comparator
-                        .comparing((User user) -> "HEAD".equalsIgnoreCase(user.getDepartmentPosition()) ? 0 : 1)
+                        .comparing((User user) -> "HEAD".equalsIgnoreCase(departmentPositionName(user)) ? 0 : 1)
                         .thenComparing(user -> "MANAGER".equalsIgnoreCase(user.getRole().getName()) ? 0 : 1)
                         .thenComparing(User::getFullName, Comparator.nullsLast(String::compareToIgnoreCase)))
                 .findFirst()
@@ -1741,8 +1742,12 @@ public class AdminDashboardController {
         user.setMajor(textOrNull(stringValue(payload, "major", "")));
         user.setSemester(intValue(payload, "semester", null));
         user.setTotalPoints(intValue(payload, "totalPoints", creating ? 0 : firstNonNull(user.getTotalPoints(), 0)));
-        String position = stringValue(payload, "departmentPosition", creating ? defaultDepartmentPosition(user, role) : firstNonBlank(user.getDepartmentPosition(), defaultDepartmentPosition(user, role), "STAFF"));
-        user.setDepartmentPosition(normalizeDepartmentPosition(position));
+        String position = stringValue(payload, "departmentPosition", creating ? defaultDepartmentPosition(user, role) : firstNonBlank(departmentPositionName(user), defaultDepartmentPosition(user, role), "STAFF"));
+        user.setDepartmentPosition(DepartmentPosition.valueOf(normalizeDepartmentPosition(position)));
+    }
+
+    private String departmentPositionName(User user) {
+        return user == null ? null : user.getDepartmentPosition();
     }
 
     private String defaultDepartmentPosition(User user) {
@@ -1824,7 +1829,7 @@ public class AdminDashboardController {
         user.setMajor(major);
         user.setSemester(semester);
         user.setTotalPoints(firstNonNull(user.getTotalPoints(), 0));
-        user.setDepartmentPosition("STAFF");
+        user.setDepartmentPosition(DepartmentPosition.STAFF);
         User savedUser = userRepository.save(user);
 
         if (student == null) {
