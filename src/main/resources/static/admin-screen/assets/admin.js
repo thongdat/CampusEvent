@@ -1546,7 +1546,10 @@
     async function renderUsers() {
         state.page = 'users';
         shell(`<button class="btn primary" id="addUser">${icon('user-plus')}Create User</button>`);
-        const [users, roles] = await Promise.all([load('/users', []), load('/roles', [])]);
+        const roles = await load('/roles', []);
+        let users = [];
+        let renderToken = 0;
+        let searchTimer = null;
         const managerRole = roles.find(role => role.name === 'MANAGER') || roles.find(role => role.name === 'DEPARTMENT');
         const safeRoleOptions = roles
             .filter(role => role.name !== 'ADMIN')
@@ -1625,9 +1628,9 @@
         const userFaculty = user => facultyOfDepartment(user.major || user.departmentName || '');
         const uniqueOptions = values => [...new Set(values.filter(Boolean))].sort((a, b) => a.localeCompare(b, 'vi'));
         const roleFilterOptions = [{ value: 'all', label: 'Tất cả role' }]
-            .concat(uniqueOptions(users.map(user => user.role)).map(value => ({ value, label: value })));
+            .concat(uniqueOptions(roles.map(role => role.name)).map(value => ({ value, label: value })));
         const facultyFilterOptions = [{ value: 'all', label: 'Tất cả khoa/bộ môn' }]
-            .concat(uniqueOptions(users.map(user => userFaculty(user))).map(value => ({ value, label: value })));
+            .concat(academicStructure.map(item => ({ value: item.faculty, label: item.faculty })));
         const sortOptions = [
             { value: 'role', label: 'Sort: Role' },
             { value: 'faculty', label: 'Sort: Khoa/Bộ môn' },
@@ -1636,13 +1639,38 @@
             { value: 'created', label: 'Sort: Mới tạo' }
         ];
 
-        const render = (q = state.filters.userSearch || '') => {
+        const fetchUsers = q => {
+            const params = new URLSearchParams({
+                page: String(Math.max(Number(state.filters.usersPage || 1), 1) - 1),
+                size: '25',
+                sort: state.filters.userSort || 'role'
+            });
+            const roleFilter = state.filters.userRole || 'all';
+            const facultyFilter = state.filters.userFaculty || 'all';
+            if (q) params.set('q', q);
+            if (roleFilter !== 'all') params.set('role', roleFilter);
+            if (facultyFilter !== 'all') params.set('faculty', facultyFilter);
+            return load(`/users?${params.toString()}`, {
+                items: [],
+                page: 0,
+                size: 25,
+                totalItems: 0,
+                totalPages: 1,
+                metrics: {}
+            });
+        };
+
+        const render = async (q = state.filters.userSearch || '') => {
+            const token = ++renderToken;
             state.filters.userSearch = q;
             const roleFilter = state.filters.userRole || 'all';
             const facultyFilter = state.filters.userFaculty || 'all';
             const sortKey = state.filters.userSort || 'role';
+            const payload = await fetchUsers(q);
+            if (token !== renderToken) return;
+            users = payload.items || [];
+            const metrics = payload.metrics || {};
             const filtered = users
-                .filter(user => !q || matchesSearch(`${user.fullName} ${user.email} ${user.role} ${user.major}`, q))
                 .filter(user => roleFilter === 'all' || String(user.role) === roleFilter)
                 .filter(user => facultyFilter === 'all' || userFaculty(user) === facultyFilter)
                 .sort((left, right) => {
@@ -1660,13 +1688,19 @@
                     if (sortKey === 'created') return new Date(right.createdAt || 0) - new Date(left.createdAt || 0);
                     return String(left.fullName || '').localeCompare(String(right.fullName || ''), 'vi');
                 });
-            const pager = pageItems('users', filtered, 10);
+            const pager = {
+                page: Number(payload.page || 0) + 1,
+                pages: Math.max(1, Number(payload.totalPages || 1)),
+                total: Number(payload.totalItems || users.length),
+                visible: filtered
+            };
+            state.filters.usersPage = pager.page;
             content(`
                 <div class="metric-grid">
-                    ${metric('All Users', number(users.length), 'User List')}
-                    ${metric('Active', number(users.filter(user => user.status === 'ACTIVE').length), 'Đang hoạt động')}
-                    ${metric('Locked', number(users.filter(user => user.status === 'LOCKED').length), 'Tài khoản khóa')}
-                    ${metric('Roles', number(roles.length), 'Role đang có')}
+                    ${metric('All Users', number(metrics.totalUsers || pager.total), 'User List')}
+                    ${metric('Active', number(metrics.activeUsers), 'Đang hoạt động')}
+                    ${metric('Locked', number(metrics.lockedUsers), 'Tài khoản khóa')}
+                    ${metric('Roles', number(metrics.totalRoles || roles.length), 'Role đang có')}
                 </div>
                 <div class="filter-strip">
                     ${searchBox('userSearch', 'Tìm tên, email, role, khoa...')}
@@ -1707,8 +1741,11 @@
             if (facultySelect) facultySelect.value = facultyFilter;
             if (sortSelect) sortSelect.value = sortKey;
             if (search) search.addEventListener('input', event => {
-                state.filters.usersPage = 1;
-                render(event.target.value);
+                clearTimeout(searchTimer);
+                searchTimer = setTimeout(() => {
+                    state.filters.usersPage = 1;
+                    render(event.target.value);
+                }, 250);
             });
             if (roleSelect) roleSelect.addEventListener('change', event => {
                 state.filters.userRole = event.target.value;
