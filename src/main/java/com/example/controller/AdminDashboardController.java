@@ -1308,6 +1308,8 @@ public class AdminDashboardController {
         report.put("elapsedCapacity", elapsedCapacity);
         report.put("elapsedRegistrations", registered);
         report.put("elapsedAttendance", attended);
+        report.put("totalRegistrations", registrationRepository.count());
+        report.put("studentUsers", userRepository.countByRole_Name("STUDENT"));
         report.put("registrationRate", round(registrationRate));
         report.put("attendanceRate", round(attendanceRate));
         report.put("averageRating", round(averageRating != null ? averageRating : 0));
