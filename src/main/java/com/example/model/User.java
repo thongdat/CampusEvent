@@ -47,8 +47,9 @@ public class User {
     @Column
     private Integer totalPoints = 0;
 
-    @Column(length = 30)
-    private String departmentPosition = "STAFF"; // HEAD, STAFF
+    @Enumerated(EnumType.STRING)
+    @Column(name = "department_position", length = 20)
+    private DepartmentPosition departmentPosition = DepartmentPosition.STAFF;
 
     public User() {}
 
@@ -168,10 +169,22 @@ public class User {
     }
 
     public String getDepartmentPosition() {
+        return departmentPosition != null ? departmentPosition.name() : null;
+    }
+
+    public DepartmentPosition getDepartmentPositionEnum() {
         return departmentPosition;
     }
 
-    public void setDepartmentPosition(String departmentPosition) {
+    public void setDepartmentPosition(DepartmentPosition departmentPosition) {
         this.departmentPosition = departmentPosition;
+    }
+
+    public void setDepartmentPosition(String departmentPosition) {
+        if (departmentPosition == null || departmentPosition.isBlank()) {
+            this.departmentPosition = null;
+            return;
+        }
+        this.departmentPosition = DepartmentPosition.valueOf(departmentPosition.trim().toUpperCase());
     }
 }

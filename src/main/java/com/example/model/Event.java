@@ -3,6 +3,8 @@ package com.example.model;
 import javax.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.ArrayList;
 
 @Entity
 @Table(name = "event")
@@ -30,11 +32,8 @@ public class Event {
     @Column
     private Integer capacity;
 
-    @Column(columnDefinition = "NVARCHAR(500)")
-    private String imageUrl;
-
-    @Column(columnDefinition = "NVARCHAR(MAX)")
-    private String imageUrls;
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<EventImage> images = new ArrayList<>();
 
     @Column(name = "google_form_url", columnDefinition = "NVARCHAR(1000)")
     private String googleFormUrl;
@@ -154,20 +153,58 @@ public class Event {
         this.capacity = capacity;
     }
 
+    public List<EventImage> getImages() {
+        return images;
+    }
+
+    public void setImages(List<EventImage> images) {
+        this.images = images;
+    }
+
     public String getImageUrl() {
-        return imageUrl;
+        return images.stream()
+                .filter(EventImage::isBanner)
+                .map(EventImage::getImageUrl)
+                .findFirst()
+                .orElse(images.isEmpty() ? null : images.get(0).getImageUrl());
     }
 
     public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
+        if (imageUrl == null || imageUrl.isBlank()) {
+            return;
+        }
+        images.removeIf(EventImage::isBanner);
+        EventImage img = new EventImage();
+        img.setImageUrl(imageUrl);
+        img.setBanner(true);
+        img.setEvent(this);
+        images.add(img);
     }
 
     public String getImageUrls() {
-        return imageUrls;
+        return images.stream()
+                .map(EventImage::getImageUrl)
+                .collect(java.util.stream.Collectors.joining(","));
     }
 
     public void setImageUrls(String imageUrls) {
-        this.imageUrls = imageUrls;
+        if (imageUrls == null || imageUrls.isBlank()) {
+            return;
+        }
+        images.clear();
+        String[] urls = imageUrls.split(",");
+        boolean first = true;
+        for (String url : urls) {
+            String trimmed = url.trim();
+            if (!trimmed.isEmpty()) {
+                EventImage img = new EventImage();
+                img.setImageUrl(trimmed);
+                img.setBanner(first);
+                img.setEvent(this);
+                images.add(img);
+                first = false;
+            }
+        }
     }
 
     public String getGoogleFormUrl() {

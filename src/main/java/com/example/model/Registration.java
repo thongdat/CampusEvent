@@ -14,8 +14,9 @@ public class Registration {
     @Column(nullable = false)
     private LocalDateTime registrationDate;
     
-    @Column(nullable = false, length = 50)
-    private String status; // REGISTERED, WAITLIST, CANCELLED
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private RegistrationStatus status;
     
     @Column(columnDefinition = "NVARCHAR(MAX)")
     private String note;
@@ -47,9 +48,17 @@ public class Registration {
 
     public Registration() {}
 
-    public Registration(LocalDateTime registrationDate, String status, String note, Event event, Student student) {
+    public Registration(LocalDateTime registrationDate, RegistrationStatus status, String note, Event event, Student student) {
         this.registrationDate = registrationDate;
         this.status = status;
+        this.note = note;
+        this.event = event;
+        this.student = student;
+    }
+
+    public Registration(LocalDateTime registrationDate, String status, String note, Event event, Student student) {
+        this.registrationDate = registrationDate;
+        this.status = status != null ? RegistrationStatus.valueOf(status.toUpperCase()) : null;
         this.note = note;
         this.event = event;
         this.student = student;
@@ -72,11 +81,19 @@ public class Registration {
     }
 
     public String getStatus() {
+        return status != null ? status.name() : null;
+    }
+
+    public RegistrationStatus getStatusEnum() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(RegistrationStatus status) {
         this.status = status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status != null ? RegistrationStatus.valueOf(status.toUpperCase()) : null;
     }
 
     public String getNote() {

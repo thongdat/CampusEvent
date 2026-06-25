@@ -1,5 +1,6 @@
 package com.example.config;
 
+import com.example.model.DepartmentPosition;
 import com.example.model.Event;
 import com.example.model.QuizQuestion;
 import com.example.model.Role;
@@ -79,8 +80,9 @@ public class FacultyHeadSeedRunner implements ApplicationRunner {
         if (existing.isPresent()) {
             User u = existing.get();
             boolean dirty = false;
-            if (u.getDepartmentPosition() == null || !position.equals(u.getDepartmentPosition())) {
-                u.setDepartmentPosition(position);
+            String currentPosition = u.getDepartmentPosition();
+            if (currentPosition == null || !currentPosition.equalsIgnoreCase(position)) {
+                u.setDepartmentPosition(DepartmentPosition.valueOf(position.toUpperCase(java.util.Locale.ROOT)));
                 dirty = true;
             }
             if (u.getRole() == null || !role.getName().equals(u.getRole().getName())) {
@@ -102,7 +104,7 @@ public class FacultyHeadSeedRunner implements ApplicationRunner {
         }
         User user = new User(fullName, email, PLAIN_PASSWORD, phone, LocalDateTime.now(), true, role);
         user.setMajor(major);
-        user.setDepartmentPosition(position);
+        user.setDepartmentPosition(DepartmentPosition.valueOf(position.toUpperCase(java.util.Locale.ROOT)));
         user.setSemester(null);
         user.setTotalPoints(0);
         userRepository.save(user);
