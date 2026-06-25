@@ -892,6 +892,25 @@
             const label = Math.round(max * (1 - ratio));
             return `<g><line x1="${padX}" y1="${y.toFixed(1)}" x2="${width - padX}" y2="${y.toFixed(1)}" class="chart-grid-line"></line><text x="14" y="${(y + 4).toFixed(1)}" class="chart-axis">${label}</text></g>`;
         }).join('');
+        const tooltipWidth = 184;
+        const tooltipHeight = 92;
+        const tooltipFor = point => {
+            const x = Math.min(Math.max(point.x - tooltipWidth / 2, padX + 6), width - padX - tooltipWidth - 6);
+            const y = point.y > 126 ? point.y - tooltipHeight - 36 : point.y + 34;
+            const caretY = point.y > 126 ? y + tooltipHeight : y;
+            const caret = point.y > 126
+                ? `M ${point.x - 7} ${caretY} L ${point.x} ${caretY + 8} L ${point.x + 7} ${caretY} Z`
+                : `M ${point.x - 7} ${caretY} L ${point.x} ${caretY - 8} L ${point.x + 7} ${caretY} Z`;
+            return `
+                <g class="chart-tooltip" transform="translate(${x.toFixed(1)} ${y.toFixed(1)})">
+                    <rect width="${tooltipWidth}" height="${tooltipHeight}" rx="10"></rect>
+                    <text x="14" y="22" class="chart-tooltip-title">${h(point.label)}</text>
+                    <text x="14" y="46" class="chart-tooltip-main">${number(point.value)} sự kiện</text>
+                    <text x="14" y="66" class="chart-tooltip-sub">Đăng ký: ${number(point.registrations)}</text>
+                    <text x="104" y="66" class="chart-tooltip-sub">Tham dự: ${number(point.attendance)}</text>
+                </g>
+                <path d="${caret}" class="chart-tooltip-caret"></path>`;
+        };
         return `
             <div class="line-chart">
                 <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Xu hướng số lượng sự kiện">
@@ -905,11 +924,14 @@
                     <path d="${area}" class="chart-area"></path>
                     <path d="${line}" class="chart-line"></path>
                     ${points.map(point => `
-                        <g>
+                        <g class="chart-point" tabindex="0" aria-label="${h(`${point.label}: ${number(point.value)} sự kiện, ${number(point.registrations)} đăng ký, ${number(point.attendance)} tham dự`)}">
+                            <line x1="${point.x.toFixed(1)}" y1="${padTop}" x2="${point.x.toFixed(1)}" y2="${height - padBottom}" class="chart-hover-line"></line>
                             <circle cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="4.5" class="chart-dot"></circle>
-                            <title>${h(`${point.label}\nTổng số sự kiện: ${number(point.value)}\nĐăng ký: ${number(point.registrations)}\nTham dự: ${number(point.attendance)}`)}</title>
+                            <circle cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="10" class="chart-dot-halo"></circle>
                             <text x="${point.x.toFixed(1)}" y="${(point.y - 13).toFixed(1)}" class="chart-value">${number(point.value)}</text>
                             <text x="${point.x.toFixed(1)}" y="${height - 16}" class="chart-label">${h(point.label)}</text>
+                            ${tooltipFor(point)}
+                            <rect x="${(point.x - Math.max(24, stepX / 2)).toFixed(1)}" y="${padTop}" width="${Math.max(48, stepX).toFixed(1)}" height="${height - padTop - padBottom}" class="chart-hit-area"></rect>
                         </g>`).join('')}
                 </svg>
             </div>`;
@@ -939,24 +961,50 @@
         }
         let angle = -Math.PI / 2;
         const slices = groups.map(group => {
+            const startAngle = angle;
             const nextAngle = angle + (group.count / total) * Math.PI * 2;
-            const slice = { ...group, path: pieSlicePath(120, 120, 92, angle, nextAngle), percent: group.count / total * 100 };
+            const midAngle = startAngle + (nextAngle - startAngle) / 2;
+            const full = groups.length === 1;
+            const slice = {
+                ...group,
+                path: full ? '' : pieSlicePath(120, 120, 92, startAngle, nextAngle),
+                percent: group.count / total * 100,
+                midAngle,
+                full
+            };
             angle = nextAngle;
             return slice;
         });
         return `
             <div class="pie-chart-wrap">
                 <svg class="pie-chart" viewBox="0 0 240 240" role="img" aria-label="Cơ cấu sự kiện theo ngành">
-                    ${slices.map(slice => {
-                        const names = slice.items.slice(0, 4).map(item => item.title).filter(Boolean).join(', ');
-                        const more = slice.items.length > 4 ? `, +${slice.items.length - 4} sự kiện khác` : '';
-                        return `<path class="pie-slice" d="${slice.path}" fill="${slice.color}">
-                            <title>${h(`${slice.name}\nSố lượng: ${number(slice.count)} sự kiện\nTỷ lệ: ${slice.percent.toLocaleString('vi-VN', { maximumFractionDigits: 1 })}%\nSự kiện: ${names || 'N/A'}${more}`)}</title>
-                        </path>`;
-                    }).join('')}
+                    ${slices.map(slice => slice.full
+                        ? `<circle class="pie-slice pie-slice-full" cx="120" cy="120" r="92" fill="${slice.color}"></circle>`
+                        : `<path class="pie-slice" d="${slice.path}" fill="${slice.color}"></path>`).join('')}
                     <circle cx="120" cy="120" r="48" class="pie-hole"></circle>
                     <text x="120" y="114" class="pie-total">${number(total)}</text>
                     <text x="120" y="136" class="pie-total-label">sự kiện</text>
+                    ${slices.map(slice => {
+                        const names = slice.items.slice(0, 4).map(item => item.title).filter(Boolean).join(', ');
+                        const more = slice.items.length > 4 ? `, +${slice.items.length - 4} sự kiện khác` : '';
+                        const tooltipX = Math.min(Math.max(120 + Math.cos(slice.midAngle) * 112 - 82, 6), 76);
+                        const tooltipY = Math.min(Math.max(120 + Math.sin(slice.midAngle) * 96 - 50, 6), 126);
+                        return `<g class="pie-segment" tabindex="0" aria-label="${h(`${slice.name}: ${number(slice.count)} sự kiện, ${slice.percent.toLocaleString('vi-VN', { maximumFractionDigits: 1 })}%`)}">
+                            ${slice.full
+                                ? '<circle class="pie-hit-slice pie-hit-slice-full" cx="120" cy="120" r="92"></circle>'
+                                : `<path class="pie-hit-slice" d="${slice.path}"></path>`}
+                            <g class="pie-tooltip" transform="translate(${tooltipX.toFixed(1)} ${tooltipY.toFixed(1)})">
+                                <foreignObject width="164" height="108">
+                                    <div class="pie-tooltip-card" xmlns="http://www.w3.org/1999/xhtml">
+                                        <strong>${h(slice.name)}</strong>
+                                        <b>${number(slice.count)} sự kiện · ${slice.percent.toLocaleString('vi-VN', { maximumFractionDigits: 1 })}%</b>
+                                        <span>${h((names || 'N/A') + more)}</span>
+                                        <button type="button" data-report-faculty="${h(slice.name)}">Xem thêm</button>
+                                    </div>
+                                </foreignObject>
+                            </g>
+                        </g>`;
+                    }).join('')}
                 </svg>
                 <div class="pie-legend">
                     ${slices.map(slice => `
@@ -2524,7 +2572,6 @@
                     <article class="chart-card">
                         <div class="chart-card-head">
                             <h3>Xu hướng số lượng sự kiện</h3>
-                            <span>${h(reportFrom)} - ${h(reportTo)}</span>
                         </div>
                         ${eventLineChart(hasChartData ? trend : [])}
                     </article>
@@ -2585,6 +2632,21 @@
             delete state.filters.reportFrom;
             delete state.filters.reportTo;
             renderReports();
+        });
+        document.querySelectorAll('[data-report-faculty]').forEach(button => {
+            button.addEventListener('click', event => {
+                event.preventDefault();
+                event.stopPropagation();
+                const group = faculties.find(item => item.name === button.dataset.reportFaculty);
+                if (!group) return;
+                openDetail(`Sự kiện ${group.name}`, table(['Event', 'Thời gian', 'Đăng ký', 'Tham dự'], group.items.map(item => `
+                    <tr>
+                        <td><span class="cell-title">${h(item.title)}</span><span class="cell-sub">${h(item.departmentName || item.location || '')}</span></td>
+                        <td>${dateTime(item.startTime)}</td>
+                        <td>${number(item.registrationCount)}</td>
+                        <td>${number(item.attendanceCount)}</td>
+                    </tr>`), 'Không có sự kiện trong khoảng thời gian đã chọn.'));
+            });
         });
         document.getElementById('exportReports')?.addEventListener('click', () => {
             exportCsv('aems-reports.csv', [
