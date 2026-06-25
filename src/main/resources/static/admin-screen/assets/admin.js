@@ -706,11 +706,44 @@
         }
         const trigger = document.getElementById('commandTrigger');
         if (trigger) trigger.addEventListener('click', openCommandPalette);
+
+        const appShell = document.getElementById('appShell');
+        if (appShell) {
+            appShell.addEventListener('click', event => {
+                const link = event.target.closest('a[href$=".html"]');
+                if (!link || !appShell.contains(link)) return;
+                if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                const page = pageFromHref(link.getAttribute('href'));
+                if (!page) return;
+                event.preventDefault();
+                navigate(page, link.getAttribute('href'));
+            });
+        }
     }
 
     function content(html) {
         document.getElementById('content').innerHTML = html;
         refreshIcons();
+    }
+
+    function pageFromHref(href) {
+        const file = String(href || '').split('?')[0].split('#')[0].split('/').pop();
+        return navItems.find(item => item.href === file)?.id || '';
+    }
+
+    function navigate(page, href = '') {
+        if (!handlers[page]) return false;
+        if (page === state.page && document.getElementById('content')) return true;
+        state.page = page;
+        if (href && window.location.pathname.split('/').pop() !== href) {
+            window.history.pushState({ page }, '', href);
+        }
+        handlers[page]().catch(error => {
+            console.error(error);
+            shell();
+            content(`<div class="error"><strong>Không thể tải dữ liệu</strong><br>${h(error.message || error)}</div>`);
+        });
+        return true;
     }
 
     function metric(label, value, hint = '', tone = '', iconName = '') {
@@ -2445,17 +2478,10 @@
     async function renderReports() {
         state.page = 'reports';
         shell();
-        const [reports, events, registrations, users] = await Promise.all([
+        const [reports, events] = await Promise.all([
             load('/reports', {}),
-            load('/events', []),
-            load('/registrations', []),
-            load('/users', [])
+            load('/events', [])
         ]);
-        const participationByMajor = users.reduce((acc, user) => {
-            const major = user.major || 'N/A';
-            acc[major] = (acc[major] || 0) + 1;
-            return acc;
-        }, {});
         const defaultRange = defaultReportRange();
         const reportFrom = state.filters.reportFrom || defaultRange.from;
         const reportTo = state.filters.reportTo || defaultRange.to;
@@ -2471,14 +2497,12 @@
         const trend = rangeIsValid ? buildEventTrend(filteredEvents, fromDate, toDate) : [];
         const faculties = buildEventFaculties(filteredEvents);
         const hasChartData = filteredEvents.length > 0;
-        const reportEventPager = pageItems('reportEvents', filteredEvents, 10);
-        const reportMajorPager = pageItems('reportMajors', Object.entries(participationByMajor), 10);
         content(`
             <div class="metric-grid">
                 ${metric('Registration rate', percent(reports.registrationRate), `${number(reports.elapsedRegistrations)} / ${number(reports.elapsedCapacity)} capacity`, 'blue', 'ticket-check')}
                 ${metric('Attendance rate', percent(reports.attendanceRate), `${number(reports.elapsedAttendance)} check-in`, 'teal', 'clipboard-check')}
                 ${metric('Average rating', `${Number(reports.averageRating || 0).toLocaleString('vi-VN', { maximumFractionDigits: 1 })}/5`, 'Event đã diễn ra', 'orange', 'star')}
-                ${metric('Student participation', number(registrations.length), `${number(users.filter(user => user.role === 'STUDENT').length)} sinh viên`, 'green', 'graduation-cap')}
+                ${metric('Student participation', number(reports.totalRegistrations), `${number(reports.studentUsers)} sinh viên`, 'green', 'graduation-cap')}
             </div>
             <section class="panel report-stat-panel">
                 <div class="panel-header report-stat-header">
@@ -2519,8 +2543,7 @@
                         <h2 class="panel-title">Attendance Reports</h2>
                         <a class="btn" href="registrations.html">Chi tiết</a>
                     </div>
-                    <div class="toolbar">${pagination('reportEvents', reportEventPager.page, reportEventPager.pages, reportEventPager.total, reportEventPager.visible.length)}</div>
-                    ${table(['Event', 'Registered', 'Attendance', 'Fill'], reportEventPager.visible.map(event => `
+                    ${table(['Event', 'Registered', 'Attendance', 'Fill'], filteredEvents.slice(0, 10).map(event => `
                         <tr>
                             <td><span class="event-cell"><img class="event-thumb" src="${h(eventImageUrl(event))}" alt=""><span><span class="cell-title">${h(event.title)}</span><span class="cell-sub">${h(event.departmentName)}</span></span></span></td>
                             <td>${number(event.registrationCount)}</td>
@@ -2529,10 +2552,9 @@
                         </tr>`))}
                 </section>
                 <section class="panel">
-                    <h2 class="panel-title">Student Participation</h2>
-                    <div class="toolbar">${pagination('reportMajors', reportMajorPager.page, reportMajorPager.pages, reportMajorPager.total, reportMajorPager.visible.length)}</div>
-                    ${table(['Khoa/Major', 'Users'], reportMajorPager.visible.map(([major, count]) => `
-                        <tr><td>${h(major)}</td><td>${number(count)}</td></tr>`))}
+                    <h2 class="panel-title">Sự kiện theo ngành</h2>
+                    ${table(['Ngành', 'Events'], faculties.map(group => `
+                        <tr><td>${h(group.name)}</td><td>${number(group.count)}</td></tr>`))}
                 </section>
             </div>
             <section class="panel">
@@ -2542,8 +2564,6 @@
                 <p class="panel-note">${h(reports.formula?.averageRating || '')}</p>
             </section>
         `);
-        bindPagination('reportEvents', reportEventPager, renderReports);
-        bindPagination('reportMajors', reportMajorPager, renderReports);
         document.getElementById('applyReportRange')?.addEventListener('click', () => {
             const from = document.getElementById('reportFrom')?.value || '';
             const to = document.getElementById('reportTo')?.value || '';
@@ -2572,7 +2592,7 @@
                 ['Registration rate', percent(reports.registrationRate)],
                 ['Attendance rate', percent(reports.attendanceRate)],
                 ['Average rating', `${Number(reports.averageRating || 0).toLocaleString('vi-VN', { maximumFractionDigits: 1 })}/5`],
-                ['Student participation', number(registrations.length)],
+                ['Student participation', number(reports.totalRegistrations)],
                 [],
                 ['Từ ngày', reportFrom],
                 ['Đến ngày', reportTo],
@@ -2681,6 +2701,12 @@
 
     function init() {
         bindGlobalHotkeys();
+        window.addEventListener('popstate', () => {
+            const page = pageFromHref(window.location.pathname) || 'overview';
+            if (!handlers[page]) return;
+            state.page = '';
+            navigate(page);
+        });
         if (!handlers[state.page]) state.page = 'overview';
         (handlers[state.page] || renderOverview)().catch(error => {
             console.error(error);
