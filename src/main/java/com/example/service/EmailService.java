@@ -39,7 +39,7 @@ public class EmailService {
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("EEEE, dd/MM/yyyy", new Locale("vi", "VN"));
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
 
-    @Autowired
+    @Autowired(required = false)
     private JavaMailSender mailSender;
 
     /** Brevo (Sendinblue) HTTP API – dùng khi host chặn SMTP (vd Render free tier). */
@@ -123,6 +123,9 @@ public class EmailService {
         if (brevoEnabled()) {
             sendViaBrevo(toEmail, subject, html, text, null, null);
             return;
+        }
+        if (mailSender == null) {
+            throw new IllegalStateException("Email is not configured. Set Brevo API or SMTP environment variables.");
         }
         if (html != null) {
             MimeMessage message = mailSender.createMimeMessage();
@@ -251,6 +254,9 @@ public class EmailService {
             sendViaBrevo(toEmail, subject, brevoHtml, null,
                     readClasspathBytes(INVITATION_BANNER), "invitation-banner.png");
         } else {
+            if (mailSender == null) {
+                throw new IllegalStateException("Email is not configured. Set Brevo API or SMTP environment variables.");
+            }
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
             helper.setTo(toEmail);
