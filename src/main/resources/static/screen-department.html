@@ -1197,6 +1197,64 @@
         return out;
     }
 
+    // Cảnh báo khi câu hỏi trùng nhau hoặc đáp án trong 1 câu trùng nhau
+    // (Google Forms từ chối lựa chọn trùng; câu hỏi trùng cũng vô nghĩa khi chấm).
+    // Trả về chuỗi lỗi (kèm số thứ tự câu) hoặc null nếu hợp lệ.
+    function validateQuizQuestions(quiz) {
+        if (!quiz || !quiz.length) return null;
+        const seenQuestions = new Map();
+        for (let i = 0; i < quiz.length; i++) {
+            const q = quiz[i];
+            const no = i + 1;
+            const qnorm = norm(q.questionText);
+            if (qnorm) {
+                if (seenQuestions.has(qnorm)) {
+                    return `Câu hỏi #${no} trùng nội dung với câu hỏi #${seenQuestions.get(qnorm) + 1}. Vui lòng sửa hoặc xóa bớt.`;
+                }
+                seenQuestions.set(qnorm, i);
+            }
+            const opts = [
+                { label: 'A', v: q.optionA }, { label: 'B', v: q.optionB },
+                { label: 'C', v: q.optionC }, { label: 'D', v: q.optionD }
+            ].filter(o => o.v && o.v.trim());
+            if (opts.length < 2) {
+                return `Câu hỏi #${no} cần ít nhất 2 đáp án.`;
+            }
+            const seenOpts = new Map();
+            for (const o of opts) {
+                const onorm = norm(o.v);
+                if (seenOpts.has(onorm)) {
+                    return `Câu hỏi #${no}: đáp án ${seenOpts.get(onorm)} và ${o.label} trùng nhau. Vui lòng sửa cho khác nhau.`;
+                }
+                seenOpts.set(onorm, o.label);
+            }
+            const correctVal = q['option' + q.correctAnswer];
+            if (!correctVal || !correctVal.trim()) {
+                return `Câu hỏi #${no}: đáp án đúng (${q.correctAnswer}) đang để trống. Hãy chọn lại đáp án đúng.`;
+            }
+        }
+        return null;
+    }
+
+    // Tìm sự kiện ĐÃ CÓ bị trùng ĐỊA ĐIỂM và CHỒNG khung giờ với đề xuất đang nhập.
+    // Trả về event xung đột đầu tiên (kèm title/location/giờ) hoặc null.
+    function findScheduleConflict(payload) {
+        const loc = norm(payload.location);
+        if (!loc) return null;
+        const start = payload.proposedDate ? new Date(payload.proposedDate).getTime() : null;
+        const end = payload.proposedEndDate ? new Date(payload.proposedEndDate).getTime() : null;
+        if (start == null || end == null || Number.isNaN(start) || Number.isNaN(end)) return null;
+        return (store.events || []).find(ev => {
+            if (!ev || norm(ev.location) !== loc) return false;
+            const es = ev.startTime ? new Date(ev.startTime).getTime() : null;
+            let ee = ev.endTime ? new Date(ev.endTime).getTime() : null;
+            if (es == null || Number.isNaN(es)) return false;
+            if (ee == null || Number.isNaN(ee)) ee = es + 2 * 60 * 60 * 1000; // không có giờ kết thúc → coi 2h
+            // Chồng lấn khi: start < ee VÀ es < end
+            return start < ee && es < end;
+        }) || null;
+    }
+
     function renderQuizQuestionRow(question, idx) {
         const row = document.createElement('div');
         row.className = 'quiz-q-row rounded-xl border border-slate-200 bg-slate-50 p-3';
@@ -1370,6 +1428,19 @@
         if (!payload.organizer) {
             toast('Vui lòng nhập người chịu trách nhiệm.');
             return;
+        }
+        const quizError = validateQuizQuestions(payload.quizQuestions);
+        if (quizError) {
+            toast(quizError);
+            return;
+        }
+        const conflict = findScheduleConflict(payload);
+        if (conflict) {
+            const msg = `⚠ Đã có sự kiện "${conflict.title || 'sự kiện khác'}" tại địa điểm "${conflict.location || payload.location}" `
+                + `trong khung giờ ${fmtDate(conflict.startTime)} → ${fmtDate(conflict.endTime)}.\n\n`
+                + `Đề xuất của bạn bị TRÙNG khung giờ và địa điểm này.\n`
+                + `Bấm OK nếu vẫn muốn tiếp tục, hoặc Cancel để chọn giờ/địa điểm khác.`;
+            if (!window.confirm(msg)) return;
         }
         const req = id
             ? api('/proposals/' + encodeURIComponent(id), { method: 'PUT', body: JSON.stringify(payload) })

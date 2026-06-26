@@ -158,10 +158,16 @@ public class GoogleFormsApiService {
                 int qNo = 1;
                 for (QuizItem q : quiz) {
                     if (q == null || q.text == null || q.text.isBlank()) continue;
+                    // Khử trùng lựa chọn (Google từ chối ChoiceQuestion có options trùng nhau).
                     List<String> opts = new ArrayList<>();
+                    java.util.Set<String> seen = new java.util.HashSet<>();
                     if (q.options != null) {
                         for (String o : q.options) {
-                            if (o != null && !o.isBlank()) opts.add(o.trim());
+                            if (o == null || o.isBlank()) continue;
+                            String trimmed = o.trim();
+                            if (seen.add(trimmed.toLowerCase(java.util.Locale.ROOT))) {
+                                opts.add(trimmed);
+                            }
                         }
                     }
                     String title = "[Question " + qNo + "] " + q.text.trim();
@@ -328,8 +334,17 @@ public class GoogleFormsApiService {
     }
 
     private Map<String, Object> createChoiceItem(String title, List<String> options, int index) {
+        // Lưới an toàn: loại bỏ lựa chọn trùng (Google trả 400 nếu options trùng giá trị).
         List<Map<String, Object>> optList = new ArrayList<>();
-        for (String opt : options) optList.add(Map.of("value", opt));
+        java.util.Set<String> seen = new java.util.HashSet<>();
+        for (String opt : options) {
+            if (opt == null) continue;
+            String value = opt.trim();
+            if (value.isEmpty()) continue;
+            if (seen.add(value.toLowerCase(java.util.Locale.ROOT))) {
+                optList.add(Map.of("value", value));
+            }
+        }
 
         Map<String, Object> choiceQuestion = Map.of(
                 "type", "RADIO",
