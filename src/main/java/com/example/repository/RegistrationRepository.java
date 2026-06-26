@@ -1,6 +1,7 @@
 package com.example.repository;
 
 import com.example.model.Registration;
+import com.example.model.RegistrationStatus;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -38,17 +39,30 @@ public interface RegistrationRepository extends JpaRepository<Registration, Long
         if ("WAITLIST".equalsIgnoreCase(status)) return 2;
         return 1;
     }
-    List<Registration> findByStatus(String status);
     long countByStudentId(Long studentId);
-    long countByStatus(String status);
+
+    // status là enum RegistrationStatus (@Enumerated STRING) nên các derived query phải nhận enum.
+    List<Registration> findByStatus(RegistrationStatus status);
+    long countByStatus(RegistrationStatus status);
+    long countByEvent_StartTimeLessThanAndStatus(LocalDateTime endTime, RegistrationStatus status);
+
+    // Wrapper nhận String để giữ nguyên các caller cũ; tự chuyển sang enum trước khi truy vấn.
+    default List<Registration> findByStatus(String status) {
+        return findByStatus(RegistrationStatus.valueOf(status.toUpperCase()));
+    }
+    default long countByStatus(String status) {
+        return countByStatus(RegistrationStatus.valueOf(status.toUpperCase()));
+    }
+    default long countByEvent_StartTimeLessThanAndStatus(LocalDateTime endTime, String status) {
+        return countByEvent_StartTimeLessThanAndStatus(endTime, RegistrationStatus.valueOf(status.toUpperCase()));
+    }
 
     /** Đếm số đăng ký "được tính" (status null hoặc REGISTERED) theo từng event — 1 query thay cho N+1. */
     @Query("select r.event.id, count(r) from Registration r "
-            + "where r.status is null or upper(r.status) = 'REGISTERED' "
+            + "where r.status is null or r.status = com.example.model.RegistrationStatus.REGISTERED "
             + "group by r.event.id")
     List<Object[]> countActiveGroupedByEvent();
     long countByRegistrationDateLessThanEqual(LocalDateTime registrationDate);
-    long countByEvent_StartTimeLessThanAndStatus(LocalDateTime endTime, String status);
     long countByEvent_StartTimeGreaterThanEqualAndEvent_StartTimeLessThan(LocalDateTime startTime, LocalDateTime endTime);
     long countByEvent_StartTimeGreaterThanEqualAndEvent_StartTimeLessThanAndRegistrationDateLessThanEqual(
             LocalDateTime startTime,

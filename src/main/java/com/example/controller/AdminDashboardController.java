@@ -809,6 +809,45 @@ public class AdminDashboardController {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Danh sách người có thể chọn làm "Người chịu trách nhiệm" cho proposal.
+     * Lấy từ DB (chỉ nhân sự đang hoạt động: COMMITTEE/MANAGER/DEPARTMENT/ADMIN) để
+     * Department Console chọn người có sẵn, tránh nhập người ngoài hệ thống.
+     * Cho phép ADMIN/MANAGER/DEPARTMENT gọi (không nằm trong nhóm /admin/users nhạy cảm).
+     */
+    @GetMapping("/proposal-organizers")
+    public List<Map<String, Object>> proposalOrganizers() {
+        List<String> organizerRoles = List.of("COMMITTEE", "MANAGER", "DEPARTMENT", "ADMIN");
+        return userRepository.findAll().stream()
+                .filter(user -> Boolean.TRUE.equals(user.getStatus()))
+                .filter(user -> user.getRole() != null && user.getRole().getName() != null
+                        && organizerRoles.contains(user.getRole().getName().toUpperCase()))
+                .sorted(Comparator.comparing(User::getFullName, Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)))
+                .map(user -> {
+                    String name = textOrEmpty(user.getFullName());
+                    String roleLabel = organizerRoleLabel(user.getRole().getName());
+                    Map<String, Object> item = new LinkedHashMap<>();
+                    item.put("id", user.getId());
+                    item.put("name", name);
+                    item.put("email", user.getEmail());
+                    item.put("role", user.getRole().getName());
+                    item.put("label", roleLabel.isEmpty() ? name : name + " — " + roleLabel);
+                    return item;
+                })
+                .collect(Collectors.toList());
+    }
+
+    private String organizerRoleLabel(String roleName) {
+        if (roleName == null) return "";
+        switch (roleName.toUpperCase()) {
+            case "COMMITTEE": return "Ban tổ chức";
+            case "MANAGER": return "Trưởng khoa/Quản lý";
+            case "DEPARTMENT": return "Nhân sự khoa";
+            case "ADMIN": return "Quản trị hệ thống";
+            default: return "";
+        }
+    }
+
     @PostMapping("/proposals")
     @Transactional
     public ResponseEntity<Map<String, Object>> createProposal(@RequestBody Map<String, Object> payload) {
@@ -2088,7 +2127,25 @@ public class AdminDashboardController {
         if (value.isBlank()) {
             return fallback;
         }
-        return LocalDateTime.parse(value);
+        return parseFlexibleDateTime(value);
+    }
+
+    /**
+     * Parse chuỗi ngày/giờ từ frontend một cách linh hoạt:
+     * - Chuỗi có 'Z' hoặc offset (vd "2026-07-31T02:30:00.000Z") được hiểu là mốc UTC và quy đổi về giờ hệ thống.
+     * - Chuỗi không có vùng giờ (vd "2026-07-31T02:30" hoặc "2026-07-31T02:30:00") được parse trực tiếp thành LocalDateTime.
+     */
+    private LocalDateTime parseFlexibleDateTime(String raw) {
+        String value = raw.trim();
+        try {
+            // Có offset/Z -> đây là Instant theo UTC, quy đổi sang giờ hệ thống.
+            return java.time.OffsetDateTime.parse(value)
+                    .atZoneSameInstant(ZoneId.systemDefault())
+                    .toLocalDateTime();
+        } catch (java.time.format.DateTimeParseException ignored) {
+            // Không phải dạng có offset, thử parse như LocalDateTime thường.
+            return LocalDateTime.parse(value);
+        }
     }
 
     private String textOrNull(String value) {

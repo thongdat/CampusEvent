@@ -802,8 +802,22 @@
         return Number.isNaN(date.getTime()) ? null : date;
     }
 
-    function defaultReportRange() {
+    function defaultReportRange(events) {
         const now = new Date();
+        // Mặc định bao trùm toàn bộ sự kiện (gồm cả sự kiện tương lai) để số liệu
+        // thống kê khớp với tổng số sự kiện trong danh sách quản lý.
+        const times = (Array.isArray(events) ? events : [])
+            .map(reportEventDate)
+            .filter(Boolean)
+            .map(date => date.getTime());
+        if (times.length) {
+            const min = new Date(Math.min(...times));
+            const max = new Date(Math.max(...times));
+            return {
+                from: inputDateValue(min),
+                to: inputDateValue(max.getTime() > now.getTime() ? max : now)
+            };
+        }
         return {
             from: inputDateValue(new Date(now.getFullYear(), 0, 1)),
             to: inputDateValue(now)
@@ -1035,25 +1049,16 @@
         refreshIcons();
     }
 
-    function openForm({ title, fields, values = {}, submitText = 'Lưu', small = false, onSubmit }) {
+    function openForm({ title, fields, values = {}, submitText = 'Lưu', small = false, onSubmit, validate }) {
         const modal = document.getElementById('modalRoot');
+        const errorTag = name => `<small class="field-error" data-field-error="${h(name)}" style="display:none;color:#dc2626;font-weight:600;margin-top:.25rem"></small>`;
         const fieldHtml = fields.map(field => {
             const value = values[field.name] ?? field.defaultValue ?? '';
             const full = field.full ? ' full' : '';
-            if (field.type === 'textarea') {
-                return `<div class="field${full}"><label>${h(field.label)}</label><textarea name="${h(field.name)}" ${field.required ? 'required' : ''}>${h(value)}</textarea></div>`;
-            }
-            if (field.type === 'select') {
-                const options = (field.options || []).map(option => {
-                    const selected = String(value) === String(option.value) ? 'selected' : '';
-                    return `<option value="${h(option.value)}" ${selected}>${h(option.label)}</option>`;
-                }).join('');
-                return `<div class="field${full}"><label>${h(field.label)}</label><select name="${h(field.name)}" ${field.required ? 'required' : ''}>${options}</select></div>`;
-            }
             if (field.type === 'image-picker') {
                 const selectedImages = imageValues(value);
                 const choices = imageChoices(selectedImages);
-                return `<div class="field${full} image-picker-field" data-image-picker="${h(field.name)}">
+                return `<div class="field${full} image-picker-field" data-field-wrap="${h(field.name)}" data-image-picker="${h(field.name)}">
                     <label>${h(field.label)}</label>
                     <input type="hidden" name="${h(field.name)}" value="${h(selectedImages.join('\n'))}">
                     <div class="field-help">Chọn tối đa 8 ảnh, ảnh đầu tiên sẽ làm ảnh bìa. Bấm lại vào ảnh để bỏ chọn, ảnh trùng sẽ tự được bỏ.</div>
@@ -1065,13 +1070,26 @@
                         <button class="btn" type="button" data-image-url-add>${icon('plus', 'h-3.5 w-3.5')}Thêm ảnh</button>
                     </div>
                     <div class="selected-images" data-image-selected></div>
+                    ${errorTag(field.name)}
                 </div>`;
             }
-            return `<div class="field${full}"><label>${h(field.label)}</label><input name="${h(field.name)}" type="${h(field.type || 'text')}" value="${h(value)}" ${field.required ? 'required' : ''}></div>`;
+            let control;
+            if (field.type === 'textarea') {
+                control = `<textarea name="${h(field.name)}">${h(value)}</textarea>`;
+            } else if (field.type === 'select') {
+                const options = (field.options || []).map(option => {
+                    const selected = String(value) === String(option.value) ? 'selected' : '';
+                    return `<option value="${h(option.value)}" ${selected}>${h(option.label)}</option>`;
+                }).join('');
+                control = `<select name="${h(field.name)}">${options}</select>`;
+            } else {
+                control = `<input name="${h(field.name)}" type="${h(field.type || 'text')}" value="${h(value)}">`;
+            }
+            return `<div class="field${full}" data-field-wrap="${h(field.name)}"><label>${h(field.label)}${field.required ? ' *' : ''}</label>${control}${errorTag(field.name)}</div>`;
         }).join('');
 
         modal.innerHTML = `
-            <form class="modal ${small ? 'small' : ''}" id="modalForm">
+            <form class="modal ${small ? 'small' : ''}" id="modalForm" novalidate>
                 <div class="modal-head">
                     <h2 class="modal-title">${h(title)}</h2>
                     <button class="icon-btn" type="button" data-close-modal aria-label="Đóng">${icon('x')}</button>
@@ -1085,14 +1103,73 @@
         modal.classList.add('open');
         modal.querySelectorAll('[data-close-modal]').forEach(button => button.addEventListener('click', () => modal.classList.remove('open')));
         bindImagePickers(modal);
-        document.getElementById('modalForm').addEventListener('submit', async event => {
+
+        const form = document.getElementById('modalForm');
+        const currentValues = () => {
+            const data = {};
+            fields.forEach(field => {
+                const el = form.querySelector(`[name="${field.name}"]`);
+                data[field.name] = el ? el.value : (values[field.name] ?? '');
+            });
+            return data;
+        };
+        const isVisible = (field, vals) => typeof field.visible !== 'function' || field.visible(vals);
+        const applyVisibility = () => {
+            const vals = currentValues();
+            fields.forEach(field => {
+                if (typeof field.visible !== 'function') return;
+                const wrap = form.querySelector(`[data-field-wrap="${field.name}"]`);
+                if (wrap) wrap.style.display = field.visible(vals) ? '' : 'none';
+            });
+        };
+        const clearFieldError = name => {
+            const node = form.querySelector(`[data-field-error="${name}"]`);
+            if (node) { node.textContent = ''; node.style.display = 'none'; }
+        };
+        const showFieldErrors = errors => {
+            fields.forEach(field => {
+                const node = form.querySelector(`[data-field-error="${field.name}"]`);
+                if (!node) return;
+                const msg = errors[field.name];
+                node.textContent = msg || '';
+                node.style.display = msg ? 'block' : 'none';
+            });
+            const first = Object.keys(errors)[0];
+            if (first) form.querySelector(`[name="${first}"]`)?.focus();
+        };
+
+        applyVisibility();
+        form.addEventListener('input', event => { if (event.target?.name) clearFieldError(event.target.name); applyVisibility(); });
+        form.addEventListener('change', applyVisibility);
+
+        form.addEventListener('submit', async event => {
             event.preventDefault();
-            const formData = new FormData(event.currentTarget);
+            const vals = currentValues();
+            const errors = {};
+            fields.forEach(field => {
+                if (!isVisible(field, vals)) return;
+                if (field.required) {
+                    const v = vals[field.name];
+                    if (v == null || String(v).trim() === '') {
+                        errors[field.name] = field.type === 'select'
+                            ? `Vui lòng chọn ${field.label}.`
+                            : `Vui lòng nhập ${field.label}.`;
+                    }
+                }
+            });
+            if (typeof validate === 'function') {
+                const custom = validate(vals, field => isVisible(field, vals)) || {};
+                Object.keys(custom).forEach(key => { if (custom[key] && !errors[key]) errors[key] = custom[key]; });
+            }
+            showFieldErrors(errors);
+            if (Object.keys(errors).length) return;
+
             const payload = {};
             fields.forEach(field => {
-                const raw = formData.get(field.name);
-                if (field.type === 'number') payload[field.name] = raw === '' ? null : Number(raw);
-                else if (field.type === 'image-picker') payload[field.name] = imageValues(raw);
+                if (!isVisible(field, vals)) return;
+                const raw = vals[field.name];
+                if (field.type === 'number') payload[field.name] = raw === '' || raw == null ? null : Number(raw);
+                else if (field.type === 'image-picker') payload[field.name] = imageValues(form.querySelector(`[name="${field.name}"]`)?.value);
                 else payload[field.name] = raw;
             });
             try {
@@ -1648,6 +1725,13 @@
             { value: 'HEAD', label: 'Trưởng khoa/Bộ môn' }
         ];
 
+        const roleNameById = id => {
+            const role = roles.find(item => String(item.id) === String(id));
+            return role && role.name ? role.name.toUpperCase() : '';
+        };
+        const isStudentRole = id => roleNameById(id) === 'STUDENT';
+        const isStaffRole = id => ['MANAGER', 'DEPARTMENT'].includes(roleNameById(id));
+
         const openUserForm = (user = {}) => {
             const roleOptions = user.role === 'ADMIN'
                 ? roles.map(role => ({ value: role.id, label: role.name }))
@@ -1659,15 +1743,31 @@
                 { name: 'email', label: 'Email', type: 'email', required: true },
                 { name: 'phone', label: 'Số điện thoại', required: true },
                 { name: 'roleId', label: 'Role', type: 'select', options: roleOptions, required: true },
-                { name: 'departmentPosition', label: 'Chức vụ khoa/Bộ môn', type: 'select', options: departmentPositionOptions },
+                { name: 'departmentPosition', label: 'Chức vụ khoa/Bộ môn', type: 'select', options: departmentPositionOptions, visible: v => isStaffRole(v.roleId) },
                 { name: 'active', label: 'Trạng thái', type: 'select', options: statusOptions },
-                { name: 'password', label: user.id ? 'Mật khẩu mới' : 'Mật khẩu', type: 'password' },
-                { name: 'major', label: 'Khoa/Major' },
-                { name: 'semester', label: 'Kỳ/Năm', type: 'number' },
-                { name: 'studentCode', label: 'Mã sinh viên' },
-                { name: 'totalPoints', label: 'Điểm', type: 'number' }
+                { name: 'password', label: user.id ? 'Mật khẩu mới' : 'Mật khẩu', type: 'password', required: !user.id },
+                { name: 'major', label: 'Khoa/Major', required: true, visible: v => isStudentRole(v.roleId) || isStaffRole(v.roleId) },
+                { name: 'semester', label: 'Kỳ/Năm', type: 'number', visible: v => isStudentRole(v.roleId) },
+                { name: 'studentCode', label: 'Mã sinh viên', required: true, visible: v => isStudentRole(v.roleId) },
+                { name: 'totalPoints', label: 'Điểm', type: 'number', visible: v => isStudentRole(v.roleId) }
             ],
             values: { ...user, roleId: user.roleId || managerRole?.id || safeRoleOptions[0]?.value || '', departmentPosition: user.departmentPosition || 'STAFF', active: user.active === false ? 'false' : 'true' },
+            validate: vals => {
+                const errors = {};
+                if (vals.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(vals.email.trim())) {
+                    errors.email = 'Email không hợp lệ.';
+                }
+                if (vals.phone && !/^[0-9]{8,15}$/.test(vals.phone.replace(/\s+/g, ''))) {
+                    errors.phone = 'Số điện thoại chỉ gồm 8–15 chữ số.';
+                }
+                if (isStudentRole(vals.roleId)) {
+                    const semester = Number(vals.semester);
+                    if (vals.semester !== '' && vals.semester != null && (!Number.isFinite(semester) || semester < 1)) {
+                        errors.semester = 'Kỳ/Năm phải là số ≥ 1.';
+                    }
+                }
+                return errors;
+            },
             onSubmit: async payload => {
                 payload.active = payload.active === 'true';
                 if (!payload.password) delete payload.password;
@@ -2557,7 +2657,7 @@
             load('/reports', {}),
             load('/events', [])
         ]);
-        const defaultRange = defaultReportRange();
+        const defaultRange = defaultReportRange(events);
         const reportFrom = state.filters.reportFrom || defaultRange.from;
         const reportTo = state.filters.reportTo || defaultRange.to;
         const fromDate = parseDateInput(reportFrom);
