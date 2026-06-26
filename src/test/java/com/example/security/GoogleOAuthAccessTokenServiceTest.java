@@ -1,6 +1,7 @@
 package com.example.security;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
@@ -28,7 +29,7 @@ class GoogleOAuthAccessTokenServiceTest {
         store.put("admin@fpt.edu.vn", "current-token", Instant.now().plusSeconds(600),
                 "refresh", "google", "principal-1");
 
-        GoogleOAuthAccessTokenService service = new GoogleOAuthAccessTokenService(store, manager);
+        GoogleOAuthAccessTokenService service = new GoogleOAuthAccessTokenService(store, managerProvider(manager));
 
         assertEquals("current-token", service.getValidAccessToken("ADMIN@fpt.edu.vn"));
         verify(manager, never()).authorize(any());
@@ -52,7 +53,7 @@ class GoogleOAuthAccessTokenServiceTest {
         when(manager.authorize(any())).thenReturn(
                 new OAuth2AuthorizedClient(registration, "principal-1", accessToken, refreshToken));
 
-        GoogleOAuthAccessTokenService service = new GoogleOAuthAccessTokenService(store, manager);
+        GoogleOAuthAccessTokenService service = new GoogleOAuthAccessTokenService(store, managerProvider(manager));
 
         assertEquals("refreshed-token", service.getValidAccessToken("admin@fpt.edu.vn"));
         assertEquals("refreshed-token", store.get("admin@fpt.edu.vn").accessToken);
@@ -67,11 +68,18 @@ class GoogleOAuthAccessTokenServiceTest {
         store.put("admin@fpt.edu.vn", "expired", Instant.now().minusSeconds(60),
                 null, "google", "principal-1");
 
-        GoogleOAuthAccessTokenService service = new GoogleOAuthAccessTokenService(store, manager);
+        GoogleOAuthAccessTokenService service = new GoogleOAuthAccessTokenService(store, managerProvider(manager));
 
         assertThrows(GoogleOAuthAccessTokenService.TokenUnavailableException.class,
                 () -> service.getValidAccessToken("admin@fpt.edu.vn"));
         verify(manager, never()).authorize(any());
+    }
+
+    @SuppressWarnings("unchecked")
+    private ObjectProvider<OAuth2AuthorizedClientManager> managerProvider(OAuth2AuthorizedClientManager manager) {
+        ObjectProvider<OAuth2AuthorizedClientManager> provider = mock(ObjectProvider.class);
+        when(provider.getIfAvailable()).thenReturn(manager);
+        return provider;
     }
 
     private ClientRegistration googleRegistration() {
