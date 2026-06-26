@@ -3,6 +3,8 @@ package com.example.config;
 import com.example.security.CustomOAuth2UserService;
 import com.example.security.OAuth2LoginSuccessHandler;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -32,7 +34,7 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
-                                           ClientRegistrationRepository clientRegistrationRepository) throws Exception {
+                                           ObjectProvider<ClientRegistrationRepository> clientRegistrationRepositoryProvider) throws Exception {
         http
             .csrf().disable()
             // Header bảo mật: chống clickjacking (chặn nhúng iframe — app không dùng iframe)
@@ -47,9 +49,12 @@ public class SecurityConfig {
                 .anyRequest().permitAll()
             )
             .formLogin().disable()
-            .httpBasic().disable()
-            // Bật OAuth2 Login với Google
-            .oauth2Login(oauth2 -> oauth2
+            .httpBasic().disable();
+
+        ClientRegistrationRepository clientRegistrationRepository = clientRegistrationRepositoryProvider.getIfAvailable();
+        if (clientRegistrationRepository != null) {
+            // Bật OAuth2 Login với Google khi đã cấu hình client registration.
+            http.oauth2Login(oauth2 -> oauth2
                 // Dùng trang đăng nhập riêng (login.html) — tắt trang mặc định
                 // "Login with OAuth 2.0" của Spring (trang hiển thị lỗi
                 // [authorization_request_not_found] khi luồng Google bị hủy/hết hạn).
@@ -66,6 +71,7 @@ public class SecurityConfig {
                 .failureHandler((request, response, exception) ->
                     response.sendRedirect(request.getContextPath() + "/login.html?oauth=error"))
             );
+        }
 
         return http.build();
     }
@@ -89,6 +95,7 @@ public class SecurityConfig {
      * This keeps Forms creation working after the initial one-hour access token expires.
      */
     @Bean
+    @ConditionalOnBean({ClientRegistrationRepository.class, OAuth2AuthorizedClientService.class})
     public OAuth2AuthorizedClientManager authorizedClientManager(
             ClientRegistrationRepository registrations,
             OAuth2AuthorizedClientService authorizedClients) {

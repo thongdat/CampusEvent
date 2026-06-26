@@ -5,6 +5,7 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 
 /** Resolves a valid Google token and refreshes it when possible. */
@@ -15,9 +16,9 @@ public class GoogleOAuthAccessTokenService {
     private final OAuth2AuthorizedClientManager authorizedClientManager;
 
     public GoogleOAuthAccessTokenService(OAuth2TokenStore tokenStore,
-                                         OAuth2AuthorizedClientManager authorizedClientManager) {
+                                         ObjectProvider<OAuth2AuthorizedClientManager> authorizedClientManagerProvider) {
         this.tokenStore = tokenStore;
-        this.authorizedClientManager = authorizedClientManager;
+        this.authorizedClientManager = authorizedClientManagerProvider.getIfAvailable();
     }
 
     public String getValidAccessToken(String email) throws TokenUnavailableException {
@@ -32,6 +33,10 @@ public class GoogleOAuthAccessTokenService {
         if (isBlank(token.registrationId) || isBlank(token.principalName) || isBlank(token.refreshToken)) {
             throw new TokenUnavailableException(
                     "Phiên Google đã hết hạn và không có refresh token. Hãy đăng nhập lại bằng Google.");
+        }
+        if (authorizedClientManager == null) {
+            throw new TokenUnavailableException(
+                    "Google OAuth chưa được cấu hình trên server. Hãy cấu hình GOOGLE_CLIENT_ID và GOOGLE_CLIENT_SECRET.");
         }
 
         try {

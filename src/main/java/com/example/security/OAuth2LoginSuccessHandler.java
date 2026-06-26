@@ -42,7 +42,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
     @Autowired
     private ActivityLogRepository activityLogRepository;
 
-    @Autowired
+    @Autowired(required = false)
     private OAuth2AuthorizedClientService authorizedClientService;
 
     @Autowired
@@ -64,7 +64,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
         // Lưu access token để gọi Google Forms/Drive API sau này
         try {
-            if (authentication instanceof OAuth2AuthenticationToken) {
+            if (authorizedClientService != null && authentication instanceof OAuth2AuthenticationToken) {
                 OAuth2AuthenticationToken oauth = (OAuth2AuthenticationToken) authentication;
                 OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient(
                         oauth.getAuthorizedClientRegistrationId(), oauth.getName());
