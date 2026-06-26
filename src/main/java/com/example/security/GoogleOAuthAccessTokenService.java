@@ -6,6 +6,7 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /** Resolves a valid Google token and refreshes it when possible. */
@@ -15,6 +16,7 @@ public class GoogleOAuthAccessTokenService {
     private final OAuth2TokenStore tokenStore;
     private final OAuth2AuthorizedClientManager authorizedClientManager;
 
+    @Autowired
     public GoogleOAuthAccessTokenService(OAuth2TokenStore tokenStore,
                                          ObjectProvider<OAuth2AuthorizedClientManager> authorizedClientManagerProvider) {
         this.tokenStore = tokenStore;
