@@ -682,7 +682,9 @@ public class AdminDashboardController {
         String lockKey = id + (isCheckout ? "|out" : "|in");
         Object lock = googleFormCreationLocks.computeIfAbsent(lockKey, ignored -> new Object());
         synchronized (lock) {
-            Event event = eventRepository.findById(id)
+            // Nạp kèm images + department để buildEvent() không lazy-load ngoài transaction
+            // (tránh LazyInitializationException khi dựng response).
+            Event event = eventRepository.findByIdWithImages(id)
                     .orElseThrow(() -> notFound("Không tìm thấy event."));
             String currentUrl = isCheckout ? event.getCheckoutFormUrl() : event.getGoogleFormUrl();
             if (currentUrl != null && !currentUrl.isBlank()) {
@@ -708,7 +710,9 @@ public class AdminDashboardController {
                     event.setCheckinFormId(created.formId);
                     event.setCheckinSheetId(created.sheetId);
                 }
-                Event saved = eventRepository.save(event);
+                eventRepository.save(event);
+                // Nạp lại kèm images để dựng response an toàn (collection đã được khởi tạo sẵn).
+                Event saved = eventRepository.findByIdWithImages(id).orElse(event);
                 Map<String, Object> result = buildEvent(saved);
                 result.put("createdFormUrl", created.responderUri);
                 result.put("kind", isCheckout ? "CHECKOUT" : "CHECKIN");
