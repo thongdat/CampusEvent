@@ -1,18 +1,6 @@
-﻿USE master;
-GO
-
--- 2. Ngắt tất cả kết nối hiện tại và chuyển database sang chế độ đơn người dùng
-ALTER DATABASE event_management_db SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
-GO
-
--- 3. Tiến hành xóa database
-DROP DATABASE event_management_db;
-GO
--- =====================================================================
+﻿-- =====================================================================
 --  CampusEvent / AEMS - FULL DATABASE SEED  (FPT-themed, rich data)
 --  Chạy 1 lần duy nhất trong SQL Server Management Studio.
-<<<<<<< HEAD
-=======
 --  Script này:
 --    1. Tạo database event_management_db (nếu chưa có)
 --    2. Drop + tạo lại toàn bộ bảng theo đúng schema JPA
@@ -32,7 +20,6 @@ GO
 --    dept01@fpt.edu.vn  / dept123 (MANAGER)
 --    com01@fpt.edu.vn   / com123
 --    sv001@fpt.edu.vn   / stu123
->>>>>>> a4dfe83916a51c29358f20bfa25155def4251119
 -- =====================================================================
 
 IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = 'event_management_db')
@@ -71,7 +58,7 @@ IF OBJECT_ID('role',               'U') IS NOT NULL DROP TABLE role;
 GO
 
 -- ---------------------------------------------------------------------
--- SCHEMA CREATION
+-- SCHEMA
 -- ---------------------------------------------------------------------
 CREATE TABLE role (
     id          BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
@@ -102,12 +89,8 @@ CREATE TABLE users (
     otp_expiry   DATETIME2,
     major        NVARCHAR(100),
     semester     INT,
-<<<<<<< HEAD
-total_points INT                  NOT NULL DEFAULT 0,
-=======
     total_points INT                  NOT NULL DEFAULT 0,
     department_position VARCHAR(30)    NULL DEFAULT 'STAFF',
->>>>>>> a4dfe83916a51c29358f20bfa25155def4251119
     CONSTRAINT UK_users_email UNIQUE (email),
     CONSTRAINT FK_users_role  FOREIGN KEY (role_id) REFERENCES role(id)
 );
@@ -116,6 +99,7 @@ GO
 CREATE UNIQUE INDEX UX_users_phone ON users(phone)
 WHERE phone IS NOT NULL AND phone <> '';
 GO
+
 CREATE TABLE student (
     id           BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
     student_code VARCHAR(50)          NOT NULL,
@@ -176,7 +160,6 @@ CREATE TABLE event_proposal (
     status        VARCHAR(50)          NOT NULL,
     note          NVARCHAR(MAX),
     created_at    DATETIME2            NOT NULL,
-    updated_at    DATETIME2,
     quiz_payload  NVARCHAR(MAX),
     department_id BIGINT               NOT NULL,
     CONSTRAINT FK_proposal_dept FOREIGN KEY (department_id) REFERENCES department(id)
@@ -202,7 +185,7 @@ CREATE TABLE ticket (
     code            VARCHAR(100)         NOT NULL,
     sent_date       DATETIME2            NOT NULL,
     registration_id BIGINT               NOT NULL,
-CONSTRAINT UK_ticket_code UNIQUE (code),
+    CONSTRAINT UK_ticket_code UNIQUE (code),
     CONSTRAINT FK_ticket_reg  FOREIGN KEY (registration_id) REFERENCES registration(id)
 );
 GO
@@ -210,15 +193,11 @@ GO
 CREATE TABLE attendance (
     id              BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
     checkin_time    DATETIME2            NOT NULL,
-<<<<<<< HEAD
-status          VARCHAR(50)          NOT NULL,
-=======
     mid_verify_time DATETIME2,
     checkout_time   DATETIME2,
     status          VARCHAR(50)          NOT NULL,
     participation_score FLOAT,
     note            NVARCHAR(MAX),
->>>>>>> a4dfe83916a51c29358f20bfa25155def4251119
     registration_id BIGINT               NOT NULL,
     event_id        BIGINT,
     student_id      BIGINT,
@@ -335,7 +314,7 @@ CREATE TABLE activity_log (
 GO
 
 -- ---------------------------------------------------------------------
--- DATA SEEDING: ROLES
+-- ROLES
 -- ---------------------------------------------------------------------
 INSERT INTO role (name, description) VALUES
 ('ADMIN',      N'Quản trị hệ thống: quản lý user, role, department và báo cáo.'),
@@ -346,10 +325,10 @@ INSERT INTO role (name, description) VALUES
 GO
 
 -- ---------------------------------------------------------------------
--- DATA SEEDING: DEPARTMENTS (15 Chuyên ngành)
+-- DEPARTMENTS  (15 chuyên ngành theo AcademicStructure.java)
 -- ---------------------------------------------------------------------
 INSERT INTO department (name, description, created_at) VALUES
-(N'Công nghệ Thông tin',         N'Khoa CNTT - tổ chức seminar lập trình, cloud, database, software engineering tại các campus FPT.',                  DATEADD(DAY, -240, GETDATE())),
+(N'Công nghệ Thông tin',         N'Khoa CNTT - tổ chức seminar lập trình, cloud, database, software engineering tại các campus FPT.',                    DATEADD(DAY, -240, GETDATE())),
 (N'Kỹ thuật phần mềm',           N'Bộ môn SE - phụ trách workshop quy trình Agile/Scrum, kiến trúc phần mềm, SWP/EXE/PRJ.',                              DATEADD(DAY, -228, GETDATE())),
 (N'An toàn thông tin',           N'Bộ môn IA - tổ chức CTF, secure coding, pentest lab và chuyên đề bảo mật cho sinh viên FPT.',                         DATEADD(DAY, -212, GETDATE())),
 (N'Trí tuệ nhân tạo',            N'Bộ môn AI - workshop machine learning, deep learning, LLM/GenAI và ứng dụng AI thực tế.',                             DATEADD(DAY, -198, GETDATE())),
@@ -359,25 +338,29 @@ INSERT INTO department (name, description, created_at) VALUES
 (N'Quản trị kinh doanh',         N'Bộ môn QTKD - case challenge, talkshow lãnh đạo, business simulation và startup pitching.',                            DATEADD(DAY, -128, GETDATE())),
 (N'Tài chính Ngân hàng',         N'Bộ môn TCNH - hội thảo đầu tư, phân tích báo cáo tài chính, FinTech và ngân hàng số.',                                 DATEADD(DAY, -116, GETDATE())),
 (N'Thiết kế Mỹ thuật số',        N'Bộ môn Digital Art - workshop UI/UX, motion graphics, 3D modelling và product design.',                                DATEADD(DAY, -100, GETDATE())),
-(N'Thiết kế Đồ họa',             N'Bộ môn Graphic Design - chuyên đề typography, branding identity, illustration và in ấn.',                               DATEADD(DAY, -88,  GETDATE())),
-(N'Truyền thông đa phương tiện', N'Bộ môn MMC - workshop video production, podcasting, social content và truyền thông số.',                               DATEADD(DAY, -72,  GETDATE())),
+(N'Thiết kế Đồ họa',             N'Bộ môn Graphic Design - chuyên đề typography, branding identity, illustration và in ấn.',                              DATEADD(DAY, -88,  GETDATE())),
+(N'Truyền thông đa phương tiện', N'Bộ môn MMC - workshop video production, podcasting, social content và truyền thông số.',                              DATEADD(DAY, -72,  GETDATE())),
 (N'Ngôn ngữ Anh',                N'Bộ môn ENG - English Speaking Club, IELTS bootcamp, presentation contest và giao lưu quốc tế.',                       DATEADD(DAY, -56,  GETDATE())),
-(N'Ngôn ngữ Nhật',               N'Bộ môn JPN - JLPT bootcamp, Japan Day, talkshow doanh nghiệp Nhật Bản và workshop văn hóa.',                           DATEADD(DAY, -40,  GETDATE())),
-(N'Du lịch - Khách sạn',         N'Bộ môn THM - workshop hospitality, F&B service, hướng nghiệp khách sạn 5 sao và career trip.',                         DATEADD(DAY, -28,  GETDATE()));
+(N'Ngôn ngữ Nhật',               N'Bộ môn JPN - JLPT bootcamp, Japan Day, talkshow doanh nghiệp Nhật Bản và workshop văn hóa.',                          DATEADD(DAY, -40,  GETDATE())),
+(N'Du lịch - Khách sạn',         N'Bộ môn THM - workshop hospitality, F&B service, hướng nghiệp khách sạn 5 sao và career trip.',                        DATEADD(DAY, -28,  GETDATE()));
 GO
+
 -- ---------------------------------------------------------------------
--- DATA SEEDING: STAFF USERS (Admin, Managers, Committee)
+-- USERS
 -- ---------------------------------------------------------------------
 DECLARE @adminRole BIGINT = (SELECT id FROM role WHERE name = 'ADMIN');
 DECLARE @managerRole BIGINT = (SELECT id FROM role WHERE name = 'MANAGER');
+DECLARE @deptRole  BIGINT = (SELECT id FROM role WHERE name = 'DEPARTMENT');
 DECLARE @comRole   BIGINT = (SELECT id FROM role WHERE name = 'COMMITTEE');
 DECLARE @stuRole   BIGINT = (SELECT id FROM role WHERE name = 'STUDENT');
 
+-- 3 ADMIN
 INSERT INTO users (full_name, email, password, phone, created_at, status, role_id, major, semester, total_points) VALUES
 (N'Nguyễn Hữu An',     'admin01@fpt.edu.vn',  'plain:admin123',  '0901000001', DATEADD(DAY, -300, GETDATE()), 1, @adminRole, N'Hệ thống', NULL, 0),
 (N'Trần Vận Hành',     'admin02@fpt.edu.vn',  'plain:admin123',  '0901000002', DATEADD(DAY, -270, GETDATE()), 1, @adminRole, N'Hệ thống', NULL, 0),
 (N'Lê Tài Khoản Khóa', 'locked@fpt.edu.vn',   'plain:locked123', '0901000099', DATEADD(DAY, -250, GETDATE()), 0, @adminRole, N'Hệ thống', NULL, 0);
 
+-- 15 DEPARTMENT (1 điều phối / khoa) - email dept01..dept15
 INSERT INTO users (full_name, email, password, phone, created_at, status, role_id, major, semester, total_points) VALUES
 (N'Phạm Minh Quang',     'dept01@fpt.edu.vn', 'plain:dept123', '0911000001', DATEADD(DAY, -210, GETDATE()), 1, @managerRole, N'Công nghệ Thông tin',         NULL, 0),
 (N'Đỗ Hồng Hạnh',        'dept02@fpt.edu.vn', 'plain:dept123', '0911000002', DATEADD(DAY, -205, GETDATE()), 1, @managerRole, N'Kỹ thuật phần mềm',           NULL, 0),
@@ -389,12 +372,13 @@ INSERT INTO users (full_name, email, password, phone, created_at, status, role_i
 (N'Nguyễn Đăng Khoa',    'dept08@fpt.edu.vn', 'plain:dept123', '0911000008', DATEADD(DAY, -175, GETDATE()), 1, @managerRole, N'Quản trị kinh doanh',         NULL, 0),
 (N'Lý Kim Thoa',         'dept09@fpt.edu.vn', 'plain:dept123', '0911000009', DATEADD(DAY, -170, GETDATE()), 1, @managerRole, N'Tài chính Ngân hàng',         NULL, 0),
 (N'Phan Tuấn Tú',        'dept10@fpt.edu.vn', 'plain:dept123', '0911000010', DATEADD(DAY, -165, GETDATE()), 1, @managerRole, N'Thiết kế Mỹ thuật số',        NULL, 0),
-(N'Châu Mỹ Duyên',       'dept11@fpt.edu.vn', 'plain:dept123', '0911000011', DATEADD(DAY, -160, GETDATE()), 1, @managerRole, N'Thiết kế Đồ họa',              NULL, 0),
+(N'Châu Mỹ Duyên',       'dept11@fpt.edu.vn', 'plain:dept123', '0911000011', DATEADD(DAY, -160, GETDATE()), 1, @managerRole, N'Thiết kế Đồ họa',             NULL, 0),
 (N'Hà Lan Anh',          'dept12@fpt.edu.vn', 'plain:dept123', '0911000012', DATEADD(DAY, -155, GETDATE()), 1, @managerRole, N'Truyền thông đa phương tiện', NULL, 0),
 (N'Mai Khánh Vy',        'dept13@fpt.edu.vn', 'plain:dept123', '0911000013', DATEADD(DAY, -150, GETDATE()), 1, @managerRole, N'Ngôn ngữ Anh',                NULL, 0),
 (N'Yamamoto Hằng',       'dept14@fpt.edu.vn', 'plain:dept123', '0911000014', DATEADD(DAY, -145, GETDATE()), 1, @managerRole, N'Ngôn ngữ Nhật',               NULL, 0),
 (N'Ngô Hoàng Thiện',     'dept15@fpt.edu.vn', 'plain:dept123', '0911000015', DATEADD(DAY, -140, GETDATE()), 1, @managerRole, N'Du lịch - Khách sạn',         NULL, 0);
 
+-- 8 COMMITTEE
 INSERT INTO users (full_name, email, password, phone, created_at, status, role_id, major, semester, total_points) VALUES
 (N'TS. Lê Thu Hà',         'com01@fpt.edu.vn', 'plain:com123', '0922000001', DATEADD(DAY, -220, GETDATE()), 1, @comRole, N'Hội đồng duyệt', NULL, 0),
 (N'TS. Phạm Quốc Minh',    'com02@fpt.edu.vn', 'plain:com123', '0922000002', DATEADD(DAY, -218, GETDATE()), 1, @comRole, N'Hội đồng duyệt', NULL, 0),
@@ -405,9 +389,7 @@ INSERT INTO users (full_name, email, password, phone, created_at, status, role_i
 (N'ThS. Mai Phương Thảo',  'com07@fpt.edu.vn', 'plain:com123', '0922000007', DATEADD(DAY, -195, GETDATE()), 1, @comRole, N'Hội đồng duyệt', NULL, 0),
 (N'TS. Bùi Thanh Sơn',     'com08@fpt.edu.vn', 'plain:com123', '0922000008', DATEADD(DAY, -190, GETDATE()), 1, @comRole, N'Hội đồng duyệt', NULL, 0);
 
--- ---------------------------------------------------------------------
--- DATA SEEDING: LOOP FOR 70 STUDENTS
--- ---------------------------------------------------------------------
+-- 70 STUDENT - tên Việt + email sv001..sv070
 DECLARE @i INT = 1;
 DECLARE @firstNames TABLE (idx INT IDENTITY(1,1), n NVARCHAR(50));
 INSERT INTO @firstNames (n) VALUES
@@ -427,13 +409,20 @@ INSERT INTO @lastNames (n) VALUES
 
 DECLARE @majors TABLE (idx INT IDENTITY(1,1), n NVARCHAR(100), prefix CHAR(2));
 INSERT INTO @majors (n, prefix) VALUES
-(N'Công nghệ Thông tin',         'HE'), (N'Kỹ thuật phần mềm',           'HE'),
-(N'An toàn thông tin',           'HS'), (N'Trí tuệ nhân tạo',            'HE'),
-(N'Data Science',                'HE'), (N'Kinh tế',                     'HM'),
-(N'Marketing',                   'HM'), (N'Quản trị kinh doanh',         'HM'),
-(N'Tài chính Ngân hàng',         'HF'), (N'Thiết kế Mỹ thuật số',        'HD'),
-(N'Thiết kế Đồ họa',             'HD'), (N'Truyền thông đa phương tiện', 'HD'),
-(N'Ngôn ngữ Anh',                'HL'), (N'Ngôn ngữ Nhật',               'HL'),
+(N'Công nghệ Thông tin',         'HE'),
+(N'Kỹ thuật phần mềm',           'HE'),
+(N'An toàn thông tin',           'HS'),
+(N'Trí tuệ nhân tạo',            'HE'),
+(N'Data Science',                'HE'),
+(N'Kinh tế',                     'HM'),
+(N'Marketing',                   'HM'),
+(N'Quản trị kinh doanh',         'HM'),
+(N'Tài chính Ngân hàng',         'HF'),
+(N'Thiết kế Mỹ thuật số',        'HD'),
+(N'Thiết kế Đồ họa',             'HD'),
+(N'Truyền thông đa phương tiện', 'HD'),
+(N'Ngôn ngữ Anh',                'HL'),
+(N'Ngôn ngữ Nhật',               'HL'),
 (N'Du lịch - Khách sạn',         'HT');
 
 WHILE @i <= 70
@@ -458,15 +447,23 @@ BEGIN
         @sem,
         @pts
     );
+
     SET @i = @i + 1;
 END;
 GO
 
--- Map users -> student table
+-- ---------------------------------------------------------------------
+-- STUDENT  (link users -> mã sinh viên FPT chuẩn HE/HS/HM/HF/HD/HL/HT)
+-- ---------------------------------------------------------------------
 DECLARE @stuRoleId BIGINT = (SELECT id FROM role WHERE name = 'STUDENT');
+
 ;WITH ranked AS (
-    SELECT u.id AS user_id, u.major, u.semester, ROW_NUMBER() OVER (ORDER BY u.id) AS rn
-    FROM users u WHERE u.role_id = @stuRoleId
+    SELECT u.id AS user_id,
+           u.major,
+           u.semester,
+           ROW_NUMBER() OVER (ORDER BY u.id) AS rn
+    FROM users u
+    WHERE u.role_id = @stuRoleId
 )
 INSERT INTO student (student_code, major, year, user_id)
 SELECT
@@ -476,16 +473,18 @@ SELECT
         WHEN N'Marketing'           THEN 'HM'
         WHEN N'Quản trị kinh doanh' THEN 'HM'
         WHEN N'Tài chính Ngân hàng' THEN 'HF'
-WHEN N'Thiết kế Mỹ thuật số' THEN 'HD'
+        WHEN N'Thiết kế Mỹ thuật số' THEN 'HD'
         WHEN N'Thiết kế Đồ họa'     THEN 'HD'
-WHEN N'Truyền thông đa phương tiện' THEN 'HD'
+        WHEN N'Truyền thông đa phương tiện' THEN 'HD'
         WHEN N'Ngôn ngữ Anh'        THEN 'HL'
         WHEN N'Ngôn ngữ Nhật'       THEN 'HL'
         WHEN N'Du lịch - Khách sạn' THEN 'HT'
         ELSE 'HE'
     END + '18' + RIGHT('0000' + CAST(r.rn AS VARCHAR(4)), 4),
     r.major,
-    CASE WHEN r.semester IS NULL OR r.semester < 1 THEN 1 ELSE ((r.semester - 1) / 3) + 1 END,
+    CASE WHEN r.semester IS NULL OR r.semester < 1 THEN 1
+         ELSE ((r.semester - 1) / 3) + 1
+    END,
     r.user_id
 FROM ranked r;
 GO
@@ -506,28 +505,95 @@ SET
 GO
 
 -- ---------------------------------------------------------------------
--- DATA SEEDING: 32 EVENTS (Hoàn chỉnh đoạn bị cắt)
+-- EVENTS  (32 sự kiện - mỗi sự kiện kèm ảnh FPT/campus chất lượng cao)
 -- ---------------------------------------------------------------------
-DECLARE @img NVARCHAR(500) = N'https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1200&q=80';
+DECLARE @img_codelab   NVARCHAR(500) = N'https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1200&q=80';
+DECLARE @img_laptop    NVARCHAR(500) = N'https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=1200&q=80';
+DECLARE @img_hackathon NVARCHAR(500) = N'https://images.unsplash.com/photo-1591453089816-0fbb971b454c?auto=format&fit=crop&w=1200&q=80';
+DECLARE @img_cloud     NVARCHAR(500) = N'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80';
+DECLARE @img_database  NVARCHAR(500) = N'https://images.unsplash.com/photo-1542903660-eedba2cda473?auto=format&fit=crop&w=1200&q=80';
+DECLARE @img_devops    NVARCHAR(500) = N'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=1200&q=80';
+DECLARE @img_ai        NVARCHAR(500) = N'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&w=1200&q=80';
+DECLARE @img_data      NVARCHAR(500) = N'https://images.unsplash.com/photo-1555255707-c07966088b7b?auto=format&fit=crop&w=1200&q=80';
+DECLARE @img_matrix    NVARCHAR(500) = N'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&w=1200&q=80';
+DECLARE @img_security  NVARCHAR(500) = N'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1200&q=80';
+DECLARE @img_padlock   NVARCHAR(500) = N'https://images.unsplash.com/photo-1563013544-824ae1b704d3?auto=format&fit=crop&w=1200&q=80';
+DECLARE @img_uxlab     NVARCHAR(500) = N'https://images.unsplash.com/photo-1558655146-d09347e92766?auto=format&fit=crop&w=1200&q=80';
+DECLARE @img_sketch    NVARCHAR(500) = N'https://images.unsplash.com/photo-1561070791-2526d30994b8?auto=format&fit=crop&w=1200&q=80';
+DECLARE @img_designer  NVARCHAR(500) = N'https://images.unsplash.com/photo-1542744095-fcf48d80b0fd?auto=format&fit=crop&w=1200&q=80';
+DECLARE @img_business  NVARCHAR(500) = N'https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=1200&q=80';
+DECLARE @img_charts    NVARCHAR(500) = N'https://images.unsplash.com/photo-1559136555-9303baea8ebd?auto=format&fit=crop&w=1200&q=80';
+DECLARE @img_meeting   NVARCHAR(500) = N'https://images.unsplash.com/photo-1542744094-3a31f272c490?auto=format&fit=crop&w=1200&q=80';
+DECLARE @img_startup   NVARCHAR(500) = N'https://images.unsplash.com/photo-1543269664-7eef42226a21?auto=format&fit=crop&w=1200&q=80';
+DECLARE @img_marketing NVARCHAR(500) = N'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&w=1200&q=80';
+DECLARE @img_branding  NVARCHAR(500) = N'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=1200&q=80';
+DECLARE @img_finance   NVARCHAR(500) = N'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=1200&q=80';
+DECLARE @img_library   NVARCHAR(500) = N'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?auto=format&fit=crop&w=1200&q=80';
+DECLARE @img_books     NVARCHAR(500) = N'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=1200&q=80';
+DECLARE @img_speaking  NVARCHAR(500) = N'https://images.unsplash.com/photo-1503428593586-e225b39bddfe?auto=format&fit=crop&w=1200&q=80';
+DECLARE @img_japan     NVARCHAR(500) = N'https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&w=1200&q=80';
+DECLARE @img_lecture   NVARCHAR(500) = N'https://images.unsplash.com/photo-1562774053-701939374585?auto=format&fit=crop&w=1200&q=80';
+DECLARE @img_graduation NVARCHAR(500) = N'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=1200&q=80';
+DECLARE @img_campus    NVARCHAR(500) = N'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=1200&q=80';
+DECLARE @img_studygroup NVARCHAR(500) = N'https://images.unsplash.com/photo-1571260899304-425eee4c7efc?auto=format&fit=crop&w=1200&q=80';
+DECLARE @img_career    NVARCHAR(500) = N'https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=1200&q=80';
+DECLARE @img_hotel     NVARCHAR(500) = N'https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=1200&q=80';
+DECLARE @img_travel    NVARCHAR(500) = N'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?auto=format&fit=crop&w=1200&q=80';
+DECLARE @img_studio    NVARCHAR(500) = N'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=1200&q=80';
+DECLARE @img_podcast   NVARCHAR(500) = N'https://images.unsplash.com/photo-1598618443855-232ee0f819f6?auto=format&fit=crop&w=1200&q=80';
 
 INSERT INTO event (title, description, location, start_time, end_time, capacity, image_url, budget, status, created_at, department_id) VALUES
-(N'FPT Code Camp 2026', N'Workshop Spring Boot & SQL Server.', N'Hội trường Alpha - FPT Đà Nẵng', DATEADD(DAY, 5, GETDATE()), DATEADD(DAY, 6, GETDATE()), 120, @img, 18000000, 'PUBLISHED', DATEADD(DAY,-10,GETDATE()), 1),
-(N'Open Day FPT IT 2026', N'Ngày hội mở cửa khoa CNTT.', N'Sảnh Beta - FPT HCM', DATEADD(DAY, 12, GETDATE()), DATEADD(DAY, 12, GETDATE()), 300, @img, 25000000, 'PUBLISHED', DATEADD(DAY,-15,GETDATE()), 1),
-(N'FPT Hackathon 36h', N'Cuộc thi lập trình liên tục.', N'Lab 3 - FPT Hà Nội', DATEADD(DAY, 20, GETDATE()), DATEADD(DAY, 22, GETDATE()), 80, @img, 80000000, 'PUBLISHED', DATEADD(DAY,-5,GETDATE()), 1),
-(N'Agile & Scrum Bootcamp', N'Trải nghiệm vai trò Scrum Master.', N'Phòng 302 - Tòa Beta', DATEADD(DAY, -2, GETDATE()), DATEADD(DAY, -1, GETDATE()), 60, @img, 14000000, 'PUBLISHED', DATEADD(DAY,-20,GETDATE()), 2),
-(N'Clean Code Workshop', N'Chia sẻ refactor codebase lớn.', N'Phòng 101 - Tòa Alpha', DATEADD(DAY, 30, GETDATE()), DATEADD(DAY, 30, GETDATE()), 80, @img, 9000000, 'PUBLISHED', DATEADD(DAY,-8,GETDATE()), 2),
-(N'FPT Cyber CTF 2026', N'Cuộc thi An toàn thông tin.', N'Lab Security - Tòa Gamma', DATEADD(DAY, 25, GETDATE()), DATEADD(DAY, 25, GETDATE()), 100, @img, 35000000, 'PUBLISHED', DATEADD(DAY,-30,GETDATE()), 3),
-(N'Secure Coding Lab', N'Hands-on lab fix lỗi OWASP Top 10.', N'Phòng 405 - Tòa Beta', DATEADD(DAY, -5, GETDATE()), DATEADD(DAY, -5, GETDATE()), 50, @img, 7000000, 'COMPLETED', DATEADD(DAY,-12,GETDATE()), 3),
-(N'GenAI Day - LLM FPT', N'Talkshow Prompt Engineering.', N'Hội trường lớn - FPT HCM', DATEADD(DAY, 40, GETDATE()), DATEADD(DAY, 40, GETDATE()), 250, @img, 28000000, 'PUBLISHED', DATEADD(DAY,-2,GETDATE()), 4),
-(N'Computer Vision Workshop', N'Training mô hình với PyTorch.', N'Lab AI - Tòa Innovation', DATEADD(DAY, 45, GETDATE()), DATEADD(DAY, 45, GETDATE()), 40, @img, 11000000, 'APPROVED', DATEADD(DAY,-1,GETDATE()), 4),
-(N'Data Analytics Power BI', N'Chuỗi 5 buổi tối học Dashboards.', N'Phòng 201 - Tòa Alpha', DATEADD(DAY, -10, GETDATE()), DATEADD(DAY, -6, GETDATE()), 70, @img, 13000000, 'COMPLETED', DATEADD(DAY,-25,GETDATE()), 5),
-(N'Data Storytelling Talk', N'Nghệ thuật kể chuyện bằng dữ liệu.', N'Innovation Hub - Đà Nẵng', DATEADD(DAY, 50, GETDATE()), DATEADD(DAY, 50, GETDATE()), 100, @img, 6000000, 'APPROVED', DATEADD(DAY,-4,GETDATE()), 5);
+-- Công nghệ Thông tin (id=1)
+(N'FPT Code Camp 2026 - Spring Boot & SQL Server', N'Workshop 1 ngày hướng dẫn xây dựng REST API với Spring Boot, kết nối SQL Server và deploy lên Docker. Diễn giả từ FPT Software.', N'Hội trường Alpha - FPT Đà Nẵng', '2026-06-08 08:00:00', '2026-06-08 17:00:00', 120, @img_codelab,   18000000, 'PUBLISHED', DATEADD(DAY,-45,GETDATE()), 1),
+(N'Open Day FPT IT 2026',                          N'Ngày hội mở cửa khoa CNTT: tham quan lab, gặp gỡ doanh nghiệp đối tác và tư vấn lộ trình nghề nghiệp cho sinh viên năm 1-2.',         N'Sảnh sự kiện Beta - FPT HCM',    '2026-06-15 09:00:00', '2026-06-15 16:00:00', 300, @img_campus,    25000000, 'PUBLISHED', DATEADD(DAY,-40,GETDATE()), 1),
+(N'AEMS - FPT Hackathon 36h',                      N'Cuộc thi lập trình 36 giờ liên tục, chủ đề Smart Campus. Giải nhất 30 triệu + suất thực tập FPT Software.',                            N'Lab 3 + Lab 4 - FPT Hà Nội',     '2026-07-04 08:00:00', '2026-07-05 20:00:00', 80,  @img_hackathon, 80000000, 'PUBLISHED', DATEADD(DAY,-30,GETDATE()), 1),
+-- Kỹ thuật phần mềm (id=2)
+(N'Agile & Scrum Bootcamp', N'2 ngày trải nghiệm vai trò Scrum Master, PO, Dev. Có chứng nhận PSM1 mock từ Scrum.org.', N'Phòng 302 - Tòa Beta', '2026-06-20 08:30:00', '2026-06-21 17:00:00', 60, @img_devops, 14000000, 'PUBLISHED', DATEADD(DAY,-50,GETDATE()), 2),
+(N'Clean Code & Refactoring Workshop', N'Diễn giả từ FPT Software chia sẻ kinh nghiệm refactor codebase 100k LOC, kèm hands-on lab.', N'Phòng 101 - Tòa Alpha', '2026-06-28 13:30:00', '2026-06-28 17:30:00', 80, @img_laptop, 9000000, 'PUBLISHED', DATEADD(DAY,-44,GETDATE()), 2),
+-- An toàn thông tin (id=3)
+(N'FPT Cyber CTF Spring 2026', N'Cuộc thi Capture The Flag dạng Jeopardy: web, pwn, crypto, reverse. Mở cho sinh viên toàn FPT.', N'Lab Security - Tòa Gamma', '2026-06-12 08:00:00', '2026-06-12 20:00:00', 100, @img_security, 35000000, 'PUBLISHED', DATEADD(DAY,-55,GETDATE()), 3),
+(N'Secure Coding Lab - OWASP Top 10 2025', N'Hands-on lab fix các lỗi SQLi, XSS, SSRF trong ứng dụng Spring Boot mẫu.', N'Phòng 405 - Tòa Beta', '2026-06-25 13:00:00', '2026-06-25 17:00:00', 50, @img_padlock, 7000000, 'APPROVED', DATEADD(DAY,-32,GETDATE()), 3),
+-- Trí tuệ nhân tạo (id=4)
+(N'GenAI Day - LLM cho sinh viên FPT', N'Talkshow ứng dụng LLM, prompt engineering, RAG. Diễn giả từ FPT.AI và OpenAI partner.', N'Hội trường lớn - FPT HCM', '2026-07-10 08:30:00', '2026-07-10 12:00:00', 250, @img_ai, 28000000, 'PUBLISHED', DATEADD(DAY,-25,GETDATE()), 4),
+(N'Workshop Computer Vision với PyTorch', N'Hands-on training mô hình nhận diện ảnh, theo dõi đối tượng trên webcam.', N'Lab AI - Tòa Innovation', '2026-07-18 13:00:00', '2026-07-18 17:00:00', 40, @img_matrix, 11000000, 'PUBLISHED', DATEADD(DAY,-20,GETDATE()), 4),
+-- Data Science (id=5)
+(N'Data Analytics Bootcamp - Power BI', N'5 buổi tối từ căn bản đến dashboard hoàn chỉnh cho phân tích kinh doanh.', N'Phòng 201 - Tòa Alpha', '2026-06-30 18:00:00', '2026-07-04 21:00:00', 70, @img_data, 13000000, 'PUBLISHED', DATEADD(DAY,-38,GETDATE()), 5),
+(N'Data Storytelling Talk', N'Cách kể chuyện bằng dữ liệu, từ insight đến slide thuyết trình ấn tượng.', N'Innovation Hub - FPT Đà Nẵng', '2026-07-22 14:00:00', '2026-07-22 17:00:00', 100, @img_charts, 6000000, 'APPROVED', DATEADD(DAY,-15,GETDATE()), 5),
+-- Kinh tế (id=6)
+(N'FPT Economic Forum 2026', N'Diễn đàn kinh tế thường niên: vĩ mô Việt Nam 2026, cơ hội cho sinh viên.', N'Hội trường Alpha - FPT HCM', '2026-08-02 08:30:00', '2026-08-02 12:00:00', 200, @img_meeting, 22000000, 'PUBLISHED', DATEADD(DAY,-10,GETDATE()), 6),
+(N'Talkshow: Phân tích thị trường ngành công nghệ', N'Chuyên gia FPT Securities phân tích dòng tiền và cơ hội đầu tư công nghệ.', N'Phòng 501 - Tòa Beta', '2026-07-26 14:00:00', '2026-07-26 17:00:00', 90, @img_business, 8000000, 'PUBLISHED', DATEADD(DAY,-12,GETDATE()), 6),
+-- Marketing (id=7)
+(N'Brand Camp 2026 - Build Your Brand', N'4 ngày training thực chiến: persona, brand voice, social content, KPI.', N'Sảnh sự kiện Gamma', '2026-08-10 08:30:00', '2026-08-13 17:00:00', 120, @img_marketing, 32000000, 'PUBLISHED', DATEADD(DAY,-8,GETDATE()), 7),
+(N'Workshop Performance Ads - Meta & Google', N'Tối ưu chiến dịch quảng cáo từ A-Z, có ngân sách thực tập 5tr/nhóm.', N'Lab Marketing - Tòa Alpha', '2026-07-30 13:00:00', '2026-07-30 17:00:00', 60, @img_branding, 15000000, 'APPROVED', DATEADD(DAY,-5,GETDATE()), 7),
+-- Quản trị kinh doanh (id=8)
+(N'FPT Business Case Challenge 2026', N'Vòng loại quốc gia: 3 vòng, đề thực từ FPT Retail và FPT Telecom.', N'Hội trường lớn - FPT Hà Nội', '2026-08-18 08:00:00', '2026-08-18 18:00:00', 150, @img_startup, 50000000, 'PUBLISHED', DATEADD(DAY,-7,GETDATE()), 8),
+(N'Startup Pitching Night', N'Sinh viên pitch ý tưởng trước nhà đầu tư FPT Ventures.', N'Innovation Hub - FPT HCM', '2026-08-22 18:00:00', '2026-08-22 21:30:00', 80, @img_startup, 12000000, 'PUBLISHED', DATEADD(DAY,-4,GETDATE()), 8),
+-- Tài chính Ngân hàng (id=9)
+(N'FinTech Day - Mobile Banking & eKYC', N'Chuyên đề công nghệ tài chính: open banking, eKYC, blockchain settlement.', N'Phòng 202 - Tòa Beta', '2026-07-12 08:30:00', '2026-07-12 12:00:00', 100, @img_finance, 10000000, 'PUBLISHED', DATEADD(DAY,-22,GETDATE()), 9),
+(N'Workshop: Đọc hiểu Báo cáo tài chính', N'Hướng dẫn phân tích BCTC doanh nghiệp niêm yết bằng Excel + Power BI.', N'Phòng 305 - Tòa Alpha', '2026-07-28 18:00:00', '2026-07-28 21:00:00', 70, @img_charts, 5000000, 'PUBLISHED', DATEADD(DAY,-9,GETDATE()), 9),
+-- Thiết kế Mỹ thuật số (id=10)
+(N'UX Research Lab Day', N'Trải nghiệm nghiên cứu UX với người dùng thật, phân tích heuristic và affinity mapping.', N'Design Studio - FPT Đà Nẵng', '2026-06-26 09:00:00', '2026-06-26 16:00:00', 50, @img_uxlab, 9000000, 'PUBLISHED', DATEADD(DAY,-28,GETDATE()), 10),
+(N'Workshop Motion Graphics với After Effects', N'Tạo intro 15s và promo video cho thương hiệu cá nhân.', N'Lab Design - Tòa Innovation', '2026-07-15 13:30:00', '2026-07-15 17:30:00', 40, @img_designer, 8000000, 'APPROVED', DATEADD(DAY,-14,GETDATE()), 10),
+-- Thiết kế Đồ họa (id=11)
+(N'Portfolio Review Day - GD/UX 2026', N'1-1 review portfolio với art director từ studio đối tác FPT.', N'Studio Media - FPT HCM', '2026-07-20 09:00:00', '2026-07-20 17:00:00', 60, @img_sketch, 6000000, 'PUBLISHED', DATEADD(DAY,-18,GETDATE()), 11),
+(N'Typography Workshop - Tiếng Việt trong design', N'Phong cách typography cho tiếng Việt, font dấu và xử lý kerning.', N'Phòng 401 - Tòa Beta', '2026-08-05 14:00:00', '2026-08-05 17:00:00', 50, @img_designer, 4500000, 'APPROVED', DATEADD(DAY,-6,GETDATE()), 11),
+-- Truyền thông đa phương tiện (id=12)
+(N'Podcast Production Bootcamp', N'2 buổi setup studio, thu - mix - phát hành podcast lên Spotify.', N'Studio Podcast - Tòa Gamma', '2026-07-08 18:00:00', '2026-07-09 21:00:00', 30, @img_podcast, 7500000, 'PUBLISHED', DATEADD(DAY,-26,GETDATE()), 12),
+(N'Video Production Workshop với Premiere Pro', N'Quay - dựng video TVC 30s, từ ý tưởng đến xuất bản TikTok/YouTube.', N'Studio Media', '2026-07-24 09:00:00', '2026-07-24 17:00:00', 35, @img_studio, 9000000, 'APPROVED', DATEADD(DAY,-11,GETDATE()), 12),
+-- Ngôn ngữ Anh (id=13)
+(N'FPT English Speaking Contest 2026', N'Vòng chung kết cuộc thi nói tiếng Anh toàn FPT, chủ đề "AI & The Future".', N'Hội trường Alpha - FPT HCM', '2026-08-15 14:00:00', '2026-08-15 18:00:00', 200, @img_speaking, 18000000, 'PUBLISHED', DATEADD(DAY,-13,GETDATE()), 13),
+(N'IELTS Bootcamp 5.5 -> 6.5', N'4 tuần học cấp tốc, mock test cuối khóa, mentor 1-1.', N'Phòng 203 - Tòa Beta', '2026-09-01 18:00:00', '2026-09-28 21:00:00', 40, @img_library, 16000000, 'APPROVED', DATEADD(DAY,-3,GETDATE()), 13),
+-- Ngôn ngữ Nhật (id=14)
+(N'Japan Day 2026 - Connect Vietnam & Japan', N'Lễ hội văn hóa Nhật: trà đạo, kimono, gian hàng doanh nghiệp Nhật Bản.', N'Sân khấu trung tâm - FPT Hà Nội', '2026-08-25 09:00:00', '2026-08-25 17:00:00', 400, @img_japan, 45000000, 'PUBLISHED', DATEADD(DAY,-2,GETDATE()), 14),
+(N'JLPT N3 Mock Test Day', N'Thi thử JLPT N3 chuẩn format, có chấm điểm và tư vấn lộ trình.', N'Phòng 102 - Tòa Alpha', '2026-09-10 08:00:00', '2026-09-10 12:30:00', 80, @img_books, 6000000, 'APPROVED', DATEADD(DAY,-1,GETDATE()), 14),
+-- Du lịch - Khách sạn (id=15)
+(N'Career Trip - InterContinental Đà Nẵng', N'Tham quan, kiến tập 1 ngày tại khách sạn 5 sao, gặp gỡ HR.', N'InterContinental Sun Peninsula', '2026-08-30 07:00:00', '2026-08-30 17:00:00', 45, @img_hotel, 14000000, 'PUBLISHED', DATEADD(DAY,-16,GETDATE()), 15),
+(N'Workshop F&B Service Excellence', N'Kỹ năng setup bàn fine dining, phục vụ rượu vang và xử lý phàn nàn.', N'Lab F&B - FPT Đà Nẵng', '2026-09-05 09:00:00', '2026-09-05 12:00:00', 35, @img_travel, 5500000, 'APPROVED', DATEADD(DAY,-21,GETDATE()), 15),
+-- Sự kiện chéo khoa (cross-faculty)
+(N'FPT Career Fair 2026 - Spring',                  N'Ngày hội việc làm lớn nhất FPT năm 2026 với 60+ doanh nghiệp, có khu vực phỏng vấn trực tiếp.', N'Sảnh trung tâm - FPT HCM', '2026-09-20 08:00:00', '2026-09-20 17:00:00', 800, @img_career,    120000000, 'PUBLISHED', DATEADD(DAY,-2,GETDATE()),  6),
+(N'Lễ tốt nghiệp FPT khóa 2022-2026', N'Lễ tốt nghiệp trang trọng cho gần 2,000 sinh viên FPT tại 3 cơ sở.', N'Nhà thi đấu Đa năng - FPT', '2026-10-15 08:00:00', '2026-10-15 12:00:00', 2000, @img_graduation, 250000000, 'PENDING', DATEADD(DAY,-1,GETDATE()), 1);
+GO
 
-<<<<<<< HEAD
--- Điền nhanh 21 sự kiện còn lại cho đủ 32 sự kiện đa dạng khoa
-DECLARE @ev_j INT = 1;
-WHILE @ev_j <= 21
-=======
 UPDATE event
 SET image_urls = image_url
 WHERE image_url IS NOT NULL;
@@ -798,8 +864,6 @@ FROM event e
 WHERE e.status IN ('PUBLISHED', 'APPROVED');
 GO
 
--- Sinh bài nộp quiz cho MỌI sự kiện PUBLISHED/APPROVED có người tham dự (đã check-in),
--- bao phủ toàn bộ event để phần "Phân tích AI từ quiz" luôn có dữ liệu.
 INSERT INTO quiz_submission (event_id, student_id, total_score, submitted_at)
 SELECT
     a.event_id,
@@ -807,10 +871,8 @@ SELECT
     CASE WHEN (a.id % 6) = 0 THEN 3 ELSE 5 END,
     DATEADD(MINUTE, 10, COALESCE(a.checkout_time, a.mid_verify_time, a.checkin_time))
 FROM attendance a
-JOIN event e ON e.id = a.event_id
-WHERE e.status IN ('PUBLISHED', 'APPROVED')
-  AND a.status IN ('CHECKED_IN', 'MID_VERIFIED', 'CHECKED_OUT')
-  AND (a.id % 4) <> 0;
+WHERE a.status IN ('MID_VERIFIED', 'CHECKED_OUT')
+  AND (a.id % 3) <> 0;
 GO
 
 INSERT INTO quiz_answer (submission_id, question_id, selected_answer, answer_text, is_correct, score, submitted_at)
@@ -917,31 +979,23 @@ DECLARE @adminId BIGINT = (SELECT TOP 1 id FROM users WHERE email = 'admin01@fpt
 DECLARE @adminEmail VARCHAR(100) = (SELECT email FROM users WHERE id = @adminId);
 DECLARE @k INT = 1;
 WHILE @k <= 20
->>>>>>> a4dfe83916a51c29358f20bfa25155def4251119
 BEGIN
-    INSERT INTO event (title, description, location, start_time, end_time, capacity, image_url, budget, status, created_at, department_id)
+    INSERT INTO email_log (to_email, subject, content, sent_at, status, user_id, registration_id, event_id)
     VALUES (
-        N'Sự kiện Chuyên ngành mẫu số ' + CAST(@ev_j AS NVARCHAR(5)),
-        N'Mô tả chi tiết nội dung sự kiện bổ sung ngành Kinh tế, Marketing, Đồ họa, Ngôn ngữ...',
-        N'Hội trường Campus FPT',
-        DATEADD(DAY, @ev_j + 5, GETDATE()),
-        DATEADD(DAY, @ev_j + 6, GETDATE()),
-        100, @img, 15000000, 
-        CASE WHEN @ev_j % 4 = 0 THEN 'COMPLETED' ELSE 'PUBLISHED' END,
-        DATEADD(DAY, -15, GETDATE()),
-        (@ev_j % 10) + 6
+        @adminEmail,
+        N'AEMS - Báo cáo vận hành tuần ' + CAST(@k AS NVARCHAR(2)),
+        N'Tổng hợp user mới, proposal, registration, attendance và feedback của tuần ' + CAST(@k AS NVARCHAR(2)) + N'.',
+        DATEADD(DAY, -7 * @k, GETDATE()),
+        'SENT',
+        @adminId, NULL, NULL
     );
-    SET @ev_j = @ev_j + 1;
+    SET @k = @k + 1;
 END;
 GO
 
 -- ---------------------------------------------------------------------
--- DATA SEEDING: 35 EVENT PROPOSALS
+-- ACTIVITY LOG  (REGISTER_EVENT / CHECK_IN / FEEDBACK / ADMIN_REPORT)
 -- ---------------------------------------------------------------------
-<<<<<<< HEAD
-DECLARE @prop_i INT = 1;
-WHILE @prop_i <= 35
-=======
 INSERT INTO activity_log (user_id, activity_type, description, points_earned, created_at)
 SELECT
     u.id, 'REGISTER_EVENT',
@@ -1002,141 +1056,23 @@ JOIN event   e ON e.id = ef.event_id;
 DECLARE @adminUserId BIGINT = (SELECT TOP 1 id FROM users WHERE email = 'admin01@fpt.edu.vn');
 DECLARE @j INT = 1;
 WHILE @j <= 30
->>>>>>> a4dfe83916a51c29358f20bfa25155def4251119
 BEGIN
-    INSERT INTO event_proposal (title, description, location, capacity, image_url, budget, proposed_date, status, note, created_at, department_id)
+    INSERT INTO activity_log (user_id, activity_type, description, points_earned, created_at)
     VALUES (
-        N'Đề xuất Sự kiện Học thuật tuần ' + CAST(@prop_i AS NVARCHAR(5)),
-        N'Nội dung đề xuất chi tiết nhằm nâng cao kiến thức thực tế và kỹ năng mềm cho sinh viên FPT.',
-        N'Phòng Seminar Tòa nhà Alpha/Beta',
-        50 + (@prop_i * 5),
-        N'https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=1200&q=80',
-        10000000 + (@prop_i * 1000000),
-        DATEADD(DAY, @prop_i - 10, GETDATE()),
-        CASE WHEN @prop_i % 3 = 0 THEN 'PENDING' WHEN @prop_i % 3 = 1 THEN 'APPROVED' ELSE 'REJECTED' END,
-        CASE WHEN @prop_i % 3 = 2 THEN N'Không đủ ngân sách hoặc trùng lịch với tuần lễ văn hóa.' ELSE NULL END,
-        DATEADD(DAY, -20, GETDATE()),
-        (@prop_i % 15) + 1
+        @adminUserId,
+        CASE WHEN @j % 2 = 0 THEN 'ADMIN_REPORT' ELSE 'ADMIN_USER' END,
+        CASE WHEN @j % 2 = 0 THEN N'Xuất báo cáo thống kê dashboard tuần ' + CAST(@j AS NVARCHAR(2))
+             ELSE N'Cập nhật tài khoản hoặc phân quyền lô #' + CAST(@j AS NVARCHAR(2)) END,
+        0,
+        DATEADD(HOUR, -5 * @j, GETDATE())
     );
-    SET @prop_i = @prop_i + 1;
+    SET @j = @j + 1;
 END;
 GO
 
 -- ---------------------------------------------------------------------
--- DATA SEEDING: 500 REGISTRATIONS, TICKETS, ATTENDANCE, FEEDBACK
+-- KẾT QUẢ
 -- ---------------------------------------------------------------------
-<<<<<<< HEAD
-DECLARE @s_id BIGINT, @e_id BIGINT;
-DECLARE @reg_count INT = 0;
-DECLARE @max_students INT = (SELECT COUNT(*) FROM student);
-DECLARE @max_events INT = (SELECT COUNT(*) FROM event);
-
-DECLARE event_cursor CURSOR FOR SELECT id FROM event;
-OPEN event_cursor;
-FETCH NEXT FROM event_cursor INTO @e_id;
-WHILE @@FETCH_STATUS = 0 AND @reg_count < 500
-BEGIN
-    -- Mỗi sự kiện gán ngẫu nhiên một cụm sinh viên đăng ký
-    DECLARE @offset INT = CAST(RAND() * 20 AS INT);
-    DECLARE student_cursor CURSOR FOR 
-        SELECT id FROM student ORDER BY id OFFSET @offset ROWS FETCH NEXT 20 ROWS ONLY;
-    
-    OPEN student_cursor;
-    FETCH NEXT FROM student_cursor INTO @s_id;
-    
-    WHILE @@FETCH_STATUS = 0 AND @reg_count < 500
-    BEGIN
-        DECLARE @reg_status VARCHAR(50) = CASE WHEN @reg_count % 8 = 0 THEN 'CANCELLED' ELSE 'APPROVED' END;
-        DECLARE @reg_id BIGINT;
-
-        INSERT INTO registration (registration_date, status, note, priority_score, event_id, student_id)
-        VALUES (DATEADD(DAY, -3, GETDATE()), @reg_status, N'Đăng ký qua cổng sinh viên AEMS', 8.5, @e_id, @s_id);
-        
-        SET @reg_id = SCOPE_IDENTITY();
-        SET @reg_count = @reg_count + 1;
-
-        -- Sinh Ticket (~350 vé cho các đăng ký APPROVED)
-        IF @reg_status = 'APPROVED' AND @reg_count <= 350
-        BEGIN
-            DECLARE @t_id BIGINT;
-            INSERT INTO ticket (code, sent_date, registration_id)
-            VALUES ('TICK-' + CAST(@reg_id AS VARCHAR(10)) + '-' + RIGHT(CONVERT(VARCHAR, RAND()), 4), DATEADD(DAY, -2, GETDATE()), @reg_id);
-            SET @t_id = SCOPE_IDENTITY();
-
-            -- Sinh Attendance (~280 lượt điểm danh check-in thành công)
-            IF @reg_count <= 280
-            BEGIN
-                INSERT INTO attendance (checkin_time, status, registration_id)
-                VALUES (DATEADD(MINUTE, 15, GETDATE()), 'ATTENDED', @reg_id);
-
-                -- Sinh Feedback (~140 lượt đánh giá)
-                IF @reg_count <= 140
-                BEGIN
-                    INSERT INTO feedback (rating, comment, created_at, event_id, student_id)
-                    VALUES ((@reg_count % 2) + 4, N'Sự kiện tổ chức rất tốt, nội dung bổ ích và diễn giả nhiệt tình!', GETDATE(), @e_id, @s_id);
-                END
-            END
-        END
-
-        FETCH NEXT FROM student_cursor INTO @s_id;
-    END;
-    CLOSE student_cursor;
-    DEALLOCATE student_cursor;
-
-    FETCH NEXT FROM event_cursor INTO @e_id;
-END;
-
-CLOSE event_cursor;
-DEALLOCATE event_cursor;
-GO
-
--- ---------------------------------------------------------------------
--- DATA SEEDING: LOGS (700 Email Logs & 900 Activity Logs)
--- ---------------------------------------------------------------------
--- 700 Email logs mẫu
-INSERT INTO email_log (to_email, subject, content, sent_at, status, user_id, registration_id, event_id)
-SELECT TOP 700 
-    u.email,
-    N'Thông báo từ Hệ thống Quản lý Sự kiện FPT AEMS',
-    N'Thân gửi sinh viên, yêu cầu xử lý tác vụ sự kiện của bạn đã được ghi nhận thành công trên hệ thống.',
-    DATEADD(MINUTE, -r.id, GETDATE()),
-    'SUCCESS',
-    u.id,
-    r.id,
-    r.event_id
-FROM registration r
-JOIN student s ON r.student_id = s.id
-JOIN users u ON s.user_id = u.id;
-
--- 900 Activity logs mẫu
-INSERT INTO activity_log (user_id, activity_type, description, points_earned, created_at)
-SELECT TOP 900
-    u.id,
-    CASE WHEN r.id % 2 = 0 THEN 'REGISTER_EVENT' ELSE 'ATTEND_EVENT' END,
-    N'Sinh viên thực hiện thao tác tương tác với mã sự kiện ID: ' + CAST(r.event_id AS VARCHAR(10)),
-    CASE WHEN r.id % 2 = 0 THEN 10 ELSE 30 END,
-    DATEADD(MINUTE, -r.id * 2, GETDATE())
-FROM registration r
-JOIN student s ON r.student_id = s.id
-JOIN users u ON s.user_id = u.id;
-GO
-
--- ---------------------------------------------------------------------
--- KIỂM TRA SỐ LƯỢNG SAU KHI SEED DỮ LIỆU
--- ---------------------------------------------------------------------
-SELECT 'Role' AS TableName, COUNT(*) AS [Total Records] FROM role UNION ALL
-SELECT 'Department', COUNT(*) FROM department UNION ALL
-SELECT 'Users (Staff + Students)', COUNT(*) FROM users UNION ALL
-SELECT 'Student Profile', COUNT(*) FROM student UNION ALL
-SELECT 'Event', COUNT(*) FROM event UNION ALL
-SELECT 'Event Proposal', COUNT(*) FROM event_proposal UNION ALL
-SELECT 'Registration', COUNT(*) FROM registration UNION ALL
-SELECT 'Ticket', COUNT(*) FROM ticket UNION ALL
-SELECT 'Attendance', COUNT(*) FROM attendance UNION ALL
-SELECT 'Feedback', COUNT(*) FROM feedback UNION ALL
-SELECT 'Email Log', COUNT(*) FROM email_log UNION ALL
-SELECT 'Activity Log', COUNT(*) FROM activity_log;
-=======
 PRINT N'';
 PRINT N'=====================================================';
 PRINT N'  AEMS FPT seed completed.';
@@ -1164,5 +1100,4 @@ PRINT N'    dept01@fpt.edu.vn  / dept123';
 PRINT N'    com01@fpt.edu.vn   / com123';
 PRINT N'    sv001@fpt.edu.vn   / stu123';
 PRINT N'=====================================================';
->>>>>>> a4dfe83916a51c29358f20bfa25155def4251119
 GO
