@@ -59,6 +59,9 @@
         /* Smooth fade for content */
         .view { animation: fadeUp .25s ease; }
         @keyframes fadeUp { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+        /* Image upload tabs */
+        .img-tab { color: #64748b; }
+        .img-tab[data-active="true"] { background: #fff; color: #9a3412; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
     </style>
 </head>
 <body class="min-h-screen bg-slate-50 text-slate-900">
@@ -212,7 +215,9 @@
                     </label>
                     <label class="block">
                         <span class="mb-1 block text-xs font-bold text-slate-700">Người chịu trách nhiệm *</span>
-                        <input id="proposalOrganizer" maxlength="200" placeholder="VD: Nguyễn Văn A — Bí thư Đoàn khoa" class="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-fpt-500 focus:ring-2 focus:ring-fpt-200 focus:outline-none">
+                        <select id="proposalOrganizer" class="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-fpt-500 focus:ring-2 focus:ring-fpt-200 focus:outline-none">
+                            <option value="">-- Chọn người trong hệ thống --</option>
+                        </select>
                     </label>
                     <label class="block">
                         <span class="mb-1 block text-xs font-bold text-slate-700">Diễn giả</span>
@@ -252,10 +257,39 @@
                         <span class="mb-1 block text-xs font-bold text-slate-700">Ghi chú riêng cho hội đồng</span>
                         <textarea id="proposalNote" rows="2" maxlength="400" placeholder="Lưu ý (nếu có)..." class="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-fpt-500 focus:ring-2 focus:ring-fpt-200 focus:outline-none"></textarea>
                     </label>
-                    <label class="block">
-                        <span class="mb-1 block text-xs font-bold text-slate-700">Link ảnh đại diện</span>
-                        <input id="proposalImage" type="url" placeholder="https://..." class="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-fpt-500 focus:ring-2 focus:ring-fpt-200 focus:outline-none">
-                    </label>
+                    <div class="block">
+                        <span class="mb-1 block text-xs font-bold text-slate-700">Ảnh đại diện</span>
+                        <div class="mb-2 inline-flex rounded-lg border border-slate-200 bg-slate-50 p-0.5 text-xs font-bold">
+                            <button type="button" id="imgTabUpload" class="img-tab rounded-md px-3 py-1.5 transition">Tải từ máy</button>
+                            <button type="button" id="imgTabLink" class="img-tab rounded-md px-3 py-1.5 transition">Dán link</button>
+                        </div>
+
+                        <!-- Tab: tải từ máy -->
+                        <div id="imgPaneUpload">
+                            <input id="proposalImageFile" type="file" accept="image/png,image/jpeg,image/gif,image/webp,image/bmp" class="hidden">
+                            <button type="button" id="imgUploadBtn" class="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 py-3 text-sm font-bold text-slate-600 hover:border-fpt-400 hover:bg-fpt-50 hover:text-fpt-700">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                                <span id="imgUploadLabel">Chọn ảnh (JPG, PNG, GIF, WEBP — tối đa 5MB)</span>
+                            </button>
+                        </div>
+
+                        <!-- Tab: dán link -->
+                        <div id="imgPaneLink" class="hidden">
+                            <input id="proposalImage" type="url" placeholder="https://..." class="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-fpt-500 focus:ring-2 focus:ring-fpt-200 focus:outline-none">
+                        </div>
+
+                        <p id="imgHint" class="mt-1 hidden text-xs font-semibold"></p>
+
+                        <!-- Preview -->
+                        <div id="imgPreviewWrap" class="mt-2 hidden">
+                            <div class="relative inline-block">
+                                <img id="imgPreview" alt="Xem trước ảnh" class="h-28 w-auto max-w-full rounded-lg border border-slate-200 object-cover">
+                                <button type="button" id="imgRemoveBtn" title="Gỡ ảnh" class="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-rose-500 text-white shadow hover:bg-rose-600">
+                                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -339,6 +373,7 @@
         departments: [],
         events: [],
         proposals: [],
+        organizers: [],
         structure: FALLBACK_STRUCTURE.slice()
     };
     let selectedProposalImage = '';
@@ -893,6 +928,176 @@
             return `<option value="${id}" data-name="${h(dn)}" ${same(dn, selected) ? 'selected' : ''}>${h(dn)}</option>`;
         }).join('');
     }
+    function populateOrganizerSelect(selected) {
+        const sel = $('#proposalOrganizer');
+        if (!sel) return;
+        const list = Array.isArray(store.organizers) ? store.organizers : [];
+        let html = '<option value="">-- Chọn người trong hệ thống --</option>';
+        html += list.map(o => {
+            const label = o.label || o.name || '';
+            return `<option value="${h(label)}" ${same(label, selected) ? 'selected' : ''}>${h(label)}</option>`;
+        }).join('');
+        // Giữ lại giá trị cũ (proposal cũ có thể nhập tay, không nằm trong danh sách).
+        if (selected && !list.some(o => same(o.label || o.name || '', selected))) {
+            html += `<option value="${h(selected)}" selected>${h(selected)} (ngoài danh sách)</option>`;
+        }
+        sel.innerHTML = html;
+    }
+    // ---------- Tự lưu nháp proposal (chống mất dữ liệu khi lỡ đóng dialog) ----------
+    const PROPOSAL_DRAFT_KEY = 'aems-proposal-draft';
+    function currentProposalDraft() {
+        const majorSel = $('#proposalMajor');
+        const opt = majorSel ? majorSel.options[majorSel.selectedIndex] : null;
+        return {
+            title: $('#proposalTitle').value,
+            faculty: $('#proposalFaculty').value,
+            departmentName: opt ? (opt.dataset.name || opt.textContent || '') : '',
+            proposedDate: $('#proposalDate').value,
+            proposedEndDate: $('#proposalEndDate').value,
+            organizer: $('#proposalOrganizer').value,
+            speakers: $('#proposalSpeakers').value,
+            supportStaffNeeded: $('#proposalSupportStaff').value,
+            location: $('#proposalLocation').value,
+            capacity: $('#proposalCapacity').value,
+            budget: $('#proposalBudget').value,
+            description: $('#proposalDescription').value,
+            note: $('#proposalNote').value,
+            imageUrl: selectedProposalImage || $('#proposalImage').value
+        };
+    }
+    function isProposalDraftEmpty(d) {
+        return !d || (!d.title && !d.description && !d.organizer && !d.speakers
+            && !d.location && !d.note && !d.imageUrl);
+    }
+    function saveProposalDraft() {
+        // Chỉ lưu nháp cho proposal MỚI và khi dialog đang mở.
+        if ($('#proposalId').value) return;
+        if (!$('#proposalModal').classList.contains('open')) return;
+        const d = currentProposalDraft();
+        if (isProposalDraftEmpty(d)) { clearProposalDraft(); return; }
+        try { localStorage.setItem(PROPOSAL_DRAFT_KEY, JSON.stringify(d)); } catch (e) {}
+    }
+    function loadProposalDraft() {
+        try { const raw = localStorage.getItem(PROPOSAL_DRAFT_KEY); return raw ? JSON.parse(raw) : null; }
+        catch (e) { return null; }
+    }
+    function clearProposalDraft() {
+        try { localStorage.removeItem(PROPOSAL_DRAFT_KEY); } catch (e) {}
+    }
+    function applyProposalDraft(d) {
+        $('#proposalTitle').value = d.title || '';
+        $('#proposalLocation').value = d.location || '';
+        $('#proposalCapacity').value = d.capacity || 80;
+        $('#proposalBudget').value = d.budget || 0;
+        $('#proposalDescription').value = d.description || '';
+        $('#proposalNote').value = d.note || '';
+        resetProposalImageUI(d.imageUrl || '');
+        $('#proposalDate').value = d.proposedDate || '';
+        $('#proposalEndDate').value = d.proposedEndDate || '';
+        $('#proposalSpeakers').value = d.speakers || '';
+        $('#proposalSupportStaff').value = (d.supportStaffNeeded != null && d.supportStaffNeeded !== '') ? d.supportStaffNeeded : 0;
+        const fac = d.faculty || '';
+        populateFacultySelect(fac);
+        populateMajorSelect(fac, d.departmentName || '');
+        populateOrganizerSelect(d.organizer || '');
+    }
+
+    // Giờ kết thúc luôn phải sau giờ bắt đầu: chặn ngay trên ô chọn + tự sửa nếu sai.
+    function syncProposalEndBounds() {
+        const startEl = $('#proposalDate');
+        const endEl = $('#proposalEndDate');
+        if (!startEl || !endEl) return;
+        const startVal = startEl.value;
+        if (!startVal) { endEl.removeAttribute('min'); return; }
+        endEl.min = startVal;
+        const start = new Date(startVal);
+        const end = endEl.value ? new Date(endEl.value) : null;
+        if (!end || end <= start) {
+            endEl.value = toDtInput(new Date(start.getTime() + 2 * 60 * 60 * 1000));
+        }
+    }
+
+    // ---------- Ảnh đại diện: tải từ máy hoặc dán link ----------
+    const IMG_MAX_BYTES = 5 * 1024 * 1024;
+    const IMG_UPLOAD_PLACEHOLDER = 'Chọn ảnh (JPG, PNG, GIF, WEBP — tối đa 5MB)';
+
+    function setImageHint(msg, kind) {
+        const el = $('#imgHint');
+        if (!el) return;
+        if (!msg) { el.classList.add('hidden'); el.textContent = ''; return; }
+        el.textContent = msg;
+        el.classList.remove('hidden');
+        el.classList.toggle('text-rose-600', kind === 'error');
+        el.classList.toggle('text-emerald-600', kind === 'ok');
+        el.classList.toggle('text-slate-500', kind !== 'error' && kind !== 'ok');
+    }
+    function showImagePreview(url) {
+        const wrap = $('#imgPreviewWrap');
+        const img = $('#imgPreview');
+        if (!wrap || !img) return;
+        if (url) { img.src = url; wrap.classList.remove('hidden'); }
+        else { img.removeAttribute('src'); wrap.classList.add('hidden'); }
+    }
+    function setProposalImage(url) {
+        selectedProposalImage = url || '';
+        showImagePreview(selectedProposalImage);
+    }
+    function switchImageTab(mode) {
+        const upload = mode !== 'link';
+        $('#imgTabUpload').dataset.active = String(upload);
+        $('#imgTabLink').dataset.active = String(!upload);
+        $('#imgPaneUpload').classList.toggle('hidden', !upload);
+        $('#imgPaneLink').classList.toggle('hidden', upload);
+    }
+    // Đồng bộ toàn bộ UI ảnh theo URL hiện có (dùng khi mở form / khôi phục nháp).
+    function resetProposalImageUI(url) {
+        setProposalImage(url || '');
+        $('#proposalImage').value = url || '';
+        $('#proposalImageFile').value = '';
+        $('#imgUploadLabel').textContent = IMG_UPLOAD_PLACEHOLDER;
+        setImageHint('', null);
+        switchImageTab(url && /^https?:\/\//i.test(url) ? 'link' : 'upload');
+    }
+    // Kiểm tra link có phải ảnh tải được không (thử nạp vào thẻ Image).
+    function validateImageUrl(url) {
+        return new Promise(resolve => {
+            if (!url) { resolve(false); return; }
+            const img = new Image();
+            let done = false;
+            const finish = ok => { if (!done) { done = true; resolve(ok); } };
+            img.onload = () => finish(img.naturalWidth > 0 && img.naturalHeight > 0);
+            img.onerror = () => finish(false);
+            window.setTimeout(() => finish(false), 8000);
+            img.src = url;
+        });
+    }
+    async function handleImageFile(file) {
+        if (!file) return;
+        if (!/^image\//i.test(file.type)) { setImageHint('Tệp không phải ảnh.', 'error'); return; }
+        if (file.size > IMG_MAX_BYTES) { setImageHint('Ảnh vượt quá 5MB, vui lòng chọn ảnh nhỏ hơn.', 'error'); return; }
+        $('#imgUploadLabel').textContent = file.name;
+        setImageHint('Đang tải ảnh lên...', null);
+        const fd = new FormData();
+        fd.append('file', file);
+        try {
+            // KHÔNG tự set Content-Type để trình duyệt tự thêm boundary của multipart.
+            const res = await fetch('/api/admin/uploads/image', {
+                method: 'POST', body: fd, headers: { Accept: 'application/json' }
+            });
+            if (res.status === 401) { location.href = '/api/login.html'; return; }
+            if (!res.ok) { throw new Error(await res.text() || ('HTTP ' + res.status)); }
+            const data = await res.json();
+            setProposalImage(data.url);
+            $('#proposalImage').value = '';
+            setImageHint('Đã tải ảnh lên thành công.', 'ok');
+        } catch (err) {
+            let msg = err.message || 'Tải ảnh thất bại.';
+            try { const j = JSON.parse(msg); if (j.message) msg = j.message; } catch (e) {}
+            setImageHint('Lỗi: ' + msg, 'error');
+            $('#imgUploadLabel').textContent = IMG_UPLOAD_PLACEHOLDER;
+        }
+    }
+
     function openProposalDialog(id) {
         const isEdit = !!id;
         const proposal = isEdit ? store.proposals.find(p => String(p.id) === String(id)) : null;
@@ -911,15 +1116,14 @@
         $('#proposalBudget').value = (proposal && proposal.budget) || 0;
         $('#proposalDescription').value = (proposal && proposal.description) || '';
         $('#proposalNote').value = (proposal && proposal.note) || '';
-        $('#proposalImage').value = (proposal && proposal.imageUrl) || '';
-        selectedProposalImage = (proposal && proposal.imageUrl) || '';
+        resetProposalImageUI((proposal && proposal.imageUrl) || '');
         $('#proposalDate').value = toDtInput(proposal && proposal.proposedDate);
         const startVal = $('#proposalDate').value;
         const endSeed = (proposal && proposal.proposedEndDate)
             ? proposal.proposedEndDate
             : (startVal ? new Date(new Date(startVal).getTime() + 2 * 60 * 60 * 1000) : null);
         $('#proposalEndDate').value = toDtInput(endSeed);
-        $('#proposalOrganizer').value = (proposal && proposal.organizer) || '';
+        populateOrganizerSelect((proposal && proposal.organizer) || '');
         $('#proposalSpeakers').value = (proposal && proposal.speakers) || '';
         $('#proposalSupportStaff').value = (proposal && proposal.supportStaffNeeded != null) ? proposal.supportStaffNeeded : 0;
 
@@ -929,6 +1133,16 @@
 
         loadQuizQuestions(proposal);
 
+        // Proposal mới: nếu có bản nháp đang soạn dở thì khôi phục để không phải gõ lại.
+        if (!isEdit) {
+            const draft = loadProposalDraft();
+            if (!isProposalDraftEmpty(draft)) {
+                applyProposalDraft(draft);
+                toast('Đã khôi phục nội dung bạn đang soạn dở.');
+            }
+        }
+
+        syncProposalEndBounds();
         $('#proposalModal').classList.add('open');
         $('#proposalTitle').focus();
     }
@@ -955,7 +1169,7 @@
             location: $('#proposalLocation').value.trim(),
             capacity: Number($('#proposalCapacity').value || 0),
             budget: Number($('#proposalBudget').value || 0),
-            imageUrl: $('#proposalImage').value.trim() || selectedProposalImage,
+            imageUrl: selectedProposalImage,
             note: $('#proposalNote').value.trim(),
             quizQuestions: collectQuizQuestions()
         };
@@ -1080,12 +1294,14 @@
             api(STRUCTURE_API).catch(() => ({ items: FALLBACK_STRUCTURE })),
             api('/departments').catch(() => []),
             api('/events').catch(() => []),
-            api('/proposals').catch(() => [])
-        ]).then(([structure, departments, events, proposals]) => {
+            api('/proposals').catch(() => []),
+            api('/proposal-organizers').catch(() => [])
+        ]).then(([structure, departments, events, proposals, organizers]) => {
             store.structure = (structure && structure.items && structure.items.length) ? structure.items : FALLBACK_STRUCTURE;
             store.departments = Array.isArray(departments) ? departments : (departments?.items || []);
             store.events = Array.isArray(events) ? events : (events?.items || events?.events || []);
             store.proposals = Array.isArray(proposals) ? proposals : (proposals?.items || proposals?.proposals || []);
+            store.organizers = Array.isArray(organizers) ? organizers : (organizers?.items || []);
             state.loading = false;
             render();
         }).catch(err => {
@@ -1110,7 +1326,27 @@
     $('#cancelProposalBtn').addEventListener('click', closeProposalDialog);
     $('#proposalModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeProposalDialog(); });
     $('#proposalFaculty').addEventListener('change', () => populateMajorSelect($('#proposalFaculty').value, null));
+    $('#proposalDate').addEventListener('change', syncProposalEndBounds);
     $('#addQuizQuestionBtn').addEventListener('click', () => addQuizQuestion(null));
+
+    // Ảnh đại diện: chuyển tab + tải file + kiểm tra link
+    $('#imgTabUpload').addEventListener('click', () => switchImageTab('upload'));
+    $('#imgTabLink').addEventListener('click', () => switchImageTab('link'));
+    $('#imgUploadBtn').addEventListener('click', () => $('#proposalImageFile').click());
+    $('#proposalImageFile').addEventListener('change', e => handleImageFile(e.target.files && e.target.files[0]));
+    $('#imgRemoveBtn').addEventListener('click', () => resetProposalImageUI(''));
+    let imgUrlTimer;
+    $('#proposalImage').addEventListener('input', () => {
+        const url = $('#proposalImage').value.trim();
+        window.clearTimeout(imgUrlTimer);
+        if (!url) { setProposalImage(''); setImageHint('', null); return; }
+        setImageHint('Đang kiểm tra ảnh...', null);
+        imgUrlTimer = window.setTimeout(async () => {
+            const ok = await validateImageUrl(url);
+            if (ok) { setProposalImage(url); setImageHint('Link ảnh hợp lệ.', 'ok'); }
+            else { setProposalImage(''); setImageHint('Link không phải ảnh hợp lệ hoặc không tải được.', 'error'); }
+        }, 500);
+    });
     document.addEventListener('keydown', e => {
         if ((e.ctrlKey || e.metaKey) && (e.key === 'n' || e.key === 'N')) { e.preventDefault(); openProposalDialog(); }
         else if (e.key === 'Escape' && $('#proposalModal').classList.contains('open')) closeProposalDialog();
@@ -1128,7 +1364,7 @@
             return;
         }
         if (new Date(payload.proposedEndDate) <= new Date(payload.proposedDate)) {
-            toast('Giờ kết thúc phải sau giờ bắt đầu.');
+            toast('Giờ kết thúc phải sau giờ bắt đầu. Lưu ý 12:xx AM là nửa đêm, buổi trưa/chiều phải chọn PM.');
             return;
         }
         if (!payload.organizer) {
@@ -1139,6 +1375,7 @@
             ? api('/proposals/' + encodeURIComponent(id), { method: 'PUT', body: JSON.stringify(payload) })
             : api('/proposals', { method: 'POST', body: JSON.stringify(payload) });
         req.then(() => {
+            clearProposalDraft();
             closeProposalDialog();
             return loadData();
         }).then(() => {
@@ -1146,6 +1383,9 @@
             toast(id ? 'Đã cập nhật proposal.' : 'Đã gửi proposal sang hội đồng.');
         }).catch(err => toast('Lỗi: ' + err.message));
     });
+    // Tự lưu nháp mỗi khi người dùng gõ/đổi trong form (chỉ áp dụng cho proposal mới).
+    $('#proposalForm').addEventListener('input', saveProposalDraft);
+    $('#proposalForm').addEventListener('change', saveProposalDraft);
 
     // Logout
     let logoutInProgress = false;

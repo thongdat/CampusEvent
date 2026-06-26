@@ -268,7 +268,7 @@ public class StudentController {
     public ResponseEntity<Map<String, Object>> eventDetail(
             @PathVariable Long id,
             @RequestHeader(value = "X-User-Email", required = false) String email) {
-        Event event = eventRepository.findById(id)
+        Event event = eventRepository.findByIdWithImages(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy sự kiện"));
         Student student = email != null ? resolveStudentOptional(email).orElse(null) : null;
         LocalDateTime now = LocalDateTime.now();
@@ -528,6 +528,7 @@ public class StudentController {
     }
 
     @GetMapping("/my-registrations")
+    @Transactional(readOnly = true)
     public ResponseEntity<Map<String, Object>> myRegistrations(
             @RequestHeader(value = "X-User-Email", required = false) String email) {
         Student student = resolveStudent(email);

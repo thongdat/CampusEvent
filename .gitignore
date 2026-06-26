@@ -5,6 +5,9 @@ target/
 *.class
 .mvn/wrapper/maven-wrapper.jar
 
+# Ảnh người dùng tải lên (runtime, không commit)
+uploads/
+
 # Local secret / OAuth / SMTP configuration (KHÔNG commit credential thật)
 src/main/resources/application-local.properties
 application-local.properties

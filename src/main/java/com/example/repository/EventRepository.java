@@ -32,9 +32,13 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     @Query("select coalesce(sum(e.capacity), 0) from Event e where e.startTime < :endTime")
     Long sumCapacityBefore(@Param("endTime") LocalDateTime endTime);
 
-    /** Nạp tất cả event kèm department trong 1 query (tránh N+1 và lazy-load ngoài request). */
-    @Query("select e from Event e left join fetch e.department")
+    /** Nạp tất cả event kèm department + images trong 1 query (tránh N+1 và lazy-load ngoài request). */
+    @Query("select distinct e from Event e left join fetch e.department left join fetch e.images")
     List<Event> findAllWithDepartment();
+
+    /** Nạp 1 event kèm department + images để tránh LazyInitializationException khi build card ngoài transaction. */
+    @Query("select distinct e from Event e left join fetch e.department left join fetch e.images where e.id = :id")
+    Optional<Event> findByIdWithImages(@Param("id") Long id);
 
     /** Event đã kết thúc (endTime < cutoff) nhưng chưa được hệ thống tự đóng. */
     List<Event> findByAutoClosedAtIsNullAndEndTimeIsNotNullAndEndTimeLessThan(LocalDateTime cutoff);
