@@ -21,6 +21,12 @@ public class GoogleOAuthAccessTokenService {
         this.authorizedClientManager = authorizedClientManagerProvider.getIfAvailable();
     }
 
+    GoogleOAuthAccessTokenService(OAuth2TokenStore tokenStore,
+                                  OAuth2AuthorizedClientManager authorizedClientManager) {
+        this.tokenStore = tokenStore;
+        this.authorizedClientManager = authorizedClientManager;
+    }
+
     public String getValidAccessToken(String email) throws TokenUnavailableException {
         OAuth2TokenStore.TokenInfo token = tokenStore.get(email);
         if (token == null) {
