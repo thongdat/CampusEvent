@@ -68,6 +68,13 @@ CREATE TABLE IF NOT EXISTS event (
     department_id BIGINT NOT NULL REFERENCES department(id)
 );
 
+CREATE TABLE IF NOT EXISTS event_images (
+    id BIGSERIAL PRIMARY KEY,
+    image_url VARCHAR(500) NOT NULL,
+    is_banner BOOLEAN DEFAULT FALSE,
+    event_id BIGINT NOT NULL REFERENCES event(id)
+);
+
 CREATE TABLE IF NOT EXISTS event_proposal (
     id BIGSERIAL PRIMARY KEY,
     title VARCHAR(200) NOT NULL,
