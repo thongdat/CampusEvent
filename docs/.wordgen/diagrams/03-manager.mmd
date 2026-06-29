@@ -1,0 +1,26 @@
+flowchart TD
+    Start([Đăng nhập MANAGER · HEAD]) --> Nav[Department Console]
+    Nav --> DB[Dashboard<br/>tổng quan + hoạt động gần đây]
+    Nav --> PR[Proposals]
+    Nav --> EV[Events<br/>quản lý event đã duyệt]
+    Nav --> RP[Reports<br/>báo cáo event đã kết thúc]
+    Nav --> TK[AEMS Toolkit]
+
+    PR --> PR1[Tạo Proposal cho đơn vị<br/>status = PENDING]
+    PR1 --> PR2{Trạng thái proposal}
+    PR2 -->|REVISION| PR3[Chỉnh sửa &amp; gửi lại<br/>→ về PENDING]
+    PR3 --> PR2
+    PR2 -->|REJECTED| PRx([Kết thúc])
+    PR2 -->|APPROVED| EV
+
+    EV --> EV1[Cập nhật speakers, capacity]
+    EV --> EV2[Tạo/sửa Quiz]
+    EV --> EV3[Tạo Google Form<br/>check-in / checkout]
+
+    RP --> RP1[Thống kê: event hoàn thành, tổng đăng ký,<br/>tỉ lệ check-in, điểm hài lòng TB]
+    RP --> RP2[Mỗi event: Dashboard tham gia<br/>+ Feedback + AI]
+
+    TK --> TK1[Chiếu QR Check-IN<br/>xoay 30s]
+    TK --> TK2[Chiếu QR Check-OUT<br/>quiz + feedback]
+    TK --> TK3[In tất cả QR]
+    TK --> TK4[Theo dõi điểm danh realtime<br/>· đánh vắng thủ công]

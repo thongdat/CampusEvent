@@ -1,0 +1,16 @@
+{
+  "name": "campusevent-wordgen",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "description": "Render workflow mermaid diagrams to PNG and build a Word .docx",
+  "scripts": {
+    "render": "node render-diagrams.js",
+    "build": "node build-docx.js",
+    "build-rbl": "node build-rbl-docx.js"
+  },
+  "dependencies": {
+    "@mermaid-js/mermaid-cli": "^11.4.2",
+    "docx": "^9.0.2"
+  }
+}

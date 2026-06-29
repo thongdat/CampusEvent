@@ -1,0 +1,21 @@
+stateDiagram-v2
+    direction LR
+    state "Proposal" as P {
+        [*] --> PENDING
+        PENDING --> REVISION: revise
+        REVISION --> PENDING: edit
+        PENDING --> APPROVED: approve
+        REVISION --> APPROVED: approve
+        PENDING --> REJECTED: reject
+        REVISION --> REJECTED: reject
+    }
+    state "Registration" as R {
+        [*] --> REGISTERED
+        REGISTERED --> WAITLIST: hết chỗ
+        WAITLIST --> REGISTERED: được đẩy lên
+        REGISTERED --> CANCELLED: hủy
+    }
+    state "Attendance" as AT {
+        [*] --> CHECKED_IN: quét QR check-in
+        [*] --> ABSENT: không check-in (auto-close)
+    }
