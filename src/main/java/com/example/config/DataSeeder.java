@@ -255,7 +255,7 @@ public class DataSeeder {
             String major,
             int semester,
             int totalPoints) {
-        return userRepository.findByEmail(email).orElseGet(() -> {
+        return userRepository.findByEmail(email).or(() -> userRepository.findByPhone(phone)).orElseGet(() -> {
             User user = new User(fullName, email, passwordEncoder.encode(rawPassword), phone, LocalDateTime.now().minusDays(totalPoints % 120L), status, role);
             user.setMajor(major);
             user.setSemester(semester);
