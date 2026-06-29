@@ -1,0 +1,8 @@
+flowchart TD
+    Start([Đăng nhập DEPARTMENT · STAFF]) --> P0[Department Console<br/>chỉ thấy mục Proposals]
+    P0 --> P1[Tạo Proposal<br/>POST /admin/proposals<br/>status = PENDING]
+    P1 --> P2{Trạng thái proposal}
+    P2 -->|REVISION| P3[Chỉnh sửa &amp; gửi lại<br/>PUT /admin/proposals/id<br/>→ về PENDING]
+    P3 --> P2
+    P2 -->|REJECTED| PEnd([Kết thúc])
+    P2 -->|APPROVED| P4([Proposal được duyệt<br/>Trưởng khoa/HEAD vận hành event])

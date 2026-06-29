@@ -19,6 +19,7 @@ import com.example.repository.StudentRepository;
 import com.example.repository.TicketRepository;
 import com.example.repository.UserRepository;
 import com.example.service.PriorityRankingService;
+import com.example.service.TicketService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,7 +48,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -79,6 +79,7 @@ public class StudentController {
     private final ActivityLogRepository activityLogRepository;
     private final PriorityRankingService priorityService;
     private final InvitationScheduler invitationScheduler;
+    private final TicketService ticketService;
 
     public StudentController(
             UserRepository userRepository,
@@ -90,7 +91,8 @@ public class StudentController {
             FeedbackRepository feedbackRepository,
             ActivityLogRepository activityLogRepository,
             PriorityRankingService priorityService,
-            InvitationScheduler invitationScheduler) {
+            InvitationScheduler invitationScheduler,
+            TicketService ticketService) {
         this.userRepository = userRepository;
         this.studentRepository = studentRepository;
         this.eventRepository = eventRepository;
@@ -101,6 +103,7 @@ public class StudentController {
         this.activityLogRepository = activityLogRepository;
         this.priorityService = priorityService;
         this.invitationScheduler = invitationScheduler;
+        this.ticketService = ticketService;
     }
 
     // =================================================================
@@ -395,8 +398,7 @@ public class StudentController {
                 lowest.setStatus("WAITLIST");
                 lowest.setNote("Tự động chuyển sang hàng chờ vì có sinh viên điểm ưu tiên cao hơn (" + score + " > " + lowestScore + ")");
                 registrationRepository.save(lowest);
-                // Xoá ticket cũ (nếu có)
-                ticketRepository.findByRegistrationId(lowest.getId()).ifPresent(ticketRepository::delete);
+                ticketService.revokeTicket(lowest);
             } else {
                 registration.setStatus("WAITLIST");
                 registration.setNote("Hàng chờ ưu tiên: điểm của bạn thấp hơn các slot đang giữ chỗ.");
@@ -408,7 +410,7 @@ public class StudentController {
         // Issue ticket nếu REGISTERED
         Ticket ticket = null;
         if ("REGISTERED".equalsIgnoreCase(saved.getStatus())) {
-            ticket = issueTicket(saved);
+            ticket = ticketService.issueTicket(saved);
         }
 
         // Cộng điểm hoạt động
@@ -492,7 +494,7 @@ public class StudentController {
         for (Registration item : sameEventRegistrations) {
             item.setStatus("CANCELLED");
             item.setNote("Sinh viên tự huỷ");
-            ticketRepository.findByRegistrationId(item.getId()).ifPresent(ticketRepository::delete);
+            ticketService.revokeTicket(item);
         }
         registrationRepository.saveAll(sameEventRegistrations);
 
@@ -515,7 +517,7 @@ public class StudentController {
                     promoted.setStatus("REGISTERED");
                     promoted.setNote("Tự động lên REGISTERED do có người huỷ");
                     registrationRepository.save(promoted);
-                    issueTicket(promoted);
+                    ticketService.issueTicket(promoted);
                 }
             }
         }
@@ -813,16 +815,6 @@ public class StudentController {
         }
 
         return map;
-    }
-
-    private Ticket issueTicket(Registration registration) {
-        Optional<Ticket> existing = ticketRepository.findByRegistrationId(registration.getId());
-        if (existing.isPresent()) {
-            return existing.get();
-        }
-        String code = "AEMS-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase(Locale.ROOT);
-        Ticket ticket = new Ticket(code, LocalDateTime.now(), registration);
-        return ticketRepository.save(ticket);
     }
 
     /**

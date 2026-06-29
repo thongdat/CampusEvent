@@ -1,0 +1,14 @@
+flowchart TD
+    Start([Đăng nhập STUDENT]) --> S1[Duyệt sự kiện<br/>GET /student/events<br/>xem preview ưu tiên]
+    S1 --> S2[Đăng ký<br/>POST /student/events/id/register]
+    S2 --> S3{Tính priorityScore<br/>major 40% + semester 30%<br/>+ điểm 20% + thời điểm 10%}
+    S3 --> S4{Còn chỗ?}
+    S4 -->|Có| S5[REGISTERED<br/>cấp Ticket, +5 điểm tích lũy]
+    S4 -->|Hết| S6[WAITLIST]
+    S5 -. hủy đăng ký .-> S7[CANCELLED]
+
+    S5 --> S8[Nhận email mời]
+    S8 --> S9[Quét QR Check-in + làm quiz<br/>→ CHECKED_IN<br/>KHÔNG cộng điểm tích lũy]
+    S9 --> S12[Gửi Feedback<br/>+8 điểm tích lũy]
+
+    S1 --> L1[Xem Leaderboard / Hồ sơ điểm]

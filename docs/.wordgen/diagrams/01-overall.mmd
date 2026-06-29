@@ -1,0 +1,24 @@
+flowchart TD
+    A([DEPARTMENT tạo Proposal]) --> B{COMMITTEE<br/>xét duyệt}
+    B -->|Reject| C([REJECTED - kết thúc])
+    B -->|Revise| D[REVISION<br/>Department chỉnh sửa]
+    D --> B
+    B -->|Approve| E[APPROVED<br/>Tạo Event PUBLISHED<br/>+ copy Quiz]
+
+    E --> F[STUDENT duyệt &amp; đăng ký<br/>Tính priorityScore]
+    F --> G{Còn chỗ?}
+    G -->|Có| H[REGISTERED<br/>Cấp Ticket, +5 điểm tích lũy]
+    G -->|Hết| I[WAITLIST<br/>theo điểm ưu tiên]
+    H -. có người hủy .-> I
+    I -. được đẩy lên .-> H
+
+    H --> J[SYSTEM: InvitationScheduler<br/>gửi thư mời trước 7 ngày]
+    J --> K[Ngày diễn ra sự kiện]
+
+    K --> L[DEPARTMENT chiếu QR Check-in<br/>token xoay mỗi 30s]
+    L --> M[STUDENT quét QR + làm quiz<br/>CHECKED_IN<br/>KHÔNG cộng điểm tích lũy]
+    M --> N[STUDENT gửi Feedback<br/>+8 điểm tích lũy]
+
+    K --> U[SYSTEM: EventAutoClose<br/>sau 15 phút khi kết thúc]
+    U --> V[SV đã đăng ký nhưng không check-in → ABSENT<br/>noShowCount++ , giảm reputation]
+    U --> W[Event → COMPLETED]
