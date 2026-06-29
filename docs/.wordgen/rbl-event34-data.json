@@ -1,0 +1,1181 @@
+{
+  "event": {
+    "id": 10035,
+    "title": "[AEMS] Event 34 - English Presentation Day",
+    "khoa_to_chuc": "Ngôn ngữ Anh",
+    "capacity": 15,
+    "status": "PUBLISHED",
+    "mo_dang_ky": "2026-04-06T13:48:45.7839644",
+    "bat_dau": "2026-06-29T09:30:00",
+    "ket_thuc": "2026-06-29T11:30:00",
+    "tong_dang_ky": 29,
+    "so_registered": 15,
+    "so_waitlist": 14
+  },
+  "ranking": [
+    {
+      "hang": 1,
+      "full_name": "Đặng Khánh Chi",
+      "student_code": "AEMS0058",
+      "chuyen_nganh": "Ngôn ngữ Anh",
+      "hoc_ky": 5,
+      "diem_hoat_dong": 314,
+      "registration_date": "2026-06-13T09:30:00",
+      "priority_score": 80.67,
+      "status": "REGISTERED"
+    },
+    {
+      "hang": 2,
+      "full_name": "Đặng Khánh Chi",
+      "student_code": "AEMS0058",
+      "chuyen_nganh": "Ngôn ngữ Anh",
+      "hoc_ky": 5,
+      "diem_hoat_dong": 314,
+      "registration_date": "2026-06-19T09:30:00",
+      "priority_score": 80.67,
+      "status": "REGISTERED"
+    },
+    {
+      "hang": 3,
+      "full_name": "Đặng Khánh Chi",
+      "student_code": "AEMS0046",
+      "chuyen_nganh": "Ngôn ngữ Anh",
+      "hoc_ky": 2,
+      "diem_hoat_dong": 158,
+      "registration_date": "2026-06-17T09:30:00",
+      "priority_score": 70.67,
+      "status": "REGISTERED"
+    },
+    {
+      "hang": 4,
+      "full_name": "Đặng Khánh Chi",
+      "student_code": "AEMS0046",
+      "chuyen_nganh": "Ngôn ngữ Anh",
+      "hoc_ky": 2,
+      "diem_hoat_dong": 158,
+      "registration_date": "2026-06-23T09:30:00",
+      "priority_score": 70.67,
+      "status": "REGISTERED"
+    },
+    {
+      "hang": 5,
+      "full_name": "Ngô Minh Hà",
+      "student_code": "AEMS0044",
+      "chuyen_nganh": "Marketing",
+      "hoc_ky": 9,
+      "diem_hoat_dong": 132,
+      "registration_date": "2026-06-15T05:30:00",
+      "priority_score": 66,
+      "status": "REGISTERED"
+    },
+    {
+      "hang": 6,
+      "full_name": "Hoàng Hoàng Bình",
+      "student_code": "AEMS0053",
+      "chuyen_nganh": "Data Science",
+      "hoc_ky": 9,
+      "diem_hoat_dong": 249,
+      "registration_date": "2026-06-16T08:30:00",
+      "priority_score": 66,
+      "status": "REGISTERED"
+    },
+    {
+      "hang": 7,
+      "full_name": "Trần Khánh Thảo",
+      "student_code": "AEMS0062",
+      "chuyen_nganh": "Kỹ thuật phần mềm",
+      "hoc_ky": 9,
+      "diem_hoat_dong": 366,
+      "registration_date": "2026-06-17T05:30:00",
+      "priority_score": 66,
+      "status": "REGISTERED"
+    },
+    {
+      "hang": 8,
+      "full_name": "Ngô Minh Hà",
+      "student_code": "AEMS0044",
+      "chuyen_nganh": "Marketing",
+      "hoc_ky": 9,
+      "diem_hoat_dong": 132,
+      "registration_date": "2026-06-21T05:30:00",
+      "priority_score": 66,
+      "status": "REGISTERED"
+    },
+    {
+      "hang": 9,
+      "full_name": "Hoàng Hoàng Bình",
+      "student_code": "AEMS0053",
+      "chuyen_nganh": "Data Science",
+      "hoc_ky": 9,
+      "diem_hoat_dong": 249,
+      "registration_date": "2026-06-22T08:30:00",
+      "priority_score": 66,
+      "status": "REGISTERED"
+    },
+    {
+      "hang": 10,
+      "full_name": "Trần Khánh Thảo",
+      "student_code": "AEMS0062",
+      "chuyen_nganh": "Kỹ thuật phần mềm",
+      "hoc_ky": 9,
+      "diem_hoat_dong": 366,
+      "registration_date": "2026-06-23T05:30:00",
+      "priority_score": 66,
+      "status": "REGISTERED"
+    },
+    {
+      "hang": 11,
+      "full_name": "Vũ Hữu Vy",
+      "student_code": "AEMS0043",
+      "chuyen_nganh": "Kinh tế",
+      "hoc_ky": 8,
+      "diem_hoat_dong": 119,
+      "registration_date": "2026-06-14T06:30:00",
+      "priority_score": 62.67,
+      "status": "REGISTERED"
+    },
+    {
+      "hang": 12,
+      "full_name": "Phạm Minh Phúc",
+      "student_code": "AEMS0052",
+      "chuyen_nganh": "An toàn thông tin",
+      "hoc_ky": 8,
+      "diem_hoat_dong": 236,
+      "registration_date": "2026-06-15T09:30:00",
+      "priority_score": 62.67,
+      "status": "REGISTERED"
+    },
+    {
+      "hang": 13,
+      "full_name": "Nguyễn Hoàng Khang",
+      "student_code": "AEMS0061",
+      "chuyen_nganh": "Công nghệ Thông tin",
+      "hoc_ky": 8,
+      "diem_hoat_dong": 353,
+      "registration_date": "2026-06-16T06:30:00",
+      "priority_score": 62.67,
+      "status": "REGISTERED"
+    },
+    {
+      "hang": 14,
+      "full_name": "Vũ Hữu Vy",
+      "student_code": "AEMS0043",
+      "chuyen_nganh": "Kinh tế",
+      "hoc_ky": 8,
+      "diem_hoat_dong": 119,
+      "registration_date": "2026-06-20T06:30:00",
+      "priority_score": 62.67,
+      "status": "REGISTERED"
+    },
+    {
+      "hang": 15,
+      "full_name": "Phạm Minh Phúc",
+      "student_code": "AEMS0052",
+      "chuyen_nganh": "An toàn thông tin",
+      "hoc_ky": 8,
+      "diem_hoat_dong": 236,
+      "registration_date": "2026-06-21T09:30:00",
+      "priority_score": 62.67,
+      "status": "REGISTERED"
+    },
+    {
+      "hang": 16,
+      "full_name": "Nguyễn Hoàng Khang",
+      "student_code": "AEMS0061",
+      "chuyen_nganh": "Công nghệ Thông tin",
+      "hoc_ky": 8,
+      "diem_hoat_dong": 353,
+      "registration_date": "2026-06-22T06:30:00",
+      "priority_score": 62.67,
+      "status": "REGISTERED"
+    },
+    {
+      "hang": 17,
+      "full_name": "Đỗ Khánh Linh",
+      "student_code": "AEMS0042",
+      "chuyen_nganh": "Thiết kế Mỹ thuật số",
+      "hoc_ky": 7,
+      "diem_hoat_dong": 106,
+      "registration_date": "2026-06-13T07:30:00",
+      "priority_score": 59.33,
+      "status": "REGISTERED"
+    },
+    {
+      "hang": 18,
+      "full_name": "Lê Hữu Dũng",
+      "student_code": "AEMS0051",
+      "chuyen_nganh": "Trí tuệ nhân tạo",
+      "hoc_ky": 7,
+      "diem_hoat_dong": 223,
+      "registration_date": "2026-06-14T04:30:00",
+      "priority_score": 59.33,
+      "status": "REGISTERED"
+    },
+    {
+      "hang": 19,
+      "full_name": "Mai Minh An",
+      "student_code": "AEMS0060",
+      "chuyen_nganh": "Truyền thông đa phương tiện",
+      "hoc_ky": 7,
+      "diem_hoat_dong": 340,
+      "registration_date": "2026-06-15T07:30:00",
+      "priority_score": 59.33,
+      "status": "REGISTERED"
+    },
+    {
+      "hang": 20,
+      "full_name": "Đỗ Khánh Linh",
+      "student_code": "AEMS0042",
+      "chuyen_nganh": "Thiết kế Mỹ thuật số",
+      "hoc_ky": 7,
+      "diem_hoat_dong": 106,
+      "registration_date": "2026-06-19T07:30:00",
+      "priority_score": 59.33,
+      "status": "REGISTERED"
+    },
+    {
+      "hang": 21,
+      "full_name": "Lê Hữu Dũng",
+      "student_code": "AEMS0051",
+      "chuyen_nganh": "Trí tuệ nhân tạo",
+      "hoc_ky": 7,
+      "diem_hoat_dong": 223,
+      "registration_date": "2026-06-20T04:30:00",
+      "priority_score": 59.33,
+      "status": "REGISTERED"
+    },
+    {
+      "hang": 22,
+      "full_name": "Mai Minh An",
+      "student_code": "AEMS0060",
+      "chuyen_nganh": "Truyền thông đa phương tiện",
+      "hoc_ky": 7,
+      "diem_hoat_dong": 340,
+      "registration_date": "2026-06-21T07:30:00",
+      "priority_score": 59.33,
+      "status": "REGISTERED"
+    },
+    {
+      "hang": 23,
+      "full_name": "Trần Khánh Thảo",
+      "student_code": "AEMS0050",
+      "chuyen_nganh": "Kỹ thuật phần mềm",
+      "hoc_ky": 6,
+      "diem_hoat_dong": 210,
+      "registration_date": "2026-06-13T05:30:00",
+      "priority_score": 56,
+      "status": "REGISTERED"
+    },
+    {
+      "hang": 24,
+      "full_name": "Võ Hữu Nam",
+      "student_code": "AEMS0059",
+      "chuyen_nganh": "Du lịch - Khách sạn",
+      "hoc_ky": 6,
+      "diem_hoat_dong": 327,
+      "registration_date": "2026-06-14T08:30:00",
+      "priority_score": 56,
+      "status": "REGISTERED"
+    },
+    {
+      "hang": 25,
+      "full_name": "Trần Khánh Thảo",
+      "student_code": "AEMS0050",
+      "chuyen_nganh": "Kỹ thuật phần mềm",
+      "hoc_ky": 6,
+      "diem_hoat_dong": 210,
+      "registration_date": "2026-06-19T05:30:00",
+      "priority_score": 56,
+      "status": "REGISTERED"
+    },
+    {
+      "hang": 26,
+      "full_name": "Võ Hữu Nam",
+      "student_code": "AEMS0059",
+      "chuyen_nganh": "Du lịch - Khách sạn",
+      "hoc_ky": 6,
+      "diem_hoat_dong": 327,
+      "registration_date": "2026-06-20T08:30:00",
+      "priority_score": 56,
+      "status": "REGISTERED"
+    },
+    {
+      "hang": 27,
+      "full_name": "Hoàng Hoàng Bình",
+      "student_code": "AEMS0041",
+      "chuyen_nganh": "Data Science",
+      "hoc_ky": 6,
+      "diem_hoat_dong": 93,
+      "registration_date": "2026-06-12T08:30:00",
+      "priority_score": 54.6,
+      "status": "REGISTERED"
+    },
+    {
+      "hang": 28,
+      "full_name": "Hoàng Hoàng Bình",
+      "student_code": "AEMS0041",
+      "chuyen_nganh": "Data Science",
+      "hoc_ky": 6,
+      "diem_hoat_dong": 93,
+      "registration_date": "2026-06-18T08:30:00",
+      "priority_score": 54.6,
+      "status": "REGISTERED"
+    },
+    {
+      "hang": 29,
+      "full_name": "Nguyễn Hoàng Khang",
+      "student_code": "AEMS0049",
+      "chuyen_nganh": "Công nghệ Thông tin",
+      "hoc_ky": 5,
+      "diem_hoat_dong": 197,
+      "registration_date": "2026-06-12T06:30:00",
+      "priority_score": 52.67,
+      "status": "REGISTERED"
+    },
+    {
+      "hang": 30,
+      "full_name": "Nguyễn Hoàng Khang",
+      "student_code": "AEMS0049",
+      "chuyen_nganh": "Công nghệ Thông tin",
+      "hoc_ky": 5,
+      "diem_hoat_dong": 197,
+      "registration_date": "2026-06-18T06:30:00",
+      "priority_score": 52.67,
+      "status": "REGISTERED"
+    },
+    {
+      "hang": 31,
+      "full_name": "Mai Minh An",
+      "student_code": "AEMS0048",
+      "chuyen_nganh": "Truyền thông đa phương tiện",
+      "hoc_ky": 4,
+      "diem_hoat_dong": 184,
+      "registration_date": "2026-06-11T07:30:00",
+      "priority_score": 49.33,
+      "status": "WAITLIST"
+    },
+    {
+      "hang": 32,
+      "full_name": "Bùi Hoàng Quân",
+      "student_code": "AEMS0057",
+      "chuyen_nganh": "Quản trị kinh doanh",
+      "hoc_ky": 4,
+      "diem_hoat_dong": 301,
+      "registration_date": "2026-06-12T04:30:00",
+      "priority_score": 49.33,
+      "status": "WAITLIST"
+    },
+    {
+      "hang": 33,
+      "full_name": "Đỗ Khánh Linh",
+      "student_code": "AEMS0066",
+      "chuyen_nganh": "Thiết kế Mỹ thuật số",
+      "hoc_ky": 4,
+      "diem_hoat_dong": 418,
+      "registration_date": "2026-06-13T07:30:00",
+      "priority_score": 49.33,
+      "status": "WAITLIST"
+    },
+    {
+      "hang": 34,
+      "full_name": "Đỗ Khánh Linh",
+      "student_code": "AEMS0054",
+      "chuyen_nganh": "Thiết kế Mỹ thuật số",
+      "hoc_ky": 4,
+      "diem_hoat_dong": 262,
+      "registration_date": "2026-06-17T07:30:00",
+      "priority_score": 49.33,
+      "status": "WAITLIST"
+    },
+    {
+      "hang": 34,
+      "full_name": "Mai Minh An",
+      "student_code": "AEMS0048",
+      "chuyen_nganh": "Truyền thông đa phương tiện",
+      "hoc_ky": 4,
+      "diem_hoat_dong": 184,
+      "registration_date": "2026-06-17T07:30:00",
+      "priority_score": 49.33,
+      "status": "WAITLIST"
+    },
+    {
+      "hang": 36,
+      "full_name": "Bùi Hoàng Quân",
+      "student_code": "AEMS0057",
+      "chuyen_nganh": "Quản trị kinh doanh",
+      "hoc_ky": 4,
+      "diem_hoat_dong": 301,
+      "registration_date": "2026-06-18T04:30:00",
+      "priority_score": 49.33,
+      "status": "WAITLIST"
+    },
+    {
+      "hang": 37,
+      "full_name": "Đỗ Khánh Linh",
+      "student_code": "AEMS0066",
+      "chuyen_nganh": "Thiết kế Mỹ thuật số",
+      "hoc_ky": 4,
+      "diem_hoat_dong": 418,
+      "registration_date": "2026-06-19T07:30:00",
+      "priority_score": 49.33,
+      "status": "WAITLIST"
+    },
+    {
+      "hang": 38,
+      "full_name": "Đỗ Khánh Linh",
+      "student_code": "AEMS0054",
+      "chuyen_nganh": "Thiết kế Mỹ thuật số",
+      "hoc_ky": 4,
+      "diem_hoat_dong": 262,
+      "registration_date": "2026-06-23T07:30:00",
+      "priority_score": 49.33,
+      "status": "WAITLIST"
+    },
+    {
+      "hang": 39,
+      "full_name": "Phạm Minh Phúc",
+      "student_code": "AEMS0040",
+      "chuyen_nganh": "An toàn thông tin",
+      "hoc_ky": 5,
+      "diem_hoat_dong": 80,
+      "registration_date": "2026-06-11T09:30:00",
+      "priority_score": 48.67,
+      "status": "WAITLIST"
+    },
+    {
+      "hang": 40,
+      "full_name": "Phạm Minh Phúc",
+      "student_code": "AEMS0040",
+      "chuyen_nganh": "An toàn thông tin",
+      "hoc_ky": 5,
+      "diem_hoat_dong": 80,
+      "registration_date": "2026-06-17T09:30:00",
+      "priority_score": 48.67,
+      "status": "WAITLIST"
+    },
+    {
+      "hang": 41,
+      "full_name": "Ngô Minh Hà",
+      "student_code": "AEMS0056",
+      "chuyen_nganh": "Marketing",
+      "hoc_ky": 3,
+      "diem_hoat_dong": 288,
+      "registration_date": "2026-06-11T05:30:00",
+      "priority_score": 46,
+      "status": "WAITLIST"
+    },
+    {
+      "hang": 42,
+      "full_name": "Hoàng Hoàng Bình",
+      "student_code": "AEMS0065",
+      "chuyen_nganh": "Data Science",
+      "hoc_ky": 3,
+      "diem_hoat_dong": 405,
+      "registration_date": "2026-06-12T08:30:00",
+      "priority_score": 46,
+      "status": "WAITLIST"
+    },
+    {
+      "hang": 43,
+      "full_name": "Bùi Hoàng Quân",
+      "student_code": "AEMS0045",
+      "chuyen_nganh": "Quản trị kinh doanh",
+      "hoc_ky": 3,
+      "diem_hoat_dong": 145,
+      "registration_date": "2026-06-16T04:30:00",
+      "priority_score": 46,
+      "status": "WAITLIST"
+    },
+    {
+      "hang": 44,
+      "full_name": "Ngô Minh Hà",
+      "student_code": "AEMS0056",
+      "chuyen_nganh": "Marketing",
+      "hoc_ky": 3,
+      "diem_hoat_dong": 288,
+      "registration_date": "2026-06-17T05:30:00",
+      "priority_score": 46,
+      "status": "WAITLIST"
+    },
+    {
+      "hang": 45,
+      "full_name": "Lê Hữu Dũng",
+      "student_code": "AEMS0063",
+      "chuyen_nganh": "Trí tuệ nhân tạo",
+      "hoc_ky": 3,
+      "diem_hoat_dong": 379,
+      "registration_date": "2026-06-18T04:30:00",
+      "priority_score": 46,
+      "status": "WAITLIST"
+    },
+    {
+      "hang": 46,
+      "full_name": "Võ Hữu Nam",
+      "student_code": "AEMS0047",
+      "chuyen_nganh": "Du lịch - Khách sạn",
+      "hoc_ky": 3,
+      "diem_hoat_dong": 171,
+      "registration_date": "2026-06-18T08:30:00",
+      "priority_score": 46,
+      "status": "WAITLIST"
+    },
+    {
+      "hang": 46,
+      "full_name": "Hoàng Hoàng Bình",
+      "student_code": "AEMS0065",
+      "chuyen_nganh": "Data Science",
+      "hoc_ky": 3,
+      "diem_hoat_dong": 405,
+      "registration_date": "2026-06-18T08:30:00",
+      "priority_score": 46,
+      "status": "WAITLIST"
+    },
+    {
+      "hang": 48,
+      "full_name": "Hồ Văn Thông Đạt",
+      "student_code": "SV00013",
+      "chuyen_nganh": "Khác",
+      "hoc_ky": 3,
+      "diem_hoat_dong": 312,
+      "registration_date": "2026-06-18T15:12:04.5480683",
+      "priority_score": 46,
+      "status": "WAITLIST"
+    },
+    {
+      "hang": 49,
+      "full_name": "Bùi Hoàng Quân",
+      "student_code": "AEMS0045",
+      "chuyen_nganh": "Quản trị kinh doanh",
+      "hoc_ky": 3,
+      "diem_hoat_dong": 145,
+      "registration_date": "2026-06-22T04:30:00",
+      "priority_score": 46,
+      "status": "WAITLIST"
+    },
+    {
+      "hang": 50,
+      "full_name": "Lê Hữu Dũng",
+      "student_code": "AEMS0063",
+      "chuyen_nganh": "Trí tuệ nhân tạo",
+      "hoc_ky": 3,
+      "diem_hoat_dong": 379,
+      "registration_date": "2026-06-24T04:30:00",
+      "priority_score": 46,
+      "status": "WAITLIST"
+    },
+    {
+      "hang": 51,
+      "full_name": "Võ Hữu Nam",
+      "student_code": "AEMS0047",
+      "chuyen_nganh": "Du lịch - Khách sạn",
+      "hoc_ky": 3,
+      "diem_hoat_dong": 171,
+      "registration_date": "2026-06-24T08:30:00",
+      "priority_score": 46,
+      "status": "WAITLIST"
+    },
+    {
+      "hang": 52,
+      "full_name": "Hồ Văn Thông Đạt",
+      "student_code": "SV00013",
+      "chuyen_nganh": "Khác",
+      "hoc_ky": 3,
+      "diem_hoat_dong": 312,
+      "registration_date": "2026-06-24T15:12:04.5480683",
+      "priority_score": 46,
+      "status": "WAITLIST"
+    },
+    {
+      "hang": 53,
+      "full_name": "Phạm Minh Phúc",
+      "student_code": "AEMS0064",
+      "chuyen_nganh": "An toàn thông tin",
+      "hoc_ky": 2,
+      "diem_hoat_dong": 392,
+      "registration_date": "2026-06-11T09:30:00",
+      "priority_score": 42.67,
+      "status": "WAITLIST"
+    },
+    {
+      "hang": 54,
+      "full_name": "Phạm Minh Phúc",
+      "student_code": "AEMS0064",
+      "chuyen_nganh": "An toàn thông tin",
+      "hoc_ky": 2,
+      "diem_hoat_dong": 392,
+      "registration_date": "2026-06-17T09:30:00",
+      "priority_score": 42.67,
+      "status": "WAITLIST"
+    },
+    {
+      "hang": 55,
+      "full_name": "Vũ Hữu Vy",
+      "student_code": "AEMS0055",
+      "chuyen_nganh": "Kinh tế",
+      "hoc_ky": 2,
+      "diem_hoat_dong": 275,
+      "registration_date": "2026-06-18T06:30:00",
+      "priority_score": 42.67,
+      "status": "WAITLIST"
+    },
+    {
+      "hang": 56,
+      "full_name": "Vũ Hữu Vy",
+      "student_code": "AEMS0055",
+      "chuyen_nganh": "Kinh tế",
+      "hoc_ky": 2,
+      "diem_hoat_dong": 275,
+      "registration_date": "2026-06-24T06:30:00",
+      "priority_score": 42.67,
+      "status": "WAITLIST"
+    },
+    {
+      "hang": 57,
+      "full_name": "quý ngu",
+      "student_code": "DE190421",
+      "chuyen_nganh": "Công nghệ thông tin",
+      "hoc_ky": 5,
+      "diem_hoat_dong": 20,
+      "registration_date": "2026-06-18T14:19:02.4862978",
+      "priority_score": 36.67,
+      "status": "WAITLIST"
+    },
+    {
+      "hang": 58,
+      "full_name": "quý ngu",
+      "student_code": "DE190421",
+      "chuyen_nganh": "Công nghệ thông tin",
+      "hoc_ky": 5,
+      "diem_hoat_dong": 20,
+      "registration_date": "2026-06-24T14:19:02.4862978",
+      "priority_score": 36.67,
+      "status": "WAITLIST"
+    }
+  ],
+  "registered": [
+    {
+      "thu_hang": 1,
+      "full_name": "Đặng Khánh Chi",
+      "student_code": "AEMS0058",
+      "major": "Ngôn ngữ Anh",
+      "registration_date": "2026-06-13T09:30:00",
+      "priority_score": 80.67,
+      "co_ve": true
+    },
+    {
+      "thu_hang": 2,
+      "full_name": "Đặng Khánh Chi",
+      "student_code": "AEMS0058",
+      "major": "Ngôn ngữ Anh",
+      "registration_date": "2026-06-19T09:30:00",
+      "priority_score": 80.67,
+      "co_ve": true
+    },
+    {
+      "thu_hang": 3,
+      "full_name": "Đặng Khánh Chi",
+      "student_code": "AEMS0046",
+      "major": "Ngôn ngữ Anh",
+      "registration_date": "2026-06-17T09:30:00",
+      "priority_score": 70.67,
+      "co_ve": true
+    },
+    {
+      "thu_hang": 4,
+      "full_name": "Đặng Khánh Chi",
+      "student_code": "AEMS0046",
+      "major": "Ngôn ngữ Anh",
+      "registration_date": "2026-06-23T09:30:00",
+      "priority_score": 70.67,
+      "co_ve": true
+    },
+    {
+      "thu_hang": 5,
+      "full_name": "Ngô Minh Hà",
+      "student_code": "AEMS0044",
+      "major": "Marketing",
+      "registration_date": "2026-06-15T05:30:00",
+      "priority_score": 66,
+      "co_ve": true
+    },
+    {
+      "thu_hang": 6,
+      "full_name": "Hoàng Hoàng Bình",
+      "student_code": "AEMS0053",
+      "major": "Data Science",
+      "registration_date": "2026-06-16T08:30:00",
+      "priority_score": 66,
+      "co_ve": true
+    },
+    {
+      "thu_hang": 7,
+      "full_name": "Trần Khánh Thảo",
+      "student_code": "AEMS0062",
+      "major": "Kỹ thuật phần mềm",
+      "registration_date": "2026-06-17T05:30:00",
+      "priority_score": 66,
+      "co_ve": true
+    },
+    {
+      "thu_hang": 8,
+      "full_name": "Ngô Minh Hà",
+      "student_code": "AEMS0044",
+      "major": "Marketing",
+      "registration_date": "2026-06-21T05:30:00",
+      "priority_score": 66,
+      "co_ve": true
+    },
+    {
+      "thu_hang": 9,
+      "full_name": "Hoàng Hoàng Bình",
+      "student_code": "AEMS0053",
+      "major": "Data Science",
+      "registration_date": "2026-06-22T08:30:00",
+      "priority_score": 66,
+      "co_ve": true
+    },
+    {
+      "thu_hang": 10,
+      "full_name": "Trần Khánh Thảo",
+      "student_code": "AEMS0062",
+      "major": "Kỹ thuật phần mềm",
+      "registration_date": "2026-06-23T05:30:00",
+      "priority_score": 66,
+      "co_ve": true
+    },
+    {
+      "thu_hang": 11,
+      "full_name": "Vũ Hữu Vy",
+      "student_code": "AEMS0043",
+      "major": "Kinh tế",
+      "registration_date": "2026-06-14T06:30:00",
+      "priority_score": 62.67,
+      "co_ve": true
+    },
+    {
+      "thu_hang": 12,
+      "full_name": "Phạm Minh Phúc",
+      "student_code": "AEMS0052",
+      "major": "An toàn thông tin",
+      "registration_date": "2026-06-15T09:30:00",
+      "priority_score": 62.67,
+      "co_ve": true
+    },
+    {
+      "thu_hang": 13,
+      "full_name": "Nguyễn Hoàng Khang",
+      "student_code": "AEMS0061",
+      "major": "Công nghệ Thông tin",
+      "registration_date": "2026-06-16T06:30:00",
+      "priority_score": 62.67,
+      "co_ve": true
+    },
+    {
+      "thu_hang": 14,
+      "full_name": "Vũ Hữu Vy",
+      "student_code": "AEMS0043",
+      "major": "Kinh tế",
+      "registration_date": "2026-06-20T06:30:00",
+      "priority_score": 62.67,
+      "co_ve": true
+    },
+    {
+      "thu_hang": 15,
+      "full_name": "Phạm Minh Phúc",
+      "student_code": "AEMS0052",
+      "major": "An toàn thông tin",
+      "registration_date": "2026-06-21T09:30:00",
+      "priority_score": 62.67,
+      "co_ve": true
+    },
+    {
+      "thu_hang": 16,
+      "full_name": "Nguyễn Hoàng Khang",
+      "student_code": "AEMS0061",
+      "major": "Công nghệ Thông tin",
+      "registration_date": "2026-06-22T06:30:00",
+      "priority_score": 62.67,
+      "co_ve": true
+    },
+    {
+      "thu_hang": 17,
+      "full_name": "Đỗ Khánh Linh",
+      "student_code": "AEMS0042",
+      "major": "Thiết kế Mỹ thuật số",
+      "registration_date": "2026-06-13T07:30:00",
+      "priority_score": 59.33,
+      "co_ve": true
+    },
+    {
+      "thu_hang": 18,
+      "full_name": "Lê Hữu Dũng",
+      "student_code": "AEMS0051",
+      "major": "Trí tuệ nhân tạo",
+      "registration_date": "2026-06-14T04:30:00",
+      "priority_score": 59.33,
+      "co_ve": true
+    },
+    {
+      "thu_hang": 19,
+      "full_name": "Mai Minh An",
+      "student_code": "AEMS0060",
+      "major": "Truyền thông đa phương tiện",
+      "registration_date": "2026-06-15T07:30:00",
+      "priority_score": 59.33,
+      "co_ve": true
+    },
+    {
+      "thu_hang": 20,
+      "full_name": "Đỗ Khánh Linh",
+      "student_code": "AEMS0042",
+      "major": "Thiết kế Mỹ thuật số",
+      "registration_date": "2026-06-19T07:30:00",
+      "priority_score": 59.33,
+      "co_ve": true
+    },
+    {
+      "thu_hang": 21,
+      "full_name": "Lê Hữu Dũng",
+      "student_code": "AEMS0051",
+      "major": "Trí tuệ nhân tạo",
+      "registration_date": "2026-06-20T04:30:00",
+      "priority_score": 59.33,
+      "co_ve": true
+    },
+    {
+      "thu_hang": 22,
+      "full_name": "Mai Minh An",
+      "student_code": "AEMS0060",
+      "major": "Truyền thông đa phương tiện",
+      "registration_date": "2026-06-21T07:30:00",
+      "priority_score": 59.33,
+      "co_ve": true
+    },
+    {
+      "thu_hang": 23,
+      "full_name": "Trần Khánh Thảo",
+      "student_code": "AEMS0050",
+      "major": "Kỹ thuật phần mềm",
+      "registration_date": "2026-06-13T05:30:00",
+      "priority_score": 56,
+      "co_ve": true
+    },
+    {
+      "thu_hang": 24,
+      "full_name": "Võ Hữu Nam",
+      "student_code": "AEMS0059",
+      "major": "Du lịch - Khách sạn",
+      "registration_date": "2026-06-14T08:30:00",
+      "priority_score": 56,
+      "co_ve": true
+    },
+    {
+      "thu_hang": 25,
+      "full_name": "Trần Khánh Thảo",
+      "student_code": "AEMS0050",
+      "major": "Kỹ thuật phần mềm",
+      "registration_date": "2026-06-19T05:30:00",
+      "priority_score": 56,
+      "co_ve": true
+    },
+    {
+      "thu_hang": 26,
+      "full_name": "Võ Hữu Nam",
+      "student_code": "AEMS0059",
+      "major": "Du lịch - Khách sạn",
+      "registration_date": "2026-06-20T08:30:00",
+      "priority_score": 56,
+      "co_ve": true
+    },
+    {
+      "thu_hang": 27,
+      "full_name": "Hoàng Hoàng Bình",
+      "student_code": "AEMS0041",
+      "major": "Data Science",
+      "registration_date": "2026-06-12T08:30:00",
+      "priority_score": 54.6,
+      "co_ve": true
+    },
+    {
+      "thu_hang": 28,
+      "full_name": "Hoàng Hoàng Bình",
+      "student_code": "AEMS0041",
+      "major": "Data Science",
+      "registration_date": "2026-06-18T08:30:00",
+      "priority_score": 54.6,
+      "co_ve": true
+    },
+    {
+      "thu_hang": 29,
+      "full_name": "Nguyễn Hoàng Khang",
+      "student_code": "AEMS0049",
+      "major": "Công nghệ Thông tin",
+      "registration_date": "2026-06-12T06:30:00",
+      "priority_score": 52.67,
+      "co_ve": true
+    },
+    {
+      "thu_hang": 30,
+      "full_name": "Nguyễn Hoàng Khang",
+      "student_code": "AEMS0049",
+      "major": "Công nghệ Thông tin",
+      "registration_date": "2026-06-18T06:30:00",
+      "priority_score": 52.67,
+      "co_ve": true
+    }
+  ],
+  "waitlist": [
+    {
+      "thu_hang_cho": 1,
+      "full_name": "Mai Minh An",
+      "student_code": "AEMS0048",
+      "major": "Truyền thông đa phương tiện",
+      "registration_date": "2026-06-11T07:30:00",
+      "priority_score": 49.33,
+      "note": "Hàng chờ — dưới top 15 (demo snapshot)"
+    },
+    {
+      "thu_hang_cho": 2,
+      "full_name": "Bùi Hoàng Quân",
+      "student_code": "AEMS0057",
+      "major": "Quản trị kinh doanh",
+      "registration_date": "2026-06-12T04:30:00",
+      "priority_score": 49.33,
+      "note": "Hàng chờ — dưới top 15 (demo snapshot)"
+    },
+    {
+      "thu_hang_cho": 3,
+      "full_name": "Đỗ Khánh Linh",
+      "student_code": "AEMS0066",
+      "major": "Thiết kế Mỹ thuật số",
+      "registration_date": "2026-06-13T07:30:00",
+      "priority_score": 49.33,
+      "note": "Hàng chờ — dưới top 15 (demo snapshot)"
+    },
+    {
+      "thu_hang_cho": 4,
+      "full_name": "Đỗ Khánh Linh",
+      "student_code": "AEMS0054",
+      "major": "Thiết kế Mỹ thuật số",
+      "registration_date": "2026-06-17T07:30:00",
+      "priority_score": 49.33,
+      "note": "Hàng chờ — dưới top 15 (demo snapshot)"
+    },
+    {
+      "thu_hang_cho": 5,
+      "full_name": "Mai Minh An",
+      "student_code": "AEMS0048",
+      "major": "Truyền thông đa phương tiện",
+      "registration_date": "2026-06-17T07:30:00",
+      "priority_score": 49.33,
+      "note": "Hàng chờ — vượt capacity 15 (DB reconcile)"
+    },
+    {
+      "thu_hang_cho": 6,
+      "full_name": "Bùi Hoàng Quân",
+      "student_code": "AEMS0057",
+      "major": "Quản trị kinh doanh",
+      "registration_date": "2026-06-18T04:30:00",
+      "priority_score": 49.33,
+      "note": "Hàng chờ — vượt capacity 15 (DB reconcile)"
+    },
+    {
+      "thu_hang_cho": 7,
+      "full_name": "Đỗ Khánh Linh",
+      "student_code": "AEMS0066",
+      "major": "Thiết kế Mỹ thuật số",
+      "registration_date": "2026-06-19T07:30:00",
+      "priority_score": 49.33,
+      "note": "Hàng chờ — vượt capacity 15 (DB reconcile)"
+    },
+    {
+      "thu_hang_cho": 8,
+      "full_name": "Đỗ Khánh Linh",
+      "student_code": "AEMS0054",
+      "major": "Thiết kế Mỹ thuật số",
+      "registration_date": "2026-06-23T07:30:00",
+      "priority_score": 49.33,
+      "note": "Hàng chờ — vượt capacity 15 (DB reconcile)"
+    },
+    {
+      "thu_hang_cho": 9,
+      "full_name": "Phạm Minh Phúc",
+      "student_code": "AEMS0040",
+      "major": "An toàn thông tin",
+      "registration_date": "2026-06-11T09:30:00",
+      "priority_score": 48.67,
+      "note": "Hàng chờ — dưới top 15 (demo snapshot)"
+    },
+    {
+      "thu_hang_cho": 10,
+      "full_name": "Phạm Minh Phúc",
+      "student_code": "AEMS0040",
+      "major": "An toàn thông tin",
+      "registration_date": "2026-06-17T09:30:00",
+      "priority_score": 48.67,
+      "note": "Chờ mở thêm slot"
+    },
+    {
+      "thu_hang_cho": 11,
+      "full_name": "Ngô Minh Hà",
+      "student_code": "AEMS0056",
+      "major": "Marketing",
+      "registration_date": "2026-06-11T05:30:00",
+      "priority_score": 46,
+      "note": "Hàng chờ — dưới top 15 (demo snapshot)"
+    },
+    {
+      "thu_hang_cho": 12,
+      "full_name": "Hoàng Hoàng Bình",
+      "student_code": "AEMS0065",
+      "major": "Data Science",
+      "registration_date": "2026-06-12T08:30:00",
+      "priority_score": 46,
+      "note": "Hàng chờ — dưới top 15 (demo snapshot)"
+    },
+    {
+      "thu_hang_cho": 13,
+      "full_name": "Bùi Hoàng Quân",
+      "student_code": "AEMS0045",
+      "major": "Quản trị kinh doanh",
+      "registration_date": "2026-06-16T04:30:00",
+      "priority_score": 46,
+      "note": "Hàng chờ — dưới top 15 (demo snapshot)"
+    },
+    {
+      "thu_hang_cho": 14,
+      "full_name": "Ngô Minh Hà",
+      "student_code": "AEMS0056",
+      "major": "Marketing",
+      "registration_date": "2026-06-17T05:30:00",
+      "priority_score": 46,
+      "note": "Hàng chờ — vượt capacity 15 (DB reconcile)"
+    },
+    {
+      "thu_hang_cho": 15,
+      "full_name": "Lê Hữu Dũng",
+      "student_code": "AEMS0063",
+      "major": "Trí tuệ nhân tạo",
+      "registration_date": "2026-06-18T04:30:00",
+      "priority_score": 46,
+      "note": "Hàng chờ — dưới top 15 (demo snapshot)"
+    },
+    {
+      "thu_hang_cho": 16,
+      "full_name": "Võ Hữu Nam",
+      "student_code": "AEMS0047",
+      "major": "Du lịch - Khách sạn",
+      "registration_date": "2026-06-18T08:30:00",
+      "priority_score": 46,
+      "note": "Hàng chờ — dưới top 15 (demo snapshot)"
+    },
+    {
+      "thu_hang_cho": 17,
+      "full_name": "Hoàng Hoàng Bình",
+      "student_code": "AEMS0065",
+      "major": "Data Science",
+      "registration_date": "2026-06-18T08:30:00",
+      "priority_score": 46,
+      "note": "Hàng chờ — vượt capacity 15 (DB reconcile)"
+    },
+    {
+      "thu_hang_cho": 18,
+      "full_name": "Hồ Văn Thông Đạt",
+      "student_code": "SV00013",
+      "major": "Khác",
+      "registration_date": "2026-06-18T15:12:04.5480683",
+      "priority_score": 46,
+      "note": "Hàng chờ — dưới top 15 (demo snapshot)"
+    },
+    {
+      "thu_hang_cho": 19,
+      "full_name": "Bùi Hoàng Quân",
+      "student_code": "AEMS0045",
+      "major": "Quản trị kinh doanh",
+      "registration_date": "2026-06-22T04:30:00",
+      "priority_score": 46,
+      "note": "Hàng chờ — vượt capacity 15 (DB reconcile)"
+    },
+    {
+      "thu_hang_cho": 20,
+      "full_name": "Lê Hữu Dũng",
+      "student_code": "AEMS0063",
+      "major": "Trí tuệ nhân tạo",
+      "registration_date": "2026-06-24T04:30:00",
+      "priority_score": 46,
+      "note": "Hàng chờ — vượt capacity 15 (DB reconcile)"
+    },
+    {
+      "thu_hang_cho": 21,
+      "full_name": "Võ Hữu Nam",
+      "student_code": "AEMS0047",
+      "major": "Du lịch - Khách sạn",
+      "registration_date": "2026-06-24T08:30:00",
+      "priority_score": 46,
+      "note": "Hàng chờ — vượt capacity 15 (DB reconcile)"
+    },
+    {
+      "thu_hang_cho": 22,
+      "full_name": "Hồ Văn Thông Đạt",
+      "student_code": "SV00013",
+      "major": "Khác",
+      "registration_date": "2026-06-24T15:12:04.5480683",
+      "priority_score": 46,
+      "note": "Hàng chờ — vượt capacity 15 (DB reconcile)"
+    },
+    {
+      "thu_hang_cho": 23,
+      "full_name": "Phạm Minh Phúc",
+      "student_code": "AEMS0064",
+      "major": "An toàn thông tin",
+      "registration_date": "2026-06-11T09:30:00",
+      "priority_score": 42.67,
+      "note": "Hàng chờ — dưới top 15 (demo snapshot)"
+    },
+    {
+      "thu_hang_cho": 24,
+      "full_name": "Phạm Minh Phúc",
+      "student_code": "AEMS0064",
+      "major": "An toàn thông tin",
+      "registration_date": "2026-06-17T09:30:00",
+      "priority_score": 42.67,
+      "note": "Hàng chờ — vượt capacity 15 (DB reconcile)"
+    },
+    {
+      "thu_hang_cho": 25,
+      "full_name": "Vũ Hữu Vy",
+      "student_code": "AEMS0055",
+      "major": "Kinh tế",
+      "registration_date": "2026-06-18T06:30:00",
+      "priority_score": 42.67,
+      "note": "Hàng chờ — dưới top 15 (demo snapshot)"
+    },
+    {
+      "thu_hang_cho": 26,
+      "full_name": "Vũ Hữu Vy",
+      "student_code": "AEMS0055",
+      "major": "Kinh tế",
+      "registration_date": "2026-06-24T06:30:00",
+      "priority_score": 42.67,
+      "note": "Hàng chờ — vượt capacity 15 (DB reconcile)"
+    },
+    {
+      "thu_hang_cho": 27,
+      "full_name": "quý ngu",
+      "student_code": "DE190421",
+      "major": "Công nghệ thông tin",
+      "registration_date": "2026-06-18T14:19:02.4862978",
+      "priority_score": 36.67,
+      "note": "Hàng chờ — dưới top 15 (demo snapshot)"
+    },
+    {
+      "thu_hang_cho": 28,
+      "full_name": "quý ngu",
+      "student_code": "DE190421",
+      "major": "Công nghệ thông tin",
+      "registration_date": "2026-06-24T14:19:02.4862978",
+      "priority_score": 36.67,
+      "note": "Hàng chờ — vượt capacity 15 (DB reconcile)"
+    }
+  ]
+}

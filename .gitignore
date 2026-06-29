@@ -13,3 +13,9 @@ src/main/resources/application-local.properties
 application-local.properties
 .env
 .env.local
+
+# Word temp / lock files
+docs/~$*
+
+# Doc generator dependencies (npm install in docs/.wordgen)
+docs/.wordgen/node_modules/

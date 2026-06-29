@@ -1,0 +1,11 @@
+flowchart TD
+    Start([Đăng nhập COMMITTEE]) --> C1[Xem Overview<br/>GET /committee/overview<br/>đếm theo status]
+    C1 --> C2[Danh sách Proposals<br/>lọc PENDING / REVISION]
+    C2 --> C3[Xem chi tiết<br/>GET /committee/proposals/id]
+    C3 --> C4{Quyết định}
+    C4 -->|Approve| A1[POST .../approve<br/>→ APPROVED]
+    C4 -->|Reject + lý do| A2[POST .../reject<br/>→ REJECTED]
+    C4 -->|Revise + ghi chú| A3[POST .../revise<br/>→ REVISION]
+    A1 --> End([Hoàn tất])
+    A2 --> End
+    A3 --> End
