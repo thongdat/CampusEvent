@@ -6,6 +6,12 @@
     const CACHE_PREFIX = 'aems-admin-api-cache:';
     let logoutInProgress = false;
 
+    const eventScopeOptions = [
+        { value: 'all', label: 'Tất cả sự kiện' },
+        { value: 'active', label: 'Sự kiện diễn ra' },
+        { value: 'completed', label: 'Sự kiện kết thúc' }
+    ];
+
     const navItems = [
         { group: 'Tổng quan', id: 'overview', label: 'Tổng quan', icon: 'layout-dashboard', href: 'overview.html', keywords: 'tong quan home dashboard' },
         { group: 'Tổng quan', id: 'reports', label: 'Báo cáo', icon: 'bar-chart-3', href: 'reports.html', keywords: 'reports analytics bao cao thong ke' },
@@ -13,7 +19,7 @@
         { group: 'Người dùng', id: 'roles', label: 'Phân quyền', icon: 'shield-check', href: 'roles.html', keywords: 'roles permissions phan quyen' },
         { group: 'Người dùng', id: 'departments', label: 'Khoa & Bộ môn', icon: 'building-2', href: 'departments.html', keywords: 'departments khoa bo mon' },
         { group: 'Sự kiện', id: 'proposals', label: 'Đề xuất', icon: 'clipboard-list', href: 'proposals.html', keywords: 'proposals de xuat workflow' },
-        { group: 'Sự kiện', id: 'events', label: 'Sự kiện', icon: 'calendar-days', href: 'events.html', keywords: 'events su kien lich' },
+        { group: 'Sự kiện', id: 'events', label: 'Tất cả sự kiện', icon: 'calendar-days', href: 'events.html', keywords: 'events su kien tat ca dang dien ra da ket thuc', children: eventScopeOptions },
         { group: 'Sự kiện', id: 'registrations', label: 'Đăng ký', icon: 'ticket-check', href: 'registrations.html', keywords: 'registrations dang ky waitlist attendance' },
         { group: 'Sự kiện', id: 'feedback', label: 'Phản hồi', icon: 'message-square-heart', href: 'feedback.html', keywords: 'feedback phan hoi rating' },
         { group: 'Hệ thống', id: 'email', label: 'Email & Thông báo', icon: 'mail-check', href: 'email.html', keywords: 'email mail notification thong bao' },
@@ -26,9 +32,9 @@
         logs: ['Nhật ký hoạt động', 'Theo dõi mọi hành động và truy cập của người dùng.', 'Nhật ký'],
         users: ['Quản lý người dùng', 'Danh sách tài khoản, phân loại, khóa/mở khóa và đặt lại mật khẩu.', 'Người dùng'],
         roles: ['Phân quyền & Vai trò', 'Tạo vai trò, ma trận quyền và gán quyền cho người dùng.', 'Phân quyền'],
-        departments: ['Khoa & Bộ môn', 'Cây tổ chức, thêm/sửa/xoá khoa, bộ môn và gán trưởng khoa.', 'Khoa & Bộ môn'],
+        departments: ['Khoa & Bộ môn', 'Quản lý cây tổ chức theo khoa lớn và bộ môn, gán trưởng đơn vị.', 'Khoa & Bộ môn'],
         proposals: ['Đề xuất sự kiện', 'Theo dõi proposal, phân hội đồng, công bố hoặc loại bỏ.', 'Đề xuất'],
-        events: ['Quản lý sự kiện', 'Tạo/sửa/huỷ event, ngân sách, sức chứa và event nổi bật.', 'Sự kiện'],
+        events: ['Tất cả sự kiện', 'Chọn xem sự kiện đang diễn ra hoặc sự kiện đã kết thúc.', 'Tất cả sự kiện'],
         registrations: ['Đăng ký & Điểm danh', 'Danh sách đăng ký, waitlist và check-in của sinh viên.', 'Đăng ký'],
         feedback: ['Phản hồi & Đánh giá', 'Danh sách feedback, phân tích rating và xử lý bình luận.', 'Phản hồi'],
         email: ['Email & Thông báo', 'Email templates, gửi thông báo, announcement và lịch sử email.', 'Email']
@@ -42,11 +48,25 @@
         { faculty: 'Du lịch - Khách sạn', departments: ['Du lịch - Khách sạn', 'Hospitality Management'] }
     ];
 
+    const initialPage = document.body.dataset.page || 'overview';
     const state = {
-        page: document.body.dataset.page || 'overview',
+        page: initialPage === 'eventsCompleted' ? 'events' : initialPage,
         cache: {},
-        filters: {}
+        filters: initialPage === 'eventsCompleted' || document.body.dataset.eventScope
+            ? { eventScope: document.body.dataset.eventScope || 'completed' }
+            : initialPage === 'events'
+                ? { eventScope: document.body.dataset.eventScope || 'all' }
+                : {}
     };
+
+    function currentEventScope() {
+        const scope = state.filters.eventScope || 'all';
+        return eventScopeOptions.some(item => item.value === scope) ? scope : 'all';
+    }
+
+    function eventScopeLabel(scope = currentEventScope()) {
+        return eventScopeOptions.find(item => item.value === scope)?.label || 'Tất cả sự kiện';
+    }
 
     function h(value) {
         return String(value ?? '').replace(/[&<>"']/g, char => ({
@@ -534,6 +554,25 @@
                 ? `<div class="nav-group">${h(item.group)}</div>`
                 : '';
             currentGroup = item.group;
+            if (item.children?.length) {
+                const scope = state.page === 'events' ? currentEventScope() : '';
+                const childKeywords = item.children.map(child => child.label).join(' ');
+                const expanded = state.page === 'events' || localGet('navEventsOpen', false);
+                return `${groupHeader}
+                    <div class="nav-dropdown${expanded ? ' open' : ''}" data-nav-dropdown="${h(item.id)}">
+                        <button type="button" class="nav-link nav-link-parent${state.page === 'events' ? ' active' : ''}" data-nav-toggle="${h(item.id)}" data-keywords="${h(item.label + ' ' + childKeywords + ' ' + (item.keywords || ''))}">
+                            ${icon(item.icon, 'h-4 w-4')}
+                            <span>${h(item.label)}</span>
+                            ${icon('chevron-down', 'nav-chevron h-3.5 w-3.5')}
+                        </button>
+                        <div class="nav-sub">
+                            ${item.children.map(child => `
+                                <a class="nav-link nav-sublink${scope === child.value ? ' active' : ''}" href="${h(item.href)}" data-nav="${h(item.id)}" data-event-scope="${h(child.value)}" data-keywords="${h(child.label + ' ' + (item.keywords || ''))}">
+                                    <span>${h(child.label)}</span>
+                                </a>`).join('')}
+                        </div>
+                    </div>`;
+            }
             return `${groupHeader}
                 <a class="nav-link${item.id === state.page ? ' active' : ''}" href="${item.href}" data-nav="${h(item.id)}" data-keywords="${h(item.label + ' ' + (item.keywords || ''))}">
                     ${icon(item.icon, 'h-4 w-4')}
@@ -543,7 +582,9 @@
     }
 
     function shell(actions = '') {
-        const meta = pageMeta[state.page] || pageMeta.overview;
+        const meta = state.page === 'events'
+            ? [eventScopeLabel(), 'Danh sách sự kiện theo bộ lọc đang chọn.', eventScopeLabel()]
+            : (pageMeta[state.page] || pageMeta.overview);
         const [title, subtitle, crumb] = meta;
         const nav = renderNavList(navItems);
         const user = currentUser();
@@ -685,19 +726,37 @@
             backdrop.addEventListener('click', closeMenu);
             sidebar.querySelectorAll('a').forEach(link => link.addEventListener('click', closeMenu));
         }
+        document.querySelectorAll('[data-nav-toggle]').forEach(button => {
+            button.addEventListener('click', event => {
+                event.preventDefault();
+                event.stopPropagation();
+                const wrap = button.closest('[data-nav-dropdown]');
+                const opening = !wrap?.classList.contains('open');
+                wrap?.classList.toggle('open', opening);
+                localSet('navEventsOpen', opening);
+            });
+        });
         const navSearch = document.getElementById('navSearch');
         if (navSearch) {
             navSearch.addEventListener('input', event => {
                 const query = event.target.value;
-                document.querySelectorAll('#navList .nav-link').forEach(link => {
+                document.querySelectorAll('#navList .nav-link, #navList .nav-link-parent').forEach(link => {
                     const keywords = link.dataset.keywords || '';
                     link.style.display = !query || matchesSearch(keywords, query) ? '' : 'none';
+                });
+                document.querySelectorAll('#navList .nav-dropdown').forEach(dropdown => {
+                    const parent = dropdown.querySelector('.nav-link-parent');
+                    const subs = dropdown.querySelectorAll('.nav-sublink');
+                    const parentMatch = parent && parent.style.display !== 'none';
+                    const subMatch = Array.from(subs).some(link => link.style.display !== 'none');
+                    dropdown.style.display = parentMatch || subMatch ? '' : 'none';
+                    if (query && subMatch) dropdown.classList.add('open');
                 });
                 document.querySelectorAll('#navList .nav-group').forEach(group => {
                     let next = group.nextElementSibling;
                     let any = false;
                     while (next && !next.classList.contains('nav-group')) {
-                        if (next.classList.contains('nav-link') && next.style.display !== 'none') any = true;
+                        if ((next.classList.contains('nav-link') || next.classList.contains('nav-dropdown')) && next.style.display !== 'none') any = true;
                         next = next.nextElementSibling;
                     }
                     group.style.display = any ? '' : 'none';
@@ -715,8 +774,14 @@
                 if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
                 const page = pageFromHref(link.getAttribute('href'));
                 if (!page) return;
+                const scope = link.dataset.eventScope;
+                if (scope) {
+                    state.filters.eventScope = scope;
+                    state.filters.eventsPage = 1;
+                    localSet('navEventsOpen', true);
+                }
                 event.preventDefault();
-                navigate(page, link.getAttribute('href'));
+                navigate(page, link.getAttribute('href'), !!scope);
             });
         }
     }
@@ -731,9 +796,9 @@
         return navItems.find(item => item.href === file)?.id || '';
     }
 
-    function navigate(page, href = '') {
+    function navigate(page, href = '', force = false) {
         if (!handlers[page]) return false;
-        if (page === state.page && document.getElementById('content')) return true;
+        if (page === state.page && document.getElementById('content') && !force) return true;
         state.page = page;
         if (href && window.location.pathname.split('/').pop() !== href) {
             window.history.pushState({ page }, '', href);
@@ -2062,25 +2127,55 @@
         const [departments, users, roles] = await Promise.all([load('/departments', []), load('/users', []), load('/roles', [])]);
         const managerRole = roles.find(role => role.name === 'MANAGER') || roles.find(role => role.name === 'DEPARTMENT');
         const managerCandidates = users.filter(user => user.role !== 'ADMIN');
-        const departmentPager = pageItems('departments', departments, 10);
-        const totalFacultyCount = new Set(departments.map(item => item.facultyName || facultyOfDepartment(item.name))).size;
         const managerFor = department =>
             users.find(user => String(user.id) === String(department.managerId))
             || users.find(user => ['MANAGER', 'DEPARTMENT'].includes(user.role) && user.departmentPosition === 'HEAD' && normalize(user.major) === normalize(department.name))
             || users.find(user => ['MANAGER', 'DEPARTMENT'].includes(user.role) && normalize(user.major) === normalize(department.name));
-        const grouped = departmentPager.visible.reduce((acc, department) => {
+        const personInitials = person => String(person?.fullName || person?.email || 'U').trim().split(/\s+/).slice(0, 2).map(part => part[0] || '').join('').toUpperCase();
+        const facultyInitials = name => {
+            const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+            if (parts.length >= 2) return parts.slice(0, 2).map(part => part[0]).join('').toUpperCase();
+            return String(name || 'K').slice(0, 2).toUpperCase();
+        };
+
+        const facultyFilter = state.filters.departmentFaculty || 'all';
+        const searchQuery = state.filters.departmentSearch || '';
+        const facultyNames = [...new Set(departments.map(item => item.facultyName || facultyOfDepartment(item.name)))].sort((a, b) => a.localeCompare(b, 'vi'));
+        const facultyFilterOptions = [{ value: 'all', label: 'Tất cả khoa' }].concat(facultyNames.map(name => ({ value: name, label: name })));
+
+        const filteredDepartments = departments.filter(department => {
+            const faculty = department.facultyName || facultyOfDepartment(department.name);
+            if (facultyFilter !== 'all' && faculty !== facultyFilter) return false;
+            if (searchQuery) {
+                const manager = managerFor(department);
+                const haystack = [department.name, faculty, department.description, manager?.fullName, manager?.email].join(' ');
+                if (!matchesSearch(haystack, searchQuery)) return false;
+            }
+            return true;
+        });
+
+        const facultyRows = Object.entries(filteredDepartments.reduce((acc, department) => {
             const faculty = department.facultyName || facultyOfDepartment(department.name);
             if (!acc[faculty]) acc[faculty] = [];
             acc[faculty].push(department);
             return acc;
-        }, {});
-        const facultyRows = Object.entries(grouped).map(([faculty, units]) => ({
-            faculty,
-            units,
-            events: units.reduce((sum, item) => sum + Number(item.eventCount || 0), 0),
-            proposals: units.reduce((sum, item) => sum + Number(item.proposalCount || 0), 0),
-            students: units.reduce((sum, item) => sum + Number(item.studentCount || 0), 0)
-        }));
+        }, {}))
+            .map(([faculty, units]) => ({
+                faculty,
+                units: units.sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'vi')),
+                events: units.reduce((sum, item) => sum + Number(item.eventCount || 0), 0),
+                proposals: units.reduce((sum, item) => sum + Number(item.proposalCount || 0), 0),
+                students: units.reduce((sum, item) => sum + Number(item.studentCount || 0), 0),
+                managers: units.filter(item => managerFor(item)).length
+            }))
+            .sort((a, b) => a.faculty.localeCompare(b.faculty, 'vi'));
+
+        const departmentPager = pageItems('departments', facultyRows, 4);
+        const expandFaculties = !!searchQuery || facultyFilter !== 'all' || facultyRows.length <= 2;
+        const totalFacultyCount = new Set(departments.map(item => item.facultyName || facultyOfDepartment(item.name))).size;
+        const totalEvents = departments.reduce((sum, item) => sum + Number(item.eventCount || 0), 0);
+        const totalStudents = departments.reduce((sum, item) => sum + Number(item.studentCount || 0), 0);
+        const assignedManagers = departments.filter(item => managerFor(item)).length;
 
         const openDepartmentForm = (department = {}) => openForm({
             title: department.id ? 'Sửa bộ môn' : 'Thêm bộ môn',
@@ -2125,57 +2220,144 @@
             }
         });
 
+        const facultyCards = departmentPager.visible.map((group, index) => {
+            const isOpen = expandFaculties || index === 0;
+            return `
+            <section class="dept-faculty-card dept-accent-${index % 5}${isOpen ? ' is-open' : ''}">
+                <button type="button" class="dept-faculty-toggle" data-faculty-toggle="${h(group.faculty)}" aria-expanded="${isOpen ? 'true' : 'false'}">
+                    <span class="dept-faculty-mark">${h(facultyInitials(group.faculty))}</span>
+                    <span class="dept-faculty-copy">
+                        <span class="dept-faculty-title">${h(group.faculty)}</span>
+                        <span class="dept-faculty-meta">${number(group.units.length)} bộ môn · ${number(group.managers)}/${number(group.units.length)} đã có trưởng đơn vị</span>
+                    </span>
+                    <span class="dept-faculty-summary">
+                        <span class="dept-summary-item"><strong>${number(group.events)}</strong> sự kiện</span>
+                        <span class="dept-summary-item"><strong>${number(group.students)}</strong> sinh viên</span>
+                    </span>
+                    ${icon('chevron-down', 'dept-faculty-chevron h-4 w-4')}
+                </button>
+                <div class="dept-faculty-body">
+                    <div class="dept-list-head" aria-hidden="true">
+                        <span>Bộ môn / ngành</span>
+                        <span>Trưởng đơn vị</span>
+                        <span>Số liệu</span>
+                        <span>Thao tác</span>
+                    </div>
+                    <div class="dept-list">
+                        ${group.units.map(department => {
+                            const manager = managerFor(department);
+                            return `
+                            <article class="dept-row">
+                                <div class="dept-row-main">
+                                    <h3 class="dept-unit-title">${h(department.name)}</h3>
+                                    <p class="dept-unit-desc">${h(department.description || `Thuộc ${group.faculty}`)}</p>
+                                </div>
+                                <div class="dept-row-manager">
+                                    ${manager
+                                        ? `<span class="dept-manager-avatar">${h(personInitials(manager))}</span>
+                                           <span class="dept-manager-copy">
+                                               <span class="cell-title">${h(manager.fullName)}</span>
+                                               <span class="cell-sub">${h(manager.email)}</span>
+                                           </span>`
+                                        : `<span class="dept-manager-empty">${icon('user-round-plus', 'h-4 w-4')}<span>Chưa gán</span></span>`}
+                                </div>
+                                <div class="dept-row-metrics">
+                                    <span class="dept-metric"><em>Sự kiện</em><strong>${number(department.eventCount)}</strong></span>
+                                    <span class="dept-metric"><em>Đề xuất</em><strong>${number(department.proposalCount)}</strong></span>
+                                    <span class="dept-metric"><em>Sinh viên</em><strong>${number(department.studentCount)}</strong></span>
+                                </div>
+                                <div class="dept-row-actions row-actions">
+                                    <button class="icon-btn" data-edit-department="${department.id}" title="Chỉnh sửa">${icon('pencil')}</button>
+                                    <button class="icon-btn" data-manager="${department.id}" title="Gán trưởng đơn vị">${icon('user-check')}</button>
+                                    <button class="icon-btn danger" data-delete-department="${department.id}" title="Xóa">${icon('trash-2')}</button>
+                                </div>
+                            </article>`;
+                        }).join('')}
+                    </div>
+                </div>
+            </section>`;
+        }).join('');
+
         content(`
-            <div class="metric-grid">
-                ${metric('Khoa lớn', number(totalFacultyCount), 'Đã gom nhóm')}
-                ${metric('Bộ môn/ngành', number(departments.length), 'Đơn vị quản lý')}
-                ${metric('Events', number(departments.reduce((sum, item) => sum + Number(item.eventCount || 0), 0)), 'Event theo DB')}
-                ${metric('Students', number(departments.reduce((sum, item) => sum + Number(item.studentCount || 0), 0)), 'Sinh viên ước tính')}
+            <div class="dept-stat-strip">
+                <div class="dept-stat-item tone-blue">
+                    ${icon('building-2', 'h-4 w-4')}
+                    <div><span>Khoa lớn</span><strong>${number(totalFacultyCount)}</strong><small>Nhóm tổ chức</small></div>
+                </div>
+                <div class="dept-stat-item tone-orange">
+                    ${icon('layers-3', 'h-4 w-4')}
+                    <div><span>Bộ môn / ngành</span><strong>${number(departments.length)}</strong><small>${number(filteredDepartments.length)} đang hiển thị</small></div>
+                </div>
+                <div class="dept-stat-item tone-green">
+                    ${icon('user-check', 'h-4 w-4')}
+                    <div><span>Trưởng đơn vị</span><strong>${number(assignedManagers)}</strong><small>/${number(departments.length)} đã gán</small></div>
+                </div>
+                <div class="dept-stat-item tone-purple">
+                    ${icon('graduation-cap', 'h-4 w-4')}
+                    <div><span>Sinh viên</span><strong>${number(totalStudents)}</strong><small>${number(totalEvents)} sự kiện</small></div>
+                </div>
             </div>
-            <div class="toolbar">${pagination('departments', departmentPager.page, departmentPager.pages, departmentPager.total, departmentPager.visible.length)}</div>
-            <div class="department-tree">
-                ${facultyRows.map(group => `
-                    <section class="panel department-group">
-                        <div class="panel-header">
-                            <div>
-                                <h2 class="panel-title">${h(group.faculty)}</h2>
-                                <p class="panel-note">${number(group.units.length)} bộ môn · ${number(group.events)} event · ${number(group.students)} sinh viên</p>
-                            </div>
-                            ${badge(`${number(group.proposals)} proposal`, group.proposals ? 'blue' : 'gray')}
-                        </div>
-                        <div class="table-panel department-table"><div class="table-scroll">
-                            <table>
-                                <thead><tr><th>Bộ môn/ngành</th><th>Manager</th><th>Events</th><th>Proposals</th><th>Students</th><th>Actions</th></tr></thead>
-                                <tbody>
-                                    ${group.units.map(department => {
-                                        const manager = managerFor(department);
-                                        return `<tr>
-                                            <td><span class="cell-title">${h(department.name)}</span><span class="cell-sub">${h(department.description || `Thuộc khoa ${group.faculty}`)}</span></td>
-                                            <td>${manager ? `${h(manager.fullName)}<span class="cell-sub">${h(manager.email)}</span>` : badge('Chưa gán', 'amber')}</td>
-                                            <td>${number(department.eventCount)}</td>
-                                            <td>${number(department.proposalCount)}</td>
-                                            <td>${number(department.studentCount)}</td>
-                                            <td><div class="row-actions">
-                                                <button class="icon-btn" data-edit-department="${department.id}" title="Chỉnh sửa bộ môn">${icon('pencil')}</button>
-                                                <button class="icon-btn" data-manager="${department.id}" title="Gán trưởng khoa">${icon('user-check')}</button>
-                                                <button class="icon-btn danger" data-delete-department="${department.id}" title="Xóa bộ môn">${icon('trash-2')}</button>
-                                            </div></td>
-                                        </tr>`;
-                                    }).join('')}
-                                </tbody>
-                            </table>
-                        </div></div>
-                    </section>
-                `).join('')}
-            </div>
+            <section class="panel dept-directory">
+                <div class="dept-directory-head">
+                    <div>
+                        <h2 class="panel-title">Danh sách khoa & bộ môn</h2>
+                        <p class="panel-note">Bấm tên khoa để mở/đóng danh sách bộ môn bên trong.</p>
+                    </div>
+                    ${pagination('departments', departmentPager.page, departmentPager.pages, departmentPager.total, departmentPager.visible.length)}
+                </div>
+                <div class="dept-directory-toolbar">
+                    <label class="dept-filter-label">Tìm kiếm</label>
+                    ${searchBox('departmentSearch', 'Tên bộ môn, khoa, email trưởng đơn vị...')}
+                    <label class="dept-filter-label">Lọc khoa</label>
+                    ${selectBox('departmentFacultyFilter', facultyFilterOptions)}
+                </div>
+                ${facultyRows.length
+                    ? `<div class="department-tree">${facultyCards}</div>`
+                    : emptyState({
+                        icon: 'building-2',
+                        title: 'Không tìm thấy bộ môn phù hợp',
+                        copy: 'Thử đổi bộ lọc khoa hoặc từ khóa tìm kiếm.'
+                    })}
+            </section>
         `);
+
         document.getElementById('addDepartment').onclick = () => openDepartmentForm();
         bindPagination('departments', departmentPager, renderDepartments);
+        const search = document.getElementById('departmentSearch');
+        const facultySelect = document.getElementById('departmentFacultyFilter');
+        if (search) {
+            search.value = searchQuery;
+            let searchTimer;
+            search.addEventListener('input', event => {
+                clearTimeout(searchTimer);
+                searchTimer = setTimeout(() => {
+                    state.filters.departmentSearch = event.target.value;
+                    state.filters.departmentsPage = 1;
+                    renderDepartments();
+                }, 250);
+            });
+        }
+        if (facultySelect) {
+            facultySelect.value = facultyFilter;
+            facultySelect.addEventListener('change', event => {
+                state.filters.departmentFaculty = event.target.value;
+                state.filters.departmentsPage = 1;
+                renderDepartments();
+            });
+        }
+        document.querySelectorAll('[data-faculty-toggle]').forEach(button => {
+            button.addEventListener('click', () => {
+                const card = button.closest('.dept-faculty-card');
+                const opening = !card?.classList.contains('is-open');
+                card?.classList.toggle('is-open', opening);
+                button.setAttribute('aria-expanded', opening ? 'true' : 'false');
+            });
+        });
         document.querySelectorAll('[data-manager]').forEach(button => button.onclick = () => assignManager(departments.find(item => String(item.id) === button.dataset.manager)));
         document.querySelectorAll('[data-edit-department]').forEach(button => button.onclick = () => openDepartmentForm(departments.find(item => String(item.id) === button.dataset.editDepartment)));
-        document.querySelectorAll('[data-delete-department]').forEach(button => button.onclick = () => confirmAction('Xóa khoa này?', async () => {
+        document.querySelectorAll('[data-delete-department]').forEach(button => button.onclick = () => confirmAction('Xóa bộ môn này?', async () => {
             await api(`/departments/${button.dataset.deleteDepartment}`, { method: 'DELETE' });
-            toast('Đã xóa khoa.');
+            toast('Đã xóa bộ môn.');
             renderDepartments();
         }));
     }
@@ -2256,9 +2438,17 @@
 
     async function renderEvents() {
         state.page = 'events';
-        shell(`<button class="btn" id="addBudget">${icon('coins')}Thêm ngân sách</button><button class="btn primary" id="addEvent">${icon('calendar-plus')}Create Event</button>`);
+        const scope = currentEventScope();
+        const rerender = () => renderEvents();
+        shell();
         const [rawEvents, departments] = await Promise.all([load('/events', []), load('/departments', [])]);
-        const events = [...rawEvents].sort(compareEventsByTime);
+        const events = [...rawEvents]
+            .filter(item => {
+                if (scope === 'active') return item.status !== 'COMPLETED';
+                if (scope === 'completed') return item.status === 'COMPLETED';
+                return true;
+            })
+            .sort(compareEventsByTime);
         const featured = localGet('featuredEvents', {});
         const eventCommitteeMap = localGet('eventCommittees', {});
         const committees = getCommittees();
@@ -2303,7 +2493,7 @@
                 else delete eventCommitteeMap[saved.id || event.id];
                 localSet('eventCommittees', eventCommitteeMap);
                 toast('Đã lưu event.');
-                renderEvents();
+                rerender();
             }
         });
 
@@ -2315,7 +2505,7 @@
             onSubmit: async payload => {
                 await api(`/events/${event.id}/capacity`, { method: 'PUT', body: JSON.stringify(payload) });
                 toast('Đã cập nhật capacity.');
-                renderEvents();
+                rerender();
             }
         });
 
@@ -2327,7 +2517,7 @@
             onSubmit: async payload => {
                 await api(`/events/${event.id}/status`, { method: 'PUT', body: JSON.stringify(payload) });
                 toast('Đã cập nhật event.');
-                renderEvents();
+                rerender();
             }
         });
 
@@ -2357,7 +2547,7 @@
                 else delete eventCommitteeMap[event.id];
                 localSet('eventCommittees', eventCommitteeMap);
                 toast('Đã cập nhật committee cho event.');
-                renderEvents();
+                rerender();
             }
         });
 
@@ -2370,7 +2560,7 @@
                     label: 'Event',
                     type: 'select',
                     required: true,
-                    options: events.map(item => ({ value: item.id, label: item.title }))
+                    options: rawEvents.map(item => ({ value: item.id, label: item.title }))
                 }]),
                 { name: 'amount', label: 'Số tiền thêm (VND)', type: 'number', required: true, defaultValue: 1000000 }
             ],
@@ -2383,7 +2573,7 @@
                 const nextBudget = Number(target.budget || 0) + amount;
                 await api(`/events/${target.id}`, { method: 'PUT', body: JSON.stringify(eventPayload(target, { budget: nextBudget })) });
                 toast(`Đã thêm ${money(amount)} vào ngân sách.`);
-                renderEvents();
+                rerender();
             }
         });
 
@@ -2391,15 +2581,19 @@
             featured[event.id] = !featured[event.id];
             localSet('featuredEvents', featured);
             toast(featured[event.id] ? 'Đã đưa vào Featured Events.' : 'Đã bỏ khỏi Featured Events.');
-            renderEvents();
+            rerender();
         };
         const pager = pageItems('events', events, 10);
+        const activeCount = rawEvents.filter(item => item.status !== 'COMPLETED').length;
+        const completedCount = rawEvents.filter(item => item.status === 'COMPLETED').length;
+        const publishedInView = events.filter(item => item.status === 'PUBLISHED').length;
+        const attendedInView = events.filter(item => Number(item.attendanceCount || 0) > 0).length;
 
         content(`
             <div class="metric-grid">
-                ${metric('All events', number(events.length), 'Event List')}
-                ${metric('Published', number(events.filter(item => item.status === 'PUBLISHED').length), 'Đang public')}
-                ${metric('Committee', number(events.filter(item => committeeForEvent(item)).length), 'Event có người phụ trách')}
+                ${metric(scope === 'completed' ? 'Đã kết thúc' : scope === 'active' ? 'Đang diễn ra' : 'Tất cả', number(events.length), scope === 'all' ? `${number(activeCount)} đang diễn ra · ${number(completedCount)} đã kết thúc` : scope === 'completed' ? 'Sự kiện đã qua ngày kết thúc' : 'Sự kiện chưa kết thúc')}
+                ${metric(scope === 'completed' ? 'Có điểm danh' : 'Published', number(scope === 'completed' ? attendedInView : publishedInView), scope === 'completed' ? 'Có người tham dự' : 'Đang public')}
+                ${metric('Committee', number(events.filter(item => committeeForEvent(item)).length), 'Có người phụ trách')}
                 ${metric('Budget', money(events.reduce((sum, item) => sum + Number(item.budget || 0), 0)), 'Tổng ngân sách')}
             </div>
             <div class="toolbar">${pagination('events', pager.page, pager.pages, pager.total, pager.visible.length)}</div>
@@ -2414,7 +2608,7 @@
                     <td>${h(event.departmentName)}</td>
                     <td>${committeeForEvent(event) ? badge(committeeForEvent(event).name, 'blue') : badge('Chưa phân', 'amber')}</td>
                     <td>${dateTime(event.startTime)}<span class="cell-sub">${dateTime(event.endTime)}</span></td>
-                    <td><div class="progress"><span style="width:${Math.min(100, Number(event.fillRate || 0))}%"></span></div><span class="cell-sub">${number(event.registrationCount)} / ${number(event.capacity)}</span></td>
+                    <td><div class="progress"><span style="width:${Math.min(100, Number(event.fillRate || 0))}%"></span></div><span class="cell-sub">${number(event.registeredCount ?? event.registrationCount)} / ${number(event.capacity)}${Number(event.waitlistCount || 0) > 0 ? ` · +${number(event.waitlistCount)} chờ` : ''}</span></td>
                     <td>${money(event.budget)}</td>
                     <td>${badge(event.status, tone(event.status))}${featured[event.id] ? ` ${badge('Featured', 'orange')}` : ''}</td>
                     <td><div class="row-actions">
@@ -2436,9 +2630,7 @@
                 </tr>`))}
         `);
         bindActionMenus();
-        bindPagination('events', pager, renderEvents);
-        document.getElementById('addEvent').onclick = () => openEventForm();
-        document.getElementById('addBudget').onclick = () => events.length ? budgetForm() : toast('Chưa có event để thêm ngân sách.', 'warn');
+        bindPagination('events', pager, rerender);
         document.querySelectorAll('[data-event-detail]').forEach(button => button.onclick = () => {
             const event = events.find(item => String(item.id) === button.dataset.eventDetail);
             const imagePreview = `<div class="event-preview"><img src="${h(eventImageUrl(event))}" alt=""></div>`;
@@ -2452,7 +2644,9 @@
                 ['Status', event.status],
                 ['Capacity', number(event.capacity)],
                 ['Budget', money(event.budget)],
-                ['Registrations', number(event.registrationCount)],
+                ['Đã nhận chỗ', `${number(event.registeredCount ?? event.registrationCount)} / ${number(event.capacity)}`],
+                ['Waitlist', number(event.waitlistCount)],
+                ['Tổng đăng ký', number(event.registrationCount)],
                 ['Attendance', number(event.attendanceCount)],
                 ['Rating', `${event.averageRating}/5`],
                 ['Created', dateTime(event.createdAt)]
@@ -2467,7 +2661,7 @@
         document.querySelectorAll('[data-event-delete]').forEach(button => button.onclick = () => confirmAction('Xóa event này? Nếu đã có dữ liệu liên quan, hệ thống sẽ hủy event thay vì xóa vật lý.', async () => {
             await api(`/events/${button.dataset.eventDelete}`, { method: 'DELETE' });
             toast('Đã xử lý event.');
-            renderEvents();
+            rerender();
         }));
     }
 

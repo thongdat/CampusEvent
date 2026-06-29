@@ -33,6 +33,7 @@ import com.example.security.SessionAuth;
 import com.example.service.EmailService;
 import com.example.service.EventFormSyncService;
 import com.example.service.GoogleFormsApiService;
+import com.example.service.TicketService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.HttpStatus;
@@ -98,6 +99,7 @@ public class AdminDashboardController {
     private final QuizQuestionRepository quizQuestionRepository;
     private final GoogleFormsApiService googleFormsApiService;
     private final GoogleOAuthAccessTokenService googleOAuthAccessTokenService;
+    private final TicketService ticketService;
     private final Map<String, Object> googleFormCreationLocks = new ConcurrentHashMap<>();
     @org.springframework.beans.factory.annotation.Autowired
     private EventFormSyncService eventFormSyncService;
@@ -121,7 +123,8 @@ public class AdminDashboardController {
             InvitationScheduler invitationScheduler,
             QuizQuestionRepository quizQuestionRepository,
             GoogleFormsApiService googleFormsApiService,
-            GoogleOAuthAccessTokenService googleOAuthAccessTokenService) {
+            GoogleOAuthAccessTokenService googleOAuthAccessTokenService,
+            TicketService ticketService) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.departmentRepository = departmentRepository;
@@ -140,6 +143,7 @@ public class AdminDashboardController {
         this.quizQuestionRepository = quizQuestionRepository;
         this.googleFormsApiService = googleFormsApiService;
         this.googleOAuthAccessTokenService = googleOAuthAccessTokenService;
+        this.ticketService = ticketService;
     }
 
     @GetMapping("/dashboard")
@@ -517,8 +521,10 @@ public class AdminDashboardController {
     public List<Map<String, Object>> events() {
         LocalDateTime asOf = currentDateTime();
         List<Event> events = eventRepository.findAllWithDepartment();
+        // Nạp TẤT CẢ đăng ký (mọi trạng thái, không lọc theo ngày) để số "đăng ký" hiển thị
+        // khớp đúng với dữ liệu thật trong DB (SELECT COUNT(*) theo event).
         Map<Long, List<Registration>> registrationsByEvent = registrationRepository
-                .findByRegistrationDateLessThanEqual(asOf, Sort.unsorted()).stream()
+                .findAll().stream()
                 .filter(registration -> registration.getEvent() != null)
                 .collect(Collectors.groupingBy(registration -> registration.getEvent().getId()));
         // Query GROUP BY (mỗi event 1 dòng) thay cho findAll() quét toàn bảng attendance/feedback.
@@ -994,6 +1000,7 @@ public class AdminDashboardController {
                 student
         );
         Registration saved = registrationRepository.save(registration);
+        ticketService.syncTicketForRegistration(saved);
 
         Map<String, Object> result = buildRegistration(saved);
         result.put("emailStatus", sendRegistrationEmail(saved));
@@ -1012,7 +1019,9 @@ public class AdminDashboardController {
         Registration registration = registrationRepository.findById(id).orElseThrow(() -> notFound("Không tìm thấy registration."));
         registration.setStatus(requiredString(payload, "status").toUpperCase(Locale.ROOT));
         registration.setNote(textOrNull(stringValue(payload, "note", textOrEmpty(registration.getNote()))));
-        return buildRegistration(registrationRepository.save(registration));
+        Registration saved = registrationRepository.save(registration);
+        ticketService.syncTicketForRegistration(saved);
+        return buildRegistration(saved);
     }
 
     @GetMapping("/feedback")
@@ -1416,9 +1425,8 @@ public class AdminDashboardController {
 
     private Map<String, Object> buildEvent(Event event) {
         LocalDateTime asOf = currentDateTime();
-        List<Registration> registrations = registrationRepository.findByEventId(event.getId()).stream()
-                .filter(registration -> registration.getRegistrationDate() != null && !registration.getRegistrationDate().isAfter(asOf))
-                .collect(Collectors.toList());
+        // Lấy toàn bộ đăng ký của event (mọi trạng thái, không lọc theo ngày) để khớp số liệu thật trong DB.
+        List<Registration> registrations = registrationRepository.findByEventId(event.getId());
         List<Attendance> attendances = attendanceRepository.findByEventId(event.getId()).stream()
                 .filter(attendance -> attendance.getCheckinTime() != null && !attendance.getCheckinTime().isAfter(asOf))
                 .collect(Collectors.toList());
@@ -1459,9 +1467,11 @@ public class AdminDashboardController {
         long waitlist = registrations.stream()
                 .filter(registration -> "WAITLIST".equalsIgnoreCase(registration.getStatus()))
                 .count();
-        // Chỉ đếm đăng ký đang hiệu lực (REGISTERED) để KHỚP với Dashboard điểm danh,
-        // không tính waitlist/cancelled → tránh lệch số gây hiểu nhầm.
-        long registeredCount = registrations.stream()
+        // Đếm TẤT CẢ đăng ký của sự kiện (mọi trạng thái: REGISTERED/WAITLIST/CANCELLED…)
+        // để con số hiển thị khớp đúng với số bản ghi thật trong DB (SELECT COUNT(*)).
+        long registeredCount = registrations.size();
+        // Số người THỰC SỰ giữ chỗ (REGISTERED) — dùng cho cột sức chứa & fillRate.
+        long registeredOnly = registrations.stream()
                 .filter(registration -> "REGISTERED".equalsIgnoreCase(registration.getStatus()))
                 .count();
         double averageRating = feedbackAvg;
@@ -1483,12 +1493,13 @@ public class AdminDashboardController {
         item.put("departmentName", event.getDepartment() != null ? textOrEmpty(event.getDepartment().getName()) : "");
         item.put("facultyName", event.getDepartment() != null ? AcademicStructure.facultyOf(event.getDepartment().getName()) : "Khác");
         item.put("registrationCount", registeredCount);
+        item.put("registeredCount", registeredOnly);
         item.put("waitlistCount", waitlist);
         item.put("attendanceCount", attended);
         item.put("feedbackCount", feedbackCount);
         item.put("averageRating", round(averageRating));
         item.put("fillRate", event.getCapacity() != null && event.getCapacity() > 0
-                ? round(registrations.size() * 100.0 / event.getCapacity())
+                ? round(registeredOnly * 100.0 / event.getCapacity())
                 : 0);
         item.put("featured", event.getCapacity() != null && event.getCapacity() >= 200);
         item.put("googleFormUrl", textOrEmpty(event.getGoogleFormUrl()));

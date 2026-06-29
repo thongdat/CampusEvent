@@ -275,7 +275,7 @@
 
                         <!-- Tab: dán link -->
                         <div id="imgPaneLink" class="hidden">
-                            <input id="proposalImage" type="url" placeholder="https://..." class="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-fpt-500 focus:ring-2 focus:ring-fpt-200 focus:outline-none">
+                            <input id="proposalImage" type="text" inputmode="url" placeholder="https://..." class="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-fpt-500 focus:ring-2 focus:ring-fpt-200 focus:outline-none">
                         </div>
 
                         <p id="imgHint" class="mt-1 hidden text-xs font-semibold"></p>
@@ -1051,12 +1051,15 @@
     }
     // Đồng bộ toàn bộ UI ảnh theo URL hiện có (dùng khi mở form / khôi phục nháp).
     function resetProposalImageUI(url) {
+        const isHttpLink = !!url && /^https?:\/\//i.test(url);
         setProposalImage(url || '');
-        $('#proposalImage').value = url || '';
+        // Chỉ đổ link http(s) vào ô "Dán link"; ảnh upload (đường dẫn tương đối)
+        // chỉ giữ ở preview để tránh ô type=url ẩn chứa giá trị không hợp lệ → chặn submit.
+        $('#proposalImage').value = isHttpLink ? url : '';
         $('#proposalImageFile').value = '';
         $('#imgUploadLabel').textContent = IMG_UPLOAD_PLACEHOLDER;
         setImageHint('', null);
-        switchImageTab(url && /^https?:\/\//i.test(url) ? 'link' : 'upload');
+        switchImageTab(isHttpLink ? 'link' : 'upload');
     }
     // Kiểm tra link có phải ảnh tải được không (thử nạp vào thẻ Image).
     function validateImageUrl(url) {

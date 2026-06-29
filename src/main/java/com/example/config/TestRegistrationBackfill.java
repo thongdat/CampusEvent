@@ -9,6 +9,7 @@ import com.example.repository.RegistrationRepository;
 import com.example.repository.StudentRepository;
 import com.example.repository.UserRepository;
 import com.example.service.PriorityRankingService;
+import com.example.service.TicketService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -50,6 +51,7 @@ public class TestRegistrationBackfill implements ApplicationRunner {
     private final StudentRepository studentRepository;
     private final UserRepository userRepository;
     private final PriorityRankingService priorityService;
+    private final TicketService ticketService;
 
     @Value("${app.test-fill.enabled:true}")
     private boolean enabled;
@@ -64,12 +66,14 @@ public class TestRegistrationBackfill implements ApplicationRunner {
                                     RegistrationRepository registrationRepository,
                                     StudentRepository studentRepository,
                                     UserRepository userRepository,
-                                    PriorityRankingService priorityService) {
+                                    PriorityRankingService priorityService,
+                                    TicketService ticketService) {
         this.eventRepository = eventRepository;
         this.registrationRepository = registrationRepository;
         this.studentRepository = studentRepository;
         this.userRepository = userRepository;
         this.priorityService = priorityService;
+        this.ticketService = ticketService;
     }
 
     @Override
@@ -148,7 +152,8 @@ public class TestRegistrationBackfill implements ApplicationRunner {
 
                 Registration r = new Registration(registeredAt, "REGISTERED", "test-fill", event, s);
                 r.setPriorityScore(BigDecimal.valueOf(bd.total));
-                registrationRepository.save(r);
+                Registration saved = registrationRepository.save(r);
+                ticketService.issueTicket(saved);
                 created++;
                 regsCreated++;
             }

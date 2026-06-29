@@ -1,0 +1,13 @@
+flowchart LR
+    subgraph InvScheduler[InvitationScheduler - mỗi 10 phút]
+    I1[Tìm REGISTERED<br/>chưa gửi mời<br/>event trong 7 ngày] --> I2[Gửi email mời<br/>set invitationSentAt]
+    end
+
+    subgraph AutoClose[EventAutoCloseScheduler - mỗi 2 phút]
+    C1[Event quá endTime + 15 phút] --> C2[REGISTERED chưa check-in<br/>→ ABSENT, noShowCount++]
+    C2 --> C3[Event → COMPLETED<br/>set autoClosedAt]
+    end
+
+    subgraph Cache[PublicController]
+    P1[Cache landing stats<br/>+ sự kiện sắp tới]
+    end
