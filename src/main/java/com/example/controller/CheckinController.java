@@ -227,7 +227,7 @@ public class CheckinController {
 
         // Lưu / cập nhật giới tính
         if (student.getGender() == null) {
-            student.setGender(Gender.valueOf(gender));
+            student.setGender(gender);
             student = studentRepository.save(student);
         }
 
@@ -337,10 +337,11 @@ public class CheckinController {
         if (raw == null) return null;
         String v = raw.trim().toLowerCase(Locale.ROOT);
         if (v.isEmpty()) return null;
-        if (v.startsWith("nam") || v.equals("m") || v.equals("male")) return "Nam";
-        if (v.startsWith("nữ") || v.startsWith("nu") || v.equals("f") || v.equals("female")) return "Nữ";
-        if (v.startsWith("kh") || v.equals("o") || v.equals("other")) return "Khác";
-        return null;
+        try {
+            return Gender.fromValue(v).name();
+        } catch (IllegalArgumentException ex) {
+            return null;
+        }
     }
 
     private String withQrParams(String formUrl, Event event, String token) {
