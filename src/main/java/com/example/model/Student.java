@@ -25,7 +25,7 @@ public class Student {
     @Column(nullable = false)
     private Double attendanceReputation = 100.0;
 
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = GenderConverter.class)
     @Column(name = "gender", length = 10)
     private Gender gender;
     
@@ -115,6 +115,6 @@ public class Student {
             this.gender = null;
             return;
         }
-        this.gender = Gender.valueOf(gender.trim().toUpperCase());
+        this.gender = Gender.fromValue(gender);
     }
 }
