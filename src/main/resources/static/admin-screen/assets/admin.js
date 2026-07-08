@@ -2046,6 +2046,14 @@
             .filter(role => role.name !== 'ADMIN')
             .map(role => ({ value: role.id, label: role.name }));
         const rolePager = pageItems('roles', roles, 10);
+        const maxRoleUsers = Math.max(1, ...roles.map(role => Number(role.userCount || 0)));
+        const roleIcon = roleName => ({
+            ADMIN: 'shield-check',
+            COMMITTEE: 'clipboard-check',
+            DEPARTMENT: 'building-2',
+            MANAGER: 'briefcase-business',
+            STUDENT: 'graduation-cap'
+        }[String(roleName || '').toUpperCase()] || 'key-round');
 
         const openRoleForm = (role = {}) => openForm({
             title: role.id ? 'Edit Role' : 'Create Role',
@@ -2085,17 +2093,46 @@
                 ${metric('Admin', number(users.filter(user => user.role === 'ADMIN').length), 'Quản trị viên', 'orange', 'user-cog')}
                 ${metric('Sinh viên', number(users.filter(user => user.role === 'STUDENT').length), 'Tài khoản sinh viên', 'green', 'graduation-cap')}
             </div>
-            <div class="toolbar">${pagination('roles', rolePager.page, rolePager.pages, rolePager.total, rolePager.visible.length)}</div>
-            ${table(['Role', 'Description', 'Users', 'Actions'], rolePager.visible.map(role => `
-                <tr>
-                    <td>${badge(role.name, tone(role.name))}</td>
-                    <td>${h(role.description || 'N/A')}</td>
-                    <td>${number(role.userCount)}</td>
-                    <td><div class="row-actions">
-                        <button class="icon-btn" data-edit-role="${role.id}">${icon('pencil')}</button>
-                        <button class="icon-btn danger" data-delete-role="${role.id}">${icon('trash-2')}</button>
-                    </div></td>
-                </tr>`))}
+            <section class="role-directory">
+                <div class="role-directory-head">
+                    <div>
+                        <h2 class="panel-title">Danh sách phân quyền</h2>
+                        <p class="panel-note">Hiển thị ${number(rolePager.visible.length)} / ${number(rolePager.total)} vai trò đang có trong hệ thống.</p>
+                    </div>
+                    <div class="toolbar">${pagination('roles', rolePager.page, rolePager.pages, rolePager.total, rolePager.visible.length)}</div>
+                </div>
+                <div class="role-grid">
+                    ${rolePager.visible.map(role => {
+                        const count = Number(role.userCount || 0);
+                        const roleTone = tone(role.name);
+                        const share = Math.max(4, Math.round((count / maxRoleUsers) * 100));
+                        return `
+                            <article class="role-card tone-${roleTone}">
+                                <div class="role-card-top">
+                                    <span class="role-mark">${icon(roleIcon(role.name), 'h-5 w-5')}</span>
+                                    <div class="role-title-block">
+                                        <h3>${h(role.name)}</h3>
+                                        ${badge(role.name, roleTone)}
+                                    </div>
+                                    <div class="row-actions role-actions">
+                                        <button class="icon-btn" data-edit-role="${role.id}" title="Chỉnh sửa role">${icon('pencil')}</button>
+                                        <button class="icon-btn danger" data-delete-role="${role.id}" title="Xóa role">${icon('trash-2')}</button>
+                                    </div>
+                                </div>
+                                <p class="role-description">${h(role.description || 'Chưa có mô tả cho vai trò này.')}</p>
+                                <div class="role-card-bottom">
+                                    <div>
+                                        <span class="role-meta-label">Người dùng</span>
+                                        <strong>${number(count)}</strong>
+                                    </div>
+                                    <div class="role-share" aria-label="${number(count)} người dùng">
+                                        <span style="width:${share}%"></span>
+                                    </div>
+                                </div>
+                            </article>`;
+                    }).join('')}
+                </div>
+            </section>
         `);
         document.getElementById('addRole').onclick = () => openRoleForm();
         document.getElementById('assignRole').onclick = assignRole;
