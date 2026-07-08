@@ -869,22 +869,9 @@
 
     function defaultReportRange(events) {
         const now = new Date();
-        // Mặc định bao trùm toàn bộ sự kiện (gồm cả sự kiện tương lai) để số liệu
-        // thống kê khớp với tổng số sự kiện trong danh sách quản lý.
-        const times = (Array.isArray(events) ? events : [])
-            .map(reportEventDate)
-            .filter(Boolean)
-            .map(date => date.getTime());
-        if (times.length) {
-            const min = new Date(Math.min(...times));
-            const max = new Date(Math.max(...times));
-            return {
-                from: inputDateValue(min),
-                to: inputDateValue(max.getTime() > now.getTime() ? max : now)
-            };
-        }
+        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         return {
-            from: inputDateValue(new Date(now.getFullYear(), 0, 1)),
+            from: inputDateValue(firstDayOfMonth),
             to: inputDateValue(now)
         };
     }
