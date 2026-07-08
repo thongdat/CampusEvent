@@ -1907,7 +1907,7 @@
             });
         };
 
-        const render = async (q = state.filters.userSearch || '') => {
+        const render = async (q = state.filters.userSearch || '', keepSearchFocus = false) => {
             const token = ++renderToken;
             state.filters.userSearch = q;
             const roleFilter = state.filters.userRole || 'all';
@@ -2000,11 +2000,15 @@
             if (roleSelect) roleSelect.value = roleFilter;
             if (facultySelect) facultySelect.value = facultyFilter;
             if (sortSelect) sortSelect.value = sortKey;
+            if (search && keepSearchFocus) {
+                search.focus();
+                search.setSelectionRange(q.length, q.length);
+            }
             if (search) search.addEventListener('input', event => {
                 clearTimeout(searchTimer);
                 searchTimer = setTimeout(() => {
                     state.filters.usersPage = 1;
-                    render(event.target.value);
+                    render(event.target.value, true);
                 }, 250);
             });
             if (roleSelect) roleSelect.addEventListener('change', event => {
