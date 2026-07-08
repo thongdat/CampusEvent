@@ -1901,6 +1901,159 @@ tbody tr.selected {
     transform: translateX(.08rem);
 }
 
+.role-directory {
+    display: grid;
+    gap: .9rem;
+}
+
+.role-directory-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+}
+
+.role-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+    gap: .9rem;
+}
+
+.role-card {
+    position: relative;
+    display: grid;
+    min-height: 13.5rem;
+    align-content: space-between;
+    gap: 1rem;
+    overflow: hidden;
+    border: 1px solid #dbe5f2;
+    border-radius: .8rem;
+    background: #fff;
+    padding: 1rem;
+    box-shadow: 0 18px 42px -34px rgba(15, 23, 42, .55);
+}
+
+.role-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: .25rem;
+    background: #64748b;
+}
+
+.role-card-top {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: start;
+    gap: .75rem;
+}
+
+.role-mark {
+    display: inline-grid;
+    width: 2.8rem;
+    height: 2.8rem;
+    place-items: center;
+    border-radius: .7rem;
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.role-title-block {
+    display: grid;
+    min-width: 0;
+    gap: .35rem;
+}
+
+.role-title-block h3 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 1rem;
+    font-weight: 950;
+    letter-spacing: 0;
+}
+
+.role-actions {
+    flex-wrap: nowrap;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    background: #f8fafc;
+    padding: .2rem;
+}
+
+.role-actions .icon-btn {
+    width: 2.1rem;
+    height: 2.1rem;
+    border-color: transparent;
+    border-radius: 999px;
+    background: transparent;
+}
+
+.role-description {
+    min-height: 3.2rem;
+    margin: 0;
+    color: #334155;
+    font-size: .9rem;
+    line-height: 1.55;
+}
+
+.role-card-bottom {
+    display: grid;
+    gap: .65rem;
+}
+
+.role-card-bottom strong {
+    display: block;
+    margin-top: .12rem;
+    color: #0f172a;
+    font-size: 1.55rem;
+    font-weight: 950;
+    line-height: 1;
+}
+
+.role-meta-label {
+    color: #64748b;
+    font-size: .72rem;
+    font-weight: 850;
+    text-transform: uppercase;
+}
+
+.role-share {
+    height: .55rem;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #e2e8f0;
+}
+
+.role-share span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: #64748b;
+}
+
+.role-card.tone-blue { border-color: #bfdbfe; background: linear-gradient(180deg, #eff6ff 0%, #fff 70%); }
+.role-card.tone-blue::before,
+.role-card.tone-blue .role-share span { background: #2563eb; }
+.role-card.tone-blue .role-mark { background: #dbeafe; color: #2563eb; }
+
+.role-card.tone-teal { border-color: #99f6e4; background: linear-gradient(180deg, #f0fdfa 0%, #fff 70%); }
+.role-card.tone-teal::before,
+.role-card.tone-teal .role-share span { background: #0f766e; }
+.role-card.tone-teal .role-mark { background: #ccfbf1; color: #0f766e; }
+
+.role-card.tone-orange { border-color: #fed7aa; background: linear-gradient(180deg, #fff7ed 0%, #fff 70%); }
+.role-card.tone-orange::before,
+.role-card.tone-orange .role-share span { background: #ea580c; }
+.role-card.tone-orange .role-mark { background: #ffedd5; color: #c2410c; }
+
+.role-card.tone-green { border-color: #bbf7d0; background: linear-gradient(180deg, #f0fdf4 0%, #fff 70%); }
+.role-card.tone-green::before,
+.role-card.tone-green .role-share span { background: #16a34a; }
+.role-card.tone-green .role-mark { background: #dcfce7; color: #15803d; }
+
+.role-card.tone-gray { border-color: #cbd5e1; background: linear-gradient(180deg, #f8fafc 0%, #fff 70%); }
+
 /* Empty + error states */
 .empty,
 .error,
@@ -3417,6 +3570,10 @@ tbody tr:hover {
         flex: 1 1 100%;
     }
 
+    .role-directory-head {
+        align-items: flex-start;
+    }
+
     .report-stat-header {
         display: grid;
     }
@@ -3484,6 +3641,19 @@ tbody tr:hover {
 
     .dept-filter-label {
         margin-top: .15rem;
+    }
+
+    .role-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .role-card-top {
+        grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    .role-actions {
+        grid-column: 1 / -1;
+        justify-self: start;
     }
 
     .dept-list-head {
