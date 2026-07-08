@@ -2398,6 +2398,12 @@
         const statusOptions = ['PENDING', 'REVISION', 'REJECTED'].map(value => ({ value, label: value }));
         const needsReview = proposals.filter(item => ['PENDING', 'REVISION'].includes(String(item.status).toUpperCase()));
         const pager = pageItems('proposals', proposals, 10);
+        const statusSummary = [
+            { key: 'PENDING', label: 'Chờ duyệt', hint: 'Cần hội đồng xem xét', icon: 'clock-3' },
+            { key: 'REVISION', label: 'Cần chỉnh sửa', hint: 'Đang trả về khoa', icon: 'file-pen-line' },
+            { key: 'APPROVED', label: 'Đã duyệt', hint: 'Sẵn sàng công bố', icon: 'badge-check' },
+            { key: 'REJECTED', label: 'Từ chối', hint: 'Không tiếp tục', icon: 'circle-x' }
+        ];
 
         const updateStatus = proposal => openForm({
             title: 'Proposal Status Tracking',
@@ -2420,26 +2426,59 @@
                 ${metric('Auto publish', 'Bật', 'Duyệt xong tự lên sự kiện')}
                 ${metric('Rejected', number(statusCounts.REJECTED), 'Không tiếp tục')}
             </div>
-            <div class="toolbar">${pagination('proposals', pager.page, pager.pages, pager.total, pager.visible.length)}</div>
-            ${table(['Proposal', 'Khoa', 'Ngày đề xuất', 'Status', 'Actions'], pager.visible.map(proposal => {
-                return `<tr>
-                    <td><span class="cell-title">${h(proposal.title)}</span><span class="cell-sub">${h(proposal.description || '')}</span></td>
-                    <td>${h(proposal.departmentName)}</td>
-                    <td>${dateTime(proposal.proposedDate)}</td>
-                    <td>${badge(proposal.status, tone(proposal.status))}</td>
-                    <td><div class="row-actions">
-                        <button class="icon-btn" data-proposal-detail="${proposal.id}" title="Xem chi tiết">${icon('eye')}</button>
-                        <div class="action-menu" data-menu="proposal-${proposal.id}">
-                            <button class="icon-btn" type="button" data-menu-trigger="proposal-${proposal.id}" aria-label="Thêm thao tác" title="Thêm thao tác">${icon('more-horizontal')}</button>
-                            <div class="action-menu-pop" data-menu-pop="proposal-${proposal.id}" role="menu">
-                                <button class="action-item" type="button" data-proposal-status="${proposal.id}">${icon('list-checks', 'h-3.5 w-3.5')}<span>Đổi trạng thái</span></button>
-                                <div class="action-divider"></div>
-                                <button class="action-item danger" type="button" data-proposal-delete="${proposal.id}">${icon('trash-2', 'h-3.5 w-3.5')}<span>Xóa proposal</span></button>
-                            </div>
+            <section class="proposal-workspace">
+                <div class="proposal-status-strip">
+                    ${statusSummary.map(item => `
+                        <div class="proposal-status-tile tone-${tone(item.key)}">
+                            <span>${icon(item.icon, 'h-4 w-4')}</span>
+                            <strong>${number(statusCounts[item.key] || 0)}</strong>
+                            <em>${h(item.label)}</em>
+                            <small>${h(item.hint)}</small>
                         </div>
-                    </div></td>
-                </tr>`;
-            }))}
+                    `).join('')}
+                </div>
+                <div class="proposal-board-head">
+                    <div>
+                        <h2 class="panel-title">Danh sách đề xuất</h2>
+                        <p class="panel-note">Theo dõi đề xuất theo từng khoa, thời gian tổ chức và trạng thái xử lý.</p>
+                    </div>
+                    <div class="toolbar">${pagination('proposals', pager.page, pager.pages, pager.total, pager.visible.length)}</div>
+                </div>
+                <div class="proposal-card-grid">
+                    ${pager.visible.map(proposal => `
+                        <article class="proposal-card tone-${tone(proposal.status)}">
+                            <div class="proposal-card-main">
+                                <div class="proposal-card-top">
+                                    <span class="proposal-status-mark">${icon('clipboard-list', 'h-5 w-5')}</span>
+                                    <div>
+                                        <h3>${h(proposal.title)}</h3>
+                                        <p>${h(proposal.description || 'Chưa có mô tả chi tiết cho đề xuất này.')}</p>
+                                    </div>
+                                </div>
+                                <div class="proposal-meta-grid">
+                                    <span>${icon('building-2', 'h-3.5 w-3.5')}<b>Khoa</b><em>${h(proposal.departmentName || 'N/A')}</em></span>
+                                    <span>${icon('calendar-clock', 'h-3.5 w-3.5')}<b>Ngày đề xuất</b><em>${dateTime(proposal.proposedDate)}</em></span>
+                                    <span>${icon('user-round', 'h-3.5 w-3.5')}<b>Đơn vị tổ chức</b><em>${h(proposal.organizer || 'Chưa cập nhật')}</em></span>
+                                </div>
+                            </div>
+                            <aside class="proposal-card-side">
+                                ${badge(proposal.status, tone(proposal.status))}
+                                <div class="row-actions proposal-actions">
+                                    <button class="btn small" data-proposal-detail="${proposal.id}" title="Xem chi tiết">${icon('eye')}Chi tiết</button>
+                                    <div class="action-menu" data-menu="proposal-${proposal.id}">
+                                        <button class="icon-btn" type="button" data-menu-trigger="proposal-${proposal.id}" aria-label="Thêm thao tác" title="Thêm thao tác">${icon('more-horizontal')}</button>
+                                        <div class="action-menu-pop" data-menu-pop="proposal-${proposal.id}" role="menu">
+                                            <button class="action-item" type="button" data-proposal-status="${proposal.id}">${icon('list-checks', 'h-3.5 w-3.5')}<span>Đổi trạng thái</span></button>
+                                            <div class="action-divider"></div>
+                                            <button class="action-item danger" type="button" data-proposal-delete="${proposal.id}">${icon('trash-2', 'h-3.5 w-3.5')}<span>Xóa proposal</span></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </aside>
+                        </article>
+                    `).join('')}
+                </div>
+            </section>
         `);
         bindActionMenus();
         bindPagination('proposals', pager, renderProposals);
