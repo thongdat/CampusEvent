@@ -346,6 +346,9 @@ public class StudentController {
         if (event.getStartTime() != null && event.getStartTime().isBefore(LocalDateTime.now())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Sự kiện đã diễn ra");
         }
+        if (event.getRegistrationClosedAt() != null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đăng ký sự kiện này đã đóng");
+        }
 
         List<Registration> existingRegistrations = registrationRepository
                 .findAllByEventIdAndStudentIdOrderByIdAsc(event.getId(), student.getId());
@@ -771,6 +774,8 @@ public class StudentController {
         map.put("startTime", iso(event.getStartTime()));
         map.put("endTime", iso(event.getEndTime()));
         map.put("capacity", event.getCapacity());
+        map.put("registrationClosed", event.getRegistrationClosedAt() != null);
+        map.put("registrationClosedAt", event.getRegistrationClosedAt() != null ? iso(event.getRegistrationClosedAt()) : null);
         map.put("imageUrl", event.getImageUrl());
         map.put("status", event.getStatus());
         map.put("budget", event.getBudget());

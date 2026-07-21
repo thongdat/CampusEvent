@@ -12,6 +12,7 @@ import com.example.model.EventProposal;
 import com.example.model.Feedback;
 import com.example.model.Registration;
 import com.example.model.Role;
+import com.example.model.Room;
 import com.example.model.Student;
 import com.example.model.User;
 import com.example.repository.ActivityLogRepository;
@@ -23,6 +24,7 @@ import com.example.repository.EventRepository;
 import com.example.repository.FeedbackRepository;
 import com.example.repository.RegistrationRepository;
 import com.example.repository.RoleRepository;
+import com.example.repository.RoomRepository;
 import com.example.repository.StudentRepository;
 import com.example.repository.TicketRepository;
 import com.example.repository.UserRepository;
@@ -100,6 +102,7 @@ public class AdminDashboardController {
     private final GoogleFormsApiService googleFormsApiService;
     private final GoogleOAuthAccessTokenService googleOAuthAccessTokenService;
     private final TicketService ticketService;
+    private final RoomRepository roomRepository;
     private final Map<String, Object> googleFormCreationLocks = new ConcurrentHashMap<>();
     @org.springframework.beans.factory.annotation.Autowired
     private EventFormSyncService eventFormSyncService;
@@ -124,7 +127,8 @@ public class AdminDashboardController {
             QuizQuestionRepository quizQuestionRepository,
             GoogleFormsApiService googleFormsApiService,
             GoogleOAuthAccessTokenService googleOAuthAccessTokenService,
-            TicketService ticketService) {
+            TicketService ticketService,
+            RoomRepository roomRepository) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.departmentRepository = departmentRepository;
@@ -144,6 +148,7 @@ public class AdminDashboardController {
         this.googleFormsApiService = googleFormsApiService;
         this.googleOAuthAccessTokenService = googleOAuthAccessTokenService;
         this.ticketService = ticketService;
+        this.roomRepository = roomRepository;
     }
 
     @GetMapping("/dashboard")
@@ -435,6 +440,106 @@ public class AdminDashboardController {
         return Map.of("deleted", true, "id", id);
     }
 
+    @GetMapping("/rooms")
+    public Map<String, Object> rooms(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String active) {
+        int safePage = Math.max(0, page);
+        int safeSize = Math.max(1, Math.min(size, 100));
+        boolean activeOnly = "true".equalsIgnoreCase(textOrEmpty(active));
+        Pageable pageable = PageRequest.of(safePage, safeSize, Sort.by(Sort.Direction.ASC, "name"));
+        Page<Room> result = roomRepository.search(textOrEmpty(q).trim(), activeOnly, pageable);
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("items", result.getContent().stream().map(this::buildRoom).collect(Collectors.toList()));
+        response.put("page", result.getNumber());
+        response.put("size", result.getSize());
+        response.put("total", result.getTotalElements());
+        response.put("totalPages", result.getTotalPages());
+        return response;
+    }
+
+    /** Danh sách phòng đang hoạt động — dùng cho dropdown form đề xuất/event. */
+    @GetMapping("/rooms/options")
+    public List<Map<String, Object>> roomOptions() {
+        return roomRepository.findByActiveTrueOrderByNameAsc().stream()
+                .map(room -> {
+                    Map<String, Object> item = new LinkedHashMap<>();
+                    item.put("id", room.getId());
+                    item.put("name", room.getName());
+                    item.put("capacity", room.getCapacity());
+                    return item;
+                })
+                .collect(Collectors.toList());
+    }
+
+    @PostMapping("/rooms")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> createRoom(@RequestBody Map<String, Object> payload) {
+        String name = requiredString(payload, "name").trim();
+        if (roomRepository.findByNameIgnoreCase(name).isPresent()) {
+            throw badRequest("Phòng đã tồn tại.");
+        }
+        Integer capacity = intValue(payload, "capacity", null);
+        if (capacity != null && capacity <= 0) {
+            throw badRequest("Sức chứa phòng phải lớn hơn 0.");
+        }
+        boolean active = payload.get("active") == null || Boolean.TRUE.equals(payload.get("active"))
+                || "true".equalsIgnoreCase(String.valueOf(payload.get("active")));
+        Room room = new Room(
+                name,
+                capacity,
+                textOrNull(stringValue(payload, "description", "")),
+                active,
+                currentDateTime());
+        return ResponseEntity.status(HttpStatus.CREATED).body(buildRoom(roomRepository.save(room)));
+    }
+
+    @PutMapping("/rooms/{id}")
+    @Transactional
+    public Map<String, Object> updateRoom(@PathVariable Long id, @RequestBody Map<String, Object> payload) {
+        Room room = roomRepository.findById(id).orElseThrow(() -> notFound("Không tìm thấy phòng."));
+        String name = requiredString(payload, "name").trim();
+        roomRepository.findByNameIgnoreCase(name).ifPresent(existing -> {
+            if (!Objects.equals(existing.getId(), id)) {
+                throw badRequest("Phòng đã tồn tại.");
+            }
+        });
+        Integer capacity = intValue(payload, "capacity", room.getCapacity());
+        if (capacity != null && capacity <= 0) {
+            throw badRequest("Sức chứa phòng phải lớn hơn 0.");
+        }
+        String oldName = room.getName();
+        room.setName(name);
+        room.setCapacity(capacity);
+        room.setDescription(textOrNull(stringValue(payload, "description", "")));
+        if (payload.containsKey("active")) {
+            Object raw = payload.get("active");
+            boolean active = Boolean.TRUE.equals(raw) || "true".equalsIgnoreCase(String.valueOf(raw));
+            room.setActive(active);
+        }
+        Room saved = roomRepository.save(room);
+        if (!Objects.equals(oldName, name)) {
+            syncRoomNameToEventsAndProposals(saved);
+        }
+        return buildRoom(saved);
+    }
+
+    @DeleteMapping("/rooms/{id}")
+    @Transactional
+    public Map<String, Object> deleteRoom(@PathVariable Long id) {
+        Room room = roomRepository.findById(id).orElseThrow(() -> notFound("Không tìm thấy phòng."));
+        long eventCount = eventRepository.countByRoom_Id(id) + eventRepository.countByLocationIgnoreCase(room.getName());
+        long proposalCount = eventProposalRepository.countByRoom_Id(id)
+                + eventProposalRepository.countByLocationIgnoreCase(room.getName());
+        if (eventCount + proposalCount > 0) {
+            throw badRequest("Không thể xóa phòng đang được dùng bởi sự kiện hoặc đề xuất. Hãy tắt phòng (inactive) thay vì xóa.");
+        }
+        roomRepository.delete(room);
+        return Map.of("deleted", true, "id", id);
+    }
+
     @GetMapping("/reports")
     public Map<String, Object> reports() {
         return buildReports();
@@ -588,6 +693,161 @@ public class AdminDashboardController {
         }
         event.setCapacity(capacity);
         return buildEvent(eventRepository.save(event));
+    }
+
+    /**
+     * Đóng đăng ký sự kiện + gửi email thông báo cho sinh viên đã REGISTERED (tiện demo).
+     * Không thay thế lịch gửi thư mời tự động trước 7 ngày ({@link InvitationScheduler}).
+     */
+    @PostMapping("/events/{id}/close-registration")
+    @Transactional
+    public Map<String, Object> closeRegistration(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "false") boolean resendEmails) {
+        Event event = eventRepository.findById(id).orElseThrow(() -> notFound("Không tìm thấy event."));
+        if ("CANCELLED".equalsIgnoreCase(textOrEmpty(event.getStatus()))) {
+            throw badRequest("Không thể đóng đăng ký sự kiện đã huỷ.");
+        }
+
+        LocalDateTime now = currentDateTime();
+        boolean firstClose = event.getRegistrationClosedAt() == null;
+        if (firstClose) {
+            event.setRegistrationClosedAt(now);
+        } else if (!resendEmails) {
+            throw badRequest("Đăng ký đã đóng. Dùng resendEmails=true nếu muốn gửi lại email thông báo.");
+        }
+
+        // Nếu sự kiện đã qua giờ kết thúc → đánh COMPLETED luôn (phù hợp màn \"đã diễn ra\").
+        if (event.getEndTime() != null && !event.getEndTime().isAfter(now)
+                && !"COMPLETED".equalsIgnoreCase(textOrEmpty(event.getStatus()))) {
+            event.setStatus("COMPLETED");
+            if (event.getAutoClosedAt() == null) {
+                event.setAutoClosedAt(now);
+            }
+        }
+
+        List<Registration> registrations = registrationRepository.findByEventId(event.getId());
+        int waitlistClosed = 0;
+        for (Registration reg : registrations) {
+            if ("WAITLIST".equalsIgnoreCase(textOrEmpty(reg.getStatus()))) {
+                String note = textOrEmpty(reg.getNote());
+                if (!note.contains("Đã đóng đăng ký")) {
+                    reg.setNote((note.isEmpty() ? "" : note + " | ") + "Đã đóng đăng ký — không còn mở thêm slot");
+                    registrationRepository.save(reg);
+                    waitlistClosed++;
+                }
+            }
+        }
+
+        Event saved = eventRepository.save(event);
+        int emailed = 0;
+        int emailFailed = 0;
+        for (Registration reg : registrations) {
+            if (!"REGISTERED".equalsIgnoreCase(textOrEmpty(reg.getStatus()))) {
+                continue;
+            }
+            if (reg.getStudent() == null || reg.getStudent().getUser() == null) {
+                continue;
+            }
+            String to = textOrEmpty(reg.getStudent().getUser().getEmail()).trim();
+            if (to.isEmpty()) {
+                continue;
+            }
+            try {
+                emailService.sendRegistrationClosedEmail(
+                        to,
+                        reg.getStudent().getUser().getFullName(),
+                        saved.getTitle(),
+                        saved.getLocation(),
+                        saved.getStartTime());
+                emailed++;
+                EmailLog log = new EmailLog();
+                log.setToEmail(to);
+                log.setSubject("Đã đóng đăng ký: " + saved.getTitle());
+                log.setContent("Thông báo đóng đăng ký sự kiện");
+                log.setStatus("SENT");
+                log.setSentAt(now);
+                log.setUser(reg.getStudent().getUser());
+                log.setRegistration(reg);
+                log.setEvent(saved);
+                emailLogRepository.save(log);
+            } catch (Exception ex) {
+                emailFailed++;
+                try {
+                    EmailLog log = new EmailLog();
+                    log.setToEmail(to);
+                    log.setSubject("Đã đóng đăng ký: " + saved.getTitle());
+                    log.setContent("FAILED: " + ex.getMessage());
+                    log.setStatus("FAILED");
+                    log.setSentAt(now);
+                    log.setUser(reg.getStudent().getUser());
+                    log.setRegistration(reg);
+                    log.setEvent(saved);
+                    emailLogRepository.save(log);
+                } catch (Exception ignored) {
+                    // ignore log persist errors
+                }
+            }
+        }
+
+        Map<String, Object> result = buildEvent(saved);
+        result.put("registrationJustClosed", firstClose);
+        result.put("emailsSent", emailed);
+        result.put("emailsFailed", emailFailed);
+        result.put("waitlistNoted", waitlistClosed);
+        result.put("message", firstClose
+                ? "Đã đóng đăng ký và gửi email thông báo."
+                : "Đã gửi lại email thông báo đóng đăng ký.");
+        return result;
+    }
+
+    /**
+     * Demo: gửi ngay thư mời cho tất cả REGISTERED chưa nhận thư.
+     * Lịch tự động trước 7 ngày ({@link InvitationScheduler}) vẫn giữ nguyên.
+     */
+    @PostMapping("/events/{id}/send-invitations")
+    @Transactional
+    public Map<String, Object> sendInvitationsNow(@PathVariable Long id) {
+        Event event = eventRepository.findById(id).orElseThrow(() -> notFound("Không tìm thấy event."));
+        LocalDateTime now = currentDateTime();
+        int sent = 0;
+        int skipped = 0;
+        int failed = 0;
+        for (Registration reg : registrationRepository.findByEventId(event.getId())) {
+            if (!"REGISTERED".equalsIgnoreCase(textOrEmpty(reg.getStatus()))) {
+                skipped++;
+                continue;
+            }
+            if (reg.getInvitationSentAt() != null) {
+                skipped++;
+                continue;
+            }
+            if (reg.getStudent() == null || reg.getStudent().getUser() == null
+                    || textOrEmpty(reg.getStudent().getUser().getEmail()).isBlank()) {
+                skipped++;
+                continue;
+            }
+            try {
+                emailService.sendInvitationEmail(
+                        reg.getStudent().getUser().getEmail().trim(),
+                        reg.getStudent().getUser().getFullName(),
+                        event.getTitle(),
+                        event.getLocation(),
+                        event.getStartTime(),
+                        event.getEndTime());
+                reg.setInvitationSentAt(now);
+                registrationRepository.save(reg);
+                sent++;
+            } catch (Exception ex) {
+                failed++;
+            }
+        }
+        Map<String, Object> result = buildEvent(event);
+        result.put("invitationsSent", sent);
+        result.put("invitationsSkipped", skipped);
+        result.put("invitationsFailed", failed);
+        result.put("message", "Đã gửi " + sent + " thư mời (lịch 7 ngày trước vẫn chạy bình thường).");
+        return result;
     }
 
     @PostMapping("/events/{id}/google-form/auto-create")
@@ -929,8 +1189,18 @@ public class AdminDashboardController {
         publishPayload.putIfAbsent("imageUrl", textOrEmpty(proposal.getImageUrl()));
         publishPayload.putIfAbsent("imageUrls", imageListForResponse(proposal.getImageUrl(), proposal.getImageUrls()));
         publishPayload.putIfAbsent("budget", firstNonNull(proposal.getBudget(), BigDecimal.ZERO));
-        publishPayload.putIfAbsent("location", firstNonBlank(proposal.getLocation(), savedEvent.getLocation(), "FPT Campus"));
-        savedEvent.setLocation(textOrNull(stringValue(publishPayload, "location", firstNonBlank(savedEvent.getLocation(), proposal.getLocation(), "FPT Campus"))));
+        publishPayload.putIfAbsent("location", firstNonBlank(proposal.getLocation(), savedEvent.getLocation(), "Hội Trường Alpha"));
+        Room publishRoom = resolveRoom(publishPayload, proposal.getRoom(), false);
+        if (publishRoom != null) {
+            savedEvent.setRoom(publishRoom);
+            savedEvent.setLocation(publishRoom.getName());
+        } else {
+            savedEvent.setLocation(textOrNull(stringValue(publishPayload, "location",
+                    firstNonBlank(savedEvent.getLocation(), proposal.getLocation(), "Hội Trường Alpha"))));
+            if (proposal.getRoom() != null) {
+                savedEvent.setRoom(proposal.getRoom());
+            }
+        }
         savedEvent.setCapacity(capacity);
         savedEvent.setEndTime(end);
         savedEvent.setOrganizer(textOrNull(stringValue(publishPayload, "organizer", textOrEmpty(proposal.getOrganizer()))));
@@ -1481,6 +1751,8 @@ public class AdminDashboardController {
         item.put("title", textOrEmpty(event.getTitle()));
         item.put("description", textOrEmpty(event.getDescription()));
         item.put("location", textOrEmpty(event.getLocation()));
+        item.put("roomId", event.getRoom() != null ? event.getRoom().getId() : null);
+        item.put("roomName", event.getRoom() != null ? event.getRoom().getName() : textOrEmpty(event.getLocation()));
         item.put("startTime", event.getStartTime());
         item.put("endTime", event.getEndTime());
         item.put("capacity", firstNonNull(event.getCapacity(), 0));
@@ -1511,6 +1783,8 @@ public class AdminDashboardController {
         item.put("checkoutFormId", textOrEmpty(event.getCheckoutFormId()));
         item.put("checkoutSheetId", textOrEmpty(event.getCheckoutSheetId()));
         item.put("lastSheetSyncAt", event.getLastSheetSyncAt());
+        item.put("registrationClosedAt", event.getRegistrationClosedAt());
+        item.put("registrationClosed", event.getRegistrationClosedAt() != null);
         item.put("speakers", textOrEmpty(event.getSpeakers()));
         item.put("organizer", textOrEmpty(event.getOrganizer()));
         item.put("supportStaffNeeded", firstNonNull(event.getSupportStaffNeeded(), 0));
@@ -1546,6 +1820,8 @@ public class AdminDashboardController {
         item.put("title", textOrEmpty(proposal.getTitle()));
         item.put("description", textOrEmpty(proposal.getDescription()));
         item.put("location", textOrEmpty(proposal.getLocation()));
+        item.put("roomId", proposal.getRoom() != null ? proposal.getRoom().getId() : null);
+        item.put("roomName", proposal.getRoom() != null ? proposal.getRoom().getName() : textOrEmpty(proposal.getLocation()));
         item.put("capacity", firstNonNull(proposal.getCapacity(), 0));
         item.put("imageUrl", textOrEmpty(proposal.getImageUrl()));
         item.put("imageUrls", imageListForResponse(proposal.getImageUrl(), proposal.getImageUrls()));
@@ -1639,7 +1915,7 @@ public class AdminDashboardController {
     private void applyEventPayload(Event event, Map<String, Object> payload, boolean creating) {
         event.setTitle(requiredString(payload, "title"));
         event.setDescription(textOrNull(stringValue(payload, "description", "")));
-        event.setLocation(textOrNull(stringValue(payload, "location", "")));
+        applyRoomSelection(event, payload, creating);
         event.setStartTime(localDateTimeValue(payload, "startTime", creating ? currentDateTime().plusDays(7) : event.getStartTime()));
         event.setEndTime(localDateTimeValue(payload, "endTime", creating ? event.getStartTime().plusHours(2) : event.getEndTime()));
         event.setCapacity(intValue(payload, "capacity", creating ? 100 : firstNonNull(event.getCapacity(), 100)));
@@ -1671,7 +1947,7 @@ public class AdminDashboardController {
     private void applyProposalPayload(EventProposal proposal, Map<String, Object> payload, boolean creating) {
         proposal.setTitle(requiredString(payload, "title"));
         proposal.setDescription(textOrNull(stringValue(payload, "description", "")));
-        proposal.setLocation(textOrNull(stringValue(payload, "location", textOrEmpty(proposal.getLocation()))));
+        applyRoomSelection(proposal, payload, creating);
         proposal.setProposedDate(localDateTimeValue(payload, "proposedDate", creating ? currentDateTime().plusDays(14) : proposal.getProposedDate()));
         // Khung giờ kết thúc: nếu không nhập, mặc định +2 giờ so với giờ bắt đầu.
         LocalDateTime proposedEnd = localDateTimeValue(payload, "proposedEndDate",
@@ -1862,6 +2138,80 @@ public class AdminDashboardController {
 
     private LocalDateTime currentDateTime() {
         return LocalDateTime.now(ZoneId.systemDefault());
+    }
+
+    private void applyRoomSelection(Event event, Map<String, Object> payload, boolean creating) {
+        Room room = resolveRoom(payload, event.getRoom(), creating);
+        event.setRoom(room);
+        event.setLocation(room != null ? room.getName() : null);
+    }
+
+    private void applyRoomSelection(EventProposal proposal, Map<String, Object> payload, boolean creating) {
+        Room room = resolveRoom(payload, proposal.getRoom(), creating);
+        proposal.setRoom(room);
+        proposal.setLocation(room != null ? room.getName() : null);
+    }
+
+    /**
+     * Ưu tiên roomId; nếu không có thì khớp theo tên location với phòng đang active.
+     * Khi tạo mới bắt buộc chọn phòng hợp lệ.
+     */
+    private Room resolveRoom(Map<String, Object> payload, Room current, boolean creating) {
+        Long roomId = longValue(payload, "roomId", current != null ? current.getId() : null);
+        if (roomId != null) {
+            Room room = roomRepository.findById(roomId)
+                    .orElseThrow(() -> badRequest("Phòng không tồn tại."));
+            if (!Boolean.TRUE.equals(room.getActive()) && (creating || !Objects.equals(current != null ? current.getId() : null, room.getId()))) {
+                throw badRequest("Phòng đang bị tắt, không thể chọn.");
+            }
+            return room;
+        }
+        String location = textOrEmpty(stringValue(payload, "location", current != null ? textOrEmpty(current.getName()) : "")).trim();
+        if (location.isEmpty()) {
+            if (creating) {
+                throw badRequest("Vui lòng chọn địa điểm (phòng sự kiện).");
+            }
+            return current;
+        }
+        Room byName = roomRepository.findByNameIgnoreCase(location)
+                .orElseThrow(() -> badRequest("Địa điểm không hợp lệ. Hãy chọn phòng từ danh sách."));
+        if (!Boolean.TRUE.equals(byName.getActive()) && (creating || current == null || !Objects.equals(current.getId(), byName.getId()))) {
+            throw badRequest("Phòng đang bị tắt, không thể chọn.");
+        }
+        return byName;
+    }
+
+    private Map<String, Object> buildRoom(Room room) {
+        Map<String, Object> item = new LinkedHashMap<>();
+        item.put("id", room.getId());
+        item.put("name", room.getName());
+        item.put("capacity", room.getCapacity());
+        item.put("description", textOrEmpty(room.getDescription()));
+        item.put("active", Boolean.TRUE.equals(room.getActive()));
+        item.put("createdAt", room.getCreatedAt() != null ? room.getCreatedAt().toString() : null);
+        item.put("eventCount", eventRepository.countByRoom_Id(room.getId())
+                + eventRepository.countByLocationIgnoreCase(room.getName()));
+        item.put("proposalCount", eventProposalRepository.countByRoom_Id(room.getId())
+                + eventProposalRepository.countByLocationIgnoreCase(room.getName()));
+        return item;
+    }
+
+    private void syncRoomNameToEventsAndProposals(Room room) {
+        if (room == null || room.getId() == null) {
+            return;
+        }
+        eventRepository.findAll().stream()
+                .filter(event -> event.getRoom() != null && Objects.equals(event.getRoom().getId(), room.getId()))
+                .forEach(event -> {
+                    event.setLocation(room.getName());
+                    eventRepository.save(event);
+                });
+        eventProposalRepository.findAll().stream()
+                .filter(proposal -> proposal.getRoom() != null && Objects.equals(proposal.getRoom().getId(), room.getId()))
+                .forEach(proposal -> {
+                    proposal.setLocation(room.getName());
+                    eventProposalRepository.save(proposal);
+                });
     }
 
     private Department resolveDepartment(Long id) {

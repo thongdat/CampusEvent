@@ -21,6 +21,10 @@ public class EventProposal {
     @Column(columnDefinition = "NVARCHAR(200)")
     private String location;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "room_id")
+    private Room room;
+
     @Column
     private Integer capacity;
 
@@ -110,6 +114,14 @@ public class EventProposal {
 
     public void setLocation(String location) {
         this.location = location;
+    }
+
+    public Room getRoom() {
+        return room;
+    }
+
+    public void setRoom(Room room) {
+        this.room = room;
     }
 
     public Integer getCapacity() {

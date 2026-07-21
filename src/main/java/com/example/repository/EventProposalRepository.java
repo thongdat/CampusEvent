@@ -17,4 +17,8 @@ public interface EventProposalRepository extends JpaRepository<EventProposal, Lo
     long countByStatusIn(Collection<String> statuses);
     long countByDepartmentId(Long departmentId);
     long countByDepartmentIdAndStatusIn(Long departmentId, Collection<String> statuses);
+
+    long countByRoom_Id(Long roomId);
+
+    long countByLocationIgnoreCase(String location);
 }

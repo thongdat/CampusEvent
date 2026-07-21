@@ -683,6 +683,61 @@
         }));
     }
 
+    function syncCount(value) {
+        const n = Number(value);
+        return Number.isFinite(n) ? n : 0;
+    }
+
+    function syncStudentStatusLabel(student, kind) {
+        if (student && student.status === 'ABSENT') return 'Chưa check-in';
+        return kind === 'out' ? 'Đã checkout' : 'Đã checkin';
+    }
+
+    function renderSyncStudentList(result, kind) {
+        const students = Array.isArray(result.newStudents) ? result.newStudents : [];
+        const count = result.newStudentsCount == null ? students.length : syncCount(result.newStudentsCount);
+        const verb = kind === 'out' ? 'check-out' : 'check-in';
+        const countClass = kind === 'out'
+            ? 'bg-emerald-100 text-emerald-800'
+            : 'bg-fpt-100 text-fpt-800';
+
+        let html = '<div class="mt-2 rounded-lg border border-white/70 bg-white/80 p-2">';
+        html += '<div class="flex flex-wrap items-center gap-1.5 text-[11px] font-extrabold text-slate-700">';
+        html += '<span class="rounded-md px-2 py-0.5 ' + countClass + '">' + count + '</span>';
+        html += '<span>sinh vi&ecirc;n m&#7899;i ' + verb + '</span>';
+        html += '</div>';
+
+        if (!students.length) {
+            html += '<p class="mt-1 text-[11px] font-semibold text-slate-500">Kh&ocirc;ng c&oacute; sinh vi&ecirc;n m&#7899;i trong l&#7847;n sync n&agrave;y.</p>';
+            html += '</div>';
+            return html;
+        }
+
+        html += '<div class="mt-2 grid gap-1.5 md:grid-cols-2">';
+        students.slice(0, 10).forEach(student => {
+            const name = student.fullName || student.name || 'Sinh viên';
+            const meta = [student.studentCode, student.email, student.time ? fmtTime(student.time) : '']
+                .filter(Boolean)
+                .map(escapeHtml)
+                .join(' &middot; ');
+            const badgeClass = student.status === 'ABSENT'
+                ? 'bg-rose-50 text-rose-700'
+                : (kind === 'out' ? 'bg-emerald-50 text-emerald-700' : 'bg-fpt-50 text-fpt-700');
+            html += '<div class="rounded-md border border-slate-200 bg-white px-2 py-1.5">';
+            html += '<div class="flex items-start justify-between gap-2">';
+            html += '<span class="font-extrabold text-slate-800">' + escapeHtml(name) + '</span>';
+            html += '<span class="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-extrabold ' + badgeClass + '">' + escapeHtml(syncStudentStatusLabel(student, kind)) + '</span>';
+            html += '</div>';
+            if (meta) html += '<div class="mt-0.5 text-[11px] font-semibold text-slate-500">' + meta + '</div>';
+            html += '</div>';
+        });
+        if (students.length > 10) {
+            html += '<div class="rounded-md border border-slate-200 bg-slate-50 px-2 py-1.5 text-[11px] font-extrabold text-slate-500">+' + (students.length - 10) + ' sinh vi&ecirc;n kh&aacute;c</div>';
+        }
+        html += '</div></div>';
+        return html;
+    }
+
     function syncFormResponses(eventId, kind, btn) {
         const userEmail = getCurrentUserEmail() || prompt('Nhập email Gmail bạn vừa đăng nhập:', '') || '';
         if (!userEmail) { toast('Cần email Gmail để sync.'); return; }
@@ -706,6 +761,7 @@
                 resultBox.className = 'border-t border-slate-100 px-5 py-2.5 text-xs font-bold border-l-4 ' + theme;
                 resultBox.innerHTML = '✓ ' + escapeHtml(result.message || 'Sync xong')
                     + ' <span class="text-slate-500 font-normal">· Phản hồi='+result.totalResponses+' · Match='+result.matched+' · Mới='+result.created+' · Cập nhật='+result.updated+' · Feedback='+result.feedbacksAdded+'</span>';
+                resultBox.innerHTML += renderSyncStudentList(result, kind);
                 resultBox.classList.remove('hidden');
             }
             toast('✓ Đã sync ' + (kind === 'out' ? 'CHECK-OUT' : 'CHECK-IN'));

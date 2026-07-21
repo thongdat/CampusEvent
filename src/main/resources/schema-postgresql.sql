@@ -213,3 +213,16 @@ CREATE TABLE IF NOT EXISTS activity_log (
     points_earned INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMP NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS room (
+    id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    capacity INTEGER,
+    description TEXT,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP NOT NULL
+);
+
+ALTER TABLE event ADD COLUMN IF NOT EXISTS room_id BIGINT REFERENCES room(id);
+ALTER TABLE event ADD COLUMN IF NOT EXISTS registration_closed_at TIMESTAMP;
+ALTER TABLE event_proposal ADD COLUMN IF NOT EXISTS room_id BIGINT REFERENCES room(id);

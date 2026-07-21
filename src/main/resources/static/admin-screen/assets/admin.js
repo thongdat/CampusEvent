@@ -20,6 +20,7 @@
         { group: 'Người dùng', id: 'departments', label: 'Khoa & Bộ môn', icon: 'building-2', href: 'departments.html', keywords: 'departments khoa bo mon' },
         { group: 'Sự kiện', id: 'proposals', label: 'Đề xuất', icon: 'clipboard-list', href: 'proposals.html', keywords: 'proposals de xuat workflow' },
         { group: 'Sự kiện', id: 'events', label: 'Tất cả sự kiện', icon: 'calendar-days', href: 'events.html', keywords: 'events su kien tat ca dang dien ra da ket thuc', children: eventScopeOptions },
+        { group: 'Sự kiện', id: 'rooms', label: 'Phòng sự kiện', icon: 'map-pin', href: 'rooms.html', keywords: 'rooms phong su kien dia diem location venue' },
         { group: 'Sự kiện', id: 'registrations', label: 'Đăng ký', icon: 'ticket-check', href: 'registrations.html', keywords: 'registrations dang ky waitlist attendance' },
         { group: 'Sự kiện', id: 'feedback', label: 'Phản hồi', icon: 'message-square-heart', href: 'feedback.html', keywords: 'feedback phan hoi rating' },
         { group: 'Hệ thống', id: 'email', label: 'Email & Thông báo', icon: 'mail-check', href: 'email.html', keywords: 'email mail notification thong bao' },
@@ -35,6 +36,7 @@
         departments: ['Khoa & Bộ môn', 'Quản lý cây tổ chức theo khoa lớn và bộ môn, gán trưởng đơn vị.', 'Khoa & Bộ môn'],
         proposals: ['Đề xuất sự kiện', 'Theo dõi proposal, phân hội đồng, công bố hoặc loại bỏ.', 'Đề xuất'],
         events: ['Tất cả sự kiện', 'Chọn xem sự kiện đang diễn ra hoặc sự kiện đã kết thúc.', 'Tất cả sự kiện'],
+        rooms: ['Phòng sự kiện', 'Quản lý danh sách địa điểm/phòng để chọn khi tạo đề xuất và sự kiện.', 'Phòng sự kiện'],
         registrations: ['Đăng ký & Điểm danh', 'Danh sách đăng ký, waitlist và check-in của sinh viên.', 'Đăng ký'],
         feedback: ['Phản hồi & Đánh giá', 'Danh sách feedback, phân tích rating và xử lý bình luận.', 'Phản hồi'],
         email: ['Email & Thông báo', 'Email templates, gửi thông báo, announcement và lịch sử email.', 'Email']
@@ -2394,16 +2396,8 @@
         state.page = 'proposals';
         shell();
         const proposals = await load('/proposals', []);
-        const statusCounts = summarizeStatuses(proposals);
         const statusOptions = ['PENDING', 'REVISION', 'REJECTED'].map(value => ({ value, label: value }));
-        const needsReview = proposals.filter(item => ['PENDING', 'REVISION'].includes(String(item.status).toUpperCase()));
-        const pager = pageItems('proposals', proposals, 10);
-        const statusSummary = [
-            { key: 'PENDING', label: 'Chờ duyệt', hint: 'Cần hội đồng xem xét', icon: 'clock-3' },
-            { key: 'REVISION', label: 'Cần chỉnh sửa', hint: 'Đang trả về khoa', icon: 'file-pen-line' },
-            { key: 'APPROVED', label: 'Đã duyệt', hint: 'Sẵn sàng công bố', icon: 'badge-check' },
-            { key: 'REJECTED', label: 'Từ chối', hint: 'Không tiếp tục', icon: 'circle-x' }
-        ];
+        let searchTimer;
 
         const updateStatus = proposal => openForm({
             title: 'Proposal Status Tracking',
@@ -2415,92 +2409,127 @@
             onSubmit: async payload => {
                 await api(`/proposals/${proposal.id}/status`, { method: 'PUT', body: JSON.stringify(payload) });
                 toast('Đã cập nhật proposal.');
-                renderProposals();
+                render();
             }
         });
 
-        content(`
-            <div class="metric-grid">
-                ${metric('Workflow proposals', number(proposals.length), 'Chưa chuyển thành event')}
-                ${metric('Need review', number(needsReview.length), 'Pending hoặc cần chỉnh sửa')}
-                ${metric('Auto publish', 'Bật', 'Duyệt xong tự lên sự kiện')}
-                ${metric('Rejected', number(statusCounts.REJECTED), 'Không tiếp tục')}
-            </div>
-            <section class="proposal-workspace">
-                <div class="proposal-status-strip">
-                    ${statusSummary.map(item => `
-                        <div class="proposal-status-tile tone-${tone(item.key)}">
-                            <span>${icon(item.icon, 'h-4 w-4')}</span>
-                            <strong>${number(statusCounts[item.key] || 0)}</strong>
-                            <em>${h(item.label)}</em>
-                            <small>${h(item.hint)}</small>
-                        </div>
-                    `).join('')}
+        const render = (keepSearchFocus = false) => {
+            const statusCounts = summarizeStatuses(proposals);
+            const total = proposals.length;
+            const activeStatus = state.filters.proposalStatus || 'ALL';
+            const query = (state.filters.proposalSearch || '').trim().toLowerCase();
+
+            const filtered = proposals.filter(item => {
+                const status = String(item.status || '').toUpperCase();
+                if (activeStatus !== 'ALL' && status !== activeStatus) return false;
+                if (!query) return true;
+                return [item.title, item.departmentName, item.organizer, item.description]
+                    .some(value => String(value || '').toLowerCase().includes(query));
+            });
+            const pager = pageItems('proposals', filtered, 10);
+
+            const statusFilterOptions = [
+                { value: 'ALL', label: `Tất cả trạng thái (${number(total)})` },
+                { value: 'PENDING', label: `Chờ duyệt (${number(statusCounts.PENDING || 0)})` },
+                { value: 'REVISION', label: `Cần chỉnh sửa (${number(statusCounts.REVISION || 0)})` },
+                { value: 'APPROVED', label: `Đã duyệt (${number(statusCounts.APPROVED || 0)})` },
+                { value: 'REJECTED', label: `Từ chối (${number(statusCounts.REJECTED || 0)})` }
+            ];
+
+            content(`
+                <div class="metric-grid">
+                    ${metric('Tất cả', number(total), `${number(statusCounts.PENDING || 0)} chờ duyệt · ${number(statusCounts.REVISION || 0)} cần sửa`)}
+                    ${metric('Chờ duyệt', number(statusCounts.PENDING || 0), 'Cần hội đồng xem xét')}
+                    ${metric('Đã duyệt', number(statusCounts.APPROVED || 0), 'Sẵn sàng công bố')}
+                    ${metric('Từ chối', number(statusCounts.REJECTED || 0), 'Không tiếp tục')}
                 </div>
-                <div class="proposal-board-head">
-                    <div>
-                        <h2 class="panel-title">Danh sách đề xuất</h2>
-                        <p class="panel-note">Theo dõi đề xuất theo từng khoa, thời gian tổ chức và trạng thái xử lý.</p>
+                <div class="toolbar proposal-toolbar">
+                    <div class="proposal-toolbar-filters">
+                        ${searchBox('proposalSearch', 'Tìm tên đề xuất, khoa, đơn vị tổ chức...')}
+                        ${selectBox('proposalStatusFilter', statusFilterOptions)}
                     </div>
-                    <div class="toolbar">${pagination('proposals', pager.page, pager.pages, pager.total, pager.visible.length)}</div>
+                    ${pagination('proposals', pager.page, pager.pages, pager.total, pager.visible.length)}
                 </div>
-                <div class="proposal-card-grid">
-                    ${pager.visible.map(proposal => `
-                        <article class="proposal-card tone-${tone(proposal.status)}">
-                            <div class="proposal-card-main">
-                                <div class="proposal-card-top">
-                                    <span class="proposal-status-mark">${icon('clipboard-list', 'h-5 w-5')}</span>
-                                    <div>
-                                        <h3>${h(proposal.title)}</h3>
-                                        <p>${h(proposal.description || 'Chưa có mô tả chi tiết cho đề xuất này.')}</p>
-                                    </div>
-                                </div>
-                                <div class="proposal-meta-grid">
-                                    <span>${icon('building-2', 'h-3.5 w-3.5')}<b>Khoa</b><em>${h(proposal.departmentName || 'N/A')}</em></span>
-                                    <span>${icon('calendar-clock', 'h-3.5 w-3.5')}<b>Ngày đề xuất</b><em>${dateTime(proposal.proposedDate)}</em></span>
-                                    <span>${icon('user-round', 'h-3.5 w-3.5')}<b>Đơn vị tổ chức</b><em>${h(proposal.organizer || 'Chưa cập nhật')}</em></span>
+                ${table(['Đề xuất', 'Khoa', 'Đơn vị tổ chức', 'Ngày đề xuất', 'Status', 'Actions'], pager.visible.map(proposal => `
+                    <tr>
+                        <td>
+                            <div class="event-cell">
+                                <span class="proposal-thumb tone-${tone(proposal.status)}">${icon('clipboard-list', 'h-5 w-5')}</span>
+                                <div><span class="cell-title">${h(proposal.title)}</span><span class="cell-sub proposal-desc">${h(proposal.description || 'Chưa có mô tả')}</span></div>
+                            </div>
+                        </td>
+                        <td>${h(proposal.departmentName || 'N/A')}</td>
+                        <td>${h(proposal.organizer || 'Chưa cập nhật')}</td>
+                        <td>${dateTime(proposal.proposedDate)}<span class="cell-sub">Tạo: ${dateTime(proposal.createdAt)}</span></td>
+                        <td>${badge(proposal.status, tone(proposal.status))}</td>
+                        <td><div class="row-actions">
+                            <button class="icon-btn" data-proposal-detail="${proposal.id}" title="Xem chi tiết">${icon('eye')}</button>
+                            <button class="icon-btn" data-proposal-status="${proposal.id}" title="Đổi trạng thái">${icon('list-checks')}</button>
+                            <div class="action-menu" data-menu="proposal-${proposal.id}">
+                                <button class="icon-btn" type="button" data-menu-trigger="proposal-${proposal.id}" aria-label="Thêm thao tác" title="Thêm thao tác">${icon('more-horizontal')}</button>
+                                <div class="action-menu-pop" data-menu-pop="proposal-${proposal.id}" role="menu">
+                                    <button class="action-item" type="button" data-proposal-status="${proposal.id}">${icon('list-checks', 'h-3.5 w-3.5')}<span>Đổi trạng thái</span></button>
+                                    <div class="action-divider"></div>
+                                    <button class="action-item danger" type="button" data-proposal-delete="${proposal.id}">${icon('trash-2', 'h-3.5 w-3.5')}<span>Xóa proposal</span></button>
                                 </div>
                             </div>
-                            <aside class="proposal-card-side">
-                                ${badge(proposal.status, tone(proposal.status))}
-                                <div class="row-actions proposal-actions">
-                                    <button class="btn small" data-proposal-detail="${proposal.id}" title="Xem chi tiết">${icon('eye')}Chi tiết</button>
-                                    <div class="action-menu" data-menu="proposal-${proposal.id}">
-                                        <button class="icon-btn" type="button" data-menu-trigger="proposal-${proposal.id}" aria-label="Thêm thao tác" title="Thêm thao tác">${icon('more-horizontal')}</button>
-                                        <div class="action-menu-pop" data-menu-pop="proposal-${proposal.id}" role="menu">
-                                            <button class="action-item" type="button" data-proposal-status="${proposal.id}">${icon('list-checks', 'h-3.5 w-3.5')}<span>Đổi trạng thái</span></button>
-                                            <div class="action-divider"></div>
-                                            <button class="action-item danger" type="button" data-proposal-delete="${proposal.id}">${icon('trash-2', 'h-3.5 w-3.5')}<span>Xóa proposal</span></button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </aside>
-                        </article>
-                    `).join('')}
-                </div>
-            </section>
-        `);
-        bindActionMenus();
-        bindPagination('proposals', pager, renderProposals);
-        document.querySelectorAll('[data-proposal-detail]').forEach(button => button.onclick = () => {
-            const proposal = proposals.find(item => String(item.id) === button.dataset.proposalDetail);
-            openDetail('Proposal Detail', `${detailGrid([
-                ['Title', proposal.title],
-                ['Department', proposal.departmentName],
-                ['Status', proposal.status],
-                ['Proposed date', dateTime(proposal.proposedDate)],
-                ['Organizer', proposal.organizer || 'N/A'],
-                ['Speakers', proposal.speakers || 'N/A'],
-                ['Created', dateTime(proposal.createdAt)],
-                ['Note', proposal.note || 'N/A']
-            ])}<div class="panel" style="margin-top:1rem"><p class="panel-note">${h(proposal.description || '')}</p></div>`);
-        });
-        document.querySelectorAll('[data-proposal-status]').forEach(button => button.onclick = () => updateStatus(proposals.find(item => String(item.id) === button.dataset.proposalStatus)));
-        document.querySelectorAll('[data-proposal-delete]').forEach(button => button.onclick = () => confirmAction('Xóa proposal này?', async () => {
-            await api(`/proposals/${button.dataset.proposalDelete}`, { method: 'DELETE' });
-            toast('Đã xóa proposal.');
-            renderProposals();
-        }));
+                        </div></td>
+                    </tr>`), query || activeStatus !== 'ALL' ? 'Không có đề xuất phù hợp bộ lọc.' : 'Chưa có đề xuất nào.')}
+            `);
+
+            bindActionMenus();
+            bindPagination('proposals', pager, render);
+
+            const statusFilter = document.getElementById('proposalStatusFilter');
+            if (statusFilter) {
+                statusFilter.value = activeStatus;
+                statusFilter.addEventListener('change', event => {
+                    state.filters.proposalStatus = event.target.value;
+                    state.filters.proposalsPage = 1;
+                    render();
+                });
+            }
+
+            const search = document.getElementById('proposalSearch');
+            if (search) {
+                search.value = state.filters.proposalSearch || '';
+                if (keepSearchFocus) {
+                    search.focus();
+                    const end = search.value.length;
+                    search.setSelectionRange(end, end);
+                }
+                search.addEventListener('input', event => {
+                    clearTimeout(searchTimer);
+                    searchTimer = setTimeout(() => {
+                        state.filters.proposalSearch = event.target.value;
+                        state.filters.proposalsPage = 1;
+                        render(true);
+                    }, 220);
+                });
+            }
+
+            document.querySelectorAll('[data-proposal-detail]').forEach(button => button.onclick = () => {
+                const proposal = proposals.find(item => String(item.id) === button.dataset.proposalDetail);
+                openDetail('Proposal Detail', `${detailGrid([
+                    ['Title', proposal.title],
+                    ['Department', proposal.departmentName],
+                    ['Status', proposal.status],
+                    ['Proposed date', dateTime(proposal.proposedDate)],
+                    ['Organizer', proposal.organizer || 'N/A'],
+                    ['Speakers', proposal.speakers || 'N/A'],
+                    ['Created', dateTime(proposal.createdAt)],
+                    ['Note', proposal.note || 'N/A']
+                ])}<div class="panel" style="margin-top:1rem"><p class="panel-note">${h(proposal.description || '')}</p></div>`);
+            });
+            document.querySelectorAll('[data-proposal-status]').forEach(button => button.onclick = () => updateStatus(proposals.find(item => String(item.id) === button.dataset.proposalStatus)));
+            document.querySelectorAll('[data-proposal-delete]').forEach(button => button.onclick = () => confirmAction('Xóa proposal này?', async () => {
+                await api(`/proposals/${button.dataset.proposalDelete}`, { method: 'DELETE' });
+                toast('Đã xóa proposal.');
+                render();
+            }));
+        };
+
+        render();
     }
 
     async function renderEvents() {
@@ -2508,7 +2537,11 @@
         const scope = currentEventScope();
         const rerender = () => renderEvents();
         shell();
-        const [rawEvents, departments] = await Promise.all([load('/events', []), load('/departments', [])]);
+        const [rawEvents, departments, roomOptions] = await Promise.all([
+            load('/events', []),
+            load('/departments', []),
+            load('/rooms/options', [])
+        ]);
         const events = [...rawEvents]
             .filter(item => {
                 if (scope === 'active') return item.status !== 'COMPLETED';
@@ -2520,6 +2553,10 @@
         const eventCommitteeMap = localGet('eventCommittees', {});
         const committees = getCommittees();
         const departmentOptions = departments.map(item => ({ value: item.id, label: `${item.facultyName || facultyOfDepartment(item.name)} / ${item.name}` }));
+        const roomSelectOptions = roomOptions.map(item => ({
+            value: item.id,
+            label: item.capacity ? `${item.name} (sức chứa ${item.capacity})` : item.name
+        }));
         const statusOptions = ['PENDING', 'APPROVED', 'PUBLISHED', 'COMPLETED', 'CANCELLED'].map(value => ({ value, label: value }));
         const committeeOptions = [{ value: '', label: 'Chưa phân committee' }]
             .concat(committees.map(item => ({ value: item.id, label: item.name })));
@@ -2528,6 +2565,11 @@
             const assigned = committees.find(item => String(item.id) === String(eventCommitteeMap[event.id]));
             return assigned || fallbackCommittee(event);
         };
+        const resolveRoomId = event => {
+            if (event.roomId) return event.roomId;
+            const matched = roomOptions.find(room => normalize(room.name) === normalize(event.location || ''));
+            return matched?.id || '';
+        };
 
         const openEventForm = (event = {}) => openForm({
             title: event.id ? 'Edit Event' : 'Create Event',
@@ -2535,7 +2577,7 @@
                 { name: 'title', label: 'Tên event', required: true },
                 { name: 'departmentId', label: 'Khoa', type: 'select', options: departmentOptions, required: true },
                 { name: 'committeeId', label: 'Committee phụ trách', type: 'select', options: committeeOptions },
-                { name: 'location', label: 'Địa điểm', required: true },
+                { name: 'roomId', label: 'Địa điểm (phòng)', type: 'select', options: roomSelectOptions, required: true },
                 { name: 'status', label: 'Status', type: 'select', options: statusOptions, required: true },
                 { name: 'startTime', label: 'Bắt đầu', type: 'datetime-local', required: true },
                 { name: 'endTime', label: 'Kết thúc', type: 'datetime-local', required: true },
@@ -2548,6 +2590,7 @@
             ],
             values: {
                 ...event,
+                roomId: resolveRoomId(event),
                 committeeId: eventCommitteeMap[event.id] || '',
                 startTime: event.startTime ? String(event.startTime).slice(0, 16) : '',
                 endTime: event.endTime ? String(event.endTime).slice(0, 16) : ''
@@ -2555,6 +2598,8 @@
             onSubmit: async payload => {
                 const committeeId = payload.committeeId || '';
                 delete payload.committeeId;
+                const room = roomOptions.find(item => String(item.id) === String(payload.roomId));
+                if (room) payload.location = room.name;
                 const saved = await api(event.id ? `/events/${event.id}` : '/events', { method: event.id ? 'PUT' : 'POST', body: JSON.stringify(payload) });
                 if (committeeId) eventCommitteeMap[saved.id || event.id] = committeeId;
                 else delete eventCommitteeMap[saved.id || event.id];
@@ -2591,6 +2636,7 @@
         const eventPayload = (event, overrides = {}) => ({
             title: event.title || '',
             departmentId: event.departmentId,
+            roomId: event.roomId || resolveRoomId(event) || null,
             location: event.location || '',
             status: event.status || 'PUBLISHED',
             startTime: event.startTime ? String(event.startTime).slice(0, 16) : '',
@@ -2677,7 +2723,7 @@
                     <td>${dateTime(event.startTime)}<span class="cell-sub">${dateTime(event.endTime)}</span></td>
                     <td><div class="progress"><span style="width:${Math.min(100, Number(event.fillRate || 0))}%"></span></div><span class="cell-sub">${number(event.registeredCount ?? event.registrationCount)} / ${number(event.capacity)}${Number(event.waitlistCount || 0) > 0 ? ` · +${number(event.waitlistCount)} chờ` : ''}</span></td>
                     <td>${money(event.budget)}</td>
-                    <td>${badge(event.status, tone(event.status))}${featured[event.id] ? ` ${badge('Featured', 'orange')}` : ''}</td>
+                    <td>${badge(event.status, tone(event.status))}${featured[event.id] ? ` ${badge('Featured', 'orange')}` : ''}${event.registrationClosed ? ` ${badge('Đã đóng ĐK', 'slate')}` : ''}</td>
                     <td><div class="row-actions">
                         <button class="icon-btn" data-event-detail="${event.id}" title="Xem chi tiết">${icon('eye')}</button>
                         <button class="icon-btn" data-event-edit="${event.id}" title="Chỉnh sửa event">${icon('pencil')}</button>
@@ -2688,6 +2734,8 @@
                                 <button class="action-item" type="button" data-event-budget="${event.id}">${icon('coins', 'h-3.5 w-3.5')}<span>Thêm ngân sách</span></button>
                                 <button class="action-item" type="button" data-event-capacity="${event.id}">${icon('gauge', 'h-3.5 w-3.5')}<span>Đổi sức chứa</span></button>
                                 <button class="action-item" type="button" data-event-status="${event.id}">${icon('refresh-cw', 'h-3.5 w-3.5')}<span>Đổi trạng thái</span></button>
+                                <button class="action-item" type="button" data-event-close-reg="${event.id}">${icon('mail-check', 'h-3.5 w-3.5')}<span>${event.registrationClosed ? 'Gửi lại email đóng ĐK' : 'Đóng đăng ký + gửi email'}</span></button>
+                                <button class="action-item" type="button" data-event-send-invite="${event.id}">${icon('send', 'h-3.5 w-3.5')}<span>Gửi thư mời ngay (demo)</span></button>
                                 <button class="action-item" type="button" data-event-featured="${event.id}">${icon('star', 'h-3.5 w-3.5')}<span>${featured[event.id] ? 'Bỏ Featured' : 'Đưa vào Featured'}</span></button>
                                 <div class="action-divider"></div>
                                 <button class="action-item danger" type="button" data-event-delete="${event.id}">${icon('trash-2', 'h-3.5 w-3.5')}<span>Xóa / huỷ event</span></button>
@@ -2725,6 +2773,28 @@
         document.querySelectorAll('[data-event-status]').forEach(button => button.onclick = () => statusForm(events.find(item => String(item.id) === button.dataset.eventStatus)));
         document.querySelectorAll('[data-event-capacity]').forEach(button => button.onclick = () => capacityForm(events.find(item => String(item.id) === button.dataset.eventCapacity)));
         document.querySelectorAll('[data-event-featured]').forEach(button => button.onclick = () => toggleFeatured(events.find(item => String(item.id) === button.dataset.eventFeatured)));
+        document.querySelectorAll('[data-event-close-reg]').forEach(button => button.onclick = () => {
+            const event = events.find(item => String(item.id) === button.dataset.eventCloseReg);
+            if (!event) return;
+            const msg = already
+                ? `Gửi lại email: ${event.title}`
+                : `Đóng sự kiện ${event.title}`;
+            confirmAction(msg, async () => {
+                const qs = already ? '?resendEmails=true' : '';
+                const result = await api(`/events/${event.id}/close-registration${qs}`, { method: 'POST' });
+                toast(result.message || `Đã gửi ${number(result.emailsSent || 0)} email.`);
+                rerender();
+            });
+        });
+        document.querySelectorAll('[data-event-send-invite]').forEach(button => button.onclick = () => {
+            const event = events.find(item => String(item.id) === button.dataset.eventSendInvite);
+            if (!event) return;
+            confirmAction(`Gửi ngay thư mời cho sinh viên REGISTERED chưa nhận thư của "${event.title}"?\n\n(Chế độ tự động trước 7 ngày vẫn giữ nguyên.)`, async () => {
+                const result = await api(`/events/${event.id}/send-invitations`, { method: 'POST' });
+                toast(result.message || `Đã gửi ${number(result.invitationsSent || 0)} thư mời.`);
+                rerender();
+            });
+        });
         document.querySelectorAll('[data-event-delete]').forEach(button => button.onclick = () => confirmAction('Xóa event này? Nếu đã có dữ liệu liên quan, hệ thống sẽ hủy event thay vì xóa vật lý.', async () => {
             await api(`/events/${button.dataset.eventDelete}`, { method: 'DELETE' });
             toast('Đã xử lý event.');
@@ -3105,6 +3175,165 @@
         bindPagination('email', emailPager, renderEmail);
     }
 
+    async function renderRooms() {
+        state.page = 'rooms';
+        shell(`<button class="btn primary" id="addRoom">${icon('plus')}Thêm phòng</button>`);
+        const page = Math.max(1, Number(state.filters.roomsPage || 1));
+        const q = state.filters.roomSearch || '';
+        const activeFilter = state.filters.roomActive || 'all';
+        const params = new URLSearchParams({
+            page: String(page - 1),
+            size: '10',
+            q,
+            ...(activeFilter === 'true' ? { active: 'true' } : {})
+        });
+        const data = await load(`/rooms?${params}`, { items: [], total: 0, totalPages: 1, page: 0 });
+        let rooms = Array.isArray(data.items) ? data.items : [];
+        if (activeFilter === 'false') {
+            rooms = rooms.filter(room => !room.active);
+        }
+        const total = Number(data.total || rooms.length);
+        const totalPages = Math.max(1, Number(data.totalPages || 1));
+        const pager = { page, pages: totalPages, total, visible: rooms };
+
+        const openRoomForm = (room = {}) => openForm({
+            title: room.id ? 'Sửa phòng sự kiện' : 'Thêm phòng sự kiện',
+            fields: [
+                { name: 'name', label: 'Tên phòng', required: true },
+                { name: 'capacity', label: 'Sức chứa gợi ý', type: 'number' },
+                { name: 'active', label: 'Trạng thái', type: 'select', options: [
+                    { value: 'true', label: 'Đang dùng' },
+                    { value: 'false', label: 'Tắt' }
+                ], required: true },
+                { name: 'description', label: 'Mô tả', type: 'textarea', full: true }
+            ],
+            values: {
+                ...room,
+                active: room.active === false ? 'false' : 'true'
+            },
+            onSubmit: async payload => {
+                const body = {
+                    name: payload.name,
+                    capacity: payload.capacity ? Number(payload.capacity) : null,
+                    description: payload.description || '',
+                    active: payload.active !== 'false'
+                };
+                await api(room.id ? `/rooms/${room.id}` : '/rooms', {
+                    method: room.id ? 'PUT' : 'POST',
+                    body: JSON.stringify(body)
+                });
+                toast(room.id ? 'Đã cập nhật phòng.' : 'Đã thêm phòng.');
+                renderRooms();
+            }
+        });
+
+        content(`
+            <div class="dept-stat-strip">
+                <div class="dept-stat-item tone-blue">
+                    ${icon('map-pin', 'h-4 w-4')}
+                    <div><span>Tổng phòng</span><strong>${number(total)}</strong><small>Trong hệ thống</small></div>
+                </div>
+                <div class="dept-stat-item tone-green">
+                    ${icon('check-circle-2', 'h-4 w-4')}
+                    <div><span>Đang dùng</span><strong>${number(rooms.filter(r => r.active).length)}</strong><small>Trang hiện tại</small></div>
+                </div>
+                <div class="dept-stat-item tone-orange">
+                    ${icon('calendar-days', 'h-4 w-4')}
+                    <div><span>Gắn sự kiện</span><strong>${number(rooms.reduce((s, r) => s + Number(r.eventCount || 0), 0))}</strong><small>Trang hiện tại</small></div>
+                </div>
+            </div>
+            <section class="panel">
+                <div class="panel-head">
+                    <div>
+                        <h2 class="panel-title">Danh sách phòng sự kiện</h2>
+                        <p class="panel-note">Chọn phòng từ danh sách này khi tạo đề xuất / sự kiện để tránh gõ sai địa điểm.</p>
+                    </div>
+                    ${pagination('rooms', pager.page, pager.pages, pager.total, pager.visible.length)}
+                </div>
+                <div class="dept-directory-toolbar">
+                    <label class="dept-filter-label">Tìm kiếm</label>
+                    ${searchBox('roomSearch', 'Tên phòng, mô tả...')}
+                    <label class="dept-filter-label">Trạng thái</label>
+                    ${selectBox('roomActiveFilter', [
+                        { value: 'all', label: 'Tất cả' },
+                        { value: 'true', label: 'Đang dùng' },
+                        { value: 'false', label: 'Đã tắt' }
+                    ])}
+                </div>
+                ${rooms.length ? `
+                <div class="table-wrap">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Phòng</th>
+                                <th>Sức chứa</th>
+                                <th>Trạng thái</th>
+                                <th>Sử dụng</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rooms.map(room => `
+                            <tr>
+                                <td>
+                                    <div class="cell-title">${h(room.name)}</div>
+                                    <div class="cell-sub">${h(room.description || '—')}</div>
+                                </td>
+                                <td>${room.capacity != null ? number(room.capacity) : '—'}</td>
+                                <td><span class="badge ${room.active ? 'success' : 'muted'}">${room.active ? 'Đang dùng' : 'Tắt'}</span></td>
+                                <td>
+                                    <div class="cell-sub">${number(room.eventCount || 0)} sự kiện · ${number(room.proposalCount || 0)} đề xuất</div>
+                                </td>
+                                <td class="row-actions">
+                                    <button class="icon-btn" data-edit-room="${room.id}" title="Sửa">${icon('pencil')}</button>
+                                    <button class="icon-btn danger" data-delete-room="${room.id}" title="Xóa">${icon('trash-2')}</button>
+                                </td>
+                            </tr>`).join('')}
+                        </tbody>
+                    </table>
+                </div>` : emptyState({
+                    icon: 'map-pin',
+                    title: 'Chưa có phòng phù hợp',
+                    copy: 'Thêm phòng mới hoặc đổi bộ lọc tìm kiếm.'
+                })}
+            </section>
+        `);
+
+        document.getElementById('addRoom').onclick = () => openRoomForm();
+        bindPagination('rooms', pager, renderRooms);
+        const search = document.getElementById('roomSearch');
+        const activeSelect = document.getElementById('roomActiveFilter');
+        if (search) {
+            search.value = q;
+            let timer;
+            search.addEventListener('input', event => {
+                clearTimeout(timer);
+                timer = setTimeout(() => {
+                    state.filters.roomSearch = event.target.value;
+                    state.filters.roomsPage = 1;
+                    renderRooms();
+                }, 250);
+            });
+        }
+        if (activeSelect) {
+            activeSelect.value = activeFilter;
+            activeSelect.addEventListener('change', event => {
+                state.filters.roomActive = event.target.value;
+                state.filters.roomsPage = 1;
+                renderRooms();
+            });
+        }
+        document.querySelectorAll('[data-edit-room]').forEach(button => {
+            button.onclick = () => openRoomForm(rooms.find(item => String(item.id) === button.dataset.editRoom));
+        });
+        document.querySelectorAll('[data-delete-room]').forEach(button => {
+            button.onclick = () => confirmAction('Xóa phòng này? Chỉ xóa được khi chưa gắn sự kiện/đề xuất.', async () => {
+                await api(`/rooms/${button.dataset.deleteRoom}`, { method: 'DELETE' });
+                toast('Đã xóa phòng.');
+                renderRooms();
+            });
+        });
+    }
 
     const handlers = {
         overview: renderOverview,
@@ -3116,6 +3345,7 @@
         logs: renderLogs,
         proposals: renderProposals,
         events: renderEvents,
+        rooms: renderRooms,
         registrations: renderRegistrations,
         feedback: renderFeedback
     };

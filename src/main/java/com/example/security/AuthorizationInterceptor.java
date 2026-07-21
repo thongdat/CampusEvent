@@ -59,6 +59,10 @@ public class AuthorizationInterceptor implements HandlerInterceptor {
             if (isAdminOnly(path, method)) {
                 return allow(request, response, role, "ADMIN");
             }
+            // Hội đồng duyệt cần ĐỌC danh sách phòng để tạo event công khai khi phê duyệt.
+            if ("GET".equalsIgnoreCase(method) && path.startsWith("/admin/rooms/options")) {
+                return allow(request, response, role, "ADMIN", "MANAGER", "DEPARTMENT", "COMMITTEE");
+            }
             return allow(request, response, role, "ADMIN", "MANAGER", "DEPARTMENT");
         }
         return true;

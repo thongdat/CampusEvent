@@ -104,6 +104,20 @@ public class AemsFeatureSchemaMigration implements ApplicationRunner {
                         "overall_rating INT NOT NULL, " +
                         "comment NVARCHAR(MAX) NULL, " +
                         "submitted_at DATETIME2 NOT NULL)");
+
+        executeIfTableMissing("room",
+                "CREATE TABLE room (" +
+                        "id BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY, " +
+                        "name NVARCHAR(100) NOT NULL UNIQUE, " +
+                        "capacity INT NULL, " +
+                        "description NVARCHAR(MAX) NULL, " +
+                        "active BIT NOT NULL DEFAULT 1, " +
+                        "created_at DATETIME2 NOT NULL)");
+
+        addColumnIfMissing("event", "room_id", "BIGINT NULL");
+        addColumnIfMissing("event", "registration_closed_at", "DATETIME2 NULL");
+        String proposalTableForRoom = resolveProposalTable();
+        addColumnIfMissing(proposalTableForRoom, "room_id", "BIGINT NULL");
     }
 
     private void addColumnIfMissing(String table, String column, String definition) {

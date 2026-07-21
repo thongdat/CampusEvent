@@ -2054,198 +2054,46 @@ tbody tr.selected {
 
 .role-card.tone-gray { border-color: #cbd5e1; background: linear-gradient(180deg, #f8fafc 0%, #fff 70%); }
 
-.proposal-workspace {
-    display: grid;
-    gap: .9rem;
-}
-
-.proposal-status-strip {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: .75rem;
-}
-
-.proposal-status-tile {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    gap: .25rem .65rem;
-    align-items: center;
-    border: 1px solid #dbe5f2;
-    border-radius: .8rem;
-    background: #fff;
-    padding: .8rem .9rem;
-}
-
-.proposal-status-tile span {
-    display: inline-grid;
-    width: 2.2rem;
-    height: 2.2rem;
-    grid-row: span 3;
-    place-items: center;
-    border-radius: .65rem;
-    background: #f1f5f9;
-    color: #475569;
-}
-
-.proposal-status-tile strong {
-    color: #0f172a;
-    font-size: 1.25rem;
-    font-weight: 950;
-    line-height: 1;
-}
-
-.proposal-status-tile em,
-.proposal-status-tile small {
-    min-width: 0;
-    font-style: normal;
-}
-
-.proposal-status-tile em {
-    color: #334155;
-    font-size: .78rem;
-    font-weight: 900;
-}
-
-.proposal-status-tile small {
-    color: #64748b;
-    font-size: .73rem;
-    font-weight: 650;
-}
-
-.proposal-status-tile.tone-green span { background: #dcfce7; color: #15803d; }
-.proposal-status-tile.tone-amber span { background: #fef3c7; color: #b45309; }
-.proposal-status-tile.tone-rose span { background: #ffe4e6; color: #be123c; }
-.proposal-status-tile.tone-blue span { background: #dbeafe; color: #2563eb; }
-.proposal-status-tile.tone-gray span { background: #f1f5f9; color: #475569; }
-
-.proposal-board-head {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
+.proposal-toolbar {
     justify-content: space-between;
-    gap: .75rem;
 }
 
-.proposal-card-grid {
-    display: grid;
-    gap: .75rem;
+.proposal-toolbar-filters {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    flex-wrap: wrap;
 }
 
-.proposal-card {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 1rem;
-    border: 1px solid #dbe5f2;
-    border-left: .28rem solid #64748b;
-    border-radius: .8rem;
-    background: rgba(255, 255, 255, .92);
-    padding: 1rem;
-    box-shadow: 0 18px 42px -34px rgba(15, 23, 42, .55);
+.proposal-toolbar-filters .control {
+    flex: 1 1 220px;
+    max-width: 340px;
 }
 
-.proposal-card-main {
-    display: grid;
-    gap: .85rem;
-    min-width: 0;
-}
-
-.proposal-card-top {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    gap: .75rem;
-}
-
-.proposal-status-mark {
+.proposal-thumb {
     display: inline-grid;
-    width: 2.75rem;
-    height: 2.75rem;
+    width: 3.25rem;
+    height: 2.45rem;
     place-items: center;
-    border-radius: .75rem;
+    border: 1px solid var(--line);
+    border-radius: .45rem;
     background: #f1f5f9;
     color: #475569;
 }
 
-.proposal-card h3 {
-    margin: 0;
-    color: #0f172a;
-    font-size: .98rem;
-    font-weight: 950;
-    letter-spacing: 0;
-}
+.proposal-thumb.tone-green { background: #dcfce7; color: #15803d; border-color: #bbf7d0; }
+.proposal-thumb.tone-amber { background: #fef3c7; color: #b45309; border-color: #fde68a; }
+.proposal-thumb.tone-rose { background: #ffe4e6; color: #be123c; border-color: #fecdd3; }
+.proposal-thumb.tone-blue { background: #dbeafe; color: #2563eb; border-color: #bfdbfe; }
+.proposal-thumb.tone-gray { background: #f1f5f9; color: #475569; border-color: #e2e8f0; }
 
-.proposal-card p {
-    margin: .28rem 0 0;
-    color: #64748b;
-    font-size: .84rem;
-    line-height: 1.5;
-}
-
-.proposal-meta-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: .65rem;
-}
-
-.proposal-meta-grid span {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    align-items: center;
-    gap: .1rem .4rem;
-    min-width: 0;
-    border: 1px solid #e2e8f0;
-    border-radius: .65rem;
-    background: #f8fafc;
-    padding: .55rem .65rem;
-}
-
-.proposal-meta-grid svg {
-    grid-row: span 2;
-    color: #64748b;
-}
-
-.proposal-meta-grid b,
-.proposal-meta-grid em {
-    min-width: 0;
+.proposal-desc {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-style: normal;
+    max-width: 32rem;
 }
-
-.proposal-meta-grid b {
-    color: #64748b;
-    font-size: .68rem;
-    font-weight: 850;
-    text-transform: uppercase;
-}
-
-.proposal-meta-grid em {
-    color: #0f172a;
-    font-size: .78rem;
-    font-weight: 800;
-}
-
-.proposal-card-side {
-    display: grid;
-    align-content: space-between;
-    justify-items: end;
-    gap: 1rem;
-    min-width: 9.5rem;
-}
-
-.proposal-actions {
-    flex-wrap: nowrap;
-}
-
-.proposal-card.tone-green { border-left-color: #16a34a; }
-.proposal-card.tone-green .proposal-status-mark { background: #dcfce7; color: #15803d; }
-.proposal-card.tone-amber { border-left-color: #f59e0b; }
-.proposal-card.tone-amber .proposal-status-mark { background: #fef3c7; color: #b45309; }
-.proposal-card.tone-rose { border-left-color: #e11d48; }
-.proposal-card.tone-rose .proposal-status-mark { background: #ffe4e6; color: #be123c; }
-.proposal-card.tone-blue { border-left-color: #2563eb; }
-.proposal-card.tone-blue .proposal-status-mark { background: #dbeafe; color: #2563eb; }
-.proposal-card.tone-gray .proposal-status-mark { background: #f1f5f9; color: #475569; }
 
 /* Empty + error states */
 .empty,
@@ -3767,18 +3615,14 @@ tbody tr:hover {
         align-items: flex-start;
     }
 
-    .proposal-status-strip {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+    .proposal-toolbar {
+        align-items: stretch;
+        flex-direction: column;
     }
 
-    .proposal-card {
-        grid-template-columns: 1fr;
-    }
-
-    .proposal-card-side {
-        align-content: start;
-        justify-items: start;
-        min-width: 0;
+    .proposal-toolbar-filters .control {
+        flex: 1 1 100%;
+        max-width: none;
     }
 
     .report-stat-header {
@@ -3863,9 +3707,8 @@ tbody tr:hover {
         justify-self: start;
     }
 
-    .proposal-status-strip,
-    .proposal-meta-grid {
-        grid-template-columns: 1fr;
+    .proposal-desc {
+        max-width: 16rem;
     }
 
     .dept-list-head {

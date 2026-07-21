@@ -62,6 +62,7 @@ public class EventFormSyncService {
         public int absentMarked;
         public int feedbacksAdded;
         public int quizSubmissionsAdded;
+        public final List<Map<String, Object>> newStudents = new java.util.ArrayList<>();
         public final List<String> warnings = new java.util.ArrayList<>();
 
         public Map<String, Object> toMap() {
@@ -74,6 +75,8 @@ public class EventFormSyncService {
             m.put("absentMarked", absentMarked);
             m.put("feedbacksAdded", feedbacksAdded);
             m.put("quizSubmissionsAdded", quizSubmissionsAdded);
+            m.put("newStudentsCount", newStudents.size());
+            m.put("newStudents", newStudents);
             m.put("warnings", warnings);
             return m;
         }
@@ -117,6 +120,7 @@ public class EventFormSyncService {
                 att.setNote("Check-in qua Google Form · email khớp hệ thống");
                 attendanceRepository.save(att);
                 r.created++;
+                addNewStudent(r, student, t, "checkin_created", "CHECKED_IN");
             } else if (!"CHECKED_IN".equals(att.getStatus()) && !"COMPLETED".equals(att.getStatus())
                     && !"MID_VERIFIED".equals(att.getStatus()) && !"CHECKED_OUT".equals(att.getStatus())) {
                 att.setStatus("CHECKED_IN");
@@ -124,6 +128,7 @@ public class EventFormSyncService {
                 att.setNote("Check-in qua Google Form · email khớp hệ thống");
                 attendanceRepository.save(att);
                 r.updated++;
+                addNewStudent(r, student, t, "checkin_updated", "CHECKED_IN");
             }
             checkedInStudentIds.add(student.getId());
         }
@@ -209,18 +214,27 @@ public class EventFormSyncService {
                 att.setNote("Có check-out nhưng KHÔNG check-in → vắng");
                 attendanceRepository.save(att);
                 r.created++;
+                addNewStudent(r, student, t, "checkout_without_checkin", "ABSENT");
             } else if (checkedIn) {
+                boolean newCheckout = att.getCheckoutTime() == null || !"COMPLETED".equals(att.getStatus());
                 att.setStatus("COMPLETED");
                 att.setCheckoutTime(t);
                 attendanceRepository.save(att);
-                r.updated++;
+                if (newCheckout) {
+                    r.updated++;
+                    addNewStudent(r, student, t, "checkout_completed", "COMPLETED");
+                }
             } else {
                 // Attendance tồn tại nhưng chưa từng check-in (REGISTERED/ABSENT) → vẫn VẮNG
+                boolean newCheckout = att.getCheckoutTime() == null;
                 att.setStatus("ABSENT");
                 att.setCheckoutTime(t);
                 att.setNote("Có check-out nhưng KHÔNG check-in → vắng");
                 attendanceRepository.save(att);
-                r.updated++;
+                if (newCheckout) {
+                    r.updated++;
+                    addNewStudent(r, student, t, "checkout_without_checkin", "ABSENT");
+                }
             }
 
             // Lưu feedback (1 feedback / sinh viên / event)
@@ -255,6 +269,18 @@ public class EventFormSyncService {
                 .orElseGet(() -> registrationRepository.save(new Registration(
                         LocalDateTime.now(), "REGISTERED",
                         "Tự tạo từ Google Form (" + via + ")", event, student)));
+    }
+
+    private void addNewStudent(SyncResult result, Student student, LocalDateTime time, String action, String status) {
+        Map<String, Object> item = new LinkedHashMap<>();
+        item.put("id", student.getId());
+        item.put("studentCode", student.getStudentCode());
+        item.put("fullName", student.getUser() != null ? safe(student.getUser().getFullName()) : "");
+        item.put("email", student.getUser() != null ? safe(student.getUser().getEmail()) : "");
+        item.put("time", time);
+        item.put("action", action);
+        item.put("status", status);
+        result.newStudents.add(item);
     }
 
     private LocalDateTime toLocal(java.time.Instant instant) {

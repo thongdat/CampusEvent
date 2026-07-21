@@ -3,9 +3,11 @@ package com.example.controller;
 import com.example.model.Event;
 import com.example.model.EventProposal;
 import com.example.model.QuizQuestion;
+import com.example.model.Room;
 import com.example.repository.EventProposalRepository;
 import com.example.repository.EventRepository;
 import com.example.repository.QuizQuestionRepository;
+import com.example.repository.RoomRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.data.domain.Sort;
@@ -52,13 +54,16 @@ public class CommitteeController {
     private final EventProposalRepository proposalRepository;
     private final EventRepository eventRepository;
     private final QuizQuestionRepository quizQuestionRepository;
+    private final RoomRepository roomRepository;
 
     public CommitteeController(EventProposalRepository proposalRepository,
                                EventRepository eventRepository,
-                               QuizQuestionRepository quizQuestionRepository) {
+                               QuizQuestionRepository quizQuestionRepository,
+                               RoomRepository roomRepository) {
         this.proposalRepository = proposalRepository;
         this.eventRepository = eventRepository;
         this.quizQuestionRepository = quizQuestionRepository;
+        this.roomRepository = roomRepository;
     }
 
     /**
@@ -139,12 +144,14 @@ public class CommitteeController {
         if (capacity == null || capacity <= 0) capacity = 100;
 
         String note = payload == null ? null : stringValue(payload, "note");
-        String resolvedLocation = payload == null ? proposal.getLocation() : firstNonBlank(stringValue(payload, "location"), proposal.getLocation(), "FPT Campus");
+        Room resolvedRoom = resolveRoom(payload, proposal);
+        final String resolvedLocationFinal = resolvedRoom != null
+                ? resolvedRoom.getName()
+                : firstNonBlank(proposal.getLocation(), "Hội Trường Alpha");
 
         final LocalDateTime startFinal = start;
         final LocalDateTime endFinal = end;
         final Integer capacityFinal = capacity;
-        final String resolvedLocationFinal = resolvedLocation == null ? "FPT Campus" : resolvedLocation;
         Event event = eventRepository
                 .findFirstByTitleAndDepartmentIdAndStartTimeOrderByIdAsc(proposal.getTitle(), proposal.getDepartment().getId(), startFinal)
                 .orElseGet(() -> new Event(
@@ -161,6 +168,11 @@ public class CommitteeController {
         event.setEndTime(endFinal);
         event.setCapacity(capacityFinal);
         event.setLocation(resolvedLocationFinal);
+        if (resolvedRoom != null) {
+            event.setRoom(resolvedRoom);
+        } else if (proposal.getRoom() != null) {
+            event.setRoom(proposal.getRoom());
+        }
         event.setStatus("PUBLISHED");
         String organizer = payload == null ? proposal.getOrganizer()
                 : firstNonBlank(stringValue(payload, "organizer"), proposal.getOrganizer());
@@ -272,6 +284,8 @@ public class CommitteeController {
         m.put("updatedAt", iso(p.getUpdatedAt()));
         m.put("imageUrl", p.getImageUrl());
         m.put("location", p.getLocation());
+        m.put("roomId", p.getRoom() != null ? p.getRoom().getId() : null);
+        m.put("roomName", p.getRoom() != null ? p.getRoom().getName() : p.getLocation());
         m.put("capacity", p.getCapacity());
         m.put("budget", p.getBudget());
         m.put("note", p.getNote());
@@ -396,6 +410,37 @@ public class CommitteeController {
             return LocalDateTime.parse(s);
         } catch (Exception ex) {
             return fallback;
+        }
+    }
+
+    private Room resolveRoom(Map<String, Object> payload, EventProposal proposal) {
+        if (payload != null && payload.get("roomId") != null) {
+            Long roomId = parseLong(payload.get("roomId"));
+            if (roomId != null) {
+                Room room = roomRepository.findById(roomId)
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Phòng không tồn tại"));
+                if (!Boolean.TRUE.equals(room.getActive())) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Phòng đang bị tắt");
+                }
+                return room;
+            }
+        }
+        String location = payload == null
+                ? proposal.getLocation()
+                : firstNonBlank(stringValue(payload, "location"), proposal.getLocation());
+        if (location != null && !location.isBlank()) {
+            return roomRepository.findByNameIgnoreCase(location.trim()).orElse(proposal.getRoom());
+        }
+        return proposal.getRoom();
+    }
+
+    private Long parseLong(Object value) {
+        if (value == null) return null;
+        if (value instanceof Number) return ((Number) value).longValue();
+        try {
+            return Long.parseLong(String.valueOf(value).trim());
+        } catch (Exception ignored) {
+            return null;
         }
     }
 

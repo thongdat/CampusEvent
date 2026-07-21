@@ -22,6 +22,10 @@ public class Event {
     
     @Column(columnDefinition = "NVARCHAR(200)")
     private String location;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "room_id")
+    private Room room;
     
     @Column(nullable = false)
     private LocalDateTime startTime;
@@ -59,6 +63,10 @@ public class Event {
     // Thời điểm hệ thống tự đóng event (đánh vắng + kết thúc) sau khi kết thúc 15 phút.
     @Column(name = "auto_closed_at")
     private LocalDateTime autoClosedAt;
+
+    /** Thời điểm admin đóng đăng ký (không nhận thêm sinh viên mới). */
+    @Column(name = "registration_closed_at")
+    private LocalDateTime registrationClosedAt;
 
     @Column(name = "speakers", columnDefinition = "NVARCHAR(800)")
     private String speakers;
@@ -127,6 +135,14 @@ public class Event {
 
     public void setLocation(String location) {
         this.location = location;
+    }
+
+    public Room getRoom() {
+        return room;
+    }
+
+    public void setRoom(Room room) {
+        this.room = room;
     }
 
     public LocalDateTime getStartTime() {
@@ -235,6 +251,9 @@ public class Event {
 
     public LocalDateTime getAutoClosedAt() { return autoClosedAt; }
     public void setAutoClosedAt(LocalDateTime autoClosedAt) { this.autoClosedAt = autoClosedAt; }
+
+    public LocalDateTime getRegistrationClosedAt() { return registrationClosedAt; }
+    public void setRegistrationClosedAt(LocalDateTime registrationClosedAt) { this.registrationClosedAt = registrationClosedAt; }
 
     public String getSpeakers() {
         return speakers;

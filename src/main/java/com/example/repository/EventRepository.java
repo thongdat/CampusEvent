@@ -29,6 +29,10 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     long countByStartTimeGreaterThanEqual(LocalDateTime startTime);
     long countByStartTimeGreaterThanEqualAndStartTimeLessThan(LocalDateTime startTime, LocalDateTime endTime);
 
+    long countByRoom_Id(Long roomId);
+
+    long countByLocationIgnoreCase(String location);
+
     @Query("select coalesce(sum(e.capacity), 0) from Event e where e.startTime < :endTime")
     Long sumCapacityBefore(@Param("endTime") LocalDateTime endTime);
 

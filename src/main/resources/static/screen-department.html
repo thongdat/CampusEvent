@@ -228,8 +228,11 @@
                         <input id="proposalSupportStaff" type="number" min="0" value="0" placeholder="VD: 5" class="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-fpt-500 focus:ring-2 focus:ring-fpt-200 focus:outline-none">
                     </label>
                     <label class="block">
-                        <span class="mb-1 block text-xs font-bold text-slate-700">Địa điểm</span>
-                        <input id="proposalLocation" maxlength="200" placeholder="Hội trường Alpha" class="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-fpt-500 focus:ring-2 focus:ring-fpt-200 focus:outline-none">
+                        <span class="mb-1 block text-xs font-bold text-slate-700">Địa điểm *</span>
+                        <select id="proposalLocation" required class="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-fpt-500 focus:ring-2 focus:ring-fpt-200 focus:outline-none">
+                            <option value="">— Chọn phòng sự kiện —</option>
+                        </select>
+                        <input type="hidden" id="proposalRoomId" value="">
                     </label>
                     <label class="block">
                         <span class="mb-1 block text-xs font-bold text-slate-700">Sức chứa *</span>
@@ -374,6 +377,7 @@
         events: [],
         proposals: [],
         organizers: [],
+        rooms: [],
         structure: FALLBACK_STRUCTURE.slice()
     };
     let selectedProposalImage = '';
@@ -914,6 +918,36 @@
     }
 
     // ---------- Proposal Modal ----------
+    function populateRoomSelect(selectedRoomIdOrName) {
+        const sel = $('#proposalLocation');
+        if (!sel) return;
+        const rooms = store.rooms || [];
+        const current = selectedRoomIdOrName == null ? '' : String(selectedRoomIdOrName);
+        sel.innerHTML = '<option value="">— Chọn phòng sự kiện —</option>' + rooms.map(room => {
+            const label = room.capacity != null ? `${room.name} (sức chứa ${room.capacity})` : room.name;
+            return `<option value="${h(room.id)}" data-name="${h(room.name)}" data-capacity="${room.capacity != null ? Number(room.capacity) : ''}">${h(label)}</option>`;
+        }).join('');
+        if (!current) {
+            sel.value = '';
+            if ($('#proposalRoomId')) $('#proposalRoomId').value = '';
+            return;
+        }
+        const byId = rooms.find(r => String(r.id) === current);
+        const byName = rooms.find(r => same(r.name, current));
+        const matched = byId || byName;
+        if (matched) {
+            sel.value = String(matched.id);
+            if ($('#proposalRoomId')) $('#proposalRoomId').value = String(matched.id);
+        } else {
+            sel.value = '';
+            if ($('#proposalRoomId')) $('#proposalRoomId').value = '';
+        }
+    }
+
+    function setProposalRoomSelection(roomId, locationName) {
+        populateRoomSelect(roomId || locationName || '');
+    }
+
     function populateFacultySelect(selected) {
         const sel = $('#proposalFaculty');
         sel.innerHTML = '<option value="">— Chọn khoa —</option>' + store.structure.map(s => `<option value="${h(s.faculty)}" ${same(s.faculty, selected) ? 'selected' : ''}>${h(s.faculty)}</option>`).join('');
@@ -957,7 +991,12 @@
             organizer: $('#proposalOrganizer').value,
             speakers: $('#proposalSpeakers').value,
             supportStaffNeeded: $('#proposalSupportStaff').value,
-            location: $('#proposalLocation').value,
+            location: $('#proposalLocation').options[$('#proposalLocation').selectedIndex]
+                ? ($('#proposalLocation').options[$('#proposalLocation').selectedIndex].dataset.name
+                    || $('#proposalLocation').options[$('#proposalLocation').selectedIndex].textContent
+                    || $('#proposalLocation').value)
+                : $('#proposalLocation').value,
+            roomId: $('#proposalRoomId').value || $('#proposalLocation').value,
             capacity: $('#proposalCapacity').value,
             budget: $('#proposalBudget').value,
             description: $('#proposalDescription').value,
@@ -986,7 +1025,7 @@
     }
     function applyProposalDraft(d) {
         $('#proposalTitle').value = d.title || '';
-        $('#proposalLocation').value = d.location || '';
+        setProposalRoomSelection(d.roomId, d.location);
         $('#proposalCapacity').value = d.capacity || 80;
         $('#proposalBudget').value = d.budget || 0;
         $('#proposalDescription').value = d.description || '';
@@ -1114,7 +1153,8 @@
         $('#proposalDialogTitle').textContent = isEdit ? 'Cập nhật proposal' : 'Tạo đề xuất sự kiện';
         $('#proposalId').value = isEdit && proposal ? proposal.id : '';
         $('#proposalTitle').value = (proposal && proposal.title) || '';
-        $('#proposalLocation').value = (proposal && proposal.location) || '';
+        populateRoomSelect(proposal && (proposal.roomId || proposal.location));
+        setProposalRoomSelection(proposal && proposal.roomId, proposal && proposal.location);
         $('#proposalCapacity').value = (proposal && proposal.capacity) || 80;
         $('#proposalBudget').value = (proposal && proposal.budget) || 0;
         $('#proposalDescription').value = (proposal && proposal.description) || '';
@@ -1169,7 +1209,12 @@
             departmentId: departmentId ? Number(departmentId) : null,
             departmentName,
             faculty,
-            location: $('#proposalLocation').value.trim(),
+            location: (() => {
+                const sel = $('#proposalLocation');
+                const opt = sel && sel.options[sel.selectedIndex];
+                return opt ? (opt.dataset.name || opt.textContent || '').trim() : '';
+            })(),
+            roomId: $('#proposalRoomId').value ? Number($('#proposalRoomId').value) : null,
             capacity: Number($('#proposalCapacity').value || 0),
             budget: Number($('#proposalBudget').value || 0),
             imageUrl: selectedProposalImage,
@@ -1356,13 +1401,15 @@
             api('/departments').catch(() => []),
             api('/events').catch(() => []),
             api('/proposals').catch(() => []),
-            api('/proposal-organizers').catch(() => [])
-        ]).then(([structure, departments, events, proposals, organizers]) => {
+            api('/proposal-organizers').catch(() => []),
+            api('/rooms/options').catch(() => [])
+        ]).then(([structure, departments, events, proposals, organizers, rooms]) => {
             store.structure = (structure && structure.items && structure.items.length) ? structure.items : FALLBACK_STRUCTURE;
             store.departments = Array.isArray(departments) ? departments : (departments?.items || []);
             store.events = Array.isArray(events) ? events : (events?.items || events?.events || []);
             store.proposals = Array.isArray(proposals) ? proposals : (proposals?.items || proposals?.proposals || []);
             store.organizers = Array.isArray(organizers) ? organizers : (organizers?.items || []);
+            store.rooms = Array.isArray(rooms) ? rooms : (rooms?.items || []);
             state.loading = false;
             render();
         }).catch(err => {
@@ -1420,6 +1467,10 @@
             toast('Vui lòng nhập đủ thông tin bắt buộc.');
             return;
         }
+        if (!payload.roomId || !payload.location) {
+            toast('Vui lòng chọn địa điểm (phòng sự kiện).');
+            return;
+        }
         if (!payload.proposedEndDate) {
             toast('Vui lòng chọn giờ kết thúc.');
             return;
@@ -1460,6 +1511,16 @@
     // Tự lưu nháp mỗi khi người dùng gõ/đổi trong form (chỉ áp dụng cho proposal mới).
     $('#proposalForm').addEventListener('input', saveProposalDraft);
     $('#proposalForm').addEventListener('change', saveProposalDraft);
+    $('#proposalLocation').addEventListener('change', () => {
+        const sel = $('#proposalLocation');
+        const opt = sel.options[sel.selectedIndex];
+        $('#proposalRoomId').value = opt && opt.value ? opt.value : '';
+        if (opt && opt.dataset.capacity && !$('#proposalId').value) {
+            const suggested = Number(opt.dataset.capacity);
+            if (suggested > 0) $('#proposalCapacity').value = suggested;
+        }
+        saveProposalDraft();
+    });
 
     // Logout
     let logoutInProgress = false;

@@ -63,6 +63,13 @@
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
         </dependency>
+        <!-- H2 in-memory: cho phép chạy app để demo/E2E mà không cần cài SQL Server.
+             Kích hoạt bằng profile "h2" (application-h2.properties). -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>runtime</scope>
+        </dependency>
 
         <dependency>
             <groupId>org.projectlombok</groupId>
