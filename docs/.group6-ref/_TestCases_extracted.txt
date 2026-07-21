@@ -1,0 +1,369 @@
+﻿
+##### SHEET: Tổng quan #####
+KẾ HOẠCH KIỂM THỬ — AEMS / CampusEvent (SWR301_SE20A05_Group1) |  |  | 
+Dự án | Academic Event Management System (Spring Boot MVC, JPA, SQL Server)
+Nhóm | SWR301_SE20A05_Group1 — Thành viên: DatHVT, AnhNVT, TuHNC, SangTM
+Tiến độ | 10 tuần (Tuần 1: lập kế hoạch & dữ liệu; Tuần 2-3: Unit; Tuần 4-6: Integration; Tuần 7-8: System; Tuần 9: End-to-End; Tuần 10: Hồi quy & báo cáo)
+Tổng số test case | 150
+Ngày cập nhật | 2026-06-08
+Người thực hiện | Tính năng phụ trách | Số TC | Sheet
+Đạt (DatHVT) | Sinh viên: Khám phá sự kiện, Đăng ký & Xếp hạng ưu tiên (RBL) — PHẦN KHÓ NHẤT | 37 | Đạt - SV & Ưu tiên
+Anh (AnhNVT) | Xác thực & Bảo mật: Đăng nhập, Đăng ký + OTP, Quên/Đặt lại mật khẩu, Google OAuth, Phân quyền | 39 | Anh - Auth & Bảo mật
+Tú (TuHNC) | Điểm danh & Quiz: Check-in QR động, Mid-session, Check-out, Quiz (SV & Khoa), Dashboard tham gia | 35 | Tú - Điểm danh & Quiz
+Sang (SangTM) | Hội đồng duyệt đề xuất + Quản trị hệ thống (Admin) + Thống kê & AI phản hồi (Khoa) | 39 | Sang - Quản trị & Tổ chức
+Chú thích |  |  | 
+
+##### SHEET: Lịch 10 tuần #####
+LỊCH KIỂM THỬ 10 TUẦN |  |  |  |  |  |  | 
+Tuần | Trọng tâm | Cấp độ | Đạt (DatHVT) | Anh (AnhNVT) | Tú (TuHNC) | Sang (SangTM) | Tổng
+1 | Lập kế hoạch, chuẩn bị môi trường & dữ liệu test, smoke test | — | 0 | 0 | 0 | 0 | 0
+2 | Kiểm thử đơn vị (logic nghiệp vụ, công thức, validate) | Unit | 4 | 4 | 2 | 2 | 12
+3 | Kiểm thử đơn vị (tiếp) + review | Unit | 4 | 3 | 2 | 1 | 10
+4 | Kiểm thử tích hợp API + CSDL (luồng cơ bản) | Integration | 8 | 9 | 8 | 10 | 35
+5 | Kiểm thử tích hợp (nghiệp vụ chính) | Integration | 8 | 8 | 8 | 10 | 34
+6 | Kiểm thử tích hợp (ngoại lệ & biên) | Integration | 7 | 8 | 7 | 9 | 31
+7 | Kiểm thử hệ thống (liên module) | System | 2 | 2 | 3 | 2 | 9
+8 | Kiểm thử hệ thống (phân quyền, luồng end-state) | System | 1 | 2 | 2 | 2 | 7
+9 | Kiểm thử End-to-End theo hành trình người dùng | E2E | 3 | 3 | 3 | 3 | 12
+10 | Hồi quy toàn bộ + tổng hợp báo cáo & demo | Regression | 0 | 0 | 0 | 0 | 0
+
+##### SHEET: Đạt - SV & Ưu tiên #####
+Đạt (DatHVT) — Sinh viên: Khám phá sự kiện, Đăng ký & Xếp hạng ưu tiên (RBL)  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Tổng số test case: 37  —  Đã sắp theo Tuần (1→10) |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Mã TC | Tuần | Người thực hiện | Module / Tính năng | Cấp độ test | Tiêu đề kiểm thử | Tiền điều kiện | Các bước thực hiện | Dữ liệu kiểm thử | Kết quả mong đợi | Loại | Ưu tiên | Kết quả thực tế | Trạng thái | Ghi chú
+STU-001 | Tuần 2 | Đạt | Công thức ưu tiên | Unit | M=100 khi đúng chuyên ngành | SV ngành = khoa tổ chức | 1. Xem priorityBreakdown ở event-detail | ngành SV ≡ khoa event | majorScore (M) = 100 | Biên | Cao |  |  | 
+STU-002 | Tuần 2 | Đạt | Công thức ưu tiên | Unit | M=60 khi cùng khoa lớn | SV và event cùng faculty, khác bộ môn | 1. Xem priorityBreakdown | cùng khoa lớn | majorScore (M) = 60 | Biên | TB |  |  | 
+STU-003 | Tuần 2 | Đạt | Công thức ưu tiên | Unit | M=30 khi khác khoa | SV và event khác khoa | 1. Xem priorityBreakdown | khác khoa | majorScore (M) = 30 | Biên | TB |  |  | 
+STU-004 | Tuần 2 | Đạt | Công thức ưu tiên | Unit | S theo học kỳ (kỳ cuối ưu tiên) | SV kỳ 9 và SV kỳ 1 | 1. So sánh semesterScore | semester=9 vs 1 | S(kỳ9)=100; S(kỳ1)≈11 (làm tròn) | Biên | TB |  |  | 
+STU-005 | Tuần 3 | Đạt | Công thức ưu tiên | Unit | P chuẩn hóa khi điểm > 100 | SV totalPoints > 100 | 1. Xem pointsScore | totalPoints=400 | P = min(100, sqrt(400)*10) = 100; nếu <=100 thì P = chính điểm | Biên | TB |  |  | 
+STU-006 | Tuần 3 | Đạt | Công thức ưu tiên | Unit | T=100 khi đăng ký sớm (<=20% thời gian mở) | Đăng ký ngay sau khi mở | 1. Đăng ký sớm, xem timeScore | elapsed/total <= 0.2 | timeScore (T) = 100; 20-70% → 70; >70% → 40 | Biên | TB |  |  | 
+STU-007 | Tuần 3 | Đạt | Công thức ưu tiên | Unit | Tổng Priority = 0.4M+0.3S+0.2P+0.1T trong [0,100] | SV bất kỳ | 1. So tổng với từng thành phần | — | total = 0.4*M+0.3*S+0.2*P+0.1*T, luôn nằm trong [0,100] | Biên | Cao |  |  | 
+STU-008 | Tuần 3 | Đạt | Quyền riêng tư | Unit | Ẩn danh tên trong hàng đợi event-detail | Event có người đăng ký | 1. GET /api/student/events/{id} xem queue | — | Tên hiển thị dạng ẩn danh (vd "Nguyễn Văn A.") | Bình thường | Thấp |  |  | 
+STU-009 | Tuần 4 | Đạt | Hồ sơ sinh viên | Integration | Xem hồ sơ & thống kê tổng quan | Đã đăng nhập bằng tài khoản sinh viên | 1. Mở màn hình Sinh viên
+2. Gọi GET /api/student/me với header X-User-Email | X-User-Email = sv hợp lệ | Trả về profile (MSSV, họ tên, ngành, khoa, kỳ, điểm) + stats (registered, waitlist, attended, feedback, upcoming, rank, totalPoints) | Bình thường | Cao |  |  | 
+STU-010 | Tuần 4 | Đạt | Hồ sơ sinh viên | Integration | Thiếu header X-User-Email | Chưa đăng nhập | 1. Gọi GET /api/student/me không kèm header | (không header) | HTTP 401 - "Yêu cầu đăng nhập (X-User-Email)" | Ngoại lệ | Cao |  |  | 
+STU-011 | Tuần 4 | Đạt | Hồ sơ sinh viên | Integration | Tự khởi tạo Student cho user role STUDENT thiếu bản ghi student | User role STUDENT nhưng chưa có row student | 1. Gọi /api/student/me | email user STUDENT chưa có student | Hệ thống tự tạo student (mã SVxxxxx) và trả hồ sơ, không lỗi 401 | Biên | TB |  |  | 
+STU-012 | Tuần 4 | Đạt | Danh sách sự kiện | Integration | Liệt kê mặc định sắp xếp theo điểm ưu tiên | Có nhiều sự kiện PUBLISHED/APPROVED/COMPLETED | 1. GET /api/student/events (sort mặc định = priority) | sort=priority | Danh sách sự kiện, sắp xếp giảm dần theo priorityPreview, kèm facultyOptions | Bình thường | Cao |  |  | 
+STU-013 | Tuần 4 | Đạt | Danh sách sự kiện | Integration | Tìm kiếm theo từ khóa | Có sự kiện chứa từ khóa | 1. GET /api/student/events?q=marketing | q=marketing | Chỉ trả sự kiện có title/description/location/khoa khớp từ khóa | Bình thường | TB |  |  | 
+STU-014 | Tuần 4 | Đạt | Danh sách sự kiện | Integration | Lọc theo khoa (faculty) | Có sự kiện thuộc nhiều khoa | 1. GET /api/student/events?faculty=... | faculty=CNTT | Chỉ trả sự kiện thuộc khoa đã chọn | Bình thường | TB |  |  | 
+STU-015 | Tuần 4 | Đạt | Danh sách sự kiện | Integration | Lọc scope=upcoming | Có sự kiện tương lai và quá khứ | 1. GET /api/student/events?scope=upcoming | scope=upcoming | Chỉ trả sự kiện có startTime > hiện tại | Bình thường | TB |  |  | 
+STU-016 | Tuần 4 | Đạt | Danh sách sự kiện | Integration | Lọc scope=past chỉ trong 8 tháng | Có sự kiện cũ > 8 tháng và trong 8 tháng | 1. GET /api/student/events?scope=past | scope=past | Chỉ trả sự kiện đã diễn ra trong vòng 8 tháng gần đây | Biên | Thấp |  |  | 
+STU-017 | Tuần 5 | Đạt | Danh sách sự kiện | Integration | Lọc scope=today | Có sự kiện diễn ra hôm nay | 1. GET /api/student/events?scope=today | scope=today | Chỉ trả sự kiện bắt đầu trong ngày hôm nay | Bình thường | Thấp |  |  | 
+STU-018 | Tuần 5 | Đạt | Danh sách sự kiện | Integration | Gợi ý theo khoa của sinh viên (recommended) | Sinh viên thuộc 1 khoa | 1. GET /api/student/events?scope=recommended | scope=recommended | Chỉ trả sự kiện thuộc khoa của sinh viên | Bình thường | TB |  |  | 
+STU-019 | Tuần 5 | Đạt | Danh sách sự kiện | Integration | Sắp xếp theo ngày (sort=date) | Có nhiều sự kiện | 1. GET /api/student/events?sort=date | sort=date | Danh sách sắp xếp tăng dần theo startTime | Bình thường | Thấp |  |  | 
+STU-020 | Tuần 5 | Đạt | Chi tiết sự kiện | Integration | Xem chi tiết + bóc tách điểm ưu tiên + hàng đợi | Có sự kiện hợp lệ | 1. GET /api/student/events/{id} | id hợp lệ + X-User-Email | Trả thông tin event, priorityBreakdown (M/S/P/T), queue top (tên đã ẩn danh), feedback nổi bật (rating>=4) | Bình thường | Cao |  |  | 
+STU-021 | Tuần 5 | Đạt | Chi tiết sự kiện | Integration | Sự kiện không tồn tại | — | 1. GET /api/student/events/999999 | id=999999 | HTTP 404 - "Không tìm thấy sự kiện" | Ngoại lệ | TB |  |  | 
+STU-022 | Tuần 5 | Đạt | Đăng ký | Integration | Đăng ký thành công khi còn chỗ | Sự kiện PUBLISHED, còn chỗ, SV chưa đăng ký | 1. POST /api/student/events/{id}/register | id sự kiện còn chỗ | status=REGISTERED, cấp ticketCode (AEMS-xxxx), +5 điểm hoạt động, ghi ActivityLog REGISTER_EVENT | Bình thường | Cao |  |  | 
+STU-023 | Tuần 5 | Đạt | Đăng ký | Integration | Đăng ký lại khi đã đăng ký | SV đã REGISTERED sự kiện này | 1. POST /api/student/events/{id}/register lần 2 | id đã đăng ký | Trả alreadyRegistered=true, giữ nguyên trạng thái, không cộng điểm lần nữa | Ngoại lệ | Cao |  |  | 
+STU-024 | Tuần 5 | Đạt | Đăng ký | Integration | Đăng ký sự kiện chưa mở | Sự kiện status != PUBLISHED/APPROVED (vd DRAFT) | 1. POST .../register | sự kiện DRAFT | HTTP 400 - "Sự kiện chưa mở đăng ký" | Ngoại lệ | Cao |  |  | 
+STU-025 | Tuần 6 | Đạt | Đăng ký | Integration | Đăng ký sự kiện đã diễn ra | startTime < hiện tại | 1. POST .../register | sự kiện quá khứ | HTTP 400 - "Sự kiện đã diễn ra" | Ngoại lệ | Cao |  |  | 
+STU-026 | Tuần 6 | Đạt | Hủy đăng ký | Integration | Hủy đăng ký của người khác | registration thuộc SV khác | 1. DELETE .../registrations/{id} | id của người khác | HTTP 403 - "Không thể huỷ đăng ký của người khác" | Ngoại lệ | Cao |  |  | 
+STU-027 | Tuần 6 | Đạt | Hủy đăng ký | Integration | Hủy khi sự kiện đã diễn ra | startTime < hiện tại | 1. DELETE .../registrations/{id} | sự kiện quá khứ | HTTP 400 - "Sự kiện đã diễn ra, không thể huỷ" | Ngoại lệ | TB |  |  | 
+STU-028 | Tuần 6 | Đạt | Đăng ký của tôi | Integration | Xem danh sách đăng ký kèm vé/điểm danh/feedback | SV có nhiều đăng ký | 1. GET /api/student/my-registrations | X-User-Email | Trả danh sách sắp theo thời gian event giảm dần, mỗi item có event, ticket, attendance, feedbackSubmitted | Bình thường | TB |  |  | 
+STU-029 | Tuần 6 | Đạt | Bảng xếp hạng | Integration | Top 10 sinh viên theo điểm + đánh dấu chính mình | Có nhiều sinh viên | 1. GET /api/student/leaderboard | X-User-Email | Trả top 10 theo totalPoints giảm dần, item của mình có isMe=true | Bình thường | TB |  |  | 
+STU-030 | Tuần 6 | Đạt | Vé | Integration | Sinh mã vé khi REGISTERED | Đăng ký thành công | 1. Đăng ký và kiểm tra ticketCode | — | Mã vé dạng AEMS-XXXXXXXX duy nhất; WAITLIST không có vé | Bình thường | TB |  |  | 
+STU-031 | Tuần 6 | Đạt | Biên capacity | Integration | capacity = 0 hoặc null → không giới hạn chỗ | Event capacity null/0 | 1. Nhiều SV đăng ký | capacity=null | Tất cả đều REGISTERED, không ai bị WAITLIST; seatsLeft/fillRate = null | Biên | TB |  |  | 
+STU-032 | Tuần 7 | Đạt | Đăng ký (Ưu tiên) | System | Đầy chỗ + điểm cao hơn người thấp nhất → chiếm chỗ | capacity đầy, SV mới có priority > min của slot | 1. POST .../register với SV điểm cao | event full, SV điểm cao | SV mới = REGISTERED; người điểm thấp nhất bị chuyển WAITLIST + xóa vé, ghi note lý do | Biên | Cao |  |  | 
+STU-033 | Tuần 7 | Đạt | Đăng ký (Ưu tiên) | System | Đầy chỗ + điểm thấp hơn → vào hàng chờ | capacity đầy, SV mới có priority thấp | 1. POST .../register với SV điểm thấp | event full, SV điểm thấp | SV mới = WAITLIST, không cấp vé, note "Hàng chờ ưu tiên" | Biên | Cao |  |  | 
+STU-034 | Tuần 8 | Đạt | Hủy đăng ký | System | Hủy đăng ký của chính mình + tự đôn hàng chờ | SV đang REGISTERED, sự kiện chưa diễn ra, có người WAITLIST | 1. DELETE /api/student/registrations/{id} | registrationId của mình | status=CANCELLED, xóa vé; người WAITLIST điểm cao nhất tự lên REGISTERED + cấp vé | Bình thường | Cao |  |  | 
+STU-035 | Tuần 9 | Đạt | Hành trình E2E | E2E | SV đăng ký & nhận vé trọn vòng | Có tài khoản SV, sự kiện đang mở | 1. Đăng nhập SV
+2. Tìm & mở sự kiện
+3. Đăng ký
+4. Kiểm tra vé
+5. Mở "Đăng ký của tôi" | SV hợp lệ + sự kiện còn chỗ | Đăng ký REGISTERED, có mã vé, xuất hiện trong danh sách đăng ký với vé/điểm danh | Bình thường | Cao |  |  | 
+STU-036 | Tuần 9 | Đạt | Hành trình E2E | E2E | Cạnh tranh chỗ theo ưu tiên (RBL) | Sự kiện capacity nhỏ, nhiều SV | 1. Nhiều SV điểm khác nhau cùng đăng ký
+2. Xem hàng đợi event-detail | nhiều SV, capacity=2 | SV điểm cao giữ REGISTERED, SV điểm thấp xuống WAITLIST; hàng đợi hiển thị đúng thứ tự | Bình thường | Cao |  |  | 
+STU-037 | Tuần 9 | Đạt | Hành trình E2E | E2E | Hủy → tự đôn hàng chờ | Sự kiện đầy, có người WAITLIST | 1. SV REGISTERED hủy đăng ký
+2. Kiểm tra người WAITLIST cao điểm nhất | — | Người WAITLIST cao điểm nhất tự lên REGISTERED + nhận vé; điểm/bảng xếp hạng cập nhật | Bình thường | Cao |  |  | 
+
+##### SHEET: Anh - Auth & Bảo mật #####
+Anh (AnhNVT) — Xác thực & Bảo mật: Đăng nhập, Đăng ký + OTP, Quên/Đặt lại mật khẩu, Google OAuth, Phân quyền |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Tổng số test case: 39  —  Đã sắp theo Tuần (1→10) |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Mã TC | Tuần | Người thực hiện | Module / Tính năng | Cấp độ test | Tiêu đề kiểm thử | Tiền điều kiện | Các bước thực hiện | Dữ liệu kiểm thử | Kết quả mong đợi | Loại | Ưu tiên | Kết quả thực tế | Trạng thái | Ghi chú
+AUTH-001 | Tuần 2 | Anh | Đăng ký | Unit | Mật khẩu < 8 ký tự | — | 1. POST /auth/register password ngắn | password=123 | HTTP 400, "Mật khẩu phải có ít nhất 8 ký tự." | Ngoại lệ | TB |  |  | 
+AUTH-002 | Tuần 2 | Anh | Đăng ký | Unit | Xác nhận mật khẩu không khớp | — | 1. POST /auth/register confirm khác | pwd != confirm | HTTP 400, "Mật khẩu xác nhận không khớp." | Ngoại lệ | TB |  |  | 
+AUTH-003 | Tuần 2 | Anh | Đăng ký | Unit | Số điện thoại sai định dạng | — | 1. POST /auth/register SĐT != 10 số | phone=123 | HTTP 400, "Số điện thoại phải gồm đúng 10 chữ số." | Ngoại lệ | TB |  |  | 
+AUTH-004 | Tuần 2 | Anh | Đăng ký | Unit | Mã SV kiểu tự sinh SVxxx bị từ chối | — | 1. POST /auth/register studentCode=SV001 | SV001 | HTTP 400, yêu cầu nhập mã sinh viên thật | Ngoại lệ | Thấp |  |  | 
+AUTH-005 | Tuần 3 | Anh | Đăng ký | Unit | Mã SV sai định dạng | — | 1. POST /auth/register mã có ký tự lạ | code="ab!" | HTTP 400, mã chỉ gồm chữ+số 4-20 ký tự | Ngoại lệ | Thấp |  |  | 
+AUTH-006 | Tuần 3 | Anh | Đăng ký | Unit | Kỳ học ngoài 1..9 | — | 1. POST /auth/register semester=12 | semester=12 | HTTP 400, "Kì học phải từ 1 đến 9." | Biên | Thấp |  |  | 
+AUTH-007 | Tuần 3 | Anh | OAuth | Unit | Trạng thái cấu hình Google | — | 1. GET /auth/oauth-status | — | Trả googleEnabled=true/false theo cấu hình clientId/secret | Bình thường | Thấp |  |  | 
+AUTH-008 | Tuần 4 | Anh | Đăng nhập | Integration | Đăng nhập đúng email + mật khẩu | Tài khoản tồn tại, status=active | 1. POST /auth/login với email+password đúng | email & mật khẩu đúng | HTTP 200, success=true, trả user (role), mở session server, +2 điểm, log EMAIL_LOGIN | Bình thường | Cao |  |  | 
+AUTH-009 | Tuần 4 | Anh | Đăng nhập | Integration | Sai mật khẩu | Tài khoản tồn tại | 1. POST /auth/login mật khẩu sai | password sai | HTTP 401, errorType=INVALID_CREDENTIALS, "Email hoặc mật khẩu không chính xác." | Ngoại lệ | Cao |  |  | 
+AUTH-010 | Tuần 4 | Anh | Đăng nhập | Integration | Email không tồn tại | — | 1. POST /auth/login email lạ | email chưa đăng ký | HTTP 401, INVALID_CREDENTIALS | Ngoại lệ | Cao |  |  | 
+AUTH-011 | Tuần 4 | Anh | Đăng nhập | Integration | Tài khoản bị khóa | User status=false | 1. POST /auth/login đúng mật khẩu | user bị khóa | HTTP 403, errorType=ACCOUNT_LOCKED | Ngoại lệ | Cao |  |  | 
+AUTH-012 | Tuần 4 | Anh | Đăng nhập | Integration | Bí danh email @uni.edu.vn ↔ @fpt.edu.vn | Tài khoản đăng ký 1 trong 2 đuôi | 1. Đăng nhập bằng đuôi còn lại | user@uni.edu.vn | Vẫn nhận diện đúng user (tự thử đổi đuôi) | Biên | TB |  |  | 
+AUTH-013 | Tuần 4 | Anh | Đăng nhập | Integration | Tự BCrypt mật khẩu seed plain | Mật khẩu lưu dạng plain:xxx | 1. Đăng nhập lần đầu đúng mật khẩu | password=plain seed | Đăng nhập thành công và mật khẩu được hash BCrypt + lưu lại | Biên | Thấp |  |  | 
+AUTH-014 | Tuần 4 | Anh | Đăng ký | Integration | Gửi OTP đăng ký thành công | Email chưa tồn tại | 1. POST /auth/register/send-otp | email mới | success=true, gửi OTP 6 số tới email, hiệu lực 5 phút | Bình thường | Cao |  |  | 
+AUTH-015 | Tuần 4 | Anh | Đăng ký | Integration | Gửi OTP với email đã tồn tại | Email đã đăng ký | 1. POST /auth/register/send-otp | email đã dùng | success=false, "Email đã được sử dụng..." | Ngoại lệ | TB |  |  | 
+AUTH-016 | Tuần 4 | Anh | Đăng ký | Integration | Gửi OTP với email rỗng | — | 1. POST /auth/register/send-otp body rỗng | email="" | HTTP 400, "Vui lòng nhập email." | Ngoại lệ | TB |  |  | 
+AUTH-017 | Tuần 5 | Anh | Đăng ký | Integration | Đăng ký sinh viên hợp lệ | Đã có OTP đúng còn hạn | 1. POST /auth/register đầy đủ thông tin SV | role=STUDENT, OTP đúng, MSSV thật | HTTP 201, tạo User + Student, +10 điểm, log EMAIL_REGISTER | Bình thường | Cao |  |  | 
+AUTH-018 | Tuần 5 | Anh | Đăng ký | Integration | Đăng ký vai trò Khoa (DEPARTMENT) | Đã có OTP đúng | 1. POST /auth/register role=DEPARTMENT | role=DEPARTMENT, khoa hợp lệ | HTTP 201, tạo tài khoản khoa | Bình thường | TB |  |  | 
+AUTH-019 | Tuần 5 | Anh | Đăng ký | Integration | Vai trò không hợp lệ | — | 1. POST /auth/register role=ADMIN | role=ADMIN | HTTP 400, chỉ cho phép STUDENT/DEPARTMENT | Ngoại lệ | Cao |  |  | 
+AUTH-020 | Tuần 5 | Anh | Đăng ký | Integration | Số điện thoại đã dùng | SĐT đã tồn tại | 1. POST /auth/register | phone trùng | HTTP 400, mỗi người 1 SĐT | Ngoại lệ | TB |  |  | 
+AUTH-021 | Tuần 5 | Anh | Đăng ký | Integration | Email đã dùng (bước register) | Email đã tồn tại | 1. POST /auth/register | email trùng | HTTP 400, "Email đã được sử dụng..." | Ngoại lệ | TB |  |  | 
+AUTH-022 | Tuần 5 | Anh | Đăng ký | Integration | Thiếu OTP | Chưa nhập OTP | 1. POST /auth/register không OTP | otpCode="" | HTTP 400, yêu cầu nhập OTP | Ngoại lệ | TB |  |  | 
+AUTH-023 | Tuần 5 | Anh | Đăng ký | Integration | OTP sai (đếm + khóa) | Có OTP nhưng nhập sai | 1. POST /auth/register OTP sai nhiều lần | otp sai | Báo OTP không chính xác; sai quá nhiều → khóa, yêu cầu mã mới | Ngoại lệ | TB |  |  | 
+AUTH-024 | Tuần 5 | Anh | Đăng ký | Integration | OTP hết hạn (>5 phút) | OTP đã quá hạn | 1. POST /auth/register sau 5 phút | otp hết hạn | HTTP 400, "Mã OTP đã hết hạn..." | Biên | TB |  |  | 
+AUTH-025 | Tuần 6 | Anh | Đăng ký | Integration | Mã SV đã tồn tại | MSSV đã có | 1. POST /auth/register | code trùng | HTTP 400, mã sinh viên đã tồn tại | Ngoại lệ | TB |  |  | 
+AUTH-026 | Tuần 6 | Anh | Đăng ký | Integration | Khoa/bộ môn không hợp lệ | — | 1. POST /auth/register major lạ | major không có | HTTP 400, "Khoa/bộ môn không hợp lệ." | Ngoại lệ | TB |  |  | 
+AUTH-027 | Tuần 6 | Anh | Quên mật khẩu | Integration | Gửi OTP cho email tồn tại | Email tồn tại | 1. POST /auth/forgot-password | email hợp lệ | success=true, gửi OTP reset, lưu otpExpiry +5 phút | Bình thường | Cao |  |  | 
+AUTH-028 | Tuần 6 | Anh | Quên mật khẩu | Integration | Email không tồn tại | — | 1. POST /auth/forgot-password | email lạ | success=false, "Email không tồn tại trong hệ thống." | Ngoại lệ | TB |  |  | 
+AUTH-029 | Tuần 6 | Anh | Quên mật khẩu | Integration | Xác minh OTP đúng | Đã gửi OTP còn hạn | 1. POST /auth/verify-otp | otp đúng | success=true, cho phép đặt lại mật khẩu | Bình thường | Cao |  |  | 
+AUTH-030 | Tuần 6 | Anh | Quên mật khẩu | Integration | OTP sai hoặc hết hạn | — | 1. POST /auth/verify-otp otp sai/hết hạn | otp sai | success=false; sai nhiều lần → khóa tạm | Ngoại lệ | TB |  |  | 
+AUTH-031 | Tuần 6 | Anh | Đặt lại mật khẩu | Integration | Đặt lại mật khẩu với OTP hợp lệ | OTP đã xác minh, còn hạn | 1. POST /auth/reset-password | otp đúng + newPassword>=8 | Đổi mật khẩu (BCrypt), xóa OTP, đăng nhập được bằng mật khẩu mới | Bình thường | Cao |  |  | 
+AUTH-032 | Tuần 6 | Anh | Đặt lại mật khẩu | Integration | Mật khẩu mới < 8 ký tự | — | 1. POST /auth/reset-password | newPassword=123 | HTTP 400, "Mật khẩu mới phải có ít nhất 8 ký tự." | Ngoại lệ | TB |  |  | 
+AUTH-033 | Tuần 7 | Anh | Bảo mật | System | Chống brute-force khóa tạm | Nhập sai nhiều lần liên tiếp cùng email | 1. POST /auth/login sai N lần | sai liên tiếp | Bị khóa tạm; trả TOO_MANY_ATTEMPTS kèm thời gian chờ (phút) | Biên | Cao |  |  | 
+AUTH-034 | Tuần 7 | Anh | OAuth | System | Đăng nhập Google thành công | Google OAuth đã cấu hình | 1. Đăng nhập bằng Google | tài khoản Google hợp lệ | OAuth2LoginSuccessHandler tạo/đăng nhập user, chuyển hướng theo vai trò | Bình thường | TB |  |  | 
+AUTH-035 | Tuần 8 | Anh | Phân quyền | System | Chặn truy cập màn ngoài quyền | Đăng nhập vai trò STUDENT | 1. Truy cập trang/API dành cho ADMIN | session STUDENT | Bị chặn/redirect (AuthorizationInterceptor) - không xem được dữ liệu admin | Ngoại lệ | Cao |  |  | 
+AUTH-036 | Tuần 8 | Anh | Phân quyền | System | Chưa đăng nhập truy cập API bảo vệ | Không có session | 1. Gọi API yêu cầu đăng nhập | — | Bị từ chối/redirect về trang đăng nhập | Ngoại lệ | Cao |  |  | 
+AUTH-037 | Tuần 9 | Anh | Hành trình E2E | E2E | Đăng ký tài khoản mới trọn vòng | Email chưa tồn tại | 1. Nhập email → gửi OTP
+2. Nhập OTP + thông tin
+3. Tạo tài khoản
+4. Đăng nhập lần đầu | email mới + OTP đúng | Tạo tài khoản thành công, đăng nhập được ngay sau đăng ký | Bình thường | Cao |  |  | 
+AUTH-038 | Tuần 9 | Anh | Hành trình E2E | E2E | Quên & đặt lại mật khẩu trọn vòng | Tài khoản tồn tại | 1. Quên mật khẩu → nhận OTP
+2. Xác minh OTP
+3. Đặt lại mật khẩu
+4. Đăng nhập bằng mật khẩu mới | email hợp lệ | Đổi mật khẩu thành công, đăng nhập bằng mật khẩu mới OK, mật khẩu cũ bị từ chối | Bình thường | Cao |  |  | 
+AUTH-039 | Tuần 9 | Anh | Hành trình E2E | E2E | Đăng nhập đúng dashboard theo vai trò | Có tài khoản 4 vai trò | 1. Đăng nhập lần lượt ADMIN/DEPARTMENT/COMMITTEE/STUDENT
+2. Thử truy cập trang khác quyền | 4 tài khoản | Mỗi vai trò vào đúng màn hình; truy cập trái quyền bị chặn/redirect | Bình thường | Cao |  |  | 
+
+##### SHEET: Tú - Điểm danh & Quiz #####
+Tú (TuHNC) — Điểm danh & Quiz: Check-in QR động, Mid-session, Check-out, Quiz (SV & Khoa), Dashboard tham gia |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Tổng số test case: 35  —  Đã sắp theo Tuần (1→10) |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Mã TC | Tuần | Người thực hiện | Module / Tính năng | Cấp độ test | Tiêu đề kiểm thử | Tiền điều kiện | Các bước thực hiện | Dữ liệu kiểm thử | Kết quả mong đợi | Loại | Ưu tiên | Kết quả thực tế | Trạng thái | Ghi chú
+ATT-001 | Tuần 2 | Tú | Check-in (điểm) | Unit | Tính participationScore từ quiz | Đã làm quiz | 1. Check-in xong, xem participationScore | quizPercent | participationScore = 40 + min(40, quizPercent*0.4) | Biên | TB |  |  | 
+ATT-002 | Tuần 2 | Tú | Check-in | Unit | Chuẩn hóa giới tính | — | 1. POST .../submit gender="male"/"nu"/"x" | các biến thể | Chuẩn hóa Nam/Nữ/Khác; giá trị lạ → 400 "Vui lòng chọn giới tính." | Biên | Thấp |  |  | 
+ATT-003 | Tuần 3 | Tú | Quiz chấm điểm | Unit | Câu trắc nghiệm chấm theo đáp án đúng | Quiz MULTIPLE_CHOICE có correctAnswer | 1. Nộp đáp án đúng/sai | selectedAnswer | Đúng → cộng points của câu; sai → 0 | Biên | TB |  |  | 
+ATT-004 | Tuần 3 | Tú | Quiz/Proposal | Unit | Copy quiz từ đề xuất sang event khi duyệt | Đề xuất có quizPayload, được duyệt | 1. Duyệt proposal có quiz | quizPayload | Quiz được tạo cho event mới (idempotent, không nhân đôi nếu chạy lại) | Biên | TB |  |  | 
+ATT-005 | Tuần 4 | Tú | Check-in (info) | Integration | Lấy thông tin sự kiện + quiz cho trang check-in | Sự kiện tồn tại | 1. GET /api/checkin/events/{id}/info | id hợp lệ | Trả thông tin event + danh sách quiz (không kèm đáp án đúng) + hasQuiz + canCheckIn | Bình thường | Cao |  |  | 
+ATT-006 | Tuần 4 | Tú | Check-in (info) | Integration | Sự kiện không tồn tại | — | 1. GET /api/checkin/events/999/info | id=999 | HTTP 404 "Không tìm thấy sự kiện" | Ngoại lệ | TB |  |  | 
+ATT-007 | Tuần 4 | Tú | QR động | Integration | Lấy token QR hiện tại (xoay 30s) | Sự kiện tồn tại | 1. GET /api/checkin/events/{id}/qr-token | — | Trả token, expiredAt, rotateSeconds=TTL; token đổi mỗi 30 giây | Bình thường | Cao |  |  | 
+ATT-008 | Tuần 4 | Tú | QR động | Integration | Buộc xoay token mới | Có token đang hoạt động | 1. GET .../qr-token?force=1 | force=1 | Sinh token mới khác token cũ | Biên | TB |  |  | 
+ATT-009 | Tuần 4 | Tú | Check-in (status) | Integration | Kiểm tra trạng thái check-in theo MSSV/email | — | 1. GET .../status?studentCode=... | studentCode/email | Trả checkedIn=true/false, kèm checkinTime/status nếu đã điểm danh | Bình thường | TB |  |  | 
+ATT-010 | Tuần 4 | Tú | Check-in (submit) | Integration | Thiếu trường bắt buộc | — | 1. POST .../submit thiếu email/họ tên/MSSV/giới tính | bỏ trống 1 trường | HTTP 400 với thông báo tương ứng | Ngoại lệ | Cao |  |  | 
+ATT-011 | Tuần 4 | Tú | Check-in (submit) | Integration | Token hết hạn / sai | Token đã xoay qua | 1. POST .../submit token cũ | token hết hạn | HTTP 401 "Mã QR đã hết hạn... quét lại" | Ngoại lệ | Cao |  |  | 
+ATT-012 | Tuần 4 | Tú | Check-in (submit) | Integration | MSSV/email chưa có trong hệ thống | — | 1. POST .../submit MSSV lạ | MSSV không tồn tại | HTTP 404 báo chưa được đăng ký trong hệ thống | Ngoại lệ | TB |  |  | 
+ATT-013 | Tuần 5 | Tú | Check-in (submit) | Integration | Check-in trùng | Đã check-in trước đó | 1. POST .../submit lần 2 | đã điểm danh | HTTP 409 "Bạn đã check-in cho event này rồi." | Ngoại lệ | Cao |  |  | 
+ATT-014 | Tuần 5 | Tú | Check-in (submit) | Integration | Event có quiz nhưng chưa làm quiz | Event có câu hỏi quiz | 1. POST .../submit answers rỗng | answers=[] | HTTP 400 "Bạn phải hoàn thành quiz trước khi check-in." | Ngoại lệ | Cao |  |  | 
+ATT-015 | Tuần 5 | Tú | Check-in (submit) | Integration | Tự đăng ký (walk-in) nếu chưa đăng ký | SV chưa đăng ký nhưng có trong hệ thống | 1. POST .../submit hợp lệ | SV chưa đăng ký | Tự tạo Registration REGISTERED (note Walk-in) rồi điểm danh | Biên | TB |  |  | 
+ATT-016 | Tuần 5 | Tú | Quiz check-out | Integration | Lấy câu hỏi quiz ngẫu nhiên (limit mặc định 5) | Event có quiz | 1. GET /api/student/quiz/events/{id}/questions | — | Trả tối đa 5 câu ngẫu nhiên | Bình thường | TB |  |  | 
+ATT-017 | Tuần 5 | Tú | Quiz check-out | Integration | Nộp quiz tính điểm | Đã đăng nhập SV | 1. POST /api/student/quiz/events/{id}/submit | answers | Lưu submission, trả totalScore + submittedAt, refresh điểm tham gia | Bình thường | Cao |  |  | 
+ATT-018 | Tuần 5 | Tú | Quiz check-out | Integration | Limit lớn hơn số câu có | Event có ít câu hơn limit | 1. GET .../questions?limit=50 | limit=50 | Trả tối đa số câu hiện có (không lỗi) | Biên | Thấp |  |  | 
+ATT-019 | Tuần 5 | Tú | Khoa - QR | Integration | Mở trang QR động cho điểm danh | Đăng nhập khoa | 1. GET /department/attendance/events/{id}/qr | — | Hiển thị trang QR động | Bình thường | TB |  |  | 
+ATT-020 | Tuần 5 | Tú | Khoa - QR | Integration | Refresh token QR check-in | — | 1. GET /department/attendance/events/{id}/qr-token | — | Trả token + scanUrl + ảnh QR (data URI) | Bình thường | TB |  |  | 
+ATT-021 | Tuần 6 | Tú | Khoa - Mid | Integration | Mở xác minh giữa giờ | — | 1. POST /department/attendance/events/{id}/mid-session/open | — | Mở phiên mid-session, trả token mid + scanUrl | Bình thường | TB |  |  | 
+ATT-022 | Tuần 6 | Tú | Khoa - Dashboard | Integration | Xem dashboard tham gia | Có dữ liệu điểm danh | 1. GET /department/attendance/events/{id}/dashboard-data | — | Trả thống kê tham gia (tổng, đã check-in, vắng...) | Bình thường | TB |  |  | 
+ATT-023 | Tuần 6 | Tú | Khoa - Quiz | Integration | Tạo câu hỏi quiz cho event | Đăng nhập khoa, event hợp lệ | 1. POST /department/quiz/events/{id}/questions | nội dung câu hỏi | Tạo câu hỏi mới, trả về đối tượng QuizQuestion | Bình thường | Cao |  |  | 
+ATT-024 | Tuần 6 | Tú | Khoa - Quiz | Integration | Sửa câu hỏi quiz | Câu hỏi tồn tại | 1. PUT /department/quiz/questions/{qid} | nội dung sửa | Cập nhật câu hỏi thành công | Bình thường | TB |  |  | 
+ATT-025 | Tuần 6 | Tú | Khoa - Quiz | Integration | Xóa câu hỏi quiz | Câu hỏi tồn tại | 1. DELETE /department/quiz/questions/{qid} | — | Trả status=deleted; câu hỏi bị xóa | Bình thường | TB |  |  | 
+ATT-026 | Tuần 6 | Tú | Khoa - Quiz | Integration | Xem kết quả quiz | Có bài nộp quiz | 1. GET /department/quiz/events/{id}/results | — | Trả stats + danh sách answers theo event | Bình thường | TB |  |  | 
+ATT-027 | Tuần 6 | Tú | Bảo mật QR | Integration | Token QR an toàn theo thời gian | — | 1. Lấy token, đợi >30s rồi submit | token quá hạn | Token cũ bị từ chối, đảm bảo chống chụp màn hình chia sẻ | Biên | TB |  |  | 
+ATT-028 | Tuần 7 | Tú | Check-in (submit) | System | Check-in thành công (token hợp lệ + quiz) | SV có trong hệ thống, token còn hạn, đã làm quiz | 1. POST .../submit đủ email/họ tên/MSSV/giới tính/token/answers | dữ liệu hợp lệ | ok=true, lưu Attendance CHECKED_IN, lưu QuizSubmission, trả quizPercent | Bình thường | Cao |  |  | 
+ATT-029 | Tuần 7 | Tú | SV quét QR | System | Quét QR check-in từ điện thoại | Đã đăng nhập SV, token hợp lệ | 1. GET /api/student/attendance/events/{id}/checkin?token=... | token hợp lệ | Tạo Attendance check-in, hiển thị trang kết quả thành công | Bình thường | Cao |  |  | 
+ATT-030 | Tuần 7 | Tú | SV quét QR | System | Quét QR xác minh giữa giờ (mid) | Khoa đã mở mid-session | 1. GET .../events/{id}/mid?token=... | token mid hợp lệ | Ghi nhận mid-verify thành công | Bình thường | TB |  |  | 
+ATT-031 | Tuần 8 | Tú | Check-out | System | Check-out tính điểm + phân loại | SV đã check-in | 1. POST /api/student/attendance/events/{id}/checkout | X-User-Email | Trả status, participationScore, phân loại (classification) | Bình thường | Cao |  |  | 
+ATT-032 | Tuần 8 | Tú | Khoa - Vắng | System | Đánh vắng SV chưa xác minh | Đã qua mid-session | 1. POST /department/attendance/events/{id}/mark-absent | — | SV không xác minh giữa giờ bị đánh ABSENT; trả status OK | Bình thường | TB |  |  | 
+ATT-033 | Tuần 9 | Tú | Hành trình E2E | E2E | Check-in QR trọn vòng | Khoa đang chiếu QR, event có quiz | 1. Khoa chiếu QR động
+2. SV quét QR mở form
+3. Điền thông tin + làm quiz
+4. Submit check-in
+5. Kiểm tra trạng thái | token hợp lệ + đáp án quiz | Check-in CHECKED_IN, lưu quiz, dashboard khoa tăng số đã điểm danh | Bình thường | Cao |  |  | 
+ATT-034 | Tuần 9 | Tú | Hành trình E2E | E2E | Xác minh giữa giờ & đánh vắng | Đang diễn ra sự kiện | 1. Khoa mở mid-session
+2. SV quét QR mid
+3. Khoa bấm mark-absent | — | SV quét được ghi nhận; SV không quét bị ABSENT | Bình thường | TB |  |  | 
+ATT-035 | Tuần 9 | Tú | Hành trình E2E | E2E | Check-out + quiz + feedback | SV đã check-in | 1. SV làm quiz checkout
+2. Check-out
+3. Gửi feedback | answers + rating | Tính participationScore + phân loại; feedback lưu thành công | Bình thường | Cao |  |  | 
+
+##### SHEET: Sang - Quản trị & Tổ chức #####
+Sang (SangTM) — Hội đồng duyệt đề xuất + Quản trị hệ thống (Admin) + Thống kê & AI phản hồi (Khoa) |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Tổng số test case: 39  —  Đã sắp theo Tuần (1→10) |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+Mã TC | Tuần | Người thực hiện | Module / Tính năng | Cấp độ test | Tiêu đề kiểm thử | Tiền điều kiện | Các bước thực hiện | Dữ liệu kiểm thử | Kết quả mong đợi | Loại | Ưu tiên | Kết quả thực tế | Trạng thái | Ghi chú
+ADM-001 | Tuần 2 | Sang | Hội đồng | Unit | Duyệt đề xuất thiếu khoa | Đề xuất không có department | 1. POST .../approve | proposal thiếu khoa | HTTP 400 "Proposal thiếu khoa, không thể tạo event" | Ngoại lệ | TB |  |  | 
+ADM-002 | Tuần 2 | Sang | Hội đồng | Unit | Từ chối thiếu lý do | Đề xuất PENDING | 1. POST .../reject body rỗng | reason="" | HTTP 400 "Cần ghi lý do từ chối" | Ngoại lệ | TB |  |  | 
+ADM-003 | Tuần 3 | Sang | Hội đồng | Unit | Yêu cầu chỉnh sửa thiếu nội dung | Đề xuất PENDING | 1. POST .../revise body rỗng | request="" | HTTP 400 "Cần ghi rõ yêu cầu chỉnh sửa" | Ngoại lệ | TB |  |  | 
+ADM-004 | Tuần 4 | Sang | Hội đồng | Integration | Tổng quan dashboard duyệt đề xuất | Có đề xuất ở nhiều trạng thái | 1. GET /api/committee/overview | — | Trả counts theo PENDING/REVISION/APPROVED/REJECTED + 5 đề xuất mới nhất | Bình thường | Cao |  |  | 
+ADM-005 | Tuần 4 | Sang | Hội đồng | Integration | Danh sách đề xuất theo filter | Có đề xuất | 1. GET /api/committee/proposals?status=PENDING | status=PENDING | Trả danh sách đề xuất đúng trạng thái, hỗ trợ tìm kiếm q | Bình thường | TB |  |  | 
+ADM-006 | Tuần 4 | Sang | Hội đồng | Integration | Chi tiết đề xuất | Đề xuất tồn tại | 1. GET /api/committee/proposals/{id} | id hợp lệ | Trả chi tiết đề xuất (mô tả, ảnh, khoa...) | Bình thường | TB |  |  | 
+ADM-007 | Tuần 4 | Sang | Hội đồng | Integration | Duyệt lại đề xuất đã xử lý | Đề xuất APPROVED/REJECTED | 1. POST .../approve | status=REJECTED | HTTP 400 "...không thể xử lý lại" (ensureActionable) | Ngoại lệ | TB |  |  | 
+ADM-008 | Tuần 4 | Sang | Hội đồng | Integration | Từ chối có lý do | Đề xuất PENDING | 1. POST .../reject reason="..." | reason hợp lệ | status=REJECTED, note "Từ chối: ..." | Bình thường | Cao |  |  | 
+ADM-009 | Tuần 4 | Sang | Hội đồng | Integration | Yêu cầu chỉnh sửa | Đề xuất PENDING | 1. POST .../revise request="..." | request hợp lệ | status=REVISION, note "Yêu cầu chỉnh sửa: ..." | Bình thường | TB |  |  | 
+ADM-010 | Tuần 4 | Sang | Admin - User | Integration | Liệt kê người dùng | — | 1. GET /api/admin/users | — | Trả danh sách users kèm thông tin student | Bình thường | TB |  |  | 
+ADM-011 | Tuần 4 | Sang | Admin - User | Integration | Tạo người dùng mới | — | 1. POST /api/admin/users | payload user | Tạo user thành công, trả thông tin | Bình thường | Cao |  |  | 
+ADM-012 | Tuần 4 | Sang | Admin - User | Integration | Cập nhật người dùng | User tồn tại | 1. PUT /api/admin/users/{id} | payload sửa | Cập nhật thành công | Bình thường | TB |  |  | 
+ADM-013 | Tuần 4 | Sang | Admin - User | Integration | Xóa / khóa người dùng | User tồn tại | 1. DELETE /api/admin/users/{id} | id hợp lệ | Xóa/khóa user thành công | Bình thường | TB |  |  | 
+ADM-014 | Tuần 5 | Sang | Admin - Role | Integration | Quản lý vai trò (CRUD) | Quyền quản lý | 1. GET/POST/PUT/DELETE /api/admin/roles | payload role | Thêm/sửa/xóa vai trò thành công | Bình thường | TB |  |  | 
+ADM-015 | Tuần 5 | Sang | Admin - Khoa | Integration | Quản lý khoa/bộ môn (CRUD) | — | 1. GET/POST/PUT/DELETE /api/admin/departments | payload department | Thêm/sửa/xóa khoa thành công | Bình thường | TB |  |  | 
+ADM-016 | Tuần 5 | Sang | Admin - Event | Integration | Tạo sự kiện | — | 1. POST /api/admin/events | payload event | Tạo sự kiện mới thành công | Bình thường | Cao |  |  | 
+ADM-017 | Tuần 5 | Sang | Admin - Event | Integration | Cập nhật trạng thái sự kiện | Sự kiện tồn tại | 1. PUT /api/admin/events/{id}/status | status mới | Cập nhật trạng thái (PUBLISHED/COMPLETED/CANCELLED...) | Bình thường | TB |  |  | 
+ADM-018 | Tuần 5 | Sang | Admin - Event | Integration | Cập nhật sức chứa | Sự kiện tồn tại | 1. PUT /api/admin/events/{id}/capacity | capacity mới | Cập nhật sức chứa thành công | Bình thường | TB |  |  | 
+ADM-019 | Tuần 5 | Sang | Admin - Event | Integration | Cập nhật diễn giả | Sự kiện tồn tại | 1. PUT /api/admin/events/{id}/speakers | speakers | Cập nhật danh sách diễn giả | Bình thường | Thấp |  |  | 
+ADM-020 | Tuần 5 | Sang | Admin - Event | Integration | Xóa sự kiện | Sự kiện tồn tại | 1. DELETE /api/admin/events/{id} | id hợp lệ | Xóa sự kiện thành công | Bình thường | TB |  |  | 
+ADM-021 | Tuần 5 | Sang | Admin - Đề xuất | Integration | CRUD đề xuất + đổi trạng thái | — | 1. GET/POST/PUT /api/admin/proposals | payload proposal | Thêm/sửa/đổi trạng thái đề xuất thành công | Bình thường | TB |  |  | 
+ADM-022 | Tuần 5 | Sang | Admin - Đề xuất | Integration | Xóa đề xuất | Đề xuất tồn tại | 1. DELETE /api/admin/proposals/{id} | id hợp lệ | Xóa đề xuất thành công | Bình thường | Thấp |  |  | 
+ADM-023 | Tuần 5 | Sang | Admin - Đăng ký | Integration | Cập nhật trạng thái đăng ký | Đăng ký tồn tại | 1. PUT /api/admin/registrations/{id}/status | status mới | Đổi trạng thái đăng ký (REGISTERED/WAITLIST/CANCELLED) | Bình thường | TB |  |  | 
+ADM-024 | Tuần 6 | Sang | Admin - Feedback | Integration | Kiểm duyệt / xóa feedback | Feedback tồn tại | 1. DELETE /api/admin/feedback/{id} | id hợp lệ | Xóa feedback vi phạm thành công | Bình thường | TB |  |  | 
+ADM-025 | Tuần 6 | Sang | Admin - Email | Integration | Xem nhật ký email (phân trang) | — | 1. GET /api/admin/email-logs?page=0 | page,size | Trả danh sách email logs phân trang | Bình thường | Thấp |  |  | 
+ADM-026 | Tuần 6 | Sang | Admin - Email | Integration | Gửi email thông báo | — | 1. POST /api/admin/email-logs/send | nội dung email | Gửi thông báo + ghi log gửi | Bình thường | TB |  |  | 
+ADM-027 | Tuần 6 | Sang | Admin - Log | Integration | Xem nhật ký hoạt động (phân trang) | — | 1. GET /api/admin/activity-logs?page=0 | page,size | Trả danh sách activity logs phân trang | Bình thường | Thấp |  |  | 
+ADM-028 | Tuần 6 | Sang | Admin - Google Form | Integration | Tự tạo form check-in/check-out | Cấu hình Google API hợp lệ | 1. POST /api/admin/events/{id}/google-form/auto-create | — | Tạo form Google + lưu URL vào sự kiện | Bình thường | Thấp |  |  | 
+ADM-029 | Tuần 6 | Sang | Admin - Google Form | Integration | Đồng bộ phản hồi Google Form | Form đã có phản hồi | 1. POST /api/admin/events/{id}/google-form/sync | — | Đồng bộ phản hồi về hệ thống | Bình thường | Thấp |  |  | 
+ADM-030 | Tuần 6 | Sang | Khoa - Feedback | Integration | Xem thống kê feedback theo sự kiện | Sự kiện có feedback | 1. GET /department/feedback/events/{id}/data | — | Trả thống kê (rating trung bình, phân bố...) | Bình thường | TB |  |  | 
+ADM-031 | Tuần 6 | Sang | Khoa - AI | Integration | Phân tích AI phản hồi | Có feedback văn bản | 1. GET /department/feedback/events/{id}/ai-analysis | — | Trả sentiment + chủ đề + khuyến nghị cải thiện | Bình thường | TB |  |  | 
+ADM-032 | Tuần 6 | Sang | Khoa - Feedback | Integration | Trang thống kê feedback (view) | — | 1. GET /department/feedback/events/{id} | — | Hiển thị trang thống kê + danh sách feedback + phân tích AI | Bình thường | Thấp |  |  | 
+ADM-033 | Tuần 7 | Sang | Hội đồng | System | Duyệt đề xuất → tạo sự kiện | Đề xuất PENDING, có khoa | 1. POST /api/committee/proposals/{id}/approve | payload thời gian/sức chứa | Tạo Event PUBLISHED, copy quiz, đề xuất chuyển APPROVED rồi bị xóa khỏi hàng đợi (removedFromWorkflow=true) | Bình thường | Cao |  |  | 
+ADM-034 | Tuần 7 | Sang | Admin | System | Xem dashboard tổng quan | Đăng nhập ADMIN | 1. GET /api/admin/dashboard | — | Trả số liệu tổng quan người dùng/sự kiện... | Bình thường | Cao |  |  | 
+ADM-035 | Tuần 8 | Sang | Admin - Đề xuất | System | Publish đề xuất → tạo sự kiện | Đề xuất hợp lệ | 1. POST /api/admin/proposals/{id}/publish | — | Tạo sự kiện từ đề xuất | Bình thường | TB |  |  | 
+ADM-036 | Tuần 8 | Sang | Admin - Báo cáo | System | Xem báo cáo thống kê | Có dữ liệu | 1. GET /api/admin/reports | — | Trả các chỉ số báo cáo tổng hợp | Bình thường | TB |  |  | 
+ADM-037 | Tuần 9 | Sang | Hành trình E2E | E2E | Vòng đời sự kiện đề xuất → công khai | Có tài khoản Khoa & Hội đồng | 1. Khoa tạo đề xuất
+2. Hội đồng duyệt
+3. Kiểm tra sự kiện PUBLISHED hiển thị cho SV | đề xuất hợp lệ | Đề xuất → Event PUBLISHED, SV nhìn thấy & đăng ký được | Bình thường | Cao |  |  | 
+ADM-038 | Tuần 9 | Sang | Hành trình E2E | E2E | Quản trị Admin trọn vòng | Đăng nhập ADMIN | 1. Tạo user
+2. Tạo event
+3. Gửi email thông báo
+4. Xem báo cáo | payload hợp lệ | Tất cả thao tác thành công, báo cáo phản ánh dữ liệu mới | Bình thường | TB |  |  | 
+ADM-039 | Tuần 9 | Sang | Hành trình E2E | E2E | Tổng kết sau sự kiện (Khoa) | Sự kiện đã kết thúc, có feedback | 1. Xem dashboard tham gia
+2. Xem thống kê feedback
+3. Xem phân tích AI | event đã xong | Hiển thị số liệu tham gia + thống kê feedback + sentiment/khuyến nghị AI | Bình thường | TB |  |  | 
+
+##### SHEET: Test Data - Đạt #####
+DỮ LIỆU KIỂM THỬ — Đạt (DatHVT) — Sinh viên & Xếp hạng ưu tiên (RBL) |  |  |  |  |  |  |  |  |  | 
+1) TÀI KHOẢN SINH VIÊN |  |  |  |  |  |  |  |  |  | 
+Data ID | MSSV | Họ tên | Email | Ngành | Kỳ | Điểm tích lũy | No-show | Loại ưu tiên kỳ vọng
+TD-STU-001 | DE190533 | Hồ Văn Thông Đạt | student1@fpt.edu.vn | Software Engineering | 9 | 95 | 0 | Rất cao (đúng ngành + kỳ cuối)
+TD-STU-002 | DE190534 | Nguyễn Văn A | student2@fpt.edu.vn | Software Engineering | 8 | 80 | 1 | Cao
+TD-STU-003 | DE190535 | Trần Thị B | student3@fpt.edu.vn | Artificial Intelligence | 7 | 75 | 0 | Ngành liên quan (cùng khoa lớn) → M=60
+TD-STU-004 | DE190536 | Lê Văn C | student4@fpt.edu.vn | Business Administration | 8 | 90 | 2 | Kỳ cao nhưng khác khoa → M=30
+TD-STU-005 | DE190537 | Phạm Thị D | student5@fpt.edu.vn | Software Engineering | 3 | 40 | 0 | Kỳ thấp / điểm thấp
+TD-STU-006 | DE190538 | Vũ Thị E | student6@fpt.edu.vn | Software Engineering | 1 | 10 | 3 | Thấp nhất (kỳ 1, S≈11)
+TD-STU-007 | DE190539 | Đỗ Văn F | student7@fpt.edu.vn | Information Technology | 6 | 200 | 0 | Điểm >100 → chuẩn hóa sqrt (P=100)
+2) SỰ KIỆN |  |  |  |  |  |  |  |  |  | 
+Data ID | Event ID | Tên sự kiện | Khoa | Loại | Sức chứa | Đã đăng ký | Trạng thái | Bắt đầu | Kết thúc | Địa điểm
+TD-EVT-001 | EV001 | AI Workshop 2026 | Software Engineering | Workshop | 50 | 30 | PUBLISHED | 2026-06-15 09:00 | 2026-06-15 11:00 | Room 301
+TD-EVT-002 | EV002 | Cloud Computing Seminar | Information Technology | Seminar | 100 | 20 | PUBLISHED | 2026-06-20 14:00 | 2026-06-20 16:00 | Hall A
+TD-EVT-003 | EV003 | Startup Innovation Talk | Business Administration | Talk | 80 | 0 | CANCELLED | 2026-06-22 09:00 | 2026-06-22 11:00 | Room 205
+TD-EVT-004 | EV004 | Software Testing Workshop | Software Engineering | Workshop | 2 | 2 | PUBLISHED | 2026-06-18 10:00 | 2026-06-18 12:00 | Room 401 (đầy chỗ — test WAITLIST/RBL)
+TD-EVT-005 | EV005 | Generative AI Talk | Artificial Intelligence | Talk | 60 | 10 | COMPLETED | 2026-05-30 08:00 | 2026-05-30 10:00 | Room 501 (quá khứ)
+TD-EVT-006 | EV006 | Past Seminar (>8 tháng) | Software Engineering | Seminar | 40 | 40 | COMPLETED | 2025-09-01 08:00 | 2025-09-01 10:00 | Room 101 (test lọc past 8 tháng)
+TD-EVT-007 | EV007 | Draft Event | Software Engineering | Workshop | 50 | 0 | DRAFT | 2026-07-10 09:00 | 2026-07-10 11:00 | N/A (chưa mở đăng ký)
+TD-EVT-008 | EV008 | Capacity Không Giới Hạn | Software Engineering | Talk |  | 5 | PUBLISHED | 2026-07-15 09:00 | 2026-07-15 11:00 | Hall B (capacity null — không waitlist)
+3) KỊCH BẢN ĐĂNG KÝ & XẾP HẠNG ƯU TIÊN (RBL) |  |  |  |  |  |  |  |  |  | 
+Data ID | MSSV | Event ID | Mức khớp ngành | Kỳ | Điểm | Kịch bản | Kết quả kỳ vọng
+TD-REG-001 | DE190533 | EV001 | Exact (M=100) | 9 | 95 | Đăng ký sớm, còn chỗ | REGISTERED, ưu tiên cao, có vé
+TD-REG-002 | DE190533 | EV001 | Exact | 9 | 95 | Đăng ký trùng | alreadyRegistered=true
+TD-REG-003 | DE190534 | EV004 | Exact | 8 | 80 | Sự kiện đầy (cap=2) | WAITLIST
+TD-REG-004 | DE190533 | EV004 | Exact | 9 | 95 | Đầy chỗ + điểm cao hơn người thấp nhất | Chiếm chỗ; người thấp nhất → WAITLIST + mất vé
+TD-REG-005 | DE190535 | EV005 | Related | 7 | 75 | Sự kiện đã diễn ra/quá khứ | Từ chối: sự kiện đã diễn ra
+TD-REG-006 | DE190533 | EV007 | Exact | 9 | 95 | Đăng ký event DRAFT | Từ chối: chưa mở đăng ký
+TD-REG-007 | DE190533 | EV001 | Exact | 9 | 95 | Hủy đăng ký | CANCELLED + đôn WAITLIST cao điểm nhất lên
+TD-REG-008 | DE190536 | EV001 | Other (M=30) | 8 | 90 | Khác khoa nhưng điểm/kỳ cao | Điểm ưu tiên thấp hơn SV đúng ngành
+
+##### SHEET: Test Data - Anh #####
+DỮ LIỆU KIỂM THỬ — Anh (AnhNVT) — Xác thực & Bảo mật |  |  |  |  | 
+1) TÀI KHOẢN ĐĂNG NHẬP |  |  |  |  | 
+Data ID | Vai trò | Email | Mật khẩu | Trạng thái | Mục đích sử dụng
+TD-AUTH-001 | ADMIN | admin@aems.com | Admin123@ | ACTIVE | Đăng nhập Admin, quản trị hệ thống
+TD-AUTH-002 | DEPARTMENT (HEAD) | department@aems.com | Dept123@ | ACTIVE | Đăng nhập Khoa
+TD-AUTH-003 | COMMITTEE | committee@aems.com | Com123@ | ACTIVE | Đăng nhập Hội đồng
+TD-AUTH-004 | STUDENT | student1@fpt.edu.vn | Stu123@ | ACTIVE | Đăng nhập SV hợp lệ
+TD-AUTH-005 | STUDENT | student2@fpt.edu.vn | Stu123@ | DISABLED | Tài khoản bị khóa → ACCOUNT_LOCKED
+TD-AUTH-006 | STUDENT | student1@fpt.edu.vn | wrong123 | ACTIVE | Sai mật khẩu → INVALID_CREDENTIALS
+TD-AUTH-007 | (không có) | unknown@fpt.edu.vn | Stu123@ | N/A | Email không tồn tại → INVALID_CREDENTIALS
+TD-AUTH-008 | STUDENT | student1@uni.edu.vn | Stu123@ | ACTIVE | Bí danh đuôi @uni ↔ @fpt vẫn nhận diện
+TD-AUTH-009 | STUDENT | student1@fpt.edu.vn | sai x5 lần | ACTIVE | Brute-force → TOO_MANY_ATTEMPTS (khóa tạm)
+2) DỮ LIỆU ĐĂNG KÝ + OTP |  |  |  |  | 
+Data ID | Trường | Giá trị | Kết quả kỳ vọng
+TD-OTP-001 | email | newuser@fpt.edu.vn | Gửi OTP thành công (hiệu lực 5 phút)
+TD-OTP-002 | email | student1@fpt.edu.vn | Email đã dùng → từ chối gửi OTP
+TD-OTP-003 | password | Pass1 | Mật khẩu < 8 ký tự → lỗi
+TD-OTP-004 | confirmPassword | khác password | Xác nhận không khớp → lỗi
+TD-OTP-005 | phone | 0123 | Số điện thoại != 10 số → lỗi
+TD-OTP-006 | phone | 0987654321 (đã dùng) | SĐT trùng → lỗi
+TD-OTP-007 | studentCode | SV001 | Mã tự sinh kiểu SVxxx → từ chối
+TD-OTP-008 | studentCode | DE190599 | Mã hợp lệ
+TD-OTP-009 | role | ADMIN | Vai trò không hợp lệ (chỉ STUDENT/DEPARTMENT)
+TD-OTP-010 | semester | 12 | Kỳ ngoài 1..9 → lỗi
+TD-OTP-011 | otpCode | 000000 | OTP sai → từ chối (sai nhiều lần → khóa)
+TD-OTP-012 | otpCode | mã đã quá 5 phút | OTP hết hạn → yêu cầu gửi lại
+TD-OTP-013 | major | Khoa không tồn tại | Khoa/bộ môn không hợp lệ → lỗi
+3) QUÊN & ĐẶT LẠI MẬT KHẨU |  |  |  |  | 
+Data ID | Bước | Dữ liệu | Kết quả kỳ vọng
+TD-PWD-001 | forgot-password | student1@fpt.edu.vn | Gửi OTP reset OK
+TD-PWD-002 | forgot-password | unknown@fpt.edu.vn | Email không tồn tại → từ chối
+TD-PWD-003 | verify-otp | OTP đúng còn hạn | Xác minh thành công
+TD-PWD-004 | reset-password | OTP đúng + NewPass123 | Đổi mật khẩu OK, đăng nhập bằng mật khẩu mới
+TD-PWD-005 | reset-password | newPassword = 123 | Mật khẩu mới < 8 ký tự → lỗi
+4) BẢO MẬT (CA KIỂM THỬ TIÊU CỰC) |  |  |  |  | 
+Data ID | Kịch bản | Vai trò / Người dùng | URL / Đầu vào | Kết quả kỳ vọng
+TD-SEC-001 | Truy cập trang nội bộ khi chưa đăng nhập | Anonymous | /student/events | Chuyển về trang đăng nhập
+TD-SEC-002 | Gọi hành động chỉ dành cho Hội đồng | STUDENT | duyệt đề xuất | 403 từ chối quyền
+TD-SEC-003 | Sai vai trò truy cập trang cao hơn | STUDENT / DEPARTMENT | /department; /admin | 403 từ chối quyền
+TD-SEC-004 | SQL Injection ở đăng nhập | Anonymous | email: ' OR '1'='1 | Từ chối; không lỗi SQL
+TD-SEC-005 | XSS ở bình luận feedback | STUDENT | <script>alert('x')</script> | Escape/sanitize đầu vào
+TD-SEC-006 | Mật khẩu seed plain tự BCrypt | STUDENT | plain:Stu123@ | Đăng nhập OK + hash lại BCrypt
+
+##### SHEET: Test Data - Tú #####
+DỮ LIỆU KIỂM THỬ — Tú (TuHNC) — Điểm danh & Quiz |  |  |  |  |  |  |  |  | 
+1) QR ĐIỂM DANH (TTL 30 giây) |  |  |  |  |  |  |  |  | 
+Data ID | Event ID | MSSV | QR Token | Loại token | Trạng thái token | Tạo lúc | Hết hạn | Trạng thái trước | Kết quả kỳ vọng
+TD-ATT-001 | EV001 | N/A | QR_ACTIVE_001 | CHECK_IN | ACTIVE | 2026-06-15 09:00:00 | 2026-06-15 09:00:30 | N/A | Hiển thị QR động trên màn hình khoa
+TD-ATT-002 | EV001 | DE190533 | QR_EXPIRED_001 | CHECK_IN | EXPIRED | 2026-06-15 09:00:00 | 2026-06-15 09:00:30 | REGISTERED | Từ chối QR hết hạn (>30s) → 401
+TD-ATT-003 | EV001 | N/A | QR_ACTIVE_002 | CHECK_IN | ACTIVE | 2026-06-15 09:00:30 | 2026-06-15 09:01:00 | N/A | QR tự làm mới sau 30 giây
+TD-ATT-004 | EV001 | DE190533 | QR_ACTIVE_002 | CHECK_IN | ACTIVE | 2026-06-15 09:00:30 | 2026-06-15 09:01:00 | REGISTERED | Check-in OK → CHECKED_IN
+TD-ATT-005 | EV001 | DE190533 | FAKE999 | CHECK_IN | INVALID | N/A | N/A | REGISTERED | Từ chối token giả → 401
+TD-ATT-006 | EV001 | DE190599 | QR_ACTIVE_002 | CHECK_IN | ACTIVE | — | — | N/A | MSSV chưa có trong hệ thống → 404
+TD-ATT-007 | EV001 | DE190533 | QR_ACTIVE_002 | CHECK_IN | ACTIVE | — | — | CHECKED_IN | Check-in trùng → 409
+TD-ATT-008 | EV001 | DE190534 | QR_ACTIVE_002 | CHECK_IN | ACTIVE | — | — | CHƯA ĐĂNG KÝ | Walk-in: tự tạo Registration rồi check-in
+2) XÁC MINH GIỮA GIỜ (MID-SESSION) |  |  |  |  |  |  |  |  | 
+Data ID | Event ID | MSSV | Token mid | Kịch bản | Kết quả kỳ vọng
+TD-MID-001 | EV001 | N/A | MID_ACTIVE_001 | Khoa mở mid-session | Sinh token mid + scanUrl + ảnh QR
+TD-MID-002 | EV001 | DE190533 | MID_ACTIVE_001 | SV quét QR mid hợp lệ | Ghi nhận mid-verify thành công
+TD-MID-003 | EV001 | DE190534 | — | SV không quét mid | Bị mark-absent → ABSENT
+3) QUIZ (CHECK-IN / CHECK-OUT) |  |  |  |  |  |  |  |  | 
+Data ID | Event ID | Loại | Câu hỏi / Dữ liệu | Lựa chọn / Giá trị | Đáp án đúng | Trả lời SV | Kết quả kỳ vọng
+TD-QUIZ-001 | EV001 | Multiple Choice | Chủ đề chính của sự kiện là gì? | A. AI  B. Marketing  C. Finance  D. HR | A | A | Chấm đúng, cộng điểm câu
+TD-QUIZ-002 | EV001 | Question Pool | Ngân hàng 20 câu, random 5 | Limit = 5 | N/A | N/A | Form checkout hiện 5 câu ngẫu nhiên
+TD-QUIZ-003 | EV001 | Multiple Choice Set | 5 câu trả lời đúng hết | All correct | All correct | All correct | Điểm quiz tối đa (participationScore cao)
+TD-QUIZ-004 | EV001 | Required | 1 câu để trống | Blank | N/A | Blank | Bắt buộc quiz: chặn check-in nếu chưa làm
+TD-QUIZ-005 | EV001 | Multiple Choice | Câu trả lời sai | A..D | A | C | Chấm sai → 0 điểm câu
+TD-QUIZ-006 | EV001 | Limit > số câu | Event chỉ có 3 câu | Limit = 50 | N/A | N/A | Trả tối đa số câu hiện có (không lỗi)
+4) FEEDBACK & ĐIỂM THAM GIA |  |  |  |  |  |  |  |  | 
+Data ID | Event ID | Tình huống | Giá trị | Kết quả kỳ vọng
+TD-FB-001 | EV001 | Feedback hợp lệ sau khi đã tham gia (ATTENDED) | Rating 5; "Sự kiện rất hay" | Lưu feedback + cộng điểm
+TD-FB-002 | EV001 | Rating ngoài khoảng | Rating 6 | Từ chối: rating phải 1..5
+TD-FB-003 | EV001 | Feedback khi chưa check-in/attended | — | Từ chối: chỉ feedback khi đã tham gia
+TD-SCORE-001 | EV001 | Tính participationScore | quizPercent = 100 | Score = 40 + min(40, 100*0.4) = 80
+TD-SCORE-002 | EV001 | Tính participationScore | quizPercent = 50 | Score = 40 + 20 = 60
+
+##### SHEET: Test Data - Sang #####
+DỮ LIỆU KIỂM THỬ — Sang (SangTM) — Quản trị, Hội đồng & Báo cáo |  |  |  |  |  |  | 
+1) ĐỀ XUẤT & DUYỆT (HỘI ĐỒNG) |  |  |  |  |  |  | 
+Data ID | Proposal ID | Tiêu đề | Khoa | Trạng thái | Người gửi | Hành động hội đồng | Kết quả kỳ vọng
+TD-PROP-001 | P001 | AI Workshop | Software Engineering | PENDING | department@aems.com | Duyệt | PENDING → APPROVED + tạo Event PUBLISHED (copy quiz)
+TD-PROP-002 | P002 | (rỗng) | Software Engineering | DRAFT | department@aems.com | Gửi thiếu tiêu đề | Lỗi xác thực
+TD-PROP-003 | P003 | Old Event | Software Engineering | DRAFT | department@aems.com | Gửi ngày quá khứ | Lỗi xác thực
+TD-PROP-004 | P004 | Invalid Capacity Event | Software Engineering | DRAFT | department@aems.com | Gửi sức chứa -10 | Lỗi xác thực
+TD-PROP-005 | P005 | Cloud Seminar | Information Technology | REVISION | department@aems.com | Yêu cầu chỉnh sửa → nộp lại | REVISION → PENDING
+TD-PROP-006 | P006 | No Department Event | (không có) | PENDING | department@aems.com | Duyệt proposal thiếu khoa | 400: thiếu khoa, không tạo event
+TD-PROP-007 | P007 | Already Approved | Software Engineering | APPROVED | department@aems.com | Duyệt lại | 400: không xử lý lại (ensureActionable)
+TD-PROP-008 | P008 | Reject No Reason | Software Engineering | PENDING | department@aems.com | Từ chối không nhập lý do | 400: cần ghi lý do từ chối
+2) QUẢN TRỊ NGƯỜI DÙNG / VAI TRÒ / KHOA / SỰ KIỆN (ADMIN) |  |  |  |  |  |  | 
+Data ID | Đối tượng | Thao tác | Dữ liệu vào | Kết quả kỳ vọng
+TD-USR-001 | User | Create | {fullName, email mới, role=STUDENT} | Tạo người dùng OK
+TD-USR-002 | User | Update | Đổi role / trạng thái | Cập nhật OK
+TD-USR-003 | User | Delete/Khóa | id hợp lệ | Xóa/khóa OK
+TD-ROLE-001 | Role | CRUD | Tên vai trò mới | Thêm/sửa/xóa vai trò OK
+TD-DEPT-001 | Department | CRUD | Software Engineering / DEP-SE | Thêm/sửa/xóa khoa OK
+TD-EVT-ADM-001 | Event | Create | {title, dept, start/end, capacity} | Tạo sự kiện OK
+TD-EVT-ADM-002 | Event | Update Status | PUBLISHED → COMPLETED | Đổi trạng thái OK
+TD-EVT-ADM-003 | Event | Update Capacity | capacity = 80 | Cập nhật sức chứa OK
+TD-EVT-ADM-004 | Registration | Update Status | REGISTERED → WAITLIST | Đổi trạng thái đăng ký OK
+3) EMAIL / DASHBOARD / BÁO CÁO / AI |  |  |  |  |  |  | 
+Data ID | Hạng mục | Dữ liệu vào | Kết quả kỳ vọng
+TD-MAIL-001 | Email xác nhận đăng ký | SV DE190533 đăng ký EV001 | Lưu email log; sentStatus SUCCESS/PENDING theo SMTP
+TD-MAIL-002 | Gửi thông báo hàng loạt | Danh sách người nhận + nội dung | Gửi + ghi log từng email
+TD-DASH-001 | Dashboard điểm danh | Registered 50; Checked-in 40; Completed 35; Absent 10 | Thẻ số liệu + tỷ lệ đúng (chỉ đếm REGISTERED)
+TD-DASH-002 | Thống kê feedback | Ratings: 5,4,4,3,5; có bình luận | Tính điểm trung bình + liệt kê bình luận
+TD-AI-001 | Phân tích AI feedback | Nhiều bình luận tích cực & tiêu cực | Sentiment + chủ đề + khuyến nghị cải thiện
+TD-REPORT-001 | Xuất báo cáo sự kiện | Dữ liệu đăng ký + điểm danh + feedback | Báo cáo đúng dữ liệu sự kiện
+

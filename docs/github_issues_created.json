@@ -1,0 +1,345 @@
+﻿[
+    {
+        "Code":  "UC01",
+        "Number":  "37",
+        "Owner":  "Anh",
+        "Assignee":  "nguyentuananh2005qb-lab",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/37"
+    },
+    {
+        "Code":  "UC02",
+        "Number":  "38",
+        "Owner":  "Anh",
+        "Assignee":  "nguyentuananh2005qb-lab",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/38"
+    },
+    {
+        "Code":  "UC03",
+        "Number":  "39",
+        "Owner":  "Anh",
+        "Assignee":  "nguyentuananh2005qb-lab",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/39"
+    },
+    {
+        "Code":  "UC04",
+        "Number":  "40",
+        "Owner":  "Anh",
+        "Assignee":  "nguyentuananh2005qb-lab",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/40"
+    },
+    {
+        "Code":  "UC05",
+        "Number":  "41",
+        "Owner":  "Anh",
+        "Assignee":  "nguyentuananh2005qb-lab",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/41"
+    },
+    {
+        "Code":  "UC06",
+        "Number":  "42",
+        "Owner":  "Anh",
+        "Assignee":  "nguyentuananh2005qb-lab",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/42"
+    },
+    {
+        "Code":  "UC07",
+        "Number":  "43",
+        "Owner":  "Anh",
+        "Assignee":  "nguyentuananh2005qb-lab",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/43"
+    },
+    {
+        "Code":  "UC08",
+        "Number":  "44",
+        "Owner":  "Anh",
+        "Assignee":  "nguyentuananh2005qb-lab",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/44"
+    },
+    {
+        "Code":  "UC09",
+        "Number":  "45",
+        "Owner":  "Anh",
+        "Assignee":  "nguyentuananh2005qb-lab",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/45"
+    },
+    {
+        "Code":  "UC10",
+        "Number":  "46",
+        "Owner":  "Anh",
+        "Assignee":  "nguyentuananh2005qb-lab",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/46"
+    },
+    {
+        "Code":  "UC11",
+        "Number":  "47",
+        "Owner":  "Anh",
+        "Assignee":  "nguyentuananh2005qb-lab",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/47"
+    },
+    {
+        "Code":  "UC12",
+        "Number":  "48",
+        "Owner":  "Anh",
+        "Assignee":  "nguyentuananh2005qb-lab",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/48"
+    },
+    {
+        "Code":  "UC13",
+        "Number":  "49",
+        "Owner":  "Đạt",
+        "Assignee":  "thongdat",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/49"
+    },
+    {
+        "Code":  "UC14",
+        "Number":  "50",
+        "Owner":  "Đạt",
+        "Assignee":  "thongdat",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/50"
+    },
+    {
+        "Code":  "UC15",
+        "Number":  "51",
+        "Owner":  "Đạt",
+        "Assignee":  "thongdat",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/51"
+    },
+    {
+        "Code":  "UC16",
+        "Number":  "52",
+        "Owner":  "Đạt",
+        "Assignee":  "thongdat",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/52"
+    },
+    {
+        "Code":  "UC17",
+        "Number":  "53",
+        "Owner":  "Đạt",
+        "Assignee":  "thongdat",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/53"
+    },
+    {
+        "Code":  "UC18",
+        "Number":  "54",
+        "Owner":  "Đạt",
+        "Assignee":  "thongdat",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/54"
+    },
+    {
+        "Code":  "UC19",
+        "Number":  "55",
+        "Owner":  "Đạt",
+        "Assignee":  "thongdat",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/55"
+    },
+    {
+        "Code":  "UC20",
+        "Number":  "56",
+        "Owner":  "Đạt",
+        "Assignee":  "thongdat",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/56"
+    },
+    {
+        "Code":  "UC21",
+        "Number":  "57",
+        "Owner":  "Đạt",
+        "Assignee":  "thongdat",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/57"
+    },
+    {
+        "Code":  "UC22",
+        "Number":  "58",
+        "Owner":  "Tú",
+        "Assignee":  "CamTu1711",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/58"
+    },
+    {
+        "Code":  "UC23",
+        "Number":  "59",
+        "Owner":  "Tú",
+        "Assignee":  "CamTu1711",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/59"
+    },
+    {
+        "Code":  "UC24",
+        "Number":  "60",
+        "Owner":  "Tú",
+        "Assignee":  "CamTu1711",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/60"
+    },
+    {
+        "Code":  "UC25",
+        "Number":  "61",
+        "Owner":  "Tú",
+        "Assignee":  "CamTu1711",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/61"
+    },
+    {
+        "Code":  "UC26",
+        "Number":  "62",
+        "Owner":  "Tú",
+        "Assignee":  "CamTu1711",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/62"
+    },
+    {
+        "Code":  "UC27",
+        "Number":  "63",
+        "Owner":  "Tú",
+        "Assignee":  "CamTu1711",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/63"
+    },
+    {
+        "Code":  "UC28",
+        "Number":  "64",
+        "Owner":  "Tú",
+        "Assignee":  "CamTu1711",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/64"
+    },
+    {
+        "Code":  "UC29",
+        "Number":  "65",
+        "Owner":  "Tú",
+        "Assignee":  "CamTu1711",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/65"
+    },
+    {
+        "Code":  "UC30",
+        "Number":  "66",
+        "Owner":  "Tú",
+        "Assignee":  "CamTu1711",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/66"
+    },
+    {
+        "Code":  "UC31",
+        "Number":  "67",
+        "Owner":  "Sang",
+        "Assignee":  "sangtruong420102",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/67"
+    },
+    {
+        "Code":  "UC32",
+        "Number":  "68",
+        "Owner":  "Sang",
+        "Assignee":  "sangtruong420102",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/68"
+    },
+    {
+        "Code":  "UC33",
+        "Number":  "69",
+        "Owner":  "Sang",
+        "Assignee":  "sangtruong420102",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/69"
+    },
+    {
+        "Code":  "UC34",
+        "Number":  "70",
+        "Owner":  "Sang",
+        "Assignee":  "sangtruong420102",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/70"
+    },
+    {
+        "Code":  "UC35",
+        "Number":  "71",
+        "Owner":  "Sang",
+        "Assignee":  "sangtruong420102",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/71"
+    },
+    {
+        "Code":  "UC36",
+        "Number":  "72",
+        "Owner":  "Sang",
+        "Assignee":  "sangtruong420102",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/72"
+    },
+    {
+        "Code":  "UC37",
+        "Number":  "73",
+        "Owner":  "Sang",
+        "Assignee":  "sangtruong420102",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/73"
+    },
+    {
+        "Code":  "UC38",
+        "Number":  "74",
+        "Owner":  "Sang",
+        "Assignee":  "sangtruong420102",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/74"
+    },
+    {
+        "Code":  "UC39",
+        "Number":  "75",
+        "Owner":  "Sang",
+        "Assignee":  "sangtruong420102",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/75"
+    },
+    {
+        "Code":  "UC40",
+        "Number":  "76",
+        "Owner":  "Sang",
+        "Assignee":  "sangtruong420102",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/76"
+    },
+    {
+        "Code":  "UC41",
+        "Number":  "77",
+        "Owner":  "Sang",
+        "Assignee":  "sangtruong420102",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/77"
+    },
+    {
+        "Code":  "UC42",
+        "Number":  "78",
+        "Owner":  "Sang",
+        "Assignee":  "sangtruong420102",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/78"
+    },
+    {
+        "Code":  "UC43",
+        "Number":  "79",
+        "Owner":  "Sang",
+        "Assignee":  "sangtruong420102",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/79"
+    },
+    {
+        "Code":  "UC44",
+        "Number":  "80",
+        "Owner":  "Sang",
+        "Assignee":  "sangtruong420102",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/80"
+    },
+    {
+        "Code":  "UC45",
+        "Number":  "81",
+        "Owner":  "Sang",
+        "Assignee":  "sangtruong420102",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/81"
+    },
+    {
+        "Code":  "UC46",
+        "Number":  "82",
+        "Owner":  "Sang",
+        "Assignee":  "sangtruong420102",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/82"
+    },
+    {
+        "Code":  "UC47",
+        "Number":  "83",
+        "Owner":  "Sang",
+        "Assignee":  "sangtruong420102",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/83"
+    },
+    {
+        "Code":  "UC48",
+        "Number":  "84",
+        "Owner":  "Sang",
+        "Assignee":  "sangtruong420102",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/84"
+    },
+    {
+        "Code":  "UC49",
+        "Number":  "85",
+        "Owner":  "Sang",
+        "Assignee":  "sangtruong420102",
+        "Url":  "https://github.com/thongdat/CampusEvent/issues/85"
+    }
+]
