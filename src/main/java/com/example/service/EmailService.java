@@ -61,6 +61,15 @@ public class EmailService {
         return brevoApiKey != null && !brevoApiKey.isBlank();
     }
 
+    /**
+     * Đã cấu hình kênh gửi email chưa (Brevo API hoặc SMTP)?
+     * Dùng để scheduler bỏ qua việc gửi thư mời khi demo/E2E chưa set biến môi
+     * trường email — tránh log spam và giảm tải không cần thiết.
+     */
+    public boolean isConfigured() {
+        return brevoEnabled() || mailSender != null;
+    }
+
     @Async
     public void sendPlainEmail(String toEmail, String subject, String content) {
         try {
@@ -266,6 +275,62 @@ public class EmailService {
             mailSender.send(message);
         }
         logger.info("Đã gửi thư mời sự kiện '{}' tới {}", eventTitle, toEmail);
+    }
+
+    /**
+     * Thông báo đóng đăng ký — dùng khi admin bấm "Đóng đăng ký" (tiện demo gửi mail ngay).
+     * Không thay thế thư mời trước 7 ngày ({@link #sendInvitationEmail}).
+     */
+    public void sendRegistrationClosedEmail(String toEmail,
+                                            String studentName,
+                                            String eventTitle,
+                                            String location,
+                                            LocalDateTime startTime) throws Exception {
+        String name = (studentName == null || studentName.isBlank()) ? "bạn" : studentName.trim();
+        String subject = "Đã đóng đăng ký: " + eventTitle;
+        String when = startTime == null ? "theo lịch sự kiện" : capitalize(startTime.format(DATE_FMT))
+                + " · " + startTime.format(TIME_FMT);
+        String place = (location == null || location.isBlank()) ? "Sẽ thông báo" : location.trim();
+        String html = "<div style=\"margin:0;padding:24px 12px;background:#fff7ed;font-family:'Segoe UI',Arial,sans-serif;\">"
+                + "<table role=\"presentation\" align=\"center\" width=\"600\" cellpadding=\"0\" cellspacing=\"0\" "
+                + "style=\"max-width:600px;width:100%;background:#ffffff;border-radius:18px;overflow:hidden;"
+                + "box-shadow:0 12px 40px -16px rgba(194,65,12,.45);border:1px solid #fed7aa;\">"
+                + "<tr><td style=\"padding:28px 36px 8px;\">"
+                + "<p style=\"margin:0 0 4px;font-size:14px;color:#9a3412;\">Kính gửi,</p>"
+                + "<p style=\"margin:0 0 18px;font-size:20px;font-weight:800;color:#7c2d12;\">" + esc(name) + "</p>"
+                + "<p style=\"margin:0 0 18px;font-size:15px;line-height:1.7;color:#44403c;\">"
+                + "Ban tổ chức đã <strong>đóng đăng ký</strong> cho sự kiện dưới đây. "
+                + "Suất tham dự của bạn vẫn được giữ. Vui lòng theo dõi email thư mời "
+                + "(thường gửi khoảng <strong>7 ngày trước</strong> ngày diễn ra) để nhận hướng dẫn check-in.</p>"
+                + "</td></tr>"
+                + "<tr><td style=\"padding:0 36px 8px;\">"
+                + "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" "
+                + "style=\"background:#fff7ed;border:1px solid #fed7aa;border-radius:14px;\">"
+                + "<tr><td style=\"padding:20px 22px;\">"
+                + "<p style=\"margin:0 0 14px;font-size:17px;font-weight:800;color:#c2410c;\">" + esc(eventTitle) + "</p>"
+                + infoRow("🗓️", "Thời gian", when)
+                + infoRow("📍", "Địa điểm", place)
+                + "</td></tr></table>"
+                + "</td></tr>"
+                + "<tr><td style=\"padding:22px 36px 30px;\">"
+                + "<p style=\"margin:0;font-size:12px;color:#a8a29e;\">Trân trọng,<br/>"
+                + "<strong style=\"color:#c2410c;\">Campus Events – FPT University</strong></p>"
+                + "</td></tr></table></div>";
+
+        if (brevoEnabled()) {
+            sendViaBrevo(toEmail, subject, html, null, null, null);
+        } else {
+            if (mailSender == null) {
+                throw new IllegalStateException("Email is not configured. Set Brevo API or SMTP environment variables.");
+            }
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setTo(toEmail);
+            helper.setSubject(subject);
+            helper.setText(html, true);
+            mailSender.send(message);
+        }
+        logger.info("Đã gửi email đóng đăng ký sự kiện '{}' tới {}", eventTitle, toEmail);
     }
 
     private String buildInvitationHtml(String studentName,

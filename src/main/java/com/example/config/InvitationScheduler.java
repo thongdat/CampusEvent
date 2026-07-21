@@ -42,6 +42,12 @@ public class InvitationScheduler {
 
     @Scheduled(fixedDelay = 600_000, initialDelay = 60_000)
     public void sendUpcomingInvitations() {
+        // Chưa cấu hình email (demo/E2E) -> bỏ qua thay vì lặp gửi rồi WARN từng
+        // đăng ký. Tránh log spam và giảm tải cho app khi chạy thử.
+        if (!emailService.isConfigured()) {
+            log.debug("Email chưa cấu hình -> bỏ qua gửi thư mời tự động cho các sự kiện sắp diễn ra.");
+            return;
+        }
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime windowEnd = now.plusDays(LEAD_DAYS);
         List<Event> upcoming = eventRepository.findByStartTimeGreaterThanEqualAndStartTimeLessThanEqual(now, windowEnd);
