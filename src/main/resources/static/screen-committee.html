@@ -52,7 +52,7 @@
         .nav-label { margin: 18px 8px 8px; color: #9aa5b6; font-size: 9px; font-weight: 800; text-transform: uppercase; }
         .nav-button { width: 100%; min-height: 40px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 7px; background: transparent; padding: 9px 10px; color: #4b5a71; text-align: left; font-size: 12px; font-weight: 700; cursor: pointer; }
         .nav-button:hover { background: #f3f6fa; color: var(--ink); }
-        .nav-button.active { background: #eef3ff; color: #244db7; }
+        .nav-button.active { background: #fff2e8; color: #b5461c; }
         .nav-button svg { width: 17px; height: 17px; flex: 0 0 auto; }
         .nav-count { margin-left: auto; min-width: 24px; border-radius: 6px; padding: 3px 6px; background: #eef1f5; color: #64748b; text-align: center; font-size: 10px; }
         .nav-count.pending { background: #fff0df; color: #b45309; }
@@ -62,7 +62,7 @@
         .proposal-select-wrap { margin: 0 8px 8px; }
         .proposal-select-wrap label { display: block; margin-bottom: 6px; color: #536176; font-size: 10px; font-weight: 800; }
         .proposal-select { width: 100%; min-height: 38px; border: 1px solid var(--line); border-radius: 7px; background: #fff; padding: 7px 9px; color: var(--ink); font-size: 11px; font-weight: 700; outline: none; }
-        .proposal-select:focus { border-color: #91a8e8; box-shadow: 0 0 0 3px #e9efff; }
+        .proposal-select:focus { border-color: #f0b48a; box-shadow: 0 0 0 3px #fdece0; }
         .sidebar-help { margin: 12px; border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
         .sidebar-help strong { display: block; font-size: 11px; }
         .sidebar-help span { display: block; margin-top: 4px; color: var(--muted); font-size: 9px; line-height: 1.5; }
@@ -73,7 +73,7 @@
         .top-search { position: relative; width: min(470px, 55vw); }
         .top-search svg { position: absolute; top: 50%; left: 13px; width: 17px; height: 17px; transform: translateY(-50%); color: #8b97a9; }
         .top-search input { width: 100%; height: 42px; border: 1px solid var(--line); border-radius: 7px; background: #fff; padding: 0 14px 0 40px; color: var(--ink); font-size: 12px; outline: none; }
-        .top-search input:focus { border-color: #91a8e8; box-shadow: 0 0 0 3px #e9efff; }
+        .top-search input:focus { border-color: #f0b48a; box-shadow: 0 0 0 3px #fdece0; }
         .account-summary { display: flex; align-items: center; gap: 10px; }
         .account-avatar { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 50%; background: #fff0d7; color: #9a5300; font-size: 11px; font-weight: 800; }
         .account-text strong, .account-text span { display: block; max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -90,7 +90,7 @@
         .stats-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; }
         .stat-card { min-height: 94px; display: flex; align-items: center; gap: 12px; border: 1px solid var(--line); border-radius: 8px; background: #fff; padding: 15px; text-align: left; cursor: pointer; transition: border-color .16s, box-shadow .16s; }
         .stat-card:hover { border-color: #b9c4d3; box-shadow: 0 10px 22px -20px rgba(17,32,54,.65); }
-        .stat-card.active { border-color: #95a9e4; box-shadow: 0 0 0 2px #edf1ff; }
+        .stat-card.active { border-color: #f0b083; box-shadow: 0 0 0 2px #fdeadd; }
         .stat-icon { display: grid; width: 38px; height: 38px; flex: 0 0 auto; place-items: center; border-radius: 8px; color: #fff; }
         .stat-icon svg { width: 19px; height: 19px; }
         .stat-icon.pending { background: var(--orange); }
@@ -111,10 +111,10 @@
         .queue-scroll { flex: 1; overflow-y: auto; }
         .queue-item { position: relative; min-height: 94px; border-bottom: 1px solid #edf0f4; border-left: 3px solid transparent; padding: 14px 15px; cursor: pointer; transition: background .15s, border-color .15s; }
         .queue-item:hover { background: #f8fafc; }
-        .queue-item.selected { border-left-color: var(--blue); background: #f1f5ff; }
+        .queue-item.selected { border-left-color: var(--orange); background: #fff6ef; }
         .queue-footer { min-height: 48px; display: flex; align-items: center; justify-content: center; border-top: 1px solid var(--line); color: var(--muted); font-size: 10px; font-weight: 700; }
         .detail-panel { overflow-y: auto; }
-        .detail-hero { background: #243b8f; color: #fff; padding: 24px; }
+        .detail-hero { background: linear-gradient(135deg, #b8461f, #8a2f10); color: #fff; padding: 24px; }
         .detail-hero-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
         .detail-hero h1 { margin-top: 10px; font-size: 20px; line-height: 1.35; }
         .detail-hero p { margin-top: 5px; color: rgba(255,255,255,.72); font-size: 11px; }
@@ -133,7 +133,8 @@
         .action-btn { min-height: 42px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--line); border-radius: 7px; padding: 9px 16px; background: #fff; color: var(--ink); font-size: 11px; font-weight: 800; }
         .action-btn:hover { background: #f7f9fc; }
         .action-btn.revise { border-color: #b9c9f7; color: #244eb4; }
-        .action-btn.approve { border-color: #1f4fc7; background: #1f4fc7; color: #fff; }
+        .action-btn.approve { border-color: #c95315; background: #d1541e; color: #fff; }
+        .action-btn.approve:hover { background: #b8461a; }
         .action-btn.reject { color: #bd2940; }
         .empty-detail { height: 100%; min-height: 500px; display: grid; place-items: center; padding: 30px; text-align: center; color: var(--muted); }
         .empty-detail strong { display: block; color: var(--ink); font-size: 13px; }
@@ -691,10 +692,19 @@
         $$('#detail [data-action]').forEach(btn => btn.addEventListener('click', () => onAction(p, btn.dataset.action)));
     }
 
-    function onAction(p, action) {
+    async function onAction(p, action) {
         if (action === 'approve') {
             const startDefault = p.proposedDate ? p.proposedDate.substring(0, 16) : '';
             const endDefault = p.proposedEndDate ? p.proposedEndDate.substring(0, 16) : '';
+            let rooms = [];
+            try { rooms = await api('/admin/rooms/options') || []; } catch (e) { rooms = []; }
+            if (!Array.isArray(rooms)) rooms = [];
+            const roomOptions = rooms.map(room => {
+                const selected = String(room.id) === String(p.roomId)
+                    || String(room.name || '').toLowerCase() === String(p.location || '').toLowerCase();
+                const label = room.capacity != null ? `${room.name} (sức chứa ${room.capacity})` : room.name;
+                return `<option value="${escapeHtml(room.id)}" data-name="${escapeHtml(room.name)}" ${selected ? 'selected' : ''}>${escapeHtml(label)}</option>`;
+            }).join('');
             openModal(`
             <form id="actionForm" class="p-6">
                 <h3 class="text-lg font-bold text-emerald-700">Phê duyệt đề xuất</h3>
@@ -715,7 +725,10 @@
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-700">Địa điểm</label>
-                            <input type="text" name="location" value="${escapeHtml(p.location || 'FPT Campus')}" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
+                            <select name="roomId" required class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
+                                <option value="">— Chọn phòng —</option>
+                                ${roomOptions}
+                            </select>
                         </div>
                     </div>
                     <div class="grid grid-cols-2 gap-3">
@@ -755,6 +768,12 @@
                     toast('Thời gian kết thúc phải sau thời gian bắt đầu.', 'error');
                     return;
                 }
+                const roomId = fd.get('roomId');
+                if (!roomId) {
+                    toast('Vui lòng chọn địa điểm (phòng sự kiện).', 'error');
+                    return;
+                }
+                const room = rooms.find(r => String(r.id) === String(roomId));
                 submitButton.disabled = true;
                 submitButton.dataset.idleText = 'Phê duyệt';
                 submitButton.textContent = 'Đang phê duyệt...';
@@ -762,7 +781,8 @@
                     startTime,
                     endTime,
                     capacity: Number(fd.get('capacity') || 100),
-                    location: fd.get('location'),
+                    roomId: Number(roomId),
+                    location: room ? room.name : (p.location || ''),
                     organizer: fd.get('organizer'),
                     speakers: fd.get('speakers'),
                     supportStaffNeeded: Number(fd.get('supportStaffNeeded') || 0),
