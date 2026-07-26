@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.PostConstruct;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -70,7 +71,7 @@ public class PublicController {
     @PostConstruct
     public void warmUpOnStartup() {
         try {
-            refreshCache();
+            refreshCacheWithConnectionRetry();
         } catch (Exception e) {
             logger.warn("Landing: warm-up khi khởi động thất bại (sẽ thử lại theo lịch): {}", e.getMessage());
         }
@@ -83,10 +84,41 @@ public class PublicController {
     @Scheduled(initialDelay = 60_000, fixedDelay = 60_000)
     public void scheduledRefresh() {
         try {
-            refreshCache();
+            refreshCacheWithConnectionRetry();
         } catch (Exception e) {
             logger.warn("Landing: làm mới cache theo lịch thất bại, giữ dữ liệu cũ: {}", e.getMessage());
         }
+    }
+
+    /**
+     * SQLState class 08 indicates a broken connection, not a bad query.
+     * Hikari discards that connection after the exception, so retry once using
+     * a fresh pooled connection. Other failures are never retried.
+     */
+    private Map<String, Object> refreshCacheWithConnectionRetry() {
+        try {
+            return refreshCache();
+        } catch (RuntimeException firstFailure) {
+            if (!isConnectionFailure(firstFailure)) {
+                throw firstFailure;
+            }
+            logger.info("Landing: kết nối DB bị gián đoạn, thử lại bằng kết nối mới");
+            return refreshCache();
+        }
+    }
+
+    private boolean isConnectionFailure(Throwable failure) {
+        Throwable cause = failure;
+        while (cause != null) {
+            if (cause instanceof SQLException) {
+                String sqlState = ((SQLException) cause).getSQLState();
+                if (sqlState != null && sqlState.startsWith("08")) {
+                    return true;
+                }
+            }
+            cause = cause.getCause();
+        }
+        return false;
     }
 
     private synchronized Map<String, Object> refreshCache() {
