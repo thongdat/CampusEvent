@@ -2395,7 +2395,9 @@
     async function renderProposals() {
         state.page = 'proposals';
         shell();
-        const proposals = await load('/proposals', []);
+        // Proposal là dữ liệu chính của trang này: nếu API lỗi, để lỗi nổi lên
+        // cho trình xử lý chung hiển thị thay vì giả vờ hệ thống có 0 đề xuất.
+        const proposals = await api('/proposals');
         const statusOptions = ['PENDING', 'REVISION', 'REJECTED'].map(value => ({ value, label: value }));
         let searchTimer;
 
