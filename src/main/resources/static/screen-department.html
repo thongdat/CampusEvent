@@ -1400,7 +1400,8 @@
             api(STRUCTURE_API).catch(() => ({ items: FALLBACK_STRUCTURE })),
             api('/departments').catch(() => []),
             api('/events').catch(() => []),
-            api('/proposals').catch(() => []),
+            // Không nuốt lỗi proposal thành [] vì người dùng sẽ hiểu nhầm dữ liệu vừa tạo bị mất.
+            api('/proposals'),
             api('/proposal-organizers').catch(() => []),
             api('/rooms/options').catch(() => [])
         ]).then(([structure, departments, events, proposals, organizers, rooms]) => {

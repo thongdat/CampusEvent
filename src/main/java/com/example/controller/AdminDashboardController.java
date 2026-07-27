@@ -80,6 +80,7 @@ import java.util.stream.Collectors;
 public class AdminDashboardController {
 
     private static final List<String> ACTIVE_PROPOSAL_STATUSES = List.of("PENDING", "REVISION", "REJECTED");
+    private static final List<String> PROPOSAL_HISTORY_STATUSES = List.of("PENDING", "REVISION", "APPROVED", "REJECTED");
     private static final List<String> ACTIONABLE_PROPOSAL_STATUSES = List.of("PENDING", "REVISION");
     private static final List<String> EVENT_STATUSES = List.of("PUBLISHED", "COMPLETED", "CANCELLED");
 
@@ -1071,10 +1072,11 @@ public class AdminDashboardController {
     }
 
     @GetMapping("/proposals")
+    @Transactional(readOnly = true)
     public List<Map<String, Object>> proposals() {
         // Nạp danh sách committee 1 lần (thay cho query lặp lại trong từng proposal).
         List<User> committees = userRepository.findByRole_NameAndStatus("COMMITTEE", true);
-        return eventProposalRepository.findByStatusIn(ACTIVE_PROPOSAL_STATUSES, Sort.by(Sort.Direction.DESC, "createdAt")).stream()
+        return eventProposalRepository.findByStatusIn(PROPOSAL_HISTORY_STATUSES, Sort.by(Sort.Direction.DESC, "createdAt")).stream()
                 .map(p -> buildProposal(p, committees))
                 .collect(Collectors.toList());
     }
